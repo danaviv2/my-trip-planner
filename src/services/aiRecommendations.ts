@@ -1,20 +1,39 @@
-import { API_KEYS } from './apiManager';
+import type { API_KEYS } from './apiManager';
+import { API_KEYS as KEYS } from './apiManager';
+import type { SmartAdvice, UserPreferences, AIRecommendation } from '../types/index';
+
+interface OpenAIMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+interface OpenAIResponse {
+  choices: Array<{
+    message: {
+      content: string;
+    };
+  }>;
+}
 
 /**
- * שירות המלצות AI מבוסס OpenAI
- * מספק המלצות חכמות למסלולי טיול, אטרקציות, מסעדות ועוד
+ * OpenAI based AI recommendations service
+ * Provides smart recommendations for trips, attractions, restaurants and more
  */
-
 class AIRecommendationsService {
+  private apiKey: string;
+  private apiUrl: string = 'https://api.openai.com/v1/chat/completions';
+
   constructor() {
-    this.apiKey = API_KEYS.openai;
-    this.apiUrl = 'https://api.openai.com/v1/chat/completions';
+    this.apiKey = KEYS.openai || '';
   }
 
   /**
-   * קריאה כללית ל-OpenAI API
+   * Generic OpenAI API call
    */
-  async callOpenAI(messages, temperature = 0.7) {
+  private async callOpenAI(
+    messages: OpenAIMessage[],
+    temperature: number = 0.7
+  ): Promise<string> {
     try {
       const response = await fetch(this.apiUrl, {
         method: 'POST',
@@ -34,18 +53,23 @@ class AIRecommendationsService {
         throw new Error(`OpenAI API Error: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data: OpenAIResponse = await response.json();
       return data.choices[0].message.content;
     } catch (error) {
-      console.error('❌ שגיאה בקריאה ל-OpenAI:', error);
+      console.error('❌ Error in OpenAI call:', error);
       throw error;
     }
   }
 
   /**
-   * המלצות למסלול טיול מותאם אישית
+   * Personalized itinerary recommendations
    */
-  async getPersonalizedItinerary(origin, destination, days, preferences = {}) {
+  async getPersonalizedItinerary(
+    origin: string,
+    destination: string,
+    days: number,
+    preferences: Partial<UserPreferences> = {}
+  ): Promise<any> {
     const {
       budget = 'medium',
       interests = [],
@@ -61,7 +85,12 @@ class AIRecommendationsService {
 - משך: ${days} ימים
 - תקציב: ${budget === 'low' ? 'נמוך' : budget === 'medium' ? 'בינוני' : 'גבוה'}
 - תחומי עניין: ${interests.join(', ') || 'כללי'}
-- סגנון טיול: ${travelStyle === 'relaxed' ? 'רגוע' : travelStyle === 'balanced' ? 'מאוזן' : 'אינטנסיבי'}
+- סגנון טיול: ${
+        travelStyle === 'adventure' ? 'הרפתקה' :
+        travelStyle === 'cultural' ? 'תרבות' :
+        travelStyle === 'relaxation' ? 'הנחה' :
+        travelStyle === 'luxury' ? 'שפע' : 'מאוזן'
+      }
 - סוג קבוצה: ${groupType === 'solo' ? 'יחיד' : groupType === 'couple' ? 'זוג' : groupType === 'family' ? 'משפחה' : 'חברים'}
 
 צור תכנית מפורטת שתכלול:
@@ -93,11 +122,11 @@ class AIRecommendationsService {
 
     const messages = [
       {
-        role: 'system',
+        role: 'system' as const,
         content: 'אתה מומחה תכנון טיולים מנוסה המתמחה ביצירת תכניות טיול מותאמות אישית. תמיד תגיב בעברית ובפורמט JSON תקין.'
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: prompt
       }
     ];
@@ -125,9 +154,12 @@ class AIRecommendationsService {
   }
 
   /**
-   * המלצות לאטרקציות ספציפיות
+   * Attraction recommendations
    */
-  async getAttractionRecommendations(location, userPreferences = {}) {
+  async getAttractionRecommendations(
+    location: string,
+    userPreferences: Partial<UserPreferences> = {}
+  ): Promise<any> {
     const prompt = `אתה מדריך טיולים מומחה. המלץ על 5 האטרקציות המובילות ב${location}.
 
 תחומי עניין: ${userPreferences.interests?.join(', ') || 'כללי'}
@@ -153,13 +185,13 @@ class AIRecommendationsService {
   ]
 }`;
 
-    const messages = [
+    const messages: OpenAIMessage[] = [
       {
-        role: 'system',
+        role: 'system' as const,
         content: 'אתה מדריך טיולים מומחה. תגיב תמיד בעברית ובפורמט JSON.'
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: prompt
       }
     ];
@@ -178,9 +210,13 @@ class AIRecommendationsService {
   }
 
   /**
-   * המלצות למסעדות
+   * Restaurant recommendations
    */
-  async getRestaurantRecommendations(location, cuisine = 'any', budget = 'medium') {
+  async getRestaurantRecommendations(
+    location: string,
+    cuisine: string = 'any',
+    budget: string = 'medium'
+  ): Promise<any> {
     const prompt = `המלץ על 5 מסעדות מובילות ב${location}.
 
 סוג מטבח: ${cuisine === 'any' ? 'כל סוג' : cuisine}
@@ -206,13 +242,13 @@ JSON:
   ]
 }`;
 
-    const messages = [
+    const messages: OpenAIMessage[] = [
       {
-        role: 'system',
-        content: 'אתה מבקר אוכל מומחה. תגיב בעברית ובפורמט JSON.'
+        role: 'system' as const,
+        content: 'אתה מערכת הערכה חכמה של תכניות טיול. תגיב בעברית ובפורמט JSON.'
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: prompt
       }
     ];
@@ -231,9 +267,9 @@ JSON:
   }
 
   /**
-   * ייעוץ חכם למסלול
+   * Smart advice for trip
    */
-  async getSmartAdvice(tripPlan) {
+  async getSmartAdvice(tripPlan: any): Promise<SmartAdvice> {
     const prompt = `אתה יועץ טיולים מומחה. נתח את תכנית הטיול הבאה וספק המלצות לשיפור:
 
 תכנית נוכחית:
@@ -256,13 +292,13 @@ JSON:
   "tips": ["טיפ 1", "טיפ 2", "טיפ 3"]
 }`;
 
-    const messages = [
+    const messages: OpenAIMessage[] = [
       {
-        role: 'system',
+        role: 'system' as const,
         content: 'אתה יועץ טיולים מומחה. תגיב בעברית ובפורמט JSON.'
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: prompt
       }
     ];
@@ -286,19 +322,22 @@ JSON:
   }
 
   /**
-   * יצירת תיאור מרתק למקום
+   * Generate place description
    */
-  async generatePlaceDescription(placeName, placeType) {
+  async generatePlaceDescription(
+    placeName: string,
+    placeType: string
+  ): Promise<string> {
     const prompt = `כתוב תיאור קצר ומרתק (2-3 משפטים) על ${placeName} - ${placeType}.
 התיאור צריך להיות מעניין, אינפורמטיבי ולגרום לאנשים לרצות לבקר במקום.`;
 
-    const messages = [
+    const messages: OpenAIMessage[] = [
       {
-        role: 'system',
-        content: 'אתה כותב תוכן מומחה למדריכי טיולים. תגיב בעברית בלבד.'
+        role: 'system' as const,
+        content: 'אתה כותב טיפוס טיולים. תגיב בעברית.'
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: prompt
       }
     ];

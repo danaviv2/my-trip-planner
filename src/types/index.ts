@@ -142,6 +142,7 @@ export interface Review {
 export interface UserPreferences {
   budget: 'low' | 'medium' | 'high' | 'luxury';
   pace: 'relaxed' | 'moderate' | 'fast';
+  travelStyle?: 'balanced' | 'adventure' | 'cultural' | 'relaxation' | 'luxury';
   interests: string[];
   groupType: 'solo' | 'couple' | 'family' | 'friends';
   accommodationType?: string;
