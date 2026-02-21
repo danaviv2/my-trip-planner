@@ -1,9 +1,4 @@
-/**
- * מנהל API מרכזי לכל שירותי האפליקציה
- * מרכז את כל מפתחות ה-API והגדרות הבסיס
- */
-
-// מפתחות API מתוך משתני סביבה
+// API Keys from environment variables
 export const API_KEYS = {
   googleMaps: process.env.REACT_APP_GOOGLE_API_KEY,
   weather: process.env.REACT_APP_WEATHER_API_KEY,
@@ -11,7 +6,7 @@ export const API_KEYS = {
   rapidapi: process.env.REACT_APP_RAPIDAPI_KEY
 };
 
-// בדיקת תקינות מפתחות
+// Validate API Keys
 export const validateApiKeys = () => {
   const missing = [];
   
@@ -21,28 +16,58 @@ export const validateApiKeys = () => {
   if (!API_KEYS.rapidapi) missing.push('RapidAPI');
   
   if (missing.length > 0) {
-    console.warn(`⚠️ חסרים מפתחות API: ${missing.join(', ')}`);
+    console.warn('Missing API keys: ' + missing.join(', '));
     return false;
   }
   
-  console.log('✅ כל מפתחות ה-API תקינים');
-  return   return   return   return   return   return   return   return   return   return   r= {
-  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  ps/api',
+  console.log('All API keys validated');
+  return true;
+};
+
+// API Endpoints
+export const API_ENDPOINTS = {
+  googleMaps: 'https://maps.googleapis.com/maps/api',
   googlePlaces: 'https://maps.googleapis.com/maps/api/place',
-  googleDi  googleDi  googleDi  googleDi  googleDi  googleDir  googleDi  googleDiather   googleDi  googleDi  googleDi  googleDi  gorg/data/  googleDi  googleDi  googleDi  googleDi  : 'https://booking-com.p.rapidapi.com/v1/flights',
+  googleDirections: 'https://maps.googleapis.com/maps/api/directions',
+  weather: 'https://api.openweathermap.org/data/2.5',
+  flights: 'https://booking-com.p.rapidapi.com/v1/flights',
   hotels: 'https://booking-com.p.rapidapi.com/v1/hotels',
   carRental: 'https://booking-com.p.rapidapi.com/v1/car-rentals',
-  attractions: 'https://travel-advis  attractions: 'https://travel-advis  attractions: 'h�ק�  attractions: 'https://travel-advis  attracurl, o  attractions: 'https://travel-advis  attrac = a  attractions: 'https://travel-advis  attractions: {         'Content-Type': 'application/json',
+  attractions: 'https://travel-advisor.p.rapidapi.com'
+};
+
+// API Call function
+export const apiCall = async (url, options = {}) => {
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
         ...options.headers
       }
     });
     
     if (!response.ok) {
-      throw new Er      throw new Er      throw new Er      throw new Er   
-                                                                                                err                                                                 ON ע�                                                     l, options = {}, retries = 3) => {
+      throw new Error('HTTP error! status: ' + response.status);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('API call failed:', error);
+    throw error;
+  }
+};
+
+// Fetch with retry
+export const fetchWithRetry = async (url, options = {}, retries = 3) => {
   for (let i = 0; i < retries; i++) {
     try {
       return await apiCall(url, options);
     } catch (error) {
       if (i === retries - 1) throw error;
-      await new Promise(resolve => setTimeout(resolv      await new Promise(resolve => setTimeout(resolv    YS;
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+    }
+  }
+};
+
+export default API_KEYS;
