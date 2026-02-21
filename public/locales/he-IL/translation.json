@@ -1,0 +1,181 @@
+{
+    "common": {
+      "search": "חיפוש",
+      "from": "מ-",
+      "to": "אל",
+      "backToHome": "חזרה לדף הבית",
+      "loading": "טוען...",
+      "error": "שגיאה",
+      "notFound": "לא נמצא",
+      "more": "עוד"
+    },
+    
+    "tabs": {
+      "plan": "תכנון מסלול",
+      "services": "שירותי נסיעות",
+      "destination": "מידע על היעד",
+      "profile": "פרופיל אישי"
+    },
+    
+    "travelServices": {
+      "title": "שירותי נסיעות",
+      "tabsAriaLabel": "לשוניות שירותי נסיעות",
+      "flights": "טיסות",
+      "hotels": "מלונות",
+      "carRentals": "השכרת רכב"
+    },
+    
+    "flightSearch": {
+      "roundTrip": "הלוך-חזור",
+      "oneWay": "כיוון אחד",
+      "multiCity": "מספר יעדים",
+      "from": "מוצא",
+      "to": "יעד",
+      "departureDate": "תאריך יציאה",
+      "returnDate": "תאריך חזרה",
+      "passengers": "נוסעים",
+      "adults": "מבוגרים (12+)",
+      "children": "ילדים (2-11)",
+      "infants": "תינוקות (0-2)",
+      "cabinClass": "מחלקה",
+      "economy": "תיירים",
+      "premiumEconomy": "תיירים משודרגת",
+      "business": "עסקים",
+      "firstClass": "ראשונה",
+      "additionalFlights": "טיסות נוספות",
+      "multiCityNotImplemented": "הוספת טיסות מרובות יעדים אינה זמינה כרגע"
+    },
+    
+    "hotelSearch": {
+      "destination": "יעד",
+      "checkIn": "כניסה",
+      "checkOut": "יציאה",
+      "rooms": "חדרים",
+      "guests": "אורחים",
+      "adults": "מבוגרים",
+      "children": "ילדים",
+      "priceRange": "טווח מחירים",
+      "starRating": "דירוג כוכבים",
+      "amenities": "שירותים",
+      "amenities": {
+        "wifi": "WiFi חינם",
+        "pool": "בריכה",
+        "breakfast": "ארוחת בוקר",
+        "parking": "חניה",
+        "spa": "ספא",
+        "petFriendly": "ידידותי לחיות",
+        "airConditioning": "מיזוג אוויר",
+        "gym": "חדר כושר"
+      }
+    },
+    
+    "carRental": {
+      "pickupLocation": "מיקום איסוף",
+      "dropoffLocation": "מיקום החזרה",
+      "differentDropoff": "החזרת הרכב במיקום אחר",
+      "pickupDate": "תאריך איסוף",
+      "pickupTime": "שעת איסוף",
+      "dropoffDate": "תאריך החזרה",
+      "dropoffTime": "שעת החזרה",
+      "carType": "סוג רכב",
+      "anyCarType": "כל סוגי הרכב",
+      "features": "מאפיינים",
+      "airConditioning": "מיזוג אוויר",
+      "automatic": "תיבת הילוכים אוטומטית",
+      "electric": "רכב חשמלי",
+      "unlimitedMileage": "ק\"מ לא מוגבל",
+      "topTips": "טיפים שימושיים להשכרת רכב",
+      "tips": {
+        "insurance": "תמיד כדאי לרכוש ביטוח מקיף",
+        "fuelPolicy": "בדקו את מדיניות הדלק - 'מלא/מלא' עדיף",
+        "documents": "הקפידו להביא רישיון נהיגה בתוקף",
+        "inspection": "בדקו את הרכב וצלמו כל נזק לפני היציאה"
+      },
+      "locationType": {
+        "airport": "שדה תעופה",
+        "station": "תחנה",
+        "city": "מרכז העיר"
+      },
+      "carTypes": {
+        "economy": "חסכוני",
+        "compact": "קומפקטי",
+        "midsize": "בינוני",
+        "fullsize": "גדול",
+        "suv": "ג'יפ",
+        "minivan": "מיניוואן",
+        "luxury": "יוקרה",
+        "convertible": "קבריולט"
+      },
+      "carTypeDescriptions": {
+        "economy": "רכבים קטנים וחסכוניים ל-2-4 אנשים",
+        "compact": "רכבים קומפקטיים ל-4 אנשים",
+        "midsize": "רכבים בינוניים ל-4-5 אנשים",
+        "fullsize": "רכבים גדולים ל-5 אנשים ומזוודות",
+        "suv": "רכבי שטח עם מרחב גדול יותר",
+        "minivan": "ואנים ל-7-9 אנשים",
+        "luxury": "רכבי יוקרה עם תוספות פרימיום",
+        "convertible": "רכבים פתוחים לנסיעות נופיות"
+      }
+    },
+    
+    "destination": {
+      "about": "אודות",
+      "essentialInfo": "מידע חיוני",
+      "languages": "שפות",
+      "currency": "מטבע",
+      "timeZone": "אזור זמן",
+      "climate": "אקלים",
+      "emergency": "מספר חירום",
+      "averagePrice": "רמת מחירים",
+      "planYourTrip": "תכנן את הטיול שלך",
+      "findFlights": "חיפוש טיסות",
+      "findHotels": "חיפוש מלונות",
+      "exploreActivities": "גילוי פעילויות",
+      "bestTimeToVisit": "הזמן הטוב ביותר לביקור",
+      "errorLoading": "אירעה שגיאה בטעינת המידע על היעד",
+      "notFound": "היעד המבוקש לא נמצא",
+      "addToFavorites": "הוספה למועדפים",
+      "removeFromFavorites": "הסרה מהמועדפים"
+    },
+    
+    "activities": {
+      "recommended": "פעילויות מומלצות",
+      "intro": "הנה כמה פעילויות מומלצות ליעד זה, המבוססות על חוויות מטיילים קודמים.",
+      "noActivities": "אין פעילויות מומלצות זמינות כרגע ליעד זה.",
+      "learnMore": "פרטים נוספים",
+      "bookNow": "הזמנה עכשיו",
+      "viewAll": "צפייה בכל הפעילויות",
+      "types": {
+        "hiking": "טיולים רגליים",
+        "dining": "אוכל וגסטרונומיה",
+        "museum": "מוזיאונים ותרבות",
+        "beach": "חופים",
+        "nightlife": "חיי לילה",
+        "boat": "שייט",
+        "tour": "סיורים מודרכים"
+      }
+    },
+    
+    "weather": {
+      "forecast": "תחזית מזג אוויר",
+      "unavailable": "תחזית מזג אוויר אינה זמינה כרגע",
+      "errorLoading": "אירעה שגיאה בטעינת תחזית מזג האוויר",
+      "feelsLike": "מרגיש כמו",
+      "humidity": "לחות",
+      "conditions": {
+        "clear": "בהיר",
+        "partlyCloudy": "מעונן חלקית",
+        "cloudy": "מעונן",
+        "rain": "גשום",
+        "snow": "שלג",
+        "storm": "סופה",
+        "fog": "ערפל"
+      }
+    },
+    
+    "gallery": {
+      "image": "תמונה {{number}}",
+      "thumbnail": "תמונה ממוזערת {{number}}",
+      "more": "תמונות נוספות"
+    }
+  }

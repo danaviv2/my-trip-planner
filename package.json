@@ -1,0 +1,60 @@
+{
+  "name": "my-trip-planner",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@emotion/react": "11.11.4",
+    "@emotion/styled": "11.11.5",
+    "@mui/icons-material": "5.15.15",
+    "@mui/material": "5.15.15",
+    "@mui/system": "5.15.15",
+    "@mui/x-date-pickers": "^6.20.2",
+    "@react-google-maps/api": "^2.19.3",
+    "apexcharts": "^5.3.6",
+    "axios": "^1.13.2",
+    "chart.js": "^4.5.1",
+    "date-fns": "^2.30.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
+    "react": "^18.3.1",
+    "react-apexcharts": "^1.8.0",
+    "react-beautiful-dnd": "^13.1.1",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.9.5",
+    "react-share": "4.4.1",
+    "uuid": "9.0.1",
+    "which": "^6.0.0"
+  },
+  "scripts": {
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@craco/craco": "^7.1.0",
+    "address": "^2.0.3",
+    "ajv": "^8.17.1",
+    "ajv-keywords": "^5.1.0",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^4.2.4"
+  }
+}

@@ -1,0 +1,32 @@
+.app {
+    background: #f5f5f5;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .map-container {
+    height: 500px;
+    width: 70%;
+    margin: 20px auto;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  .MuiPaper-root {
+    background: #ffffff;
+    border-radius: 20px;
+  }
+  
+  .MuiButton-containedPrimary {
+    background: #2196F3 !important;
+    padding: 10px 20px !important;
+    border-radius: 10px !important;
+  }
+  
+  .MuiIconButton-root {
+    border-radius: 8px !important;
+  }
+  
+  .MuiTextField-root {
+    border-radius: 8px !important;
+  }
