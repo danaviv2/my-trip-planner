@@ -51,10 +51,14 @@
   },
   "devDependencies": {
     "@craco/craco": "^7.1.0",
+    "@types/node": "^25.3.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "address": "^2.0.3",
     "ajv": "^8.17.1",
     "ajv-keywords": "^5.1.0",
     "react-scripts": "5.0.1",
+    "typescript": "^5.9.3",
     "web-vitals": "^4.2.4"
   }
 }
