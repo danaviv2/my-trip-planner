@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Paper,
@@ -11,7 +11,6 @@ import {
   StepContent,
   Chip,
   Stack,
-  IconButton,
   List,
   ListItem,
   ListItemText,
@@ -32,7 +31,6 @@ import {
 const TripScheduler = ({ tripPlan, onUpdatePlan }) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [dailySchedule, setDailySchedule] = useState([]);
   const [optimizedSchedule, setOptimizedSchedule] = useState(null);
 
   /**

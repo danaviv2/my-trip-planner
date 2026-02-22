@@ -18,8 +18,7 @@ import {
   Alert,
   Accordion,
   AccordionSummary,
-  AccordionDetails,
-  Divider
+  AccordionDetails
 } from '@mui/material';
 import {
   WbSunny as SunIcon,

@@ -18,8 +18,7 @@ import {
   AccordionDetails,
   Avatar,
   Divider,
-  IconButton,
-  Tooltip
+  IconButton
 } from '@mui/material';
 import {
   Psychology as AIIcon,
@@ -28,8 +27,7 @@ import {
   Warning as WarningIcon,
   TipsAndUpdates as TipIcon,
   AutoAwesome as MagicIcon,
-  Close as CloseIcon,
-  Refresh as RefreshIcon
+  Close as CloseIcon
 } from '@mui/icons-material';
 import aiRecommendations from '../../services/aiRecommendations';
 
@@ -38,7 +36,7 @@ const AIAssistant = ({ tripPlan, origin, destination }) => {
   const [advice, setAdvice] = useState(null);
   const [itinerary, setItinerary] = useState(null);
   const [days, setDays] = useState(3);
-  const [activeSection, setActiveSection] = useState('advice');
+  const [activeSection] = useState('advice');
 
   /**
    * קבלת ייעוץ חכם

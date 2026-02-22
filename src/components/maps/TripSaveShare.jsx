@@ -9,7 +9,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton,
   Stack,
   Snackbar,
   Alert,
@@ -28,7 +27,6 @@ import {
   WhatsApp as WhatsAppIcon,
   Facebook as FacebookIcon,
   Download as DownloadIcon,
-  QrCode as QrCodeIcon,
   Check as CheckIcon
 } from '@mui/icons-material';
 

@@ -8,7 +8,6 @@ import {
   CircularProgress,
   IconButton,
   Modal,
-  TextareaAutosize,
   FormControl,
   InputLabel,
   Select,
@@ -22,23 +21,23 @@ import {
   TableHead,
   TableRow,
   Grid,
+  Tabs,
+  Tab
 } from '@mui/material';
-import { GoogleMap, LoadScript, InfoWindow, DirectionsRenderer, Marker } from '@react-google-maps/api';
+import { GoogleMap, LoadScript, InfoWindow, DirectionsRenderer } from '@react-google-maps/api';
 import AddIcon from '@mui/icons-material/Add';
 import { FacebookShareButton, TwitterShareButton, EmailShareButton } from 'react-share';
 import { v4 as uuidv4 } from 'uuid';
 import ErrorBoundary from './ErrorBoundary'; // ודא שקובץ זה קיים בנתיב src/ErrorBoundary.js
 import './style.css';
-import TripPlanner from './components/trip-planner/TripPlanner';
 import WeatherWidget from "./components/maps/WeatherWidget";
 import PriceComparison from "./components/maps/PriceComparison";
-import StatisticsPanel from './components/statistics/StatisticsPanel';
 import HotelSearch from './components/travel-services/HotelSearch';
 import FlightSearch from './components/travel-services/FlightSearch';
 import CarRentalSearch from './components/travel-services/CarRentalSearch';
 import TravelServicesTab from './components/travel-services/TravelServicesTab';
 import DestinationInfo from './components/DestinationInfo';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router } from 'react-router-dom';
 import AppRoutes from './routes';
 import { TripProvider } from './contexts/TripContext';
 import './assets/css/theme.css'; // קובץ העיצוב החדש
@@ -46,21 +45,15 @@ import { useNavigate } from 'react-router-dom';
 
 // יבוא הקומפוננטות הקיימות שלך
 import Header from './components/layout/Header';
-import HomePage from './pages/HomePage';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { TripSaveProvider } from './contexts/TripSaveContext';
-
-// יבוא הדפים החדשים
-import SmartTripPage from './pages/SmartTripPage';
-import AdvancedSearchPage from './pages/AdvancedSearchPage';
-import MapPage from './pages/MapPage';
 
 // ייבוא הסמלים הנדרשים
 import FlightIcon from '@mui/icons-material/Flight';
 import HotelIcon from '@mui/icons-material/Hotel';
 import DriveEtaIcon from '@mui/icons-material/DriveEta';
-import { Tabs, Tab } from '@mui/material';
-// import BudgetManager from './components/Budget/BudgetManager'; // הערה: הוסר כפי שביקשת
+
+
 
 // הגדרת ספריות Google Maps כקבוע סטטי מחוץ לרכיב
 const GOOGLE_MAPS_LIBRARIES = ['places'];
@@ -153,516 +146,6 @@ const CATEGORY_ICONS = {
     label: 'מרכזי ספא'
   },
 };
-// קומפוננט חדש לניהול פרטי נסיעה - טיסות והשכרת רכב
-const TravelInfoComponent = () => {
-  // מצבים לניהול פרטי הטיסות
-  const [flights, setFlights] = useState([
-    { id: 1, type: 'departure', flightNumber: '', airline: '', date: '', departureTime: '', departureAirport: '', arrivalTime: '', arrivalAirport: '', terminal: '' }
-  ]);
-  
-  // מצבים לניהול פרטי הרכב
-  const [carRental, setCarRental] = useState({
-    company: '',
-    pickupDate: '',
-    pickupTime: '',
-    pickupLocation: '',
-    returnDate: '',
-    returnTime: '',
-    returnLocation: '',
-    carType: '',
-    confirmationNumber: ''
-  });
-  
-  // מצב פתיחת חלונית מידע
-  const [infoModalOpen, setInfoModalOpen] = useState(false);
-  const [emailImportModalOpen, setEmailImportModalOpen] = useState(false);
-  
-  // מצבים לניהול תצוגה
-  const [showFlights, setShowFlights] = useState(true);
-  const [showCarRental, setShowCarRental] = useState(true);
-  
-  // פונקציה להוספת טיסה נוספת
-  const addFlight = () => {
-    const newId = Math.max(...flights.map(f => f.id), 0) + 1;
-    setFlights([...flights, { 
-      id: newId, 
-      type: 'return', 
-      flightNumber: '', 
-      airline: '', 
-      date: '', 
-      departureTime: '', 
-      departureAirport: '', 
-      arrivalTime: '', 
-      arrivalAirport: '', 
-      terminal: '' 
-    }]);
-  };
-  
-  // פונקציה לעדכון פרטי טיסה
-  const updateFlight = (id, field, value) => {
-    setFlights(flights.map(flight => 
-      flight.id === id ? { ...flight, [field]: value } : flight
-    ));
-  };
-  
-  // פונקציה למחיקת טיסה
-  const removeFlight = (id) => {
-    setFlights(flights.filter(flight => flight.id !== id));
-  };
-  
-  // פונקציה להצגת מידע על שדה תעופה
-  const showAirportInfo = (airportCode) => {
-    // פה נוכל לקרוא ל-API שמספק מידע על שדות תעופה
-    setInfoModalOpen(true);
-  };
-  
-  // חלונית ייבוא פרטים ממייל
-  const EmailImportModal = () => (
-    <Modal
-      open={emailImportModalOpen}
-      onClose={() => setEmailImportModalOpen(false)}
-      aria-labelledby="email-import-modal-title"
-    >
-      <Box sx={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: '90%',
-        maxWidth: '600px',
-        bgcolor: 'background.paper',
-        borderRadius: '12px',
-        boxShadow: 24,
-        p: 4,
-        textAlign: 'right',
-        direction: 'rtl'
-      }}>
-        <Typography id="email-import-modal-title" variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
-          ייבוא פרטים מהמייל
-        </Typography>
-        
-        <Typography variant="body1" sx={{ mb: 3 }}>
-          אשף זה יעזור לך לייבא פרטי טיסה והשכרת רכב מהמייל שלך. ניתן להעתיק ולהדביק את המידע מהמייל או לאפשר חיבור ישיר לתיבת הדואר שלך.
-        </Typography>
-        
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold' }}>העתק והדבק את המייל:</Typography>
-          <TextField
-            fullWidth
-            multiline
-            rows={8}
-            placeholder="הדבק כאן את תוכן המייל עם פרטי ההזמנה..."
-          />
-        </Box>
-        
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Button 
-            variant="outlined"
-            startIcon={<i className="material-icons">mail</i>}
-            sx={{ ml: 2 }}
-          >
-            התחבר לג'ימייל
-          </Button>
-          
-          <Box>
-            <Button 
-              variant="outlined" 
-              onClick={() => setEmailImportModalOpen(false)}
-              sx={{ ml: 2 }}
-            >
-              ביטול
-            </Button>
-            <Button 
-              variant="contained"
-              onClick={() => {
-                // כאן צריך לממש את הלוגיקה של חילוץ פרטים מהמייל
-                setEmailImportModalOpen(false);
-                // לדוגמה, נדמיין שהצלחנו לחלץ פרטי טיסה
-                setFlights([
-                  { 
-                    id: 1, 
-                    type: 'departure', 
-                    flightNumber: 'LY315', 
-                    airline: 'אל על', 
-                    date: '2023-10-15', 
-                    departureTime: '12:30', 
-                    departureAirport: 'TLV', 
-                    arrivalTime: '16:45', 
-                    arrivalAirport: 'CDG', 
-                    terminal: 'T3' 
-                  },
-                  { 
-                    id: 2, 
-                    type: 'return', 
-                    flightNumber: 'LY318', 
-                    airline: 'אל על', 
-                    date: '2023-10-22', 
-                    departureTime: '09:15', 
-                    departureAirport: 'CDG', 
-                    arrivalTime: '14:30', 
-                    arrivalAirport: 'TLV', 
-                    terminal: 'T2E' 
-                  }
-                ]);
-                // ודמיון פרטי השכרת רכב
-                setCarRental({
-                  company: 'Hertz',
-                  pickupDate: '2023-10-15',
-                  pickupTime: '17:30',
-                  pickupLocation: 'נמל התעופה שארל דה גול, פריז',
-                  returnDate: '2023-10-22',
-                  returnTime: '06:30',
-                  returnLocation: 'נמל התעופה שארל דה גול, פריז',
-                  carType: 'Peugeot 208 או דומה',
-                  confirmationNumber: 'HR123456789'
-                });
-              }}
-            >
-              חלץ פרטים
-            </Button>
-          </Box>
-        </Box>
-      </Box>
-    </Modal>
-  );
-  
-  return (
-    <Paper elevation={3} sx={{ p: 3, borderRadius: '10px', mb: 3 }}>
-      <Typography variant="h5" sx={{ mb: 2, display: 'flex', alignItems: 'center', fontWeight: 'bold' }}>
-        <i className="material-icons" style={{ marginRight: '8px', color: '#2196F3' }}>flight</i>
-        פרטי נסיעה
-      </Typography>
-      
-      <Box sx={{ mb: 3, display: 'flex', gap: 1 }}>
-        <Button 
-          variant="contained" 
-          color="primary"
-          startIcon={<i className="material-icons">email</i>}
-          onClick={() => setEmailImportModalOpen(true)}
-        >
-          ייבא פרטים ממייל
-        </Button>
-        
-        <Button 
-          variant="outlined"
-          startIcon={<i className="material-icons">print</i>}
-          onClick={() => window.print()}
-        >
-          הדפס פרטי נסיעה
-        </Button>
-      </Box>
-      
-      {/* אזור טיסות */}
-      <Box sx={{ mb: 4 }}>
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            borderBottom: '1px solid #e0e0e0',
-            pb: 1,
-            mb: 2
-          }}
-          onClick={() => setShowFlights(!showFlights)}
-          style={{ cursor: 'pointer' }}
-        >
-          <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
-            <i className="material-icons" style={{ marginRight: '8px', color: '#2196F3' }}>flight</i>
-            טיסות
-          </Typography>
-          <IconButton size="small">
-            <i className="material-icons">{showFlights ? 'expand_less' : 'expand_more'}</i>
-          </IconButton>
-        </Box>
-        
-        {showFlights && (
-          <>
-            {flights.map((flight, index) => (
-              <Paper key={flight.id} sx={{ p: 2, mb: 2, borderRadius: '8px', bgcolor: '#f5f5f5' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                    {flight.type === 'departure' ? 'טיסה ליעד' : 'טיסה חזרה'}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <IconButton 
-                      size="small" 
-                      color="error"
-                      onClick={() => removeFlight(flight.id)}
-                    >
-                      <i className="material-icons">delete</i>
-                    </IconButton>
-                  </Box>
-                </Box>
-                
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="חברת תעופה"
-                      value={flight.airline}
-                      onChange={(e) => updateFlight(flight.id, 'airline', e.target.value)}
-                      size="small"
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="מספר טיסה"
-                      value={flight.flightNumber}
-                      onChange={(e) => updateFlight(flight.id, 'flightNumber', e.target.value)}
-                      size="small"
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="תאריך"
-                      type="date"
-                      value={flight.date}
-                      onChange={(e) => updateFlight(flight.id, 'date', e.target.value)}
-                      InputLabelProps={{ shrink: true }}
-                      size="small"
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="טרמינל"
-                      value={flight.terminal}
-                      onChange={(e) => updateFlight(flight.id, 'terminal', e.target.value)}
-                      size="small"
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="שדה תעופה יציאה"
-                      value={flight.departureAirport}
-                      onChange={(e) => updateFlight(flight.id, 'departureAirport', e.target.value)}
-                      size="small"
-                      InputProps={{
-                        endAdornment: (
-                          <IconButton 
-                            size="small"
-                            onClick={() => showAirportInfo(flight.departureAirport)}
-                          >
-                            <i className="material-icons" style={{ fontSize: '18px' }}>info</i>
-                          </IconButton>
-                        ),
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="שעת יציאה"
-                      type="time"
-                      value={flight.departureTime}
-                      onChange={(e) => updateFlight(flight.id, 'departureTime', e.target.value)}
-                      InputLabelProps={{ shrink: true }}
-                      size="small"
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="שדה תעופה הגעה"
-                      value={flight.arrivalAirport}
-                      onChange={(e) => updateFlight(flight.id, 'arrivalAirport', e.target.value)}
-                      size="small"
-                      InputProps={{
-                        endAdornment: (
-                          <IconButton 
-                            size="small"
-                            onClick={() => showAirportInfo(flight.arrivalAirport)}
-                          >
-                            <i className="material-icons" style={{ fontSize: '18px' }}>info</i>
-                          </IconButton>
-                        ),
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="שעת הגעה"
-                      type="time"
-                      value={flight.arrivalTime}
-                      onChange={(e) => updateFlight(flight.id, 'arrivalTime', e.target.value)}
-                      InputLabelProps={{ shrink: true }}
-                      size="small"
-                    />
-                  </Grid>
-                </Grid>
-                
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<i className="material-icons">search</i>}
-                    onClick={() => window.open(`https://www.flightstats.com/v2/flight-tracker/${flight.airline}/${flight.flightNumber}?year=${new Date(flight.date).getFullYear()}&month=${new Date(flight.date).getMonth() + 1}&date=${new Date(flight.date).getDate()}`)}
-                  >
-                    בדוק סטטוס טיסה
-                  </Button>
-                </Box>
-              </Paper>
-            ))}
-            
-            <Button
-              variant="outlined"
-              startIcon={<i className="material-icons">add</i>}
-              onClick={addFlight}
-              sx={{ mb: 2 }}
-            >
-              הוסף טיסה
-            </Button>
-          </>
-        )}
-      </Box>
-      
-      {/* אזור השכרת רכב */}
-      <Box>
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            borderBottom: '1px solid #e0e0e0',
-            pb: 1,
-            mb: 2
-          }}
-          onClick={() => setShowCarRental(!showCarRental)}
-          style={{ cursor: 'pointer' }}
-        >
-          <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
-            <i className="material-icons" style={{ marginRight: '8px', color: '#4CAF50' }}>directions_car</i>
-            השכרת רכב
-          </Typography>
-          <IconButton size="small">
-            <i className="material-icons">{showCarRental ? 'expand_less' : 'expand_more'}</i>
-          </IconButton>
-        </Box>
-        
-        {showCarRental && (
-          <Paper sx={{ p: 2, borderRadius: '8px', bgcolor: '#f5f5f5' }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="חברת השכרה"
-                  value={carRental.company}
-                  onChange={(e) => setCarRental({ ...carRental, company: e.target.value })}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="מספר הזמנה/אישור"
-                  value={carRental.confirmationNumber}
-                  onChange={(e) => setCarRental({ ...carRental, confirmationNumber: e.target.value })}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="תאריך קבלת הרכב"
-                  type="date"
-                  value={carRental.pickupDate}
-                  onChange={(e) => setCarRental({ ...carRental, pickupDate: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="שעת קבלת הרכב"
-                  type="time"
-                  value={carRental.pickupTime}
-                  onChange={(e) => setCarRental({ ...carRental, pickupTime: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="מיקום קבלת הרכב"
-                  value={carRental.pickupLocation}
-                  onChange={(e) => setCarRental({ ...carRental, pickupLocation: e.target.value })}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="תאריך החזרת הרכב"
-                  type="date"
-                  value={carRental.returnDate}
-                  onChange={(e) => setCarRental({ ...carRental, returnDate: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="שעת החזרת הרכב"
-                  type="time"
-                  value={carRental.returnTime}
-                  onChange={(e) => setCarRental({ ...carRental, returnTime: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="מיקום החזרת הרכב"
-                  value={carRental.returnLocation}
-                  onChange={(e) => setCarRental({ ...carRental, returnLocation: e.target.value })}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="סוג רכב"
-                  value={carRental.carType}
-                  onChange={(e) => setCarRental({ ...carRental, carType: e.target.value })}
-                  size="small"
-                />
-              </Grid>
-            </Grid>
-            
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 1 }}>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<i className="material-icons">search</i>}
-                onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(`${carRental.company} car rental`)}`)}
-              >
-                בדוק מידע על חברת ההשכרה
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<i className="material-icons">map</i>}
-                onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(`${carRental.company} car rental ${carRental.pickupLocation}`)}`)}
-              >
-                הצג במפה
-              </Button>
-            </Box>
-          </Paper>
-        )}
-      </Box>
-      
-      <EmailImportModal />
-    </Paper>
-  );
-};
 // הגדרת סגנונות טיול לשימוש בטופס העדפות
 const travelStyles = [
   { value: 'cultural', label: 'תרבותי - מוזיאונים, היסטוריה, אמנות' },
@@ -737,9 +220,7 @@ function App() {
   const [hotelModalOpen, setHotelModalOpen] = useState(false);
 
   // החלף במפתחות API אמיתיים שלך או ודא שהם מוגדרים במשתני הסביבה שלך
-  const GOOGLE_API_KEY = process.env.REACT_APP_GOOGLE_API_KEY || 'המפתח_האמיתי_שלך_ל_GOOGLE_API'; 
-  const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_API_KEY || "";
-  const RAPIDAPI_KEY = process.env.REACT_APP_RAPIDAPI_KEY || "המפתח_האמיתי_שלך_RAPIDAPI"; // הוסף את זה
+  const GOOGLE_API_KEY = process.env.REACT_APP_GOOGLE_API_KEY || 'המפתח_האמיתי_שלך_ל_GOOGLE_API';
 
   // פונקציית עזר להמרת אינדקס למחרוזת יום בשבוע
   const getDayName = (dayIndex) => {
@@ -1980,13 +1461,6 @@ const addActivityToDay = (dayIndex) => {
   setEditModalOpen(true);
 };
 
-const handleEditAttraction = (day, activityIndex) => {
-  const activity = tripPlan.dailyItinerary[day - 1]?.schedule[activityIndex] || {};
-  setEditedAttraction(activity);
-  setSelectedDay(day);
-  setSelectedActivityIndex(activityIndex);
-  setEditModalOpen(true);
-};
 // 3. עדכון רכיב תצוגת לוח זמנים יומי משופר - לתמיכה במקומות ספציפיים
 const DailyTimeline = ({ dayData }) => {
   // ניתוח תצוגת פעילות לפי סוג - כדי להציג אייקון ועיצוב מתאים
@@ -2741,45 +2215,6 @@ const getStopColor = (index) => {
   return colors[index % colors.length];
 };
 
-const TripDayWithStopIndicator = ({ day }) => {
-  // אם זה טיול מתגלגל ויש מידע על stopIndex, מציגים אינדיקטור
-  const hasStopInfo = tripPlan.isRoadTrip && day.stopIndex !== undefined;
-  
-  return (
-    <Box sx={{ 
-      display: 'flex', 
-      alignItems: 'center',
-      gap: 1
-    }}>
-      {hasStopInfo && (
-        <Box sx={{ 
-          width: 20, 
-          height: 20, 
-          borderRadius: '50%', 
-          bgcolor: getStopColor(day.stopIndex),
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          fontSize: '12px',
-          fontWeight: 'bold'
-        }}>
-          {day.stopIndex + 1}
-        </Box>
-      )}
-      <Typography variant="h6" sx={{ 
-        color: '#2c3e50', 
-        fontWeight: 'bold',
-        display: 'flex',
-        alignItems: 'center'
-      }}>
-        <i className="material-icons" style={{ marginRight: '8px' }}>event</i>
-        יום {day.day}: {day.date || ''} {day.summary ? `- ${day.summary}` : ''}
-      </Typography>
-    </Box>
-  );
-};
-
   // 4. עדכון רכיב תכנון הטיול - משתמש ברכיב הטיימליין החדש
   const TripPlanner = () => {
     // הוספת משתנה מצב לתצוגת תצוגה מרוכזת/מפוצלת
@@ -3246,13 +2681,6 @@ const HotelModal = () => {
     checkIn: '',
     checkOut: '',
     notes: ''
-  });
-  
-  const [bookingSites, setBookingSites] = useState({
-    booking: true,
-    hotels: true,
-    airbnb: false,
-    expedia: false
   });
   
   const handleSave = () => {

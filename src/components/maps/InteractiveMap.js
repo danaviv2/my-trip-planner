@@ -1,25 +1,19 @@
 // src/components/maps/InteractiveMap.js
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Box, Paper, Typography, Button, IconButton, 
-  Chip, Tooltip, ToggleButtonGroup, ToggleButton, 
-  FormControl, InputLabel, Select, MenuItem,
+  Box, Paper, Typography, IconButton, 
+  Chip, Tooltip, FormControl, InputLabel, Select, MenuItem,
   CircularProgress, Slide, Zoom, Fab, Alert
 } from '@mui/material';
 import MapIcon from '@mui/icons-material/Map';
-import LayersIcon from '@mui/icons-material/Layers';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
-import DirectionsIcon from '@mui/icons-material/Directions';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
-import RouteIcon from '@mui/icons-material/Route';
-import TuneIcon from '@mui/icons-material/Tune';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import HotelIcon from '@mui/icons-material/Hotel';
 import AttractionsIcon from '@mui/icons-material/Attractions';
 import NatureIcon from '@mui/icons-material/Nature';
 import MuseumIcon from '@mui/icons-material/Museum';
 import AddLocationIcon from '@mui/icons-material/AddLocation';
-import SearchIcon from '@mui/icons-material/Search';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 
@@ -402,62 +396,6 @@ const InteractiveMap = ({
         enableHighAccuracy: true,
         timeout: 5000,
         maximumAge: 0
-      }
-    );
-  };
-  
-  // חיפוש מקום על המפה
-  const searchPlace = (query) => {
-    if (!mapInstanceRef.current || !window.google) {
-      setError('המפה אינה זמינה');
-      return;
-    }
-    
-    const placesService = new window.google.maps.places.PlacesService(mapInstanceRef.current);
-    
-    placesService.textSearch(
-      {
-        query: query,
-        bounds: mapInstanceRef.current.getBounds() || undefined
-      },
-      (results, status) => {
-        if (status === window.google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
-          const place = results[0];
-          
-          // מרכז את המפה למיקום שנמצא
-          mapInstanceRef.current.setCenter(place.geometry.location);
-          mapInstanceRef.current.setZoom(15);
-          
-          // הוסף סמן למקום שנמצא
-          const marker = new window.google.maps.Marker({
-            position: place.geometry.location,
-            map: mapInstanceRef.current,
-            title: place.name,
-            animation: window.google.maps.Animation.DROP
-          });
-          
-          // הוסף חלון מידע
-          const infoWindow = new window.google.maps.InfoWindow({
-            content: `
-              <div style="direction: rtl; text-align: right; padding: 8px;">
-                <h3 style="margin: 0 0 8px 0;">${place.name}</h3>
-                <p style="margin: 0 0 4px 0;">${place.formatted_address || ''}</p>
-                ${place.rating ? `<p style="margin: 0;">דירוג: ${place.rating} / 5</p>` : ''}
-              </div>
-            `
-          });
-          
-          infoWindow.open(mapInstanceRef.current, marker);
-          
-          // שמור התייחסות לסמן
-          markersRef.current['search_result'] = {
-            instance: marker,
-            infoWindow: infoWindow,
-            data: place
-          };
-        } else {
-          setError('לא נמצאו תוצאות לחיפוש זה');
-        }
       }
     );
   };

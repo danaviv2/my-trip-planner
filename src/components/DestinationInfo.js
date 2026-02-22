@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Box, Paper, Typography, Tabs, Tab, Grid, Card, CardMedia, 
-  CardContent, Chip, Divider, List, ListItem, ListItemIcon, 
-  ListItemText, Accordion, AccordionSummary, AccordionDetails,
+  CardContent, Chip, Divider, List, ListItem, ListItemIcon, ListItemText, Accordion, AccordionSummary, AccordionDetails,
   MenuItem, FormControl, InputLabel, Select, Alert, CircularProgress,
   Rating
 } from '@mui/material';

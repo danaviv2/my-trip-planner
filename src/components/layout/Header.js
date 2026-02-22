@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Box, AppBar, Toolbar, Typography, Button } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button } from '@mui/material';
 import { Map as MapIcon, Assessment as StatsIcon } from '@mui/icons-material';
 import NotificationCenter from '../notifications/NotificationCenter';
 
