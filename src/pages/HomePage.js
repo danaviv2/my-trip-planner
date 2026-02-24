@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
+import {
   Container, Box, Typography, Button, Grid, Card, CardContent,
-  Paper, Chip, Stack
+  Paper, Chip, Stack, TextField
 } from '@mui/material';
 import {
   Flight as FlightIcon,
@@ -12,13 +12,11 @@ import {
   Star as StarIcon,
   TrendingUp as TrendingIcon,
   LocationOn as LocationIcon,
-  CalendarMonth as CalendarIcon
 } from '@mui/icons-material';
 
 const HomePage = () => {
   const navigate = useNavigate();
 
-  // 4 הכפתורים המרכזיים
   const mainFeatures = [
     {
       title: 'המשך תכנון',
@@ -26,7 +24,8 @@ const HomePage = () => {
       icon: <FlightIcon sx={{ fontSize: 60 }} />,
       color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       path: '/trip-planner',
-      emoji: '✈️'
+      emoji: '✈️',
+      delay: '0s'
     },
     {
       title: 'מידע על היעד',
@@ -34,7 +33,8 @@ const HomePage = () => {
       icon: <ExploreIcon sx={{ fontSize: 60 }} />,
       color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
       path: '/destination-info/פריז',
-      emoji: '🏙️'
+      emoji: '🏙️',
+      delay: '0.2s'
     },
     {
       title: 'חיפוש מתקדם',
@@ -42,7 +42,8 @@ const HomePage = () => {
       icon: <SearchIcon sx={{ fontSize: 60 }} />,
       color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
       path: '/advanced-search',
-      emoji: '🔍'
+      emoji: '🔍',
+      delay: '0.4s'
     },
     {
       title: 'מפת מסלולים',
@@ -50,11 +51,11 @@ const HomePage = () => {
       icon: <MapIcon sx={{ fontSize: 60 }} />,
       color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
       path: '/map',
-      emoji: '🗺️'
+      emoji: '🗺️',
+      delay: '0.6s'
     }
   ];
 
-  // יעדים פופולריים
   const popularDestinations = [
     { name: 'פריז', emoji: '🗼', color: '#667eea' },
     { name: 'רומא', emoji: '🏛️', color: '#f5576c' },
@@ -65,12 +66,13 @@ const HomePage = () => {
   ];
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       minHeight: '100vh',
       background: 'linear-gradient(180deg, #ffffff 0%, #f8f9ff 50%, #fff5f8 100%)',
-      pb: 8
+      pb: 8,
+      pt: '64px' // פיצוי על AppBar קבוע
     }}>
-      {/* Hero Section - קטן ומודרני */}
+      {/* Hero Section */}
       <Box sx={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
         color: 'white',
@@ -83,19 +85,16 @@ const HomePage = () => {
         {/* אפקט נקודות */}
         <Box sx={{
           position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          top: 0, left: 0, right: 0, bottom: 0,
           backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)',
           backgroundSize: '50px 50px',
           opacity: 0.5
         }} />
-        
+
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Typography 
-            variant="h2" 
-            sx={{ 
+          <Typography
+            variant="h2"
+            sx={{
               fontWeight: 800,
               fontSize: { xs: '2.5rem', md: '3.5rem' },
               mb: 2,
@@ -104,9 +103,9 @@ const HomePage = () => {
           >
             ✈️ תכנן את הטיול המושלם שלך
           </Typography>
-          <Typography 
-            variant="h5" 
-            sx={{ 
+          <Typography
+            variant="h5"
+            sx={{
               mb: 4,
               opacity: 0.95,
               fontSize: { xs: '1.2rem', md: '1.5rem' },
@@ -115,86 +114,61 @@ const HomePage = () => {
           >
             מסלולים מותאמים אישית • טיפים מקומיים • מידע מקיף
           </Typography>
-          
-          {/* Badges */}
-          <Stack 
-            direction="row" 
-            spacing={2} 
+
+          <Stack
+            direction="row"
             justifyContent="center"
             flexWrap="wrap"
             sx={{ gap: 2 }}
           >
-            <Chip 
-              icon={<StarIcon />} 
-              label="מעל 10,000 יעדים" 
-              sx={{ 
-                bgcolor: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                fontWeight: 600,
-                backdropFilter: 'blur(10px)',
-                fontSize: '1rem',
-                py: 2.5,
-                px: 1
-              }} 
-            />
-            <Chip 
-              icon={<TrendingIcon />} 
-              label="מסלולים מותאמים" 
-              sx={{ 
-                bgcolor: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                fontWeight: 600,
-                backdropFilter: 'blur(10px)',
-                fontSize: '1rem',
-                py: 2.5,
-                px: 1
-              }} 
-            />
-            <Chip 
-              icon={<LocationIcon />} 
-              label="ניווט חכם" 
-              sx={{ 
-                bgcolor: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                fontWeight: 600,
-                backdropFilter: 'blur(10px)',
-                fontSize: '1rem',
-                py: 2.5,
-                px: 1
-              }} 
-            />
+            {[
+              { icon: <StarIcon />, label: 'מעל 10,000 יעדים' },
+              { icon: <TrendingIcon />, label: 'מסלולים מותאמים' },
+              { icon: <LocationIcon />, label: 'ניווט חכם' },
+            ].map((chip) => (
+              <Chip
+                key={chip.label}
+                icon={chip.icon}
+                label={chip.label}
+                sx={{
+                  bgcolor: 'rgba(255,255,255,0.2)',
+                  color: 'white',
+                  fontWeight: 600,
+                  backdropFilter: 'blur(10px)',
+                  fontSize: '1rem',
+                  py: 2.5,
+                  px: 1
+                }}
+              />
+            ))}
           </Stack>
         </Container>
       </Box>
 
       <Container maxWidth="lg" sx={{ mt: -4, position: 'relative', zIndex: 2 }}>
+
         {/* תיבת חיפוש מרחפת */}
-        <Paper 
+        <Paper
           elevation={8}
-          sx={{
-            p: 4,
-            borderRadius: 4,
-            background: 'white',
-            mb: 6
-          }}
+          sx={{ p: 4, borderRadius: 4, background: 'white', mb: 6 }}
         >
           <Typography variant="h5" fontWeight="bold" mb={3} textAlign="center">
             🌍 לאן תרצה לטייל?
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' } }}>
-            <Paper
-              component="input"
+            <TextField
+              fullWidth
               placeholder="חפש יעד, עיר או מדינה..."
+              variant="outlined"
               sx={{
-                flex: 1,
-                p: 2,
-                border: '2px solid #e0e0e0',
-                borderRadius: 2,
-                fontSize: '1.1rem',
-                outline: 'none',
-                '&:focus': {
-                  borderColor: '#667eea',
-                  boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)'
+                '& .MuiOutlinedInput-root': {
+                  fontSize: '1.1rem',
+                  borderRadius: 2,
+                  '&:hover fieldset': { borderColor: '#667eea' },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#667eea',
+                    boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)'
+                  }
                 }
               }}
             />
@@ -210,6 +184,8 @@ const HomePage = () => {
                 borderRadius: 2,
                 fontSize: '1.1rem',
                 fontWeight: 600,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease',
                 '&:hover': {
                   transform: 'scale(1.05)',
                   boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)'
@@ -221,23 +197,7 @@ const HomePage = () => {
           </Box>
         </Paper>
 
-        {/* כותרת הכפתורים */}
-        <Typography 
-          variant="h4" 
-          fontWeight="bold" 
-          textAlign="center" 
-          mb={5}
-          sx={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f5576c 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
-          }}
-        >
-          תכנן את הטיול המושלם שלך
-        </Typography>
-
-        {/* 4 הכפתורים המרכזיים - גדולים וברורים! */}
+        {/* 4 כרטיסיות ניווט */}
         <Grid container spacing={4} mb={8}>
           {mainFeatures.map((feature, index) => (
             <Grid item xs={12} sm={6} md={6} key={index}>
@@ -251,44 +211,38 @@ const HomePage = () => {
                   color: 'white',
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    transform: 'translateY(-12px)',
+                    transform: 'translateY(-10px)',
                     boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
                   }
                 }}
               >
                 <CardContent sx={{ p: 4, textAlign: 'center' }}>
-                  {/* אייקון ענק */}
-                  <Box sx={{ 
-                    fontSize: '5rem', 
+                  <Box sx={{
+                    fontSize: '5rem',
                     mb: 2,
-                    animation: 'bounce 2s infinite'
+                    display: 'inline-block',
+                    animation: 'bounce 2.5s ease-in-out infinite',
+                    animationDelay: feature.delay
                   }}>
                     {feature.emoji}
                   </Box>
-                  
-                  {/* כותרת */}
-                  <Typography 
-                    variant="h4" 
-                    fontWeight="bold" 
+
+                  <Typography
+                    variant="h4"
+                    fontWeight="bold"
                     mb={2}
                     sx={{ textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}
                   >
                     {feature.title}
                   </Typography>
-                  
-                  {/* תיאור */}
-                  <Typography 
-                    variant="body1" 
-                    sx={{ 
-                      opacity: 0.95,
-                      fontSize: '1.1rem',
-                      mb: 3
-                    }}
+
+                  <Typography
+                    variant="body1"
+                    sx={{ opacity: 0.95, fontSize: '1.1rem', mb: 3 }}
                   >
                     {feature.description}
                   </Typography>
 
-                  {/* כפתור */}
                   <Button
                     variant="contained"
                     size="large"
@@ -302,8 +256,9 @@ const HomePage = () => {
                       fontWeight: 700,
                       borderRadius: 3,
                       border: '2px solid rgba(255,255,255,0.3)',
+                      transition: 'all 0.2s ease',
                       '&:hover': {
-                        bgcolor: 'rgba(255,255,255,0.3)',
+                        bgcolor: 'rgba(255,255,255,0.35)',
                         transform: 'scale(1.05)'
                       }
                     }}
@@ -317,7 +272,7 @@ const HomePage = () => {
         </Grid>
 
         {/* יעדים פופולריים */}
-        <Paper 
+        <Paper
           elevation={3}
           sx={{
             p: 5,
@@ -325,16 +280,16 @@ const HomePage = () => {
             background: 'linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%)'
           }}
         >
-          <Typography 
-            variant="h4" 
-            fontWeight="bold" 
-            textAlign="center" 
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            textAlign="center"
             mb={4}
             sx={{ color: '#333' }}
           >
             🔥 יעדים פופולריים
           </Typography>
-          
+
           <Grid container spacing={3}>
             {popularDestinations.map((dest, index) => (
               <Grid item xs={6} sm={4} md={2} key={index}>
@@ -342,7 +297,7 @@ const HomePage = () => {
                   fullWidth
                   onClick={() => navigate(`/destination-info/${dest.name}`)}
                   sx={{
-                    background: `linear-gradient(135deg, ${dest.color} 0%, ${dest.color}dd 100%)`,
+                    background: `linear-gradient(135deg, ${dest.color} 0%, ${dest.color}cc 100%)`,
                     color: 'white',
                     py: 3,
                     px: 2,
@@ -351,9 +306,11 @@ const HomePage = () => {
                     fontWeight: 700,
                     flexDirection: 'column',
                     gap: 1,
+                    boxShadow: `0 4px 15px ${dest.color}55`,
+                    transition: 'all 0.25s ease',
                     '&:hover': {
-                      transform: 'scale(1.1)',
-                      boxShadow: `0 10px 30px ${dest.color}66`
+                      transform: 'translateY(-4px) scale(1.05)',
+                      boxShadow: `0 10px 30px ${dest.color}77`
                     }
                   }}
                 >
@@ -380,18 +337,19 @@ const HomePage = () => {
                   textAlign: 'center',
                   borderRadius: 3,
                   background: 'white',
+                  transition: 'all 0.25s ease',
                   '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+                    transform: 'translateY(-6px)',
+                    boxShadow: '0 12px 35px rgba(0,0,0,0.12)'
                   }
                 }}
               >
                 <Typography variant="h2" sx={{ fontSize: '3rem', mb: 1 }}>
                   {stat.icon}
                 </Typography>
-                <Typography 
-                  variant="h3" 
-                  fontWeight="bold" 
+                <Typography
+                  variant="h3"
+                  fontWeight="bold"
                   color="primary"
                   sx={{ mb: 1 }}
                 >
@@ -406,56 +364,63 @@ const HomePage = () => {
         </Grid>
 
         {/* CTA סופי */}
-        <Box 
+        <Box
           sx={{
             mt: 8,
             p: 6,
             borderRadius: 4,
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f5576c 100%)',
             textAlign: 'center',
-            color: 'white'
+            color: 'white',
+            position: 'relative',
+            overflow: 'hidden'
           }}
         >
-          <Typography variant="h3" fontWeight="bold" mb={2}>
-            מוכן להתחיל את ההרפתקה? 🚀
-          </Typography>
-          <Typography variant="h6" mb={4} sx={{ opacity: 0.95 }}>
-            צור את הטיול המושלם שלך תוך דקות ספורות
-          </Typography>
-          <Button
-            variant="contained"
-            size="large"
-            onClick={() => navigate('/trip-planner')}
-            sx={{
-              bgcolor: 'white',
-              color: '#667eea',
-              px: 6,
-              py: 2,
-              fontSize: '1.3rem',
-              fontWeight: 700,
-              borderRadius: 3,
-              '&:hover': {
-                bgcolor: 'rgba(255,255,255,0.9)',
-                transform: 'scale(1.1)',
-                boxShadow: '0 10px 40px rgba(255,255,255,0.3)'
-              }
-            }}
-          >
-            התחל עכשיו ←
-          </Button>
+          {/* אפקט נקודות */}
+          <Box sx={{
+            position: 'absolute',
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }} />
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <Typography variant="h3" fontWeight="bold" mb={2}>
+              מוכן להתחיל את ההרפתקה? 🚀
+            </Typography>
+            <Typography variant="h6" mb={4} sx={{ opacity: 0.9 }}>
+              צור את הטיול המושלם שלך תוך דקות ספורות
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => navigate('/trip-planner')}
+              sx={{
+                bgcolor: 'white',
+                color: '#667eea',
+                px: 6,
+                py: 2,
+                fontSize: '1.3rem',
+                fontWeight: 700,
+                borderRadius: 3,
+                transition: 'all 0.25s ease',
+                '&:hover': {
+                  bgcolor: 'rgba(255,255,255,0.92)',
+                  transform: 'scale(1.08)',
+                  boxShadow: '0 12px 40px rgba(0,0,0,0.2)'
+                }
+              }}
+            >
+              התחל עכשיו ←
+            </Button>
+          </Box>
         </Box>
       </Container>
 
-      {/* אנימציות CSS */}
       <style>
         {`
           @keyframes bounce {
-            0%, 100% {
-              transform: translateY(0);
-            }
-            50% {
-              transform: translateY(-10px);
-            }
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
           }
         `}
       </style>
