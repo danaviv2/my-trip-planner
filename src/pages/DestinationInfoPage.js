@@ -49,7 +49,19 @@ import {
   Euro as EuroIcon,
   PlayArrow as PlayArrowIcon,
   Image as ImageIcon,
-  Search as SearchIcon
+  Search as SearchIcon,
+  CalendarMonth as ItineraryIcon,
+  AccountBalanceWallet as BudgetIcon,
+  Build as PracticalIcon,
+  Shield as SafetyIcon,
+  ShoppingBag as ShoppingIcon,
+  NightlifeOutlined as NightlifeIcon,
+  ElectricBolt as PlugIcon,
+  SimCard as SimIcon,
+  CheckCircle as CheckIcon,
+  Warning as WarningIcon,
+  WbSunny as MorningIcon,
+  WbTwilight as EveningIcon
 } from '@mui/icons-material';
 
 import { useParams, useNavigate } from 'react-router-dom';
@@ -1305,10 +1317,28 @@ const DestinationInfoPage = () => {
               iconPosition="start" 
               sx={{ direction: 'rtl' }}
             />
-            <Tab 
-              label="טיפים" 
-              icon={<TipsIcon />} 
-              iconPosition="start" 
+            <Tab
+              label="טיפים"
+              icon={<TipsIcon />}
+              iconPosition="start"
+              sx={{ direction: 'rtl' }}
+            />
+            <Tab
+              label="לו״ז מומלץ"
+              icon={<ItineraryIcon />}
+              iconPosition="start"
+              sx={{ direction: 'rtl' }}
+            />
+            <Tab
+              label="תקציב"
+              icon={<BudgetIcon />}
+              iconPosition="start"
+              sx={{ direction: 'rtl' }}
+            />
+            <Tab
+              label="מידע מעשי"
+              icon={<PracticalIcon />}
+              iconPosition="start"
               sx={{ direction: 'rtl' }}
             />
           </Tabs>
@@ -2034,9 +2064,295 @@ const DestinationInfoPage = () => {
                 )}
               </Box>
             )}
+
+            {/* טאב 5 - לו"ז מומלץ */}
+            {activeTab === 5 && (
+              <Box sx={{ p: 3 }}>
+                {!destinationData.itinerary ? (
+                  <Box textAlign="center" py={6}>
+                    <Typography sx={{ fontSize: '3rem', mb: 2 }}>🤖</Typography>
+                    <Typography variant="h6" color="text.secondary">מידע זה זמין עבור יעדים שנטענו דרך חיפוש AI</Typography>
+                  </Box>
+                ) : (
+                  <>
+                    <Typography variant="h5" fontWeight="bold" mb={3}>📅 לוח זמנים מומלץ</Typography>
+                    {['3days', '5days'].map((plan) => {
+                      const days = destinationData.itinerary[plan];
+                      if (!days) return null;
+                      return (
+                        <Box key={plan} mb={5}>
+                          <Typography variant="h6" fontWeight="bold" mb={2}
+                            sx={{ color: plan === '3days' ? '#667eea' : '#f5576c' }}>
+                            {plan === '3days' ? '🗓️ תכנית 3 ימים' : '🗓️ תכנית 5 ימים'}
+                          </Typography>
+                          {days.map((day) => (
+                            <Paper key={day.day} elevation={2} sx={{ mb: 2, borderRadius: 3, overflow: 'hidden' }}>
+                              <Box sx={{ background: plan === '3days'
+                                ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                                : 'linear-gradient(135deg, #f5576c 0%, #f093fb 100%)',
+                                color: 'white', px: 3, py: 1.5 }}>
+                                <Typography fontWeight="bold">יום {day.day} — {day.title}</Typography>
+                              </Box>
+                              <Box sx={{ p: 3 }}>
+                                <Grid container spacing={2}>
+                                  {[
+                                    { icon: '🌅', label: 'בוקר', value: day.morning },
+                                    { icon: '☀️', label: 'צהריים', value: day.afternoon },
+                                    { icon: '🌙', label: 'ערב', value: day.evening },
+                                  ].map(({ icon, label, value }) => (
+                                    <Grid item xs={12} sm={4} key={label}>
+                                      <Box sx={{ p: 1.5, bgcolor: 'rgba(0,0,0,0.02)', borderRadius: 2 }}>
+                                        <Typography variant="subtitle2" fontWeight="bold" mb={0.5}>
+                                          {icon} {label}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">{value}</Typography>
+                                      </Box>
+                                    </Grid>
+                                  ))}
+                                </Grid>
+                                {day.food && (
+                                  <Box sx={{ mt: 2, p: 1.5, bgcolor: '#fff8e1', borderRadius: 2 }}>
+                                    <Typography variant="body2"><strong>🍽️ אוכל:</strong> {day.food}</Typography>
+                                  </Box>
+                                )}
+                                {day.tip && (
+                                  <Box sx={{ mt: 1, p: 1.5, bgcolor: '#e8f5e9', borderRadius: 2 }}>
+                                    <Typography variant="body2"><strong>💡 טיפ:</strong> {day.tip}</Typography>
+                                  </Box>
+                                )}
+                              </Box>
+                            </Paper>
+                          ))}
+                        </Box>
+                      );
+                    })}
+                  </>
+                )}
+              </Box>
+            )}
+
+            {/* טאב 6 - תקציב */}
+            {activeTab === 6 && (
+              <Box sx={{ p: 3 }}>
+                {!destinationData.budget ? (
+                  <Box textAlign="center" py={6}>
+                    <Typography sx={{ fontSize: '3rem', mb: 2 }}>🤖</Typography>
+                    <Typography variant="h6" color="text.secondary">מידע זה זמין עבור יעדים שנטענו דרך חיפוש AI</Typography>
+                  </Box>
+                ) : (
+                  <>
+                    <Typography variant="h5" fontWeight="bold" mb={1}>💰 תקציב יומי משוער</Typography>
+                    {destinationData.budget.note && (
+                      <Typography variant="body2" color="text.secondary" mb={3}>{destinationData.budget.note}</Typography>
+                    )}
+                    <Grid container spacing={3} mb={4}>
+                      {[
+                        { key: 'budget', label: 'תקציבאי 🎒', color: '#43e97b', bg: '#e8f5e9' },
+                        { key: 'mid', label: 'ממוצע 🏨', color: '#4facfe', bg: '#e3f2fd' },
+                        { key: 'luxury', label: 'יוקרה ✨', color: '#f5576c', bg: '#fce4ec' },
+                      ].map(({ key, label, color, bg }) => {
+                        const tier = destinationData.budget[key];
+                        if (!tier) return null;
+                        const cur = destinationData.budget.currency || '$';
+                        return (
+                          <Grid item xs={12} sm={4} key={key}>
+                            <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'hidden', height: '100%' }}>
+                              <Box sx={{ bgcolor: color, color: 'white', p: 2, textAlign: 'center' }}>
+                                <Typography variant="h6" fontWeight="bold">{label}</Typography>
+                                <Typography variant="h4" fontWeight="bold">{cur}{tier.total}</Typography>
+                                <Typography variant="caption">לאדם ליום</Typography>
+                              </Box>
+                              <Box sx={{ p: 2, bgcolor: bg }}>
+                                {[
+                                  { label: '🏠 לינה', val: tier.accommodation },
+                                  { label: '🍽️ אוכל', val: tier.food },
+                                  { label: '🚌 תחבורה', val: tier.transport },
+                                  { label: '🎭 פעילויות', val: tier.activities },
+                                ].map(({ label: l, val }) => (
+                                  <Box key={l} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                    <Typography variant="body2">{l}</Typography>
+                                    <Typography variant="body2" fontWeight="bold">{cur}{val}</Typography>
+                                  </Box>
+                                ))}
+                                {tier.notes && (
+                                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                                    {tier.notes}
+                                  </Typography>
+                                )}
+                              </Box>
+                            </Paper>
+                          </Grid>
+                        );
+                      })}
+                    </Grid>
+                    {destinationData.budget.tips?.length > 0 && (
+                      <Box>
+                        <Typography variant="h6" fontWeight="bold" mb={2}>💡 טיפים לחיסכון</Typography>
+                        {destinationData.budget.tips.map((tip, i) => (
+                          <Box key={i} sx={{ display: 'flex', gap: 1, mb: 1.5, p: 2, bgcolor: '#fff8e1', borderRadius: 2 }}>
+                            <CheckIcon sx={{ color: '#f9a825', fontSize: 20, mt: 0.2 }} />
+                            <Typography variant="body2">{tip}</Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+                  </>
+                )}
+              </Box>
+            )}
+
+            {/* טאב 7 - מידע מעשי */}
+            {activeTab === 7 && (
+              <Box sx={{ p: 3 }}>
+                {!destinationData.practical ? (
+                  <Box textAlign="center" py={6}>
+                    <Typography sx={{ fontSize: '3rem', mb: 2 }}>🤖</Typography>
+                    <Typography variant="h6" color="text.secondary">מידע זה זמין עבור יעדים שנטענו דרך חיפוש AI</Typography>
+                  </Box>
+                ) : (
+                  <Grid container spacing={3}>
+                    {/* ויזה + בטיחות */}
+                    <Grid item xs={12} md={6}>
+                      <Paper elevation={2} sx={{ p: 3, borderRadius: 3, height: '100%' }}>
+                        <Typography variant="h6" fontWeight="bold" mb={2}>✈️ ויזה לישראלים</Typography>
+                        <Typography variant="body2" color="text.secondary">{destinationData.practical.visa}</Typography>
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      {destinationData.practical.safety && (
+                        <Paper elevation={2} sx={{ p: 3, borderRadius: 3, height: '100%',
+                          border: `2px solid ${destinationData.practical.safety.color === 'green' ? '#43e97b' : destinationData.practical.safety.color === 'yellow' ? '#fdd835' : '#f5576c'}` }}>
+                          <Typography variant="h6" fontWeight="bold" mb={1}>
+                            🛡️ בטיחות — {destinationData.practical.safety.level}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" mb={2}>{destinationData.practical.safety.overview}</Typography>
+                          {destinationData.practical.safety.tips?.map((t, i) => (
+                            <Box key={i} sx={{ display: 'flex', gap: 1, mb: 0.5 }}>
+                              <CheckIcon sx={{ fontSize: 18, color: '#43e97b' }} />
+                              <Typography variant="body2">{t}</Typography>
+                            </Box>
+                          ))}
+                          {destinationData.practical.safety.avoidAreas?.length > 0 && destinationData.practical.safety.avoidAreas[0] && (
+                            <Box sx={{ mt: 1 }}>
+                              {destinationData.practical.safety.avoidAreas.map((a, i) => (
+                                <Box key={i} sx={{ display: 'flex', gap: 1, mb: 0.5 }}>
+                                  <WarningIcon sx={{ fontSize: 18, color: '#f5576c' }} />
+                                  <Typography variant="body2">{a}</Typography>
+                                </Box>
+                              ))}
+                            </Box>
+                          )}
+                        </Paper>
+                      )}
+                    </Grid>
+
+                    {/* מידע מעשי - חשמל, SIM, מטבע, בריאות */}
+                    <Grid item xs={12}>
+                      <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
+                        <Typography variant="h6" fontWeight="bold" mb={2}>🔧 פרטים מעשיים</Typography>
+                        <Grid container spacing={2}>
+                          {[
+                            { icon: '🔌', label: 'שקע חשמל', val: `${destinationData.practical.plugType} | ${destinationData.practical.voltage}` },
+                            { icon: '📱', label: 'כרטיס SIM', val: destinationData.practical.simCard },
+                            { icon: '💱', label: 'המרת מטבע', val: destinationData.practical.currencyTips },
+                            { icon: '🏥', label: 'בריאות', val: destinationData.practical.health },
+                          ].map(({ icon, label, val }) => val && (
+                            <Grid item xs={12} sm={6} key={label}>
+                              <Box sx={{ p: 2, bgcolor: 'rgba(0,0,0,0.02)', borderRadius: 2 }}>
+                                <Typography variant="subtitle2" fontWeight="bold" mb={0.5}>{icon} {label}</Typography>
+                                <Typography variant="body2" color="text.secondary">{val}</Typography>
+                              </Box>
+                            </Grid>
+                          ))}
+                        </Grid>
+                        {destinationData.practical.emergencyNumbers && (
+                          <Box sx={{ mt: 2, p: 2, bgcolor: '#fce4ec', borderRadius: 2 }}>
+                            <Typography variant="subtitle2" fontWeight="bold" mb={1}>🆘 מספרי חירום</Typography>
+                            <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                              {Object.entries(destinationData.practical.emergencyNumbers).map(([k, v]) => (
+                                <Typography key={k} variant="body2">
+                                  <strong>{k === 'police' ? '👮 משטרה' : k === 'ambulance' ? '🚑 אמבולנס' : '📞 תיירים'}:</strong> {v}
+                                </Typography>
+                              ))}
+                            </Box>
+                          </Box>
+                        )}
+                      </Paper>
+                    </Grid>
+
+                    {/* שכונות */}
+                    {destinationData.practical.neighborhoods?.length > 0 && (
+                      <Grid item xs={12}>
+                        <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
+                          <Typography variant="h6" fontWeight="bold" mb={2}>🏘️ שכונות מומלצות ללינה</Typography>
+                          <Grid container spacing={2}>
+                            {destinationData.practical.neighborhoods.map((n, i) => (
+                              <Grid item xs={12} sm={6} md={4} key={i}>
+                                <Box sx={{ p: 2, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 2 }}>
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                    <Typography fontWeight="bold">{n.name}</Typography>
+                                    <Chip label={n.priceRange} size="small" />
+                                  </Box>
+                                  <Typography variant="body2" color="text.secondary" mb={1}>{n.description}</Typography>
+                                  {n.bestFor && <Chip label={n.bestFor} size="small" color="primary" variant="outlined" />}
+                                </Box>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        </Paper>
+                      </Grid>
+                    )}
+
+                    {/* קניות + חיי לילה */}
+                    {destinationData.practical.shopping && (
+                      <Grid item xs={12} md={6}>
+                        <Paper elevation={2} sx={{ p: 3, borderRadius: 3, height: '100%' }}>
+                          <Typography variant="h6" fontWeight="bold" mb={2}>🛍️ קניות</Typography>
+                          <Typography variant="body2" color="text.secondary" mb={2}>{destinationData.practical.shopping.intro}</Typography>
+                          {destinationData.practical.shopping.items?.length > 0 && (
+                            <Box mb={2}>
+                              <Typography variant="subtitle2" fontWeight="bold" mb={1}>מה לקנות:</Typography>
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                {destinationData.practical.shopping.items.map((item, i) => (
+                                  <Chip key={i} label={item} size="small" sx={{ bgcolor: '#e3f2fd' }} />
+                                ))}
+                              </Box>
+                            </Box>
+                          )}
+                          {destinationData.practical.shopping.areas?.map((a, i) => (
+                            <Box key={i} sx={{ p: 1.5, bgcolor: 'rgba(0,0,0,0.02)', borderRadius: 2, mb: 1 }}>
+                              <Typography variant="subtitle2" fontWeight="bold">{a.name}</Typography>
+                              <Typography variant="body2" color="text.secondary">{a.description}</Typography>
+                            </Box>
+                          ))}
+                        </Paper>
+                      </Grid>
+                    )}
+                    {destinationData.practical.nightlife && (
+                      <Grid item xs={12} md={6}>
+                        <Paper elevation={2} sx={{ p: 3, borderRadius: 3, height: '100%' }}>
+                          <Typography variant="h6" fontWeight="bold" mb={2}>🌙 חיי לילה</Typography>
+                          <Typography variant="body2" color="text.secondary" mb={2}>{destinationData.practical.nightlife.intro}</Typography>
+                          {destinationData.practical.nightlife.areas?.map((a, i) => (
+                            <Box key={i} sx={{ p: 1.5, border: '1px solid rgba(0,0,0,0.08)', borderRadius: 2, mb: 1 }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                <Typography variant="subtitle2" fontWeight="bold">{a.name}</Typography>
+                                {a.type && <Chip label={a.type} size="small" />}
+                              </Box>
+                              <Typography variant="body2" color="text.secondary">{a.description}</Typography>
+                            </Box>
+                          ))}
+                        </Paper>
+                      </Grid>
+                    )}
+                  </Grid>
+                )}
+              </Box>
+            )}
+
           </Box>
         </Paper>
-        
+
         {/* יעדים קרובים */}
         {destinationData.nearbyDestinations && destinationData.nearbyDestinations.length > 0 && (
           <Box sx={{ mb: 6 }}>
