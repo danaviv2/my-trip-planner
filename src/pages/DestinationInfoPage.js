@@ -53,15 +53,8 @@ import {
   CalendarMonth as ItineraryIcon,
   AccountBalanceWallet as BudgetIcon,
   Build as PracticalIcon,
-  Shield as SafetyIcon,
-  ShoppingBag as ShoppingIcon,
-  NightlifeOutlined as NightlifeIcon,
-  ElectricBolt as PlugIcon,
-  SimCard as SimIcon,
   CheckCircle as CheckIcon,
-  Warning as WarningIcon,
-  WbSunny as MorningIcon,
-  WbTwilight as EveningIcon
+  Warning as WarningIcon
 } from '@mui/icons-material';
 
 import { useParams, useNavigate } from 'react-router-dom';
@@ -116,6 +109,8 @@ const DestinationInfoPage = () => {
         setError('no_api_key');
       } else if (err.message === 'TIMEOUT') {
         setError('הבקשה לקחה יותר מדי זמן. נסה שוב.');
+      } else if (err.message === 'INVALID_RESPONSE') {
+        setError('התקבלה תגובה לא תקינה מהשרת. נסה שוב.');
       } else {
         setError('שגיאה בטעינת מידע על היעד. נסה שוב.');
       }
@@ -1627,6 +1622,7 @@ const DestinationInfoPage = () => {
                   <Button
                     variant="outlined"
                     endIcon={<ArrowForwardIcon />}
+                    onClick={() => window.open(`https://www.google.com/search?q=אטרקציות+תיירות+${encodeURIComponent(destinationData.name)}`, '_blank')}
                     sx={{ borderRadius: '8px', textTransform: 'none' }}
                   >
                     הצג עוד אטרקציות ב{destinationData.name}
@@ -2360,9 +2356,10 @@ const DestinationInfoPage = () => {
               <Typography variant="h5" fontWeight="bold">
                 יעדים נוספים באזור
               </Typography>
-              <Button 
-                variant="text" 
+              <Button
+                variant="text"
                 endIcon={<ArrowForwardIcon />}
+                onClick={() => window.open(`https://www.google.com/search?q=יעדים+קרובים+ל${encodeURIComponent(destinationData.name)}`, '_blank')}
                 sx={{ textTransform: 'none' }}
               >
                 הצג הכל
