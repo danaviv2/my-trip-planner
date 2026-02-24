@@ -1,3 +1,22 @@
+import {
+  Star as StarIcon,
+  Nature as NatureIcon,
+  EmojiEvents as CultureIcon,
+  School as HistoricalIcon,
+  Favorite as FavoriteIcon,
+  AttachMoney as AttachMoneyIcon,
+  WbSunny as WeatherIcon,
+  FamilyRestroom as FamilyIcon,
+  Language as LanguageIcon,
+  ContentCopy as CopyIcon,
+  FileDownload as DownloadIcon,
+  Edit as EditIcon,
+  Share as ShareIcon,
+  Close as CloseIcon,
+  Collections as CollectionsIcon,
+  Save as SaveIcon,
+  AutoAwesome as AIIcon
+} from '@mui/icons-material';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
@@ -77,47 +96,7 @@ import {
   LocalMall as ShoppingIcon,
   Attractions as AttractionsIcon,
   CameraAlt as CameraIcon,
-  EmojiEvents as CultureIcon,
-  Nature as NatureIcon,
-  School as HistoricalIcon,
-  MenuBook as PlanIcon,
-  Favorite as FavoriteIcon,
-  Star as StarIcon,
-  MoreVert as MoreVertIcon,
-  PersonAddAlt as PersonAddIcon,
-  FileDownload as DownloadIcon,
-  Share as ShareIcon,
-  Edit as EditIcon,
-  CheckCircle as CheckCircleIcon,
-  DragIndicator as DragIndicatorIcon,
-  ArrowForward as ArrowForwardIcon,
-  AddCircleOutline as AddCircleOutlineIcon,
-  Close as CloseIcon,
-  ExpandMore as ExpandMoreIcon,
-  Directions as DirectionsIcon,
-  Public as PublicIcon,
-  Language as LanguageIcon,
-  AttachMoney as AttachMoneyIcon,
-  Save as SaveIcon,
-  Collections as CollectionsIcon,
-  LocalAtm as BudgetIcon,
-  AccessTime as TimeIcon,
-  LocalOffer as TagIcon,
-  MapOutlined as MapOutlinedIcon,
-  Refresh as RefreshIcon,
-  VisibilityOutlined as VisibilityOutlinedIcon,
-  WbSunny as WeatherIcon,
-  Notifications as NotificationsIcon,
-  FilterList as FilterListIcon,
-  Search as SearchIcon,
-  Info as InfoIcon,
-  Warning as WarningIcon,
-  BarChart as BarChartIcon,
-  FamilyRestroom as FamilyIcon,
-  Accessible as AccessibleIcon,
-  ContentCopy as CopyIcon,
-  LibraryBooks as TemplateIcon,
-  AutoAwesome as AIIcon,
+  // ...existing code...
   FilterDrama,
   Cloud,
   Grain,
@@ -452,7 +431,7 @@ const TripPlanner = () => {
       
       setItinerary(updatedItinerary);
     }
-  }, [startDate]);
+  }, [startDate, itinerary.length, tripDays]);
 
   // שליפת אטרקציות מומלצות כשהיעד משתנה
   useEffect(() => {

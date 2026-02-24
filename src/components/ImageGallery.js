@@ -9,14 +9,14 @@ import {
   Skeleton,
   Typography,
   Fade,
-  Zoom
+  
 } from '@mui/material';
 import { 
   ArrowBackIos, 
   ArrowForwardIos, 
   Close, 
   ZoomIn,
-  FullscreenExit
+  
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 

@@ -164,4 +164,5 @@ class GoogleMapsService {
   }
 }
 
-export default new GoogleMapsService();
+const googleMapsService = new GoogleMapsService();
+export default googleMapsService;

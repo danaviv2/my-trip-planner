@@ -1,17 +1,20 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import TravelServicesBooking from './components/booking/TravelServicesBooking';
-import TripPlannerMapView from './components/maps/TripPlannerMapView';
-// ייבוא הדפים השונים
-import HomePage from './pages/HomePage';
-import TravelInfoPage from './pages/TravelInfoPage';
-import AdvancedSearchPage from './pages/AdvancedSearchPage';
-import MapPage from './pages/MapPage';
-import TripPlannerPage from './pages/TripPlannerPage';
-import DestinationInfoPage from './pages/DestinationInfoPage';
-import SmartTripPage from './pages/SmartTripPage';
-import RouteMapPage from './pages/RouteMapPage';
-import StatisticsPage from './pages/StatisticsPage';
+
+// Use lazy-loading for heavy pages to reduce bundle size and avoid loading
+// browser-only libs during SSR/test/build phases.
+const TravelServicesBooking = React.lazy(() => import('./components/booking/TravelServicesBooking'));
+const TripPlannerMapView = React.lazy(() => import('./components/maps/TripPlannerMapView'));
+// ייבוא הדפים השונים (lazy)
+const HomePage = React.lazy(() => import('./pages/HomePage'));
+const TravelInfoPage = React.lazy(() => import('./pages/TravelInfoPage'));
+const AdvancedSearchPage = React.lazy(() => import('./pages/AdvancedSearchPage'));
+const MapPage = React.lazy(() => import('./pages/MapPage'));
+const TripPlannerPage = React.lazy(() => import('./pages/TripPlannerPage'));
+const DestinationInfoPage = React.lazy(() => import('./pages/DestinationInfoPage'));
+const SmartTripPage = React.lazy(() => import('./pages/SmartTripPage'));
+const RouteMapPage = React.lazy(() => import('./pages/RouteMapPage'));
+const StatisticsPage = React.lazy(() => import('./pages/StatisticsPage'));
 
 /**
  * רכיב ניתוב ראשי של האפליקציה
@@ -19,7 +22,8 @@ import StatisticsPage from './pages/StatisticsPage';
  */
 const AppRoutes = () => {
   return (
-    <Routes>
+    <Suspense fallback={<div>Loading...</div>}>
+      <Routes>
       {/* דף הבית */}
       <Route path="/" element={<HomePage />} />
       
@@ -56,7 +60,8 @@ const AppRoutes = () => {
       
       {/* נתיב ברירת מחדל - מפנה לדף הבית */}
       <Route path="*" element={<HomePage />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 };
 

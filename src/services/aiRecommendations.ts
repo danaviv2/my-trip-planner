@@ -351,4 +351,5 @@ JSON:
   }
 }
 
-export default new AIRecommendationsService();
+const aiRecommendationsService = new AIRecommendationsService();
+export default aiRecommendationsService;

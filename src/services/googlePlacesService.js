@@ -289,4 +289,5 @@ class GooglePlacesService {
   }
 }
 
-export default new GooglePlacesService();
+const googlePlacesService = new GooglePlacesService();
+export default googlePlacesService;

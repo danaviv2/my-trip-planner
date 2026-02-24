@@ -37,11 +37,10 @@ import FlightSearch from './components/travel-services/FlightSearch';
 import CarRentalSearch from './components/travel-services/CarRentalSearch';
 import TravelServicesTab from './components/travel-services/TravelServicesTab';
 import DestinationInfo from './components/DestinationInfo';
-import { BrowserRouter as Router } from 'react-router-dom';
 import AppRoutes from './routes';
 import { TripProvider } from './contexts/TripContext';
 import './assets/css/theme.css'; // קובץ העיצוב החדש
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 // יבוא הקומפוננטות הקיימות שלך
 import Header from './components/layout/Header';
@@ -173,6 +172,8 @@ const mapContainerStyle = {
 };
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
   const [mainTab, setMainTab] = useState('plan');
   const [activeTab, setActiveTab] = useState(0);
   const [startPoint, setStartPoint] = useState('');
@@ -3301,7 +3302,8 @@ const InviteButton = () => {
             
             {/* רכיב הנתיבים החדש שיטפל בניתוב לדפים השונים */}
             <AppRoutes />
-            
+
+            {isHomePage && <>
             <Paper elevation={6} sx={{ p: 3, m: '20px auto', maxWidth: '900px', bgcolor: '#ffffff', borderRadius: '16px', boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)' }} role="region" aria-label="אזור תכנון טיולים">
               <Typography variant="h3" align="center" gutterBottom sx={{ 
                 color: '#2c3e50', 
@@ -3648,6 +3650,7 @@ const InviteButton = () => {
             </LoadScript>
             <EditAttractionModal />
             <HotelModal />
+            </>}
           </div>
         </TripProvider>
       </UserPreferencesProvider>

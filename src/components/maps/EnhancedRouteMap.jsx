@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { GoogleMap, DirectionsRenderer } from '@react-google-maps/api';
-import { Box, Paper, Typography } from '@mui/material';
+import { Paper, Typography } from '@mui/material';
 import InteractiveMapMarker from './InteractiveMapMarker';
 
 const EnhancedRouteMap = ({ origin, destination, directions, attractions = [] }) => {

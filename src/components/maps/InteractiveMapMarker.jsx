@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { InfoWindow, Marker } from '@react-google-maps/api';
 import {
-  Box,
   Typography,
   Button,
   Stack,
@@ -9,11 +8,6 @@ import {
   Paper
 } from '@mui/material';
 import {
-  Flight as FlightIcon,
-  Hotel as HotelIcon,
-  Restaurant as RestaurantIcon,
-  Attractions as AttractionIcon,
-  DirectionsCar as CarIcon,
   OpenInNew as OpenIcon
 } from '@mui/icons-material';
 import bookingLinks from '../../utils/bookingLinks';

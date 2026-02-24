@@ -84,36 +84,6 @@ const InteractiveMap = ({
   ];
   
   // אתחול המפה
-  useEffect(() => {
-    // בדוק אם ה-API של Google Maps כבר נטען
-    if (!window.google || !window.google.maps) {
-      // אם לא נטען, טען אותו
-      loadGoogleMapsAPI();
-    } else {
-      // אם כבר נטען, אתחל את המפה
-      initializeMap();
-    }
-  }, []);
-  
-  // טעינת ה-API של Google Maps
-  const loadGoogleMapsAPI = () => {
-    // בדיקה שה-script לא נטען כבר
-    if (document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]')) {
-      initializeMap();
-      return;
-    }
-    
-    const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_API_KEY;
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.onload = initializeMap;
-    script.onerror = () => setError('שגיאה בטעינת מפות Google');
-    document.head.appendChild(script);
-  };
-  
-  // אתחול המפה
   const initializeMap = () => {
     if (!mapRef.current || !window.google || !window.google.maps) return;
     
@@ -160,7 +130,35 @@ const InteractiveMap = ({
       setError('שגיאה באתחול המפה');
     }
   };
-  
+
+  // טעינת ה-API של Google Maps
+  const loadGoogleMapsAPI = () => {
+    // בדיקה שה-script לא נטען כבר
+    if (document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]')) {
+      initializeMap();
+      return;
+    }
+
+    const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_API_KEY;
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = initializeMap;
+    script.onerror = () => setError('שגיאה בטעינת מפות Google');
+    document.head.appendChild(script);
+  };
+
+  // אתחול המפה בטעינה
+  useEffect(() => {
+    if (!window.google || !window.google.maps) {
+      loadGoogleMapsAPI();
+    } else {
+      initializeMap();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // הוספת סמנים למפה
   const addMarkersToMap = (markersData) => {
     if (!mapInstanceRef.current || !window.google) return;

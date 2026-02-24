@@ -11,7 +11,7 @@ import {
   Chip,
   Rating,
   Paper,
-  Avatar
+  
 } from '@mui/material';
 import { 
   AccessTime,

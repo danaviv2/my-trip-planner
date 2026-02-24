@@ -214,4 +214,5 @@ class PriceComparisonService {
   }
 }
 
-export default new PriceComparisonService();
+const priceComparisonService = new PriceComparisonService();
+export default priceComparisonService;

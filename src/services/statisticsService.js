@@ -352,4 +352,5 @@ class StatisticsService {
   }
 }
 
-export default new StatisticsService();
+const statisticsService = new StatisticsService();
+export default statisticsService;

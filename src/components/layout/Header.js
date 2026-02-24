@@ -14,7 +14,7 @@ const Header = () => {
         <NotificationCenter />
         <Button color="inherit" component={Link} to="/">דף הבית</Button>
         <Button color="inherit" component={Link} to="/travel-info">פרטי נסיעה</Button>
-        <Button color="inherit" component={Link} to="/search">חיפוש</Button>
+        <Button color="inherit" component={Link} to="/advanced-search">חיפוש</Button>
         <Button color="inherit" component={Link} to="/map">מפה</Button>
         <Button 
           color="inherit" 

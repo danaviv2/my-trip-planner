@@ -8,12 +8,7 @@ import RouteInfo from './RouteInfo';
 import AttractionFilters from './AttractionFilters';
 import RouteNavigationButtons from './RouteNavigationButtons';
 import { UserPreferencesContext } from '../../contexts/UserPreferencesContext';
-import PreferencesForm from '../trip-planner/PreferencesForm';
-import TripPlanner from '../trip-planner/TripPlanner';
-import AccommodationPlanner from '../trip-planner/AccommodationPlanner';
-import ShareButtons from '../shared/ShareButtons';
-import InviteButton from '../shared/InviteButton';
-import TripLogs from './TripLogs';
+// ...existing code...
 
 /**
  * RoutePlanner - קומפוננט ראשי לתכנון מסלול
