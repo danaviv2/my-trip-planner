@@ -218,7 +218,7 @@ const HomePage = () => {
               >
                 <CardContent sx={{ p: 4, textAlign: 'center' }}>
                   <Box sx={{
-                    fontSize: '5rem',
+                    fontSize: '3rem',
                     mb: 2,
                     display: 'inline-block',
                     animation: 'bounce 2.5s ease-in-out infinite',
@@ -230,7 +230,7 @@ const HomePage = () => {
                   <Typography
                     variant="h4"
                     fontWeight="bold"
-                    mb={2}
+                    mb={1}
                     sx={{ textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}
                   >
                     {feature.title}
@@ -238,33 +238,10 @@ const HomePage = () => {
 
                   <Typography
                     variant="body1"
-                    sx={{ opacity: 0.95, fontSize: '1.1rem', mb: 3 }}
+                    sx={{ opacity: 0.95, fontSize: '1.1rem' }}
                   >
                     {feature.description}
                   </Typography>
-
-                  <Button
-                    variant="contained"
-                    size="large"
-                    sx={{
-                      bgcolor: 'rgba(255,255,255,0.2)',
-                      color: 'white',
-                      backdropFilter: 'blur(10px)',
-                      px: 4,
-                      py: 1.5,
-                      fontSize: '1.1rem',
-                      fontWeight: 700,
-                      borderRadius: 3,
-                      border: '2px solid rgba(255,255,255,0.3)',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        bgcolor: 'rgba(255,255,255,0.35)',
-                        transform: 'scale(1.05)'
-                      }
-                    }}
-                  >
-                    למידע נוסף ←
-                  </Button>
                 </CardContent>
               </Card>
             </Grid>
@@ -301,15 +278,17 @@ const HomePage = () => {
                     color: 'white',
                     py: 3,
                     px: 2,
-                    borderRadius: 3,
-                    fontSize: '1.2rem',
+                    borderRadius: '50%',
+                    aspectRatio: '1',
+                    minWidth: 0,
+                    fontSize: '1rem',
                     fontWeight: 700,
                     flexDirection: 'column',
-                    gap: 1,
+                    gap: 0.5,
                     boxShadow: `0 4px 15px ${dest.color}55`,
                     transition: 'all 0.25s ease',
                     '&:hover': {
-                      transform: 'translateY(-4px) scale(1.05)',
+                      transform: 'translateY(-4px) scale(1.08)',
                       boxShadow: `0 10px 30px ${dest.color}77`
                     }
                   }}
