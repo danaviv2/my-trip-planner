@@ -96,9 +96,10 @@ const HomePage = () => {
             variant="h2"
             sx={{
               fontWeight: 800,
-              fontSize: { xs: '2.5rem', md: '3.5rem' },
+              fontSize: { xs: '1.8rem', sm: '2.5rem', md: '3.5rem' },
               mb: 2,
-              textShadow: '0 4px 20px rgba(0,0,0,0.2)'
+              textShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              lineHeight: 1.3
             }}
           >
             ✈️ תכנן את הטיול המושלם שלך
@@ -108,7 +109,7 @@ const HomePage = () => {
             sx={{
               mb: 4,
               opacity: 0.95,
-              fontSize: { xs: '1.2rem', md: '1.5rem' },
+              fontSize: { xs: '1rem', sm: '1.2rem', md: '1.5rem' },
               fontWeight: 500
             }}
           >
@@ -304,18 +305,21 @@ const HomePage = () => {
         {/* סטטיסטיקות */}
         <Grid container spacing={4} mt={6}>
           {[
-            { number: '10,000+', label: 'יעדים בעולם', icon: '🌍' },
-            { number: '50,000+', label: 'משתמשים מרוצים', icon: '😊' },
-            { number: '100,000+', label: 'מסלולים שנוצרו', icon: '🗺️' }
-          ].map((stat, index) => (
+            { icon: '🗺️', title: 'תכנון חכם', desc: 'בנה מסלול מותאם אישית עם מפות אינטראקטיביות וניווט מדויק', path: '/trip-planner' },
+            { icon: '🔍', title: 'חיפוש מתקדם', desc: 'מצא אטרקציות, מסעדות ומלונות לפי קטגוריה, מיקום ומחיר', path: '/advanced-search' },
+            { icon: '⛅', title: 'מידע בזמן אמת', desc: 'מזג אוויר עדכני, השוואת מחירים והמלצות לפי עונה', path: '/destination-info' }
+          ].map((feature, index) => (
             <Grid item xs={12} sm={4} key={index}>
               <Paper
                 elevation={2}
+                onClick={() => navigate(feature.path)}
                 sx={{
                   p: 4,
                   textAlign: 'center',
                   borderRadius: 3,
                   background: 'white',
+                  height: '100%',
+                  cursor: 'pointer',
                   transition: 'all 0.25s ease',
                   '&:hover': {
                     transform: 'translateY(-6px)',
@@ -323,19 +327,14 @@ const HomePage = () => {
                   }
                 }}
               >
-                <Typography variant="h2" sx={{ fontSize: '3rem', mb: 1 }}>
-                  {stat.icon}
+                <Typography sx={{ fontSize: '3rem', mb: 2 }}>
+                  {feature.icon}
                 </Typography>
-                <Typography
-                  variant="h3"
-                  fontWeight="bold"
-                  color="primary"
-                  sx={{ mb: 1 }}
-                >
-                  {stat.number}
+                <Typography variant="h6" fontWeight="bold" mb={1}>
+                  {feature.title}
                 </Typography>
-                <Typography variant="h6" color="text.secondary">
-                  {stat.label}
+                <Typography variant="body2" color="text.secondary" lineHeight={1.7}>
+                  {feature.desc}
                 </Typography>
               </Paper>
             </Grid>
@@ -363,10 +362,10 @@ const HomePage = () => {
             backgroundSize: '40px 40px',
           }} />
           <Box sx={{ position: 'relative', zIndex: 1 }}>
-            <Typography variant="h3" fontWeight="bold" mb={2}>
+            <Typography variant="h3" fontWeight="bold" mb={2} sx={{ fontSize: { xs: '1.8rem', md: '3rem' } }}>
               מוכן להתחיל את ההרפתקה? 🚀
             </Typography>
-            <Typography variant="h6" mb={4} sx={{ opacity: 0.9 }}>
+            <Typography variant="h6" mb={4} sx={{ opacity: 0.9, fontSize: { xs: '1rem', md: '1.25rem' } }}>
               צור את הטיול המושלם שלך תוך דקות ספורות
             </Typography>
             <Button

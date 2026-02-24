@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Container, 
-  Paper, 
-  Grid, 
-  Card, 
-  CardMedia, 
-  CardContent, 
-  Tabs, 
-  Tab, 
-  Button, 
-  Chip, 
-  Divider, 
+import {
+  Box,
+  Typography,
+  Container,
+  Paper,
+  Grid,
+  Card,
+  CardMedia,
+  CardContent,
+  Tabs,
+  Tab,
+  Button,
+  Chip,
+  Divider,
+  TextField,
+  InputAdornment,
   List, 
   ListItem, 
   ListItemIcon, 
@@ -46,10 +48,12 @@ import {
   AccessTime as TimeIcon,
   Euro as EuroIcon,
   PlayArrow as PlayArrowIcon,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Search as SearchIcon
 } from '@mui/icons-material';
 
 import { useParams, useNavigate } from 'react-router-dom';
+import { fetchDestinationFromAI } from '../services/aiDestinationService';
 import { useTripContext } from '../contexts/TripContext';
 
 const DestinationInfoPage = () => {
@@ -63,7 +67,13 @@ const DestinationInfoPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
-  
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = () => {
+    const trimmed = searchQuery.trim();
+    if (trimmed) navigate(`/destination-info/${trimmed}`);
+  };
+
   useEffect(() => {
     if (destination) {
       fetchDestinationData(destination);
@@ -73,20 +83,31 @@ const DestinationInfoPage = () => {
   const fetchDestinationData = async (dest) => {
     setIsLoading(true);
     setError('');
-    
+    setDestinationData(null);
+
     try {
-      // כאן תבוא קריאה לפונקציית fetchDestinationData שלך
-      
-      // לצורך הדוגמה, נשתמש בנתונים סטטיים
-      setTimeout(() => {
-        const mockData = getMockDestinationData(dest);
-        setDestinationData(mockData);
+      // קודם בדוק במאגר הסטטי
+      const staticData = getMockDestinationData(dest);
+      if (staticData) {
+        setDestinationData(staticData);
         setIsLoading(false);
-      }, 1000); // סימולציה של API call
-      
-    } catch (error) {
-      console.error('שגיאה בטעינת מידע על היעד:', error);
-      setError('שגיאה בטעינת מידע על היעד: ' + error.message);
+        return;
+      }
+
+      // אם לא נמצא - שאל את ה-AI
+      const aiData = await fetchDestinationFromAI(dest);
+      setDestinationData(aiData);
+
+    } catch (err) {
+      console.error('שגיאה בטעינת יעד:', err.message);
+      if (err.message === 'NO_API_KEY') {
+        setError('no_api_key');
+      } else if (err.message === 'TIMEOUT') {
+        setError('הבקשה לקחה יותר מדי זמן. נסה שוב.');
+      } else {
+        setError('שגיאה בטעינת מידע על היעד. נסה שוב.');
+      }
+    } finally {
       setIsLoading(false);
     }
   };
@@ -97,246 +118,613 @@ const DestinationInfoPage = () => {
         country: 'צרפת',
         coverImage: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200',
         tags: ['רומנטיקה', 'אמנות', 'אוכל', 'היסטוריה'],
-        description: 'פריז, בירת צרפת, היא אחת הערים הרומנטיות והיפות בעולם. ידועה בזכות מגדל אייפל המפורסם, מוזיאון הלובר, קתדרלת נוטרדאם ושדרות השאנז אליזה. העיר מציעה תרבות עשירה, אמנות מרהיבה, אופנה ייחודית וחוויה קולינרית בלתי נשכחת.',
-        language: 'צרפתית',
-        currency: 'אירו (€)',
-        airport: 'שארל דה גול (CDG), אורלי (ORY)'
+        description: 'פריז, בירת צרפת, היא אחת הערים הרומנטיות והיפות בעולם. ידועה בזכות מגדל אייפל, מוזיאון הלובר, קתדרלת נוטרדאם ושדרות השאנז אליזה.',
+        language: 'צרפתית', currency: 'אירו (€)', timezone: 'GMT+1', airport: 'שארל דה גול (CDG), אורלי (ORY)',
+        bestTimeToVisit: 'אפריל-יוני, ספטמבר-אוקטובר',
+        seasons: { summer: 'חם ונעים 18-25°C, עמוס תיירים', winter: 'קר וגשום 2-8°C, פחות תיירים' },
+        events: [
+          { name: 'יום הבסטיליה', date: '14 ביולי', description: 'חגיגות יום העצמאות הצרפתי עם מצעדים וזיקוקים.' },
+          { name: 'פריז פאשן וויק', date: 'פברואר ו-ספטמבר', description: 'שבוע האופנה המפורסם בעולם.' }
+        ],
+        attractions: [
+          { name: 'מגדל אייפל', image: 'https://images.unsplash.com/photo-1543349689-9a4d426bee8e?w=500', rating: 4.7, description: 'סמל פריז, נוף פנורמי מרהיב.', recommendedDuration: '2-3 שעות', price: '€18-28' },
+          { name: 'מוזיאון הלובר', image: 'https://images.unsplash.com/photo-1527410-90b930c0a42b?w=500', rating: 4.8, description: 'המוזיאון הגדול בעולם, בית המונה ליזה.', recommendedDuration: '3-4 שעות', price: '€17' },
+          { name: 'קתדרלת נוטרדאם', image: 'https://images.unsplash.com/photo-1584707824245-087f3505cfe4?w=500', rating: 4.7, description: 'קתדרלה גותית אייקונית בלב פריז.', recommendedDuration: '1-2 שעות', price: 'חינם' }
+        ],
+        food: {
+          intro: 'פריז היא גן עדן קולינרי - מבתי קפה קסומים ועד מסעדות כוכבי מישלן.',
+          dishes: [
+            { name: 'קרואסון', image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=150', description: 'מאפה צרפתי קלאסי, פריך ושכבתי.' },
+            { name: 'בף בורגיניון', image: 'https://images.unsplash.com/photo-1600891963935-0a566be546ec?w=150', description: 'תבשיל בשר מסורתי ביין אדום.' }
+          ],
+          restaurants: [
+            { name: 'Le Jules Verne', rating: 4.5, description: 'מסעדה יוקרתית במגדל אייפל.', cuisine: 'צרפתית עילית', priceRange: '€€€€', area: 'מגדל אייפל', website: 'https://www.restaurants-toureiffel.com' },
+            { name: 'Café de Flore', rating: 4.3, description: 'בית קפה היסטורי של אמנים ואינטלקטואלים.', cuisine: 'בית קפה', priceRange: '€€€', area: 'סן ז\'רמן', website: 'https://cafedeflore.fr' }
+          ],
+          markets: [{ name: 'Marché d\'Aligre', image: 'https://images.unsplash.com/photo-1513030230908-42087708be3c?w=300', description: 'שוק מקומי עם פירות, ירקות וגבינות.', hours: 'שלישי-ראשון 8:00-13:00' }]
+        },
+        transportation: {
+          overview: 'מטרו מצוין עם 16 קווים, אוטובוסים, RER ואופניים.',
+          options: [
+            { name: 'מטרו', icon: 'subway', iconColor: '#1976D2', description: '16 קווים המכסים את כל העיר.', cost: 'כרטיס בודד €1.90', hours: '5:30-1:15', website: 'https://www.ratp.fr/en' },
+            { name: 'Vélib\'', icon: 'pedal_bike', iconColor: '#388E3C', description: 'השכרת אופניים עירונית.', cost: '€5 ליום', hours: '24/7', website: 'https://www.velib-metropole.fr' }
+          ],
+          tips: [{ title: 'Paris Visite', description: 'כרטיס לנסיעות בלתי מוגבלות עם הנחות לאטרקציות.' }]
+        },
+        tips: {
+          beforeTravel: [
+            { icon: 'language', title: 'כמה מילים בצרפתית', description: '"בונז\'ור" ו"מרסי" - הצרפתים מעריכים את המאמץ.' },
+            { icon: 'euro', title: 'Paris Museum Pass', description: 'חוסך כסף ומונע תורים ארוכים.' }
+          ],
+          hours: { shopping: '10:00-19:00, סגור ראשון', restaurants: 'צהריים 12-14, ערב 19:30-22', attractions: 'מוזיאונים סגורים שני/שלישי' },
+          local: [
+            { title: 'שפת גוף', description: 'הצרפתים מאופקים - דיבור קולני נחשב לא מנומס.' },
+            { title: 'טיפים', description: 'שירות כלול, אך €1-3 טיפ מקובל.' }
+          ]
+        },
+        nearbyDestinations: [
+          { name: 'ורסאי', image: 'https://images.unsplash.com/photo-1551487499-58d68f794511?w=300', distance: '20' },
+          { name: 'דיסנילנד פריז', image: 'https://images.unsplash.com/photo-1596443286276-129cb297978d?w=300', distance: '40' }
+        ]
       },
       'רומא': {
         country: 'איטליה',
         coverImage: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1200',
         tags: ['היסטוריה', 'אמנות', 'אוכל', 'תרבות'],
-        description: 'רומא, בירת איטליה, היא עיר נצח עם היסטוריה של אלפי שנים. הקולוסיאום, הוותיקן, מזרקת טרווי והפנתיאון הם רק חלק קטן מהאטרקציות המדהימות.',
-        language: 'איטלקית',
-        currency: 'אירו (€)',
-        airport: 'פיומיצ׳ינו (FCO)'
+        description: 'רומא, עיר הנצח, מציעה אלפי שנות היסטוריה. הקולוסיאום, הוותיקן, מזרקת טרווי והפנתיאון הם רק חלק מהפלאות.',
+        language: 'איטלקית', currency: 'אירו (€)', timezone: 'GMT+1', airport: 'פיומיצ׳ינו (FCO)',
+        bestTimeToVisit: 'מרץ-מאי, ספטמבר-נובמבר',
+        seasons: { summer: 'חם מאוד 25-35°C, עמוס תיירים', winter: 'מתון 5-15°C, פחות עמוס' },
+        events: [
+          { name: 'פסחא ברומא', date: 'אפריל', description: 'חגיגות קתוליות עצומות בכיכר פטרוס הקדוש.' },
+          { name: 'Roma Estate', date: 'יוני-ספטמבר', description: 'פסטיבל קיץ עם קולנוע, מוזיקה ואמנות.' }
+        ],
+        attractions: [
+          { name: 'הקולוסיאום', image: 'https://images.unsplash.com/photo-1555992336-03a23c7b20ee?w=500', rating: 4.8, description: 'האמפיתיאטר האייקוני מהמאה הראשונה.', recommendedDuration: '2-3 שעות', price: '€16' },
+          { name: 'הוותיקן ומוזיאוניו', image: 'https://images.unsplash.com/photo-1531572753322-ad063cecc140?w=500', rating: 4.9, description: 'בית הפאפה, כולל קפלה הסיסטינית ומוזיאונים עשירים.', recommendedDuration: '4-5 שעות', price: '€17' },
+          { name: 'מזרקת טרווי', image: 'https://images.unsplash.com/photo-1529154166925-574a0236a4f4?w=500', rating: 4.6, description: 'המזרקה הבארוקית המפורסמת - זרוק מטבע ותחזור!', recommendedDuration: '30 דקות', price: 'חינם' }
+        ],
+        food: {
+          intro: 'רומא היא מקדש הפסטה, הפיצה הג\'לטו. כל שכונה מסתירה מסעדות משפחתיות נסתרות.',
+          dishes: [
+            { name: 'קרבונרה', image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=150', description: 'פסטה רומאית קלאסית עם ביצה, גואנצ\'לה ופקורינו.' },
+            { name: 'ג\'לטו', image: 'https://images.unsplash.com/photo-1567206563064-6f60f40a2b57?w=150', description: 'גלידה איטלקית קרמית - מנה חובה בכל פינה.' }
+          ],
+          restaurants: [
+            { name: 'Da Enzo al 29', rating: 4.7, description: 'טראטוריה משפחתית אותנטית בטראסטווירה.', cuisine: 'רומאית מסורתית', priceRange: '€€', area: 'טראסטווירה', website: 'https://www.daenzoal29.com' },
+            { name: 'Roscioli', rating: 4.6, description: 'מפורסמת בפסטות וגבינות מעולות.', cuisine: 'איטלקית', priceRange: '€€€', area: 'Campo de\' Fiori', website: 'https://www.salumeriaroscioli.com' }
+          ],
+          markets: [{ name: 'Campo de\' Fiori', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300', description: 'שוק פתוח עם פירות, ירקות ופרחים.', hours: 'שני-שבת 7:00-14:00' }]
+        },
+        transportation: {
+          overview: 'מטרו עם 3 קווים, אוטובוסים ותרמים. המרכז ההיסטורי נוח ברגל.',
+          options: [
+            { name: 'מטרו', icon: 'subway', iconColor: '#E53935', description: '3 קווים, מכסה נקודות עיקריות.', cost: 'כרטיס בודד €1.50', hours: '5:30-23:30', website: 'https://www.atac.roma.it' },
+            { name: 'רגלים', icon: 'directions_walk', iconColor: '#7B1FA2', description: 'המרכז ההיסטורי קטן וניתן ללכת בין רוב האתרים.', cost: 'חינם', hours: '24/7', website: '' }
+          ],
+          tips: [{ title: 'Roma Pass', description: 'כרטיס 48/72 שעות לתחבורה ציבורית + הנחות לאטרקציות.' }]
+        },
+        tips: {
+          beforeTravel: [
+            { icon: 'language', title: 'מילים בסיסיות', description: '"גראציה" (תודה), "בונז\'ורנו" (בוקר טוב).' },
+            { icon: 'camera', title: 'הזמינו מראש', description: 'הוותיקן והקולוסיאום - חובה להזמין כרטיסים מראש.' }
+          ],
+          hours: { shopping: '10:00-20:00, סגור ראשון', restaurants: 'צהריים 13-15, ערב 20:00-23:00', attractions: 'מוזיאוני וותיקן סגורים ראשון' },
+          local: [
+            { title: 'לבוש בכנסיות', description: 'כתפיים וברכיים מכוסות נדרשות לכניסה לכנסיות.' },
+            { title: 'מים', description: 'מזרקות המים ברחבי העיר מספקות מים ראויים לשתייה - חינם!' }
+          ]
+        },
+        nearbyDestinations: [
+          { name: 'פלורנס', image: 'https://images.unsplash.com/photo-1543429776-2782fc8e3f4e?w=300', distance: '280' },
+          { name: 'נאפולי', image: 'https://images.unsplash.com/photo-1534308143481-c55f00dc5b31?w=300', distance: '225' }
+        ]
+      },
+      'טוקיו': {
+        country: 'יפן',
+        coverImage: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1200',
+        tags: ['טכנולוגיה', 'תרבות', 'אוכל', 'אנימה'],
+        description: 'טוקיו, הבירה הצפופה ביותר בעולם, מאחדת מסורת ועתיד. מקדשים עתיקים לצד בניינים עתידניים, אוכל מדהים ותרבות ייחודית.',
+        language: 'יפנית', currency: 'ין (¥)', timezone: 'GMT+9', airport: 'נאריטה (NRT), הנדה (HND)',
+        bestTimeToVisit: 'מרץ-מאי (דובדבן), ספטמבר-נובמבר',
+        seasons: { summer: 'חם ולח 25-35°C, עונת גשמים ביוני', winter: 'קר וצלול 2-10°C, שלג לעיתים' },
+        events: [
+          { name: 'פריחת הדובדבן', date: 'מרץ-אפריל', description: 'חגיגת הסאקורה - פיקניקים מתחת לעצי הדובדבן הפורחים.' },
+          { name: 'מסמת גיון', date: 'יולי', description: 'אחד הפסטיבלים הוותיקים ביפן עם מצעדים מסורתיים.' }
+        ],
+        attractions: [
+          { name: 'מקדש סנסו-ג\'י', image: 'https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?w=500', rating: 4.7, description: 'המקדש הבודהיסטי הוותיק ביותר בטוקיו, בשכונת אסאקוסה.', recommendedDuration: '1-2 שעות', price: 'חינם' },
+          { name: 'מגדל טוקיו', image: 'https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=500', rating: 4.5, description: 'מגדל תקשורת אייקוני עם נוף 360° של העיר.', recommendedDuration: '1-2 שעות', price: '¥1200' },
+          { name: 'שיבויה קרוסינג', image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=500', rating: 4.6, description: 'מעבר החצייה הצפוף ביותר בעולם - חוויה בלתי נשכחת.', recommendedDuration: '30 דקות', price: 'חינם' }
+        ],
+        food: {
+          intro: 'טוקיו היא גן עדן קולינרי עם יותר כוכבי מישלן מכל עיר אחרת בעולם.',
+          dishes: [
+            { name: 'ראמן', image: 'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=150', description: 'מרק נודלס עשיר - כל מסעדה עם מתכון סודי משלה.' },
+            { name: 'סושי', image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=150', description: 'סושי אמיתי ישירות מהדייגים - לא כמו בחו״ל.' }
+          ],
+          restaurants: [
+            { name: 'Ichiran Ramen', rating: 4.6, description: 'מסעדת ראמן מפורסמת עם תאים אישיים לחוויה מלאה.', cuisine: 'ראמן', priceRange: '¥', area: 'שיבויה', website: 'https://en.ichiran.com' },
+            { name: 'Tsukiji Outer Market', rating: 4.7, description: 'שוק הדגים החיצוני - סושי בוקר טרי להפליא.', cuisine: 'פירות ים', priceRange: '¥¥', area: 'צוקיג\'י', website: '' }
+          ],
+          markets: [{ name: 'שוק צוקיג\'י', image: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=300', description: 'שוק הדגים הגדול בעולם, פעיל מאוד בבוקר.', hours: 'שני-שבת 5:00-14:00' }]
+        },
+        transportation: {
+          overview: 'המערכת הטובה בעולם - רכבות, מטרו ואוטובוסים מדויקים לשנייה.',
+          options: [
+            { name: 'JR Pass', icon: 'train', iconColor: '#F57F17', description: 'כרטיס לכל רכבות JR כולל שינקנסן - חובה לתיירים.', cost: '¥50,000 לשבוע', hours: '5:00-24:00', website: 'https://www.jrpass.com' },
+            { name: 'מטרו טוקיו', icon: 'subway', iconColor: '#0097A7', description: '13 קווים המכסים את כל טוקיו.', cost: '¥170-320 לנסיעה', hours: '5:00-24:00', website: 'https://www.tokyometro.jp/en' }
+          ],
+          tips: [{ title: 'IC Card (Suica)', description: 'כרטיס נסיעה נטען שעובד בכל הרכבות, האוטובוסים ואפילו בנוחות-צו.' }]
+        },
+        tips: {
+          beforeTravel: [
+            { icon: 'language', title: 'אפליקציית תרגום', description: 'הורד Google Translate עם יפנית offline - הצילה מסטואציות רבות.' },
+            { icon: 'wifi', title: 'Pocket WiFi', description: 'השכר Pocket WiFi בנמל התעופה - הכרחי לניווט.' }
+          ],
+          hours: { shopping: '10:00-21:00, פתוח 7 ימים', restaurants: 'ראמן 24 שעות, מסעדות עד 23:00', attractions: 'רוב האתרים פתוחים מ-9:00' },
+          local: [
+            { title: 'כיבוד קשישים', description: 'פנה מקום לקשישים ברכבת - נורמה חברתית מוקפדת.' },
+            { title: 'מזומן', description: 'יפן עדיין מבוססת מזומן - משוך ין בנמל התעופה.' }
+          ]
+        },
+        nearbyDestinations: [
+          { name: 'קיוטו', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=300', distance: '450' },
+          { name: 'הר פוג\'י', image: 'https://images.unsplash.com/photo-1542640244-7e672d6cef4e?w=300', distance: '100' }
+        ]
+      },
+      'ניו יורק': {
+        country: 'ארה״ב',
+        coverImage: 'https://images.unsplash.com/photo-1538970272646-f61fabb3a8a2?w=1200',
+        tags: ['עיר גדולה', 'תרבות', 'קניות', 'מוזיקה'],
+        description: 'ניו יורק, העיר שלא ישנה, היא לב התרבות והכלכלה העולמית. מנהטן, סנטרל פארק, פסל החירות ורחוב ברודוויי.',
+        language: 'אנגלית', currency: 'דולר ($)', timezone: 'GMT-5', airport: 'JFK, LaGuardia (LGA), Newark (EWR)',
+        bestTimeToVisit: 'אפריל-יוני, ספטמבר-נובמבר',
+        seasons: { summer: 'חם ולח 25-35°C, אירועים רבים', winter: 'קר מאוד -5-5°C, שלג' },
+        events: [
+          { name: 'ראש השנה האזרחי', date: '31 דצמבר', description: 'ספירת לאחור אגדית ב-Times Square עם מיליון איש.' },
+          { name: 'מצעד Pride', date: 'יוני', description: 'אחד מצעדי הגאווה הגדולים בעולם.' }
+        ],
+        attractions: [
+          { name: 'פסל החירות', image: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=500', rating: 4.7, description: 'סמל האמריקה, נגישה בספינה מהנמל.', recommendedDuration: '3-4 שעות', price: '$24' },
+          { name: 'סנטרל פארק', image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?w=500', rating: 4.8, description: 'גן הירוק עצום בלב מנהטן - לריצה, פיקניק ושלווה.', recommendedDuration: '2-4 שעות', price: 'חינם' },
+          { name: 'Empire State Building', image: 'https://images.unsplash.com/photo-1555109307-f7d9da25c244?w=500', rating: 4.6, description: 'נוף מדהים של מנהטן מהגג האייקוני.', recommendedDuration: '1-2 שעות', price: '$44' }
+        ],
+        food: {
+          intro: 'ניו יורק היא מלטינג פוט קולינרי - מכל תרבות בעולם ניתן למצוא אוכל אמיתי.',
+          dishes: [
+            { name: 'NY Pizza', image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=150', description: 'פיצה דקה ורחבה לפי פרוסה - חובה לאכול ברחוב.' },
+            { name: 'NY Bagel', image: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=150', description: 'בייגל עם קרם גבינה ולוקס - ארוחת בוקר ניו יורקית קלאסית.' }
+          ],
+          restaurants: [
+            { name: 'Katz\'s Delicatessen', rating: 4.5, description: 'דלי יהודי אגדי מ-1888 - פסטרמי הכי טוב בעולם.', cuisine: 'דלי יהודי', priceRange: '$$', area: 'Lower East Side', website: 'https://katzsdelicatessen.com' },
+            { name: 'Shake Shack Madison', rating: 4.4, description: 'המקום המקורי של רשת ההמבורגרים המפורסמת.', cuisine: 'המבורגרים', priceRange: '$$', area: 'Madison Square Park', website: 'https://www.shakeshack.com' }
+          ],
+          markets: [{ name: 'Chelsea Market', image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300', description: 'שוק מקורה מפורסם עם מסעדות ודוכנים מכל העולם.', hours: 'יום-שישי 7:00-21:00' }]
+        },
+        transportation: {
+          overview: 'מטרו עובד 24/7, מוניות צהובות ו-Uber זמינים בכל מקום.',
+          options: [
+            { name: 'מטרו NYC', icon: 'subway', iconColor: '#E53935', description: '24 קווים, פועל 24/7 - הדרך הכי זולה לנסוע.', cost: '$2.90 לנסיעה', hours: '24/7', website: 'https://new.mta.info' },
+            { name: 'מונית צהובה', icon: 'local_taxi', iconColor: '#FDD835', description: 'אייקונית ניו יורקית, זמינה בכל מקום במנהטן.', cost: '$3 + מד', hours: '24/7', website: '' }
+          ],
+          tips: [{ title: 'MetroCard', description: 'קנה MetroCard בכניסה לתחנה - חוסך זמן ומזומן.' }]
+        },
+        tips: {
+          beforeTravel: [
+            { icon: 'security', title: 'ESTA', description: 'ישראלים זקוקים לאישור ESTA לפני הטיסה - הגש 72 שעות מראש.' },
+            { icon: 'hotel', title: 'הזמן מוקדם', description: 'מלונות בניו יורק יקרים - הזמן כמה שיותר מוקדם.' }
+          ],
+          hours: { shopping: '10:00-21:00, פתוח 7 ימים', restaurants: 'סגנון אמריקאי - ארוחת ערב מ-18:00', attractions: 'רוב האתרים פתוחים 9:00-17:00' },
+          local: [
+            { title: 'טיפים', description: 'בניו יורק נהוג לתת 18-20% טיפ במסעדות - זה חלק מהשכר.' },
+            { title: 'הליכה', description: 'ניו יורקים הולכים מהר - אל תעצור באמצע המדרכה לצלם.' }
+          ]
+        },
+        nearbyDestinations: [
+          { name: 'וושינגטון DC', image: 'https://images.unsplash.com/photo-1501466044931-62695aada8e9?w=300', distance: '360' },
+          { name: 'בוסטון', image: 'https://images.unsplash.com/photo-1501979376754-f8b8fd3e4f4f?w=300', distance: '350' }
+        ]
+      },
+      'בנגקוק': {
+        country: 'תאילנד',
+        coverImage: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=1200',
+        tags: ['מקדשים', 'אוכל', 'קניות', 'חיי לילה'],
+        description: 'בנגקוק, עיר הכסא, היא שילוב מרתק של מקדשים עתיקים, שווקים צפופים, אוכל רחוב מדהים ומודרניות בועטת.',
+        language: 'תאית', currency: 'בהט (THB)', timezone: 'GMT+7', airport: 'סוברנאבהומי (BKK)',
+        bestTimeToVisit: 'נובמבר-פברואר',
+        seasons: { summer: 'עונת גשמים מאי-אוקטובר, חם ולח', winter: 'יבש ונעים 20-30°C' },
+        events: [
+          { name: 'סונגקראן', date: 'אפריל', description: 'ראש השנה התאי - מלחמת המים הגדולה בעולם!' },
+          { name: 'לוי קרתונג', date: 'נובמבר', description: 'פסטיבל השקת סירות נרות על הנהר.' }
+        ],
+        attractions: [
+          { name: 'ואט פרא קאו', image: 'https://images.unsplash.com/photo-1563492065599-3520f775eeed?w=500', rating: 4.8, description: 'מקדש בודה אמרלד - הקדוש ביותר בתאילנד.', recommendedDuration: '2 שעות', price: '500 בהט' },
+          { name: 'שוק צף', image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=500', rating: 4.5, description: 'סירות עמוסות פירות וירקות על תעלות עתיקות.', recommendedDuration: '2-3 שעות', price: 'חינם (כניסה)' },
+          { name: 'Chatuchak Weekend Market', image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500', rating: 4.6, description: 'השוק הגדול בעולם - 15,000 דוכנים!', recommendedDuration: '3-4 שעות', price: 'חינם' }
+        ],
+        food: {
+          intro: 'בנגקוק היא גן עדן של אוכל רחוב - כל פינה מגלה ריחות ומתכונים חדשים.',
+          dishes: [
+            { name: 'פאד תאי', image: 'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=150', description: 'נודלס מוקפצים עם שרימפס, בוטנים ולימון - המנה הלאומית.' },
+            { name: 'ירק גרין קארי', image: 'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=150', description: 'קארי קוקוס ירוק מפוצץ טעמים - חריף וארומטי.' }
+          ],
+          restaurants: [
+            { name: 'Jay Fai', rating: 4.8, description: 'מסעדת רחוב עם כוכב מישלן - תור של שעות!', cuisine: 'תאית מסורתית', priceRange: '฿฿฿', area: 'בנגלמפו', website: '' },
+            { name: 'Nahm', rating: 4.5, description: 'מסעדת Fine Dining תאית מפורסמת עולמית.', cuisine: 'תאית מודרנית', priceRange: '฿฿฿฿', area: 'סילום', website: 'https://www.comohotels.com/metropolitanbangkok/dining/nahm' }
+          ],
+          markets: [{ name: 'Or Tor Kor Market', image: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=300', description: 'שוק הפירות הטרופיים הטובים ביותר בבנגקוק.', hours: 'יומי 6:00-18:00' }]
+        },
+        transportation: {
+          overview: 'BTS Skytrain נוח מאוד, Grab (אובר תאילנדי) זול, וסונגתיאו (טנדר משותף) לשכונות.',
+          options: [
+            { name: 'BTS Skytrain', icon: 'train', iconColor: '#00897B', description: 'רכבת על גובה - מהיר ומזוגן, מכסה מרכז העיר.', cost: '17-59 בהט', hours: '6:00-24:00', website: 'https://www.bts.co.th/eng' },
+            { name: 'Grab', icon: 'local_taxi', iconColor: '#1B5E20', description: 'Uber תאילנדי - זול, בטוח ועם GPS.', cost: 'החל מ-50 בהט', hours: '24/7', website: 'https://www.grab.com' }
+          ],
+          tips: [{ title: 'הימנע מטוק-טוק', description: 'טוק-טוקים מקומיים לעיתים מוציאים תיירים לחנויות - השתמש ב-Grab.' }]
+        },
+        tips: {
+          beforeTravel: [
+            { icon: 'health_and_safety', title: 'חיסונים', description: 'בדוק עם רופא לגבי חיסוני הפטיטיס A, טיפוס ויפנסי.' },
+            { icon: 'wb_sunny', title: 'קרם הגנה', description: 'השמש חזקה מאוד - SPF 50 חובה.' }
+          ],
+          hours: { shopping: '10:00-22:00, פתוח 7 ימים', restaurants: 'אוכל רחוב 24/7, מסעדות עד 23:00', attractions: 'מקדשים 8:00-17:00' },
+          local: [
+            { title: 'כבוד למלך', description: 'ביקורת על המשפחה המלכותית היא עבירה פלילית בתאילנד.' },
+            { title: 'לבוש במקדשים', description: 'כיסוי כתפיים וברכיים - מוכרים כיסויים בכניסה.' }
+          ]
+        },
+        nearbyDestinations: [
+          { name: 'פוקט', image: 'https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?w=300', distance: '860' },
+          { name: 'צ\'יאנג מאי', image: 'https://images.unsplash.com/photo-1528181304800-259b08848526?w=300', distance: '700' }
+        ]
       },
       'ברצלונה': {
         country: 'ספרד',
         coverImage: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=1200',
         tags: ['חופים', 'אדריכלות', 'אוכל', 'חיי לילה'],
         description: 'ברצלונה, עיר התרבות והאמנות של ספרד. סגרדה פמיליה, פארק גואל, לה רמבלה והחופים המדהימים.',
-        language: 'קטלאנית וספרדית',
-        currency: 'אירו (€)',
-        airport: 'אל פראט (BCN)'
+        language: 'קטלאנית וספרדית', currency: 'אירו (€)', timezone: 'GMT+1', airport: 'אל פראט (BCN)',
+        bestTimeToVisit: 'מאי-יוני, ספטמבר',
+        seasons: { summer: 'חם ויבש 25-30°C, מלא תיירים', winter: 'מתון 10-15°C, נעים' },
+        events: [
+          { name: 'La Mercè', date: 'ספטמבר', description: 'פסטיבל העיר עם קסטלרס, זיקוקים ומוזיקה חינמית.' },
+          { name: 'Sónar Festival', date: 'יוני', description: 'פסטיבל מוזיקה אלקטרונית ואמנות דיגיטלית עולמי.' }
+        ],
+        attractions: [
+          { name: 'סגרדה פמיליה', image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=500', rating: 4.9, description: 'מופת אדריכלי של גאודי - הכנסייה הייחודית בעולם.', recommendedDuration: '2-3 שעות', price: '€26' },
+          { name: 'פארק גואל', image: 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=500', rating: 4.6, description: 'גן פנטסטי של גאודי עם נוף עצום על הים.', recommendedDuration: '1-2 שעות', price: '€10' },
+          { name: 'לה רמבלה', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500', rating: 4.3, description: 'הרחוב המפורסם של ברצלונה - שוק, מסעדות ואמנים.', recommendedDuration: '1 שעה', price: 'חינם' }
+        ],
+        food: {
+          intro: 'ברצלונה היא בירת הטאפאס - אוכל חברתי שמבלים עליו שעות.',
+          dishes: [
+            { name: 'פאן קון טומאטה', image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=150', description: 'לחם עם עגבנייה ושמן זית - פשוט ומושלם.' },
+            { name: 'פאייה', image: 'https://images.unsplash.com/photo-1534080564583-6be75777b70a?w=150', description: 'אורז עם פירות ים - המנה הקטלאנית האייקונית.' }
+          ],
+          restaurants: [
+            { name: 'El Xampanyet', rating: 4.5, description: 'בר קאווה ישן עם טאפאס מסורתיים ב-El Born.', cuisine: 'טאפאס קטלאנית', priceRange: '€€', area: 'El Born', website: '' },
+            { name: 'Tickets', rating: 4.7, description: 'מסעדת המולקולרי של אלברט אדריא - חוויה מדהימה.', cuisine: 'מודרנית', priceRange: '€€€€', area: 'Eixample', website: 'https://www.ticketsbar.es' }
+          ],
+          markets: [{ name: 'La Boqueria', image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300', description: 'שוק הפירות והמזון המפורסם של ברצלונה.', hours: 'שני-שבת 8:00-20:30' }]
+        },
+        transportation: {
+          overview: 'מטרו מצוין, אוטובוסים, ואפשרות נעימה ללכת ברגל לאורך הים.',
+          options: [
+            { name: 'מטרו', icon: 'subway', iconColor: '#D32F2F', description: '12 קווים, מכסה את כל ברצלונה.', cost: 'כרטיס T-Casual €11.35 ל-10 נסיעות', hours: '5:00-24:00 (כל הלילה שישי)', website: 'https://www.tmb.cat/en' },
+            { name: 'אופניים', icon: 'pedal_bike', iconColor: '#388E3C', description: 'Bicing - השכרת אופניים לתושבים, DONKEY לתיירים.', cost: '€5-10 ליום', hours: '24/7', website: '' }
+          ],
+          tips: [{ title: 'T-Casual', description: '10 נסיעות ב-€11 - הרבה יותר זול מכרטיסים בודדים.' }]
+        },
+        tips: {
+          beforeTravel: [
+            { icon: 'warning', title: 'שמור על חפציך', description: 'הרמבלה ידועה בכיסי. שמור על הארנק והטלפון.' },
+            { icon: 'camera', title: 'הזמן לסגרדה פמיליה', description: 'חובה להזמין מראש - תורים ארוכים מאוד בלעדי זה.' }
+          ],
+          hours: { shopping: '10:00-21:00, סגור ראשון', restaurants: 'ארוחת ערב 21:00-23:30 - אל תגיע לפני 21!', attractions: 'מוזיאונים 10:00-18:00' },
+          local: [
+            { title: 'קטלאנית', description: 'דבר ספרדית לא קטלאנית - חלק מהמקומיים עלולים להתרעם.' },
+            { title: 'שנת צהריים', description: 'חנויות ומסעדות רבות סגורות 14:00-17:00.' }
+          ]
+        },
+        nearbyDestinations: [
+          { name: 'מדריד', image: 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=300', distance: '620' },
+          { name: 'ואלנסיה', image: 'https://images.unsplash.com/photo-1562183241-b937e9102f47?w=300', distance: '350' }
+        ]
       },
       'לונדון': {
         country: 'בריטניה',
         coverImage: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1200',
         tags: ['תרבות', 'היסטוריה', 'קניות', 'תיאטרון'],
         description: 'לונדון, בירת בריטניה, משלבת היסטוריה עתיקה עם מודרניות. ביג בן, ארמון בקינגהאם, גלגל הענק והתיאטרונים.',
-        language: 'אנגלית',
-        currency: 'פאונד (£)',
-        airport: 'היתרו (LHR), גטוויק (LGW)'
+        language: 'אנגלית', currency: 'פאונד (£)', timezone: 'GMT', airport: 'היתרו (LHR), גטוויק (LGW)',
+        bestTimeToVisit: 'מאי-ספטמבר',
+        seasons: { summer: 'נעים 18-25°C, אורך יום', winter: 'קר וגשום 2-8°C' },
+        events: [
+          { name: 'Notting Hill Carnival', date: 'אוגוסט', description: 'קרנבל הקריבי הגדול באירופה - מוזיקה, ריקוד ואוכל.' },
+          { name: 'Guy Fawkes Night', date: '5 נובמבר', description: 'זיקוקים ומדורות ברחבי העיר.' }
+        ],
+        attractions: [
+          { name: 'המוזיאון הבריטי', image: 'https://images.unsplash.com/photo-1526139334526-f591a54b477c?w=500', rating: 4.8, description: 'אחד המוזיאונים הגדולים בעולם - אוצרות מכל התרבויות.', recommendedDuration: '3-4 שעות', price: 'חינם' },
+          { name: 'ביג בן ופרלמנט', image: 'https://images.unsplash.com/photo-1529655683826-aba9b3e77383?w=500', rating: 4.6, description: 'סמל לונדון - שעון הכינוי הגדול לצד הטמזה.', recommendedDuration: '1 שעה', price: 'חינם (חיצוני)' },
+          { name: 'מוזיאון הלאומי', image: 'https://images.unsplash.com/photo-1533929736458-ca588d08c8be?w=500', rating: 4.7, description: 'עצמות דינוזאורים, אמנות ומדע - חינם!', recommendedDuration: '2-3 שעות', price: 'חינם' }
+        ],
+        food: {
+          intro: 'לונדון מציעה מגוון קולינרי עצום - מ-fish & chips מסורתי ועד מסעדות כוכבי מישלן.',
+          dishes: [
+            { name: 'Fish & Chips', image: 'https://images.unsplash.com/photo-1571091655789-405eb7a3a3a8?w=150', description: 'הארוחה הבריטית הקלאסית - דג מטוגן עם צ\'יפס.' },
+            { name: 'Full English Breakfast', image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=150', description: 'ביצים, בייקון, שעועית, עגבנייה וסלאמי - ארוחת בוקר אנגלית.' }
+          ],
+          restaurants: [
+            { name: 'The Ledbury', rating: 4.8, description: 'מסעדת 2 כוכבי מישלן בנוטינג היל.', cuisine: 'בריטית מודרנית', priceRange: '££££', area: 'Notting Hill', website: 'https://www.theledbury.com' },
+            { name: 'Borough Market', rating: 4.7, description: 'שוק אוכל היסטורי עם מיטב המוצרים הבריטיים.', cuisine: 'מגוון', priceRange: '££', area: 'Southwark', website: 'https://boroughmarket.org.uk' }
+          ],
+          markets: [{ name: 'Borough Market', image: 'https://images.unsplash.com/photo-1533929736458-ca588d08c8be?w=300', description: 'שוק אוכל היסטורי מ-1276 עם מוצרים מכל העולם.', hours: 'שני-שבת 10:00-17:00' }]
+        },
+        transportation: {
+          overview: 'The Tube (מטרו לונדוני) הוא הוותיק בעולם, אוטובוסים קומותיים אדומים ותחבורת נהר.',
+          options: [
+            { name: 'The Tube', icon: 'subway', iconColor: '#C62828', description: 'מטרו לונדון - 11 קווים, ותיק בעולם.', cost: 'חל 2 Zones £2.80', hours: '5:00-1:00', website: 'https://tfl.gov.uk' },
+            { name: 'אוטובוס אדום', icon: 'directions_bus', iconColor: '#B71C1C', description: 'אייקון לונדוני - מכסה גם מה שהמטרו לא.', cost: '£1.75 לנסיעה', hours: '24/7', website: 'https://tfl.gov.uk' }
+          ],
+          tips: [{ title: 'Oyster Card', description: 'כרטיס נסיעה נטען - הרבה יותר זול מכרטיס בודד.' }]
+        },
+        tips: {
+          beforeTravel: [
+            { icon: 'language', title: 'אנגלית', description: 'לונדון מרתק אנגלי - תוכל להסתדר בלי בעיות.' },
+            { icon: 'wb_cloudy', title: 'מטרייה', description: 'גשם בכל עת - קח מטרייה קומפקטית תמיד.' }
+          ],
+          hours: { shopping: '9:00-20:00, ראשון 11:00-17:00', restaurants: 'ארוחת ערב 18:00-22:00', attractions: 'מוזיאונים לאומיים פתוחים 10:00-17:30, חינם' },
+          local: [
+            { title: 'תור', description: 'הבריטים מקפידים מאוד על תורים - לא לנסות לקפוץ.' },
+            { title: 'ברכישה משמאל', description: 'בסקלטורים - עמוד ימין, הלוך שמאל.' }
+          ]
+        },
+        nearbyDestinations: [
+          { name: 'אוקספורד', image: 'https://images.unsplash.com/photo-1607237138185-eedd9c632b0b?w=300', distance: '90' },
+          { name: 'קיימברידג\'', image: 'https://images.unsplash.com/photo-1562619371033-5de84c0d64e0?w=300', distance: '100' }
+        ]
       },
       'אמסטרדם': {
         country: 'הולנד',
         coverImage: 'https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=1200',
         tags: ['תעלות', 'אופניים', 'מוזיאונים', 'פרחים'],
         description: 'אמסטרדם, עיר התעלות והאופניים. בית אנה פרנק, מוזיאון ואן גוך, שדות הטוליפים והאווירה הליברלית.',
-        language: 'הולנדית',
-        currency: 'אירו (€)',
-        airport: 'סכיפהול (AMS)'
+        language: 'הולנדית', currency: 'אירו (€)', timezone: 'GMT+1', airport: 'סכיפהול (AMS)',
+        bestTimeToVisit: 'אפריל-מאי (טוליפים), יוני-אוגוסט',
+        seasons: { summer: 'נעים 18-22°C, ארוך ובהיר', winter: 'קר וגשום 0-6°C' },
+        events: [
+          { name: 'קינגס דיי', date: '27 אפריל', description: 'יום הולדת המלך - כל העיר כתומה, מסיבות ושווקים.' },
+          { name: 'Amsterdam Light Festival', date: 'דצמבר-ינואר', description: 'יצירות אור לאורך התעלות.' }
+        ],
+        attractions: [
+          { name: 'בית אנה פרנק', image: 'https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=500', rating: 4.7, description: 'המחבוא ההיסטורי של משפחת פרנק - מרגש ביותר.', recommendedDuration: '1-2 שעות', price: '€14' },
+          { name: 'מוזיאון ואן גוך', image: 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=500', rating: 4.8, description: 'אוסף ציורי ואן גוך הגדול בעולם.', recommendedDuration: '2-3 שעות', price: '€22' },
+          { name: 'שדות טוליפים', image: 'https://images.unsplash.com/photo-1490750967868-88df5691cc93?w=500', rating: 4.9, description: 'שטיחי פרחים צבעוניים - חובה באפריל-מאי.', recommendedDuration: 'חצי יום', price: '€20 (כולר)' }
+        ],
+        food: {
+          intro: 'אמסטרדם מציעה אוכל בינלאומי מגוון ומסורות מקומיות ייחודיות.',
+          dishes: [
+            { name: 'הרינג', image: 'https://images.unsplash.com/photo-1559737558-2f5a35f4523b?w=150', description: 'דג הרינג טרי עם בצל - המנה ההולנדית הקלאסית.' },
+            { name: 'ספייקולאס', image: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=150', description: 'עוגיות תבלינים הולנדיות - מושלמות עם קפה.' }
+          ],
+          restaurants: [
+            { name: 'Rijks Restaurant', rating: 4.6, description: 'מסעדת כוכב מישלן בתוך מוזיאון ריקס.', cuisine: 'הולנדית מודרנית', priceRange: '€€€€', area: 'מוזיאון', website: 'https://rijksrestaurant.nl' },
+            { name: 'Foodhallen', rating: 4.4, description: 'מרחב אוכל ענק עם 21 מטבחים שונים.', cuisine: 'מגוון', priceRange: '€€', area: 'De Hallen', website: 'https://foodhallen.nl' }
+          ],
+          markets: [{ name: 'Albert Cuyp Market', image: 'https://images.unsplash.com/photo-1513030230908-42087708be3c?w=300', description: 'השוק הגדול בהולנד - אוכל, בגדים וסחורות.', hours: 'שני-שבת 9:00-17:00' }]
+        },
+        transportation: {
+          overview: 'אופניים הן המלכה! תחבורה ציבורית מצוינת עם טראם, אוטובוס ומטרו.',
+          options: [
+            { name: 'אופניים', icon: 'pedal_bike', iconColor: '#E65100', description: 'השכר אופניים - כולם רוכבים, יש נתיבים בכל מקום.', cost: '€10-15 ליום', hours: '24/7', website: '' },
+            { name: 'טראם', icon: 'tram', iconColor: '#1565C0', description: '17 קווי טראם המכסים את המרכז.', cost: 'כרטיס יומי €8', hours: '6:00-24:00', website: 'https://www.gvb.nl/en' }
+          ],
+          tips: [{ title: 'I Amsterdam Card', description: 'כרטיס תיירות הכולל תחבורה ציבורית + כניסה למוזיאונים.' }]
+        },
+        tips: {
+          beforeTravel: [
+            { icon: 'pedal_bike', title: 'נסיעה באופניים', description: 'שים לב לנתיבי אופניים - תיירים לעיתים נפגעים.' },
+            { icon: 'confirmation_number', title: 'הזמן מראש', description: 'בית אנה פרנק ומוזיאון ואן גוך - הזמן שבועות מראש.' }
+          ],
+          hours: { shopping: '10:00-18:00, ראשון 12:00-18:00', restaurants: 'ארוחת ערב 18:00-22:00', attractions: 'מוזיאונים 9:00-17:00' },
+          local: [
+            { title: 'אופניים ראשונה', description: 'באמסטרדם אופניים הם תחבורה רצינית - לא לגנוב מקום בנתיב.' },
+            { title: 'אנגלית', description: 'ההולנדים מדברים אנגלית מצוינת - אין בעיה לתקשר.' }
+          ]
+        },
+        nearbyDestinations: [
+          { name: 'כולר (שדות טוליפים)', image: 'https://images.unsplash.com/photo-1490750967868-88df5691cc93?w=300', distance: '35' },
+          { name: 'האג', image: 'https://images.unsplash.com/photo-1600891964599-f61ba0e24092?w=300', distance: '55' }
+        ]
       },
       'דובאי': {
         country: 'איחוד האמירויות',
         coverImage: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200',
         tags: ['מודרניות', 'קניות', 'יוקרה', 'מדבר'],
-        description: 'דובאי, עיר העתיד והפלאות. בורג׳ ח׳ליפה, דובאי מול, מלון בורג׳ אל ערב והחופים המדהימים.',
-        language: 'ערבית',
-        currency: 'דירהם (AED)',
-        airport: 'דובאי הבינלאומי (DXB)'
+        description: 'דובאי, עיר העתיד והפלאות. בורג׳ ח׳ליפה, דובאי מול, מלון בורג׳ אל ערב וחוויות מדבר.',
+        language: 'ערבית', currency: 'דירהם (AED)', timezone: 'GMT+4', airport: 'דובאי הבינלאומי (DXB)',
+        bestTimeToVisit: 'נובמבר-מרץ',
+        seasons: { summer: 'לוהט מאוד 40-45°C, לח', winter: 'מושלם 20-28°C, מעט גשם' },
+        events: [
+          { name: 'DSF - דובאי שופינג פסטיבל', date: 'ינואר-פברואר', description: 'פסטיבל הקניות הגדול בעולם עם הנחות ואטרקציות.' },
+          { name: 'חג ריצות אבו דאבי', date: 'מרץ', description: 'תחרות גמלים וסוסים - תרבות מקומית עשירה.' }
+        ],
+        attractions: [
+          { name: 'בורג׳ ח׳ליפה', image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=500', rating: 4.7, description: 'הבניין הגבוה בעולם - 828 מטר, נוף בלתי נשכח.', recommendedDuration: '2 שעות', price: 'AED 169' },
+          { name: 'דובאי מול', image: 'https://images.unsplash.com/photo-1567529684892-09290a1b2d05?w=500', rating: 4.5, description: 'הקניון הגדול בעולם - 1,200 חנויות, מלחייה ומגלשת קרח.', recommendedDuration: '3-5 שעות', price: 'חינם (כניסה)' },
+          { name: 'ספארי מדבר', image: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=500', rating: 4.8, description: 'נסיעה בדיונות, רכיבת גמל וארוחת ערב בדרביה.', recommendedDuration: 'חצי יום', price: 'AED 200-400' }
+        ],
+        food: {
+          intro: 'דובאי היא גסטרונומיה עולמית - מאוכל אמירתי מסורתי ועד כל מסעדה בעולם.',
+          dishes: [
+            { name: 'שאוורמה', image: 'https://images.unsplash.com/photo-1561651823-34feb02250e4?w=150', description: 'שאוורמה ערבית אותנטית - עטוף עם חומוס ופיקלס.' },
+            { name: 'ח׳בז ומוחמרה', image: 'https://images.unsplash.com/photo-1542345812-d98b5cd6cf98?w=150', description: 'לחם ערבי עם ממרח גמבה אדום - ארוחת בוקר מקומית.' }
+          ],
+          restaurants: [
+            { name: 'Nobu Dubai', rating: 4.6, description: 'מסעדת יוקרה יפנית-פרואנית של שף נובו.', cuisine: 'יפנית-יוקרה', priceRange: 'AED AED AED', area: 'Atlantis', website: 'https://www.atlantis.com/dubai/dining/nobu' },
+            { name: 'Al Ustad Special Kebab', rating: 4.7, description: 'קבב איראני אמיתי - פשוט ומדהים מאז 1978.', cuisine: 'מסורתית', priceRange: 'AED', area: 'Deira', website: '' }
+          ],
+          markets: [{ name: 'Gold Souk', image: 'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=300', description: 'שוק הזהב - 400 חנויות זהב ותכשיטים.', hours: 'ראשון-חמישי 10:00-22:00' }]
+        },
+        transportation: {
+          overview: 'מטרו מודרני, אוטובוסים וטקסי זמינים. אובר וכרים זמינים ותיסים.',
+          options: [
+            { name: 'מטרו דובאי', icon: 'subway', iconColor: '#C62828', description: '2 קווים אוטומטיים - ניקיון ומיזוג מושלם.', cost: 'AED 1.8-7.5', hours: '5:30-24:00 (שישי עד 1:00)', website: 'https://www.rta.ae' },
+            { name: 'Careem', icon: 'local_taxi', iconColor: '#5D4037', description: 'אובר מקומי - נוח, זול ובטוח.', cost: 'החל מ-AED 10', hours: '24/7', website: 'https://www.careem.com' }
+          ],
+          tips: [{ title: 'NOL Card', description: 'כרטיס תחבורה לכל האמצעים - מטרו, אוטובוס, טראם.' }]
+        },
+        tips: {
+          beforeTravel: [
+            { icon: 'gavel', title: 'חוקים קפדניים', description: 'שתיית אלכוהול ברחוב, נשיקות בפומבי - אסור חוקית.' },
+            { icon: 'wb_sunny', title: 'חום קיצוני', description: 'בקיץ - הישאר בפנים עם מיזוג בין 11:00-16:00.' }
+          ],
+          hours: { shopping: 'קניונים 10:00-22:00, שווקים 9:00-23:00', restaurants: 'עד 24:00 ברוב המקומות', attractions: 'גג בורג׳ ח׳ליפה - הזמן מראש!' },
+          local: [
+            { title: 'לבוש צנוע', description: 'בקניונים ואתרים ציבוריים - כיסוי כתפיים וברכיים.' },
+            { title: 'רמדאן', description: 'אסור לאכול או לשתות ברחוב ביום בתקופת הרמדאן.' }
+          ]
+        },
+        nearbyDestinations: [
+          { name: 'אבו דאבי', image: 'https://images.unsplash.com/photo-1512632578888-169bbbc64f33?w=300', distance: '140' },
+          { name: 'מסאפי', image: 'https://images.unsplash.com/photo-1504214208698-ea1916a2195a?w=300', distance: '120' }
+        ]
+      },
+      'פראג': {
+        country: 'צ\'כיה',
+        coverImage: 'https://images.unsplash.com/photo-1519677100203-a0e668c92439?w=1200',
+        tags: ['ארכיטקטורה', 'בירה', 'היסטוריה', 'רומנטיקה'],
+        description: 'פראג, עיר מאה הצריחים, היא אחת הערים היפות באירופה. טירת פראג, גשר קרלוב, שכונת יהודי פראג - כמו בסיפור אגדה.',
+        language: 'צ\'כית', currency: 'קורונה (CZK)', timezone: 'GMT+1', airport: 'ואצלב האוול (PRG)',
+        bestTimeToVisit: 'מאי-יוני, ספטמבר',
+        seasons: { summer: 'נעים 22-28°C, עמוס תיירים', winter: 'קר -2-5°C, שלג, שוק חג המולד' },
+        events: [
+          { name: 'פסטיבל קיץ בפראג', date: 'יוני-ספטמבר', description: 'קונצרטים קלאסיים בבניינים היסטוריים.' },
+          { name: 'שוק חג המולד', date: 'נובמבר-דצמבר', description: 'כיכר ליל עם דוכנים, פונץ\' ועוגיות.' }
+        ],
+        attractions: [
+          { name: 'טירת פראג', image: 'https://images.unsplash.com/photo-1519677100203-a0e668c92439?w=500', rating: 4.7, description: 'הטירה הגדולה בעולם - קומפלקס עצום מעל העיר.', recommendedDuration: '3-4 שעות', price: 'CZK 250' },
+          { name: 'גשר קרלוב', image: 'https://images.unsplash.com/photo-1541849546-216549ae216d?w=500', rating: 4.8, description: 'גשר גותי עם 30 פסלי קדושים מהמאה ה-14.', recommendedDuration: '30-60 דקות', price: 'חינם' },
+          { name: 'כיכר העיר העתיקה', image: 'https://images.unsplash.com/photo-1580828343064-fde4fc206bc6?w=500', rating: 4.7, description: 'לב פראג עם שעון האסטרולוגיה מהמאה ה-15.', recommendedDuration: '1-2 שעות', price: 'חינם' }
+        ],
+        food: {
+          intro: 'מטבח צ\'כי עשיר ומשביע - בשרים, כרוב ובירה מהטובות בעולם.',
+          dishes: [
+            { name: ' סבי?קובה', image: 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=150', description: 'גולאש צ\'כי עם כנדליקי (כיסנים) - מנה לאומית.' },
+            { name: 'טריידלניק', image: 'https://images.unsplash.com/photo-1519676867240-f03562e64548?w=150', description: 'מאפה מגולגל סלילי עם סוכר - מנה רחוב פופולרית.' }
+          ],
+          restaurants: [
+            { name: 'Lokál', rating: 4.6, description: 'ביר-הול צ\'כי אותנטי עם בירת פילסנר בוהמי.', cuisine: 'מסורתית צ\'כית', priceRange: 'CZK CZK', area: 'מרכז', website: 'https://lokal-dlouha.ambi.cz' },
+            { name: 'Field Restaurant', rating: 4.7, description: 'כוכב מישלן עם מטבח צ\'כי מודרני מרשים.', cuisine: 'צ\'כית מודרנית', priceRange: 'CZK CZK CZK CZK', area: 'עיר עתיקה', website: 'https://www.fieldrestaurant.cz' }
+          ],
+          markets: [{ name: 'שוק האיכרים נאפלבסקה', image: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=300', description: 'שוק אורגני ב-Náměstí Míru עם מוצרים מקומיים.', hours: 'שישי 8:00-14:00' }]
+        },
+        transportation: {
+          overview: 'תחבורה ציבורית מצוינת - מטרו, טראם ואוטובוס. המרכז ניתן ללכת ברגל.',
+          options: [
+            { name: 'מטרו', icon: 'subway', iconColor: '#C62828', description: '3 קווים A/B/C מכסים את פראג.', cost: 'כרטיס 90 דקות CZK 30', hours: '5:00-24:00', website: 'https://www.dpp.cz/en' },
+            { name: 'טראם', icon: 'tram', iconColor: '#E65100', description: 'טראם אדום אייקוני - נוף מדהים תוך כדי נסיעה.', cost: 'כלול בכרטיס התחבורה', hours: '24/7 (קו לילה)', website: 'https://www.dpp.cz/en' }
+          ],
+          tips: [{ title: 'Prague Card', description: 'כרטיס 2/3/4 יום עם כניסה לאטרקציות ותחבורה חינמית.' }]
+        },
+        tips: {
+          beforeTravel: [
+            { icon: 'euro', title: 'קורונה צ\'כית', description: 'שלם בקורונה מקומית - שער ההמרה טוב יותר ממחיר באירו.' },
+            { icon: 'warning', title: 'שחלות', description: 'ב-Wenceslas Square - היזהר מסוכרייה יקרה ומרמאים.' }
+          ],
+          hours: { shopping: '10:00-20:00, ראשון 12:00-18:00', restaurants: 'ארוחת ערב 18:00-23:00, מחירים נמוכים!', attractions: 'טירת פראג 6:00-22:00' },
+          local: [
+            { title: 'אנגלית', description: 'רוב הצ\'כים הצעירים מדברים אנגלית טובה.' },
+            { title: 'בירה זולה', description: 'בירה בפראג זולה יותר ממים מינרלים - תרבות ייחודית.' }
+          ]
+        },
+        nearbyDestinations: [
+          { name: 'וינה', image: 'https://images.unsplash.com/photo-1516550893885-985c836c5e05?w=300', distance: '330' },
+          { name: 'בודפשט', image: 'https://images.unsplash.com/photo-1551867633-194f125bddfa?w=300', distance: '525' }
+        ]
+      },
+      'סינגפור': {
+        country: 'סינגפור',
+        coverImage: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200',
+        tags: ['מודרניות', 'אוכל', 'גינות', 'קניות'],
+        description: 'סינגפור, עיר-מדינה עתידנית, מפגישה תרבויות אסיה. Gardens by the Bay, Marina Bay Sands, ושפע קולינרי ייחודי.',
+        language: 'אנגלית, מנדרינית, מאלאית, טמילית', currency: 'דולר סינגפורי (SGD)', timezone: 'GMT+8', airport: 'צ\'אנגי (SIN)',
+        bestTimeToVisit: 'פברואר-אפריל, יולי-אוגוסט',
+        seasons: { summer: 'חם ולח כל השנה 26-32°C, עונות גשם', winter: 'אין עונות - חם לאורך כל השנה' },
+        events: [
+          { name: 'Singapore Food Festival', date: 'יולי', description: 'חגיגת המטבח הסינגפורי הייחודי עם שפים מכל העולם.' },
+          { name: 'Deepavali (חג האורות)', date: 'אוקטובר-נובמבר', description: 'חג ההינדי עם קישוטי אור מרהיבים ב-Little India.' }
+        ],
+        attractions: [
+          { name: 'Gardens by the Bay', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=500', rating: 4.8, description: 'גנים עתידניים עם עצי-על ענקיים - מרהיב בלילה.', recommendedDuration: '2-3 שעות', price: 'SGD 28 (כיפות)' },
+          { name: 'Marina Bay Sands', image: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500', rating: 4.7, description: 'מלון אייקוני עם בריכה ב-200 מטר גובה ונוף עוצר נשימה.', recommendedDuration: '2 שעות', price: 'SGD 23 (SkyPark)' },
+          { name: 'Hawker Centers', image: 'https://images.unsplash.com/photo-1567337710282-00832b415979?w=500', rating: 4.9, description: 'מרכזי אוכל רחוב עם מנות כוכבי מישלן ב-SGD 3.', recommendedDuration: '1-2 שעות', price: 'החל מ-SGD 3' }
+        ],
+        food: {
+          intro: 'סינגפור היא גן עדן קולינרי - מטבחים סיניים, מאליים, הודים ואירופאים יחד.',
+          dishes: [
+            { name: 'Chicken Rice', image: 'https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=150', description: 'עוף על אורז עם ציר מרוכז - המנה הלאומית.' },
+            { name: 'Laksa', image: 'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=150', description: 'מרק נודלס קוקוס ושרימפס - שילוב סיני-מאלאי.' }
+          ],
+          restaurants: [
+            { name: 'Hawker Chan', rating: 4.5, description: 'הוקר בעל כוכב מישלן - עוף ואורז ב-SGD 3.', cuisine: 'קנטונזית', priceRange: 'SGD', area: 'Chinatown', website: '' },
+            { name: 'Odette', rating: 4.9, description: 'אחת ממסעדות ה-50 הטובות בעולם, 3 כוכבי מישלן.', cuisine: 'צרפתית-אסייתית', priceRange: 'SGD SGD SGD SGD', area: 'National Gallery', website: 'https://www.odetterestaurant.com' }
+          ],
+          markets: [{ name: 'Newton Food Centre', image: 'https://images.unsplash.com/photo-1557499305-0af888c3d8ec?w=300', description: 'הוקר סנטר פופולרי עם מגוון מנות סינגפוריות.', hours: 'יומי 12:00-2:00' }]
+        },
+        transportation: {
+          overview: 'MRT - אחת ממערכות הרכבות הנקיות והמדויקות בעולם. גם אוטובוסים ומוניות.',
+          options: [
+            { name: 'MRT', icon: 'subway', iconColor: '#D32F2F', description: 'רכבת עירונית מהירה ומזוגנת - מכסה כל הנקודות.', cost: 'SGD 1.0-2.5', hours: '5:30-24:00', website: 'https://www.smrt.com.sg' },
+            { name: 'Grab', icon: 'local_taxi', iconColor: '#1B5E20', description: 'אובר מקומי - זול, בטוח, עם מיזוג.', cost: 'החל מ-SGD 5', hours: '24/7', website: 'https://www.grab.com' }
+          ],
+          tips: [{ title: 'EZ-Link Card', description: 'כרטיס נסיעה נטען לMRT + אוטובוסים - נוח מאוד.' }]
+        },
+        tips: {
+          beforeTravel: [
+            { icon: 'gavel', title: 'חוקים נוקשים', description: 'אין ללעוס מסטיק ברחוב, להשליך זבל - קנסות כבדים.' },
+            { icon: 'restaurant', title: 'אוכל Halal', description: 'הרבה אפשרויות Halal - בדוק שלטים לרווחת כלל המטיילים.' }
+          ],
+          hours: { shopping: 'קניונים 10:00-22:00', restaurants: 'הוקר סנטרס 24/7, מסעדות עד 23:00', attractions: 'Gardens by the Bay עד 21:00' },
+          local: [
+            { title: 'Singlish', description: 'הסינגפורים מדברים Singlish - אנגלית עם סיומות "lah" ו-"lor".' },
+            { title: 'רב-תרבותי', description: 'Chinatown, Little India, Arab Street - כל תרבות בשכונה שלה.' }
+          ]
+        },
+        nearbyDestinations: [
+          { name: 'באלי', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300', distance: '1500' },
+          { name: 'קואלה לומפור', image: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=300', distance: '350' }
+        ]
       }
     };
 
-    const defaultData = destinationsData['פריז'];
-    const destData = destinationsData[dest] || defaultData;
+    if (!destinationsData[dest]) {
+      return null;
+    }
 
+    const d = destinationsData[dest];
     return {
       name: dest,
-      country: destData.country,
-      coverImage: destData.coverImage,
-      tags: destData.tags,
-      description: destData.description,
+      country: d.country,
+      coverImage: d.coverImage,
+      tags: d.tags,
+      description: d.description,
       generalInfo: {
-        language: destData.language,
-        currency: destData.currency,
-        timezone: 'GMT+1 (GMT+2 בקיץ)',
-        airport: destData.airport,
-        bestTimeToVisit: 'אפריל-יוני, ספטמבר-אוקטובר',
-        seasons: {
-          summer: 'חם ונעים, 18°C-25°C, תקופת תיירות עמוסה',
-          winter: 'קר וגשום, 2°C-8°C, פחות תיירים'
-        }
+        language: d.language,
+        currency: d.currency,
+        timezone: d.timezone,
+        airport: d.airport,
+        bestTimeToVisit: d.bestTimeToVisit,
+        seasons: d.seasons
       },
-      currentWeather: {
-        temperature: 22,
-        feelsLike: 24,
-        description: 'בהיר',
-        icon: `https://openweathermap.org/img/wn/01d@2x.png`,
-        humidity: 75,
-        windSpeed: 3.5,
-      },
-      events: [
-        {
-          name: 'יום הבסטיליה',
-          date: '14 ביולי',
-          description: 'חגיגות יום העצמאות הצרפתי עם מצעדים, זיקוקים ואירועים ברחבי העיר.'
-        },
-        {
-          name: 'פריז פאשן וויק',
-          date: 'פברואר/מרץ וספטמבר/אוקטובר',
-          description: 'שבוע האופנה המפורסם בעולם, מציג את הקולקציות החדשות של מעצבי העל.'
-        }
-      ],
-      attractions: [
-        {
-          name: 'מגדל אייפל',
-          image: 'https://images.unsplash.com/photo-1543349689-9a4d426bee8e?w=500',
-          rating: 4.7,
-          description: 'סמלה המפורסם של פריז, המגדל מציע נוף פנורמי מרהיב של העיר.',
-          recommendedDuration: '2-3 שעות',
-          price: '€18-28'
-        },
-        {
-          name: 'מוזיאון הלובר',
-          image: 'https://images.unsplash.com/photo-1527410-90b930c0a42b?w=500',
-          rating: 4.8,
-          description: 'אחד המוזיאונים המפורסמים בעולם, בו מוצגות יצירות אמנות כמו המונה ליזה.',
-          recommendedDuration: '3-4 שעות',
-          price: '€17'
-        },
-        {
-          name: 'קתדרלת נוטרדאם',
-          image: 'https://images.unsplash.com/photo-1584707824245-087f3505cfe4?w=500',
-          rating: 4.7,
-          description: 'קתדרלה גותית מפורסמת הממוקמת בלב פריז, בעלת היסטוריה עשירה.',
-          recommendedDuration: '1-2 שעות',
-          price: 'חינם (תשלום לעלייה למגדל)'
-        }
-      ],
-      food: {
-        intro: 'פריז היא גן עדן למאכלים איכותיים, מבתי קפה קסומים ועד מסעדות יוקרה כוכבי מישלן.',
-        dishes: [
-          {
-            name: 'קרואסון',
-            image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=150',
-            description: 'מאפה צרפתי קלאסי, פריך ושכבתי, מושלם לארוחת בוקר עם קפה.'
-          },
-          {
-            name: 'בף בורגיניון',
-            image: 'https://images.unsplash.com/photo-1600891963935-0a566be546ec?w=150',
-            description: 'תבשיל בשר מסורתי המבושל ביין אדום עם ירקות שורש ותבלינים.'
-          }
-        ],
-        restaurants: [
-          {
-            name: 'Le Jules Verne',
-            rating: 4.5,
-            description: 'מסעדה יוקרתית במגדל אייפל עם נוף פנורמי של העיר.',
-            cuisine: 'צרפתית עילית',
-            priceRange: '€€€€',
-            area: 'מגדל אייפל',
-            website: 'https://www.restaurants-toureiffel.com/en/jules-verne-restaurant.html'
-          },
-          {
-            name: 'Café de Flore',
-            rating: 4.3,
-            description: 'בית קפה היסטורי שהיה מקום מפגש לאמנים ואינטלקטואלים.',
-            cuisine: 'בית קפה צרפתי',
-            priceRange: '€€€',
-            area: 'סן ז\'רמן',
-            website: 'https://cafedeflore.fr/'
-          }
-        ],
-        markets: [
-          {
-            name: 'Marché d\'Aligre',
-            image: 'https://images.unsplash.com/photo-1513030230908-42087708be3c?w=300',
-            description: 'שוק מקומי תוסס עם דוכני פירות, ירקות, גבינות ומאכלים טריים.',
-            hours: 'שלישי-ראשון 8:00-13:00'
-          }
-        ]
-      },
-      transportation: {
-        overview: 'פריז מציעה מערכת תחבורה ציבורית מצוינת, הכוללת רכבת תחתית (מטרו), אוטובוסים, רכבת מהירה (RER) ואפשרויות להשכרת אופניים.',
-        options: [
-          {
-            name: 'מטרו',
-            icon: 'subway',
-            iconColor: '#1976D2',
-            description: 'הדרך הטובה ביותר להתנייד בפריז, עם 16 קווים המכסים את כל העיר.',
-            cost: 'כרטיס בודד €1.90, כרטיס יומי (Paris Visite) €12',
-            hours: '5:30-1:15 (עד 2:15 בסופי שבוע)',
-            website: 'https://www.ratp.fr/en'
-          },
-          {
-            name: 'Vélib\'',
-            icon: 'pedal_bike',
-            iconColor: '#388E3C',
-            description: 'מערכת השכרת אופניים עירונית, עם אלפי אופניים רגילים וחשמליים.',
-            cost: '€5 ליום, €15 לשבוע',
-            hours: '24/7',
-            website: 'https://www.velib-metropole.fr/en_GB'
-          }
-        ],
-        tips: [
-          {
-            title: 'כרטיס Paris Visite',
-            description: 'שקלו לרכוש כרטיס Paris Visite המאפשר נסיעות בלתי מוגבלות בתחבורה הציבורית והנחות לאטרקציות.'
-          },
-          {
-            title: 'אפליקציית ניווט',
-            description: 'הורידו את אפליקציית RATP או Citymapper לניווט קל במערכת התחבורה הציבורית.'
-          }
-        ]
-      },
-      tips: {
-        beforeTravel: [
-          {
-            icon: 'language',
-            title: 'כמה מילים בצרפתית',
-            description: 'למדו כמה מילים בסיסיות בצרפתית כמו "בוז\'ור" (שלום), "מרסי" (תודה). הצרפתים מעריכים את המאמץ.'
-          },
-          {
-            icon: 'euro',
-            title: 'כרטיס מוזיאונים',
-            description: 'אם מתכננים לבקר במספר מוזיאונים, שקלו לרכוש Paris Museum Pass לחיסכון והימנעות מתורים.'
-          }
-        ],
-        hours: {
-          shopping: 'חנויות פתוחות בד״כ 10:00-19:00, סגורות בימי ראשון. חנויות גדולות פתוחות מאוחר יותר בימי חמישי.',
-          restaurants: 'ארוחת צהריים 12:00-14:00, ארוחת ערב 19:30-22:00. רבות מהמסעדות סגורות בימי ראשון או שני.',
-          attractions: 'רוב המוזיאונים סגורים בימי שני או שלישי, בדקו לפני ביקור.'
-        },
-        local: [
-          {
-            title: 'שפת גוף',
-            description: 'הצרפתים נוטים להיות מאופקים יותר בשפת הגוף והדיבור הקולני במקומות ציבוריים נחשב לא מנומס.'
-          },
-          {
-            title: 'טיפים במסעדות',
-            description: 'שירות כלול בחשבון, אך מקובל להשאיר טיפ קטן (€1-3) אם השירות היה טוב.'
-          }
-        ]
-      },
-      nearbyDestinations: [
-        {
-          name: 'ורסאי',
-          image: 'https://images.unsplash.com/photo-1551487499-58d68f794511?w=300',
-          distance: '20'
-        },
-        {
-          name: 'דיסנילנד פריז',
-          image: 'https://images.unsplash.com/photo-1596443286276-129cb297978d?w=300',
-          distance: '40'
-        },
-        {
-          name: 'שאטו דה פונטנבלו',
-          image: 'https://images.unsplash.com/photo-1604580864964-0462f5d5b1a8?w=300',
-          distance: '60'
-        }
-      ]
+      currentWeather: { temperature: 22, feelsLike: 24, description: 'בהיר', icon: 'https://openweathermap.org/img/wn/01d@2x.png', humidity: 75, windSpeed: 3.5 },
+      events: d.events,
+      attractions: d.attractions,
+      food: d.food,
+      transportation: d.transportation,
+      tips: d.tips,
+      nearbyDestinations: d.nearbyDestinations
     };
   };
 
@@ -446,8 +834,24 @@ const DestinationInfoPage = () => {
   
   // טעינה
   if (isLoading) {
+    const isAISearch = !['פריז','רומא','טוקיו','ניו יורק','בנגקוק','ברצלונה','לונדון','אמסטרדם','דובאי','פראג','סינגפור'].includes(destination);
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
+        {isAISearch && (
+          <Box sx={{
+            textAlign: 'center', py: 4, mb: 3,
+            background: 'linear-gradient(135deg, #667eea22 0%, #764ba222 100%)',
+            borderRadius: 3, border: '1px solid #667eea33'
+          }}>
+            <Typography sx={{ fontSize: '2.5rem', mb: 1 }}>🤖</Typography>
+            <Typography variant="h6" fontWeight="bold" color="primary">
+              מחפש מידע על "{destination}"...
+            </Typography>
+            <Typography variant="body2" color="text.secondary" mt={1}>
+              ה-AI מייצר מידע מפורט - לוקח כמה שניות
+            </Typography>
+          </Box>
+        )}
         <Box sx={{ mb: 6 }}>
           <Skeleton variant="rectangular" height={400} sx={{ borderRadius: '0 0 24px 24px' }} />
           <Box sx={{ mt: -4, mx: { xs: 2, md: 'auto' }, maxWidth: '1100px' }}>
@@ -457,8 +861,6 @@ const DestinationInfoPage = () => {
         <Skeleton variant="text" height={60} />
         <Skeleton variant="text" height={20} width="80%" />
         <Skeleton variant="text" height={20} width="90%" />
-        <Skeleton variant="text" height={20} width="85%" />
-        
         <Box sx={{ my: 4 }}>
           <Skeleton variant="rectangular" height={50} sx={{ borderRadius: '8px', mb: 2 }} />
           <Grid container spacing={3}>
@@ -474,27 +876,142 @@ const DestinationInfoPage = () => {
   }
   
   // שגיאה
-  if (error) {
+  if (error && error !== 'no_api_key') {
     return (
-      <Box sx={{ p: 3, textAlign: 'center', color: 'error.main' }}>
-        <Typography variant="h6">{error}</Typography>
-        <Button 
-          variant="outlined" 
-          color="primary" 
-          sx={{ mt: 2 }}
-          onClick={() => fetchDestinationData(destination)}
-        >
-          נסה שוב
-        </Button>
+      <Box sx={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', p: 4 }}>
+        <Box>
+          <Typography sx={{ fontSize: '4rem', mb: 2 }}>⚠️</Typography>
+          <Typography variant="h5" fontWeight="bold" mb={1}>{error}</Typography>
+          <Typography variant="body2" color="text.secondary" mb={3}>בדוק את חיבור האינטרנט ונסה שוב</Typography>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Button variant="contained" onClick={() => fetchDestinationData(destination)}
+              sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 2 }}>
+              נסה שוב
+            </Button>
+            <Button variant="outlined" onClick={() => navigate('/destination-info')} sx={{ borderRadius: 2 }}>
+              חזור לבחירת יעד
+            </Button>
+          </Box>
+        </Box>
       </Box>
     );
   }
   
-  // אם אין נתונים
-  if (!destinationData) {
+  // אם יעד נבחר אך לא נמצא / שגיאה
+  if (destination && !destinationData && !isLoading) {
+    const isNoKey = error === 'no_api_key';
     return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography variant="h6">אין מידע זמין עבור יעד זה</Typography>
+      <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f8f9ff 0%, #fff5f8 100%)', pt: '80px', pb: 8, textAlign: 'center' }}>
+        <Container maxWidth="sm">
+          <Typography sx={{ fontSize: '5rem', mb: 2 }}>{isNoKey ? '🔑' : '🔍'}</Typography>
+          <Typography variant="h4" fontWeight="bold" mb={2}>
+            {isNoKey ? 'נדרש מפתח AI' : `לא נמצא מידע עבור "${destination}"`}
+          </Typography>
+          <Typography variant="body1" color="text.secondary" mb={4}>
+            {isNoKey
+              ? 'כדי לחפש כל יעד בעולם, הוסף מפתח OpenAI ל-.env: REACT_APP_OPENAI_API_KEY'
+              : 'לא הצלחנו לטעון מידע על יעד זה. נסה שוב או בחר מהיעדים הפופולריים.'}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Button
+              variant="contained"
+              onClick={() => navigate('/destination-info')}
+              sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 2, px: 4 }}
+            >
+              חזור לבחירת יעד
+            </Button>
+            <Button variant="outlined" onClick={() => navigate(-1)} sx={{ borderRadius: 2, px: 4 }}>
+              חזור אחורה
+            </Button>
+          </Box>
+        </Container>
+      </Box>
+    );
+  }
+
+  // אם אין יעד נבחר - הצג בורר יעדים
+  if (!destination || !destinationData) {
+    const popularDestinations = [
+      { name: 'פריז', emoji: '🗼', color: '#667eea' },
+      { name: 'רומא', emoji: '🏛️', color: '#f5576c' },
+      { name: 'טוקיו', emoji: '🗾', color: '#e91e8c' },
+      { name: 'ניו יורק', emoji: '🗽', color: '#ff6b35' },
+      { name: 'בנגקוק', emoji: '🛕', color: '#f5a623' },
+      { name: 'ברצלונה', emoji: '🏖️', color: '#4facfe' },
+      { name: 'לונדון', emoji: '🎡', color: '#43e97b' },
+      { name: 'אמסטרדם', emoji: '🚲', color: '#f093fb' },
+      { name: 'דובאי', emoji: '🏙️', color: '#fa709a' },
+      { name: 'פראג', emoji: '🏰', color: '#764ba2' },
+      { name: 'סינגפור', emoji: '🌴', color: '#00b09b' },
+    ];
+    return (
+      <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f8f9ff 0%, #fff5f8 100%)', pt: '80px', pb: 8 }}>
+        <Container maxWidth="md">
+          <Box textAlign="center" mb={6}>
+            <Typography variant="h3" fontWeight="bold" mb={2}>
+              🌍 לאן תרצה לטייל?
+            </Typography>
+            <Typography variant="h6" color="text.secondary" mb={4}>
+              בחר יעד לקבלת מידע מפורט - מזג אוויר, אטרקציות, טיפים ועוד
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, maxWidth: 480, mx: 'auto' }}>
+              <TextField
+                fullWidth
+                placeholder="חפש כל יעד בעולם..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon color="action" />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ bgcolor: 'white', borderRadius: 2 }}
+              />
+              <Button
+                variant="contained"
+                onClick={handleSearch}
+                sx={{
+                  px: 3,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  whiteSpace: 'nowrap',
+                  borderRadius: 2
+                }}
+              >
+                חפש
+              </Button>
+            </Box>
+          </Box>
+          <Grid container spacing={3} justifyContent="center">
+            {popularDestinations.map((dest) => (
+              <Grid item xs={6} sm={4} key={dest.name}>
+                <Paper
+                  elevation={3}
+                  onClick={() => navigate(`/destination-info/${dest.name}`)}
+                  sx={{
+                    p: 4,
+                    textAlign: 'center',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    background: `linear-gradient(135deg, ${dest.color}22 0%, ${dest.color}44 100%)`,
+                    border: `2px solid ${dest.color}55`,
+                    transition: 'all 0.25s ease',
+                    '&:hover': {
+                      transform: 'translateY(-6px)',
+                      boxShadow: `0 12px 30px ${dest.color}55`,
+                      background: `linear-gradient(135deg, ${dest.color}33 0%, ${dest.color}66 100%)`,
+                    }
+                  }}
+                >
+                  <Typography sx={{ fontSize: '3rem', mb: 1 }}>{dest.emoji}</Typography>
+                  <Typography variant="h6" fontWeight="bold">{dest.name}</Typography>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
       </Box>
     );
   }
