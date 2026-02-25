@@ -332,16 +332,15 @@ const TravelServicesBooking = () => {
                   label="תאריך התחלה"
                   value={bookingData.startDate}
                   onChange={(date) => handleDateChange('startDate', date)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      fullWidth
-                      required
-                      error={!!errors.startDate}
-                      helperText={errors.startDate}
-                    />
-                  )}
                   minDate={new Date()}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      required: true,
+                      error: !!errors.startDate,
+                      helperText: errors.startDate,
+                    },
+                  }}
                 />
               </LocalizationProvider>
             </Grid>
@@ -352,16 +351,15 @@ const TravelServicesBooking = () => {
                   label="תאריך סיום"
                   value={bookingData.endDate}
                   onChange={(date) => handleDateChange('endDate', date)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      fullWidth
-                      required
-                      error={!!errors.endDate}
-                      helperText={errors.endDate}
-                    />
-                  )}
                   minDate={bookingData.startDate || new Date()}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      required: true,
+                      error: !!errors.endDate,
+                      helperText: errors.endDate,
+                    },
+                  }}
                 />
               </LocalizationProvider>
             </Grid>

@@ -176,32 +176,33 @@ export default function TravelAIChat() {
   return (
     <>
       {/* Floating Action Button */}
-      <Tooltip title="טריפי - עוזר הנסיעות שלך 🌍" placement="right">
-        <Fab
-          onClick={open}
-          sx={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            width: 60,
-            height: 60,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            zIndex: 1200,
-            boxShadow: '0 8px 25px rgba(102,126,234,0.5)',
-            animation: hasNewMessage ? 'none' : 'fabPulse 2.5s ease-in-out infinite',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            '&:hover': {
-              transform: 'scale(1.1)',
-              boxShadow: '0 12px 35px rgba(102,126,234,0.6)',
-              background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)'
-            },
-            display: isOpen ? 'none' : 'flex'
-          }}
-        >
-          <SmartToyIcon sx={{ fontSize: 28 }} />
-        </Fab>
-      </Tooltip>
+      {!isOpen && (
+        <Tooltip title="טריפי - עוזר הנסיעות שלך 🌍" placement="right">
+          <Fab
+            onClick={open}
+            sx={{
+              position: 'fixed',
+              bottom: 24,
+              right: 24,
+              width: 60,
+              height: 60,
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              zIndex: 1200,
+              boxShadow: '0 8px 25px rgba(102,126,234,0.5)',
+              animation: hasNewMessage ? 'none' : 'fabPulse 2.5s ease-in-out infinite',
+              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+              '&:hover': {
+                transform: 'scale(1.1)',
+                boxShadow: '0 12px 35px rgba(102,126,234,0.6)',
+                background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)'
+              },
+            }}
+          >
+            <SmartToyIcon sx={{ fontSize: 28 }} />
+          </Fab>
+        </Tooltip>
+      )}
 
       {/* Chat Drawer */}
       <Drawer

@@ -11,10 +11,25 @@ export const TripProvider = ({ children }) => {
   });
 
   const [startPoint, setStartPoint] = useState('Tel Aviv');
+  const [tripPlan, setTripPlan] = useState(null);
 
   const planTripWithAI = async (preferences) => {
-    console.log('Planning trip with:', preferences);
+    if (preferences) console.log('Planning trip with:', preferences);
     return { success: true };
+  };
+
+  const updateTripPlan = (plan) => setTripPlan(plan);
+
+  const saveTrip = (planData) => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('savedTrips') || '[]');
+      saved.push({ ...planData, savedAt: new Date().toISOString() });
+      localStorage.setItem('savedTrips', JSON.stringify(saved));
+      return { success: true };
+    } catch (e) {
+      console.error('שגיאה בשמירת טיול:', e);
+      return { success: false };
+    }
   };
 
   const value = {
@@ -24,6 +39,9 @@ export const TripProvider = ({ children }) => {
     setStartPoint,
     planTripWithAI,
     accommodations: tripData.accommodations || [],
+    tripPlan,
+    updateTripPlan,
+    saveTrip,
   };
 
   return (
