@@ -4,9 +4,9 @@ export const lightTheme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#1976d2',
-      light: '#42a5f5',
-      dark: '#1565c0',
+      main: '#667eea',
+      light: '#8fa4f0',
+      dark: '#764ba2',
       contrastText: '#fff',
     },
     secondary: {
@@ -40,7 +40,7 @@ export const lightTheme = createTheme({
     },
   },
   typography: {
-    fontFamily: '"Segoe UI", "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Roboto"',
+    fontFamily: "'Rubik', 'Heebo', 'Assistant', 'Segoe UI', sans-serif",
     h1: {
       fontSize: '2.5rem',
       fontWeight: 700,
@@ -126,7 +126,7 @@ export const lightTheme = createTheme({
           '& .MuiOutlinedInput-root': {
             transition: 'all 0.3s',
             '&:hover fieldset': {
-              borderColor: '#1976d2',
+              borderColor: '#667eea',
             },
           },
         },
@@ -180,7 +180,7 @@ export const darkTheme = createTheme({
     },
   },
   typography: {
-    fontFamily: '"Segoe UI", "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Roboto"',
+    fontFamily: "'Rubik', 'Heebo', 'Assistant', 'Segoe UI', sans-serif",
     h1: {
       fontSize: '2.5rem',
       fontWeight: 700,

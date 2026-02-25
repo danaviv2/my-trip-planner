@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import Fade from '@mui/material/Fade';
 
 // Use lazy-loading for heavy pages to reduce bundle size and avoid loading
 // browser-only libs during SSR/test/build phases.
@@ -22,8 +23,11 @@ const GroupTripPage = React.lazy(() => import('./pages/GroupTripPage'));
  * מגדיר את כל הנתיבים הזמינים באפליקציה
  */
 const AppRoutes = () => {
+  const location = useLocation();
   return (
     <Suspense fallback={<div>Loading...</div>}>
+      <Fade key={location.pathname} in timeout={300}>
+        <div>
       <Routes>
       {/* דף הבית */}
       <Route path="/" element={<HomePage />} />
@@ -65,6 +69,8 @@ const AppRoutes = () => {
       {/* נתיב ברירת מחדל - מפנה לדף הבית */}
       <Route path="*" element={<HomePage />} />
       </Routes>
+        </div>
+      </Fade>
     </Suspense>
   );
 };

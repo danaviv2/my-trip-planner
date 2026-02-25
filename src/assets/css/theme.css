@@ -326,6 +326,31 @@
     }
   }
   
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #667eea66;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #667eea99;
+  }
+
+  /* Dark Mode (class-based, applied by ThemeWrapper via MUI CssBaseline) */
+  body.dark-mode {
+    background: #121212;
+    color: #ffffff;
+  }
+
   /* התאמת כהה (דארק מוד) */
   @media (prefers-color-scheme: dark) {
     :root {
@@ -333,21 +358,21 @@
       --gray-medium: #bdc3c7;
       --gray-light: #2c3e50;
     }
-    
+
     body {
       background-color: #1a1a2e;
       color: var(--gray-dark);
     }
-    
+
     .card, .navbar {
       background-color: #16213e;
     }
-    
+
     .input-field {
       background-color: #0f3460;
       color: white;
     }
-    
+
     .nav-link:hover {
       background-color: #0f3460;
     }

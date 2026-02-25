@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   AppBar, Toolbar, Typography, Button, IconButton,
   Drawer, List, ListItem, ListItemButton, ListItemIcon,
-  ListItemText, Box, Divider, useMediaQuery, useTheme
+  ListItemText, Box, Divider, useMediaQuery, useTheme, Tooltip
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -14,9 +14,12 @@ import {
   Flight as FlightIcon,
   Explore as ExploreIcon,
   Close as CloseIcon,
-  Group as GroupIcon
+  Group as GroupIcon,
+  DarkMode as DarkModeIcon,
+  LightMode as LightModeIcon
 } from '@mui/icons-material';
 import NotificationCenter from '../notifications/NotificationCenter';
+import { useUserPreferences } from '../../contexts/UserPreferencesContext';
 
 const navLinks = [
   { label: 'דף הבית', path: '/', icon: <HomeIcon /> },
@@ -34,6 +37,7 @@ const Header = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
+  const { userPreferences, toggleDarkMode } = useUserPreferences();
 
   return (
     <>
@@ -57,6 +61,11 @@ const Header = () => {
           {/* דסקטופ - כפתורים */}
           {!isMobile && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Tooltip title={userPreferences.darkMode ? 'מצב בהיר' : 'מצב כהה'}>
+                <IconButton color="inherit" onClick={toggleDarkMode} size="small">
+                  {userPreferences.darkMode ? <LightModeIcon /> : <DarkModeIcon />}
+                </IconButton>
+              </Tooltip>
               <NotificationCenter />
               {navLinks.map((link) => (
                 <Button
@@ -79,6 +88,11 @@ const Header = () => {
           {/* מובייל - פעמון + המבורגר */}
           {isMobile && (
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Tooltip title={userPreferences.darkMode ? 'מצב בהיר' : 'מצב כהה'}>
+                <IconButton color="inherit" onClick={toggleDarkMode} size="small">
+                  {userPreferences.darkMode ? <LightModeIcon /> : <DarkModeIcon />}
+                </IconButton>
+              </Tooltip>
               <NotificationCenter />
               <IconButton
                 color="inherit"

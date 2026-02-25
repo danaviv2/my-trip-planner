@@ -44,6 +44,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 // יבוא הקומפוננטות הקיימות שלך
 import Header from './components/layout/Header';
+import ThemeWrapper from './components/layout/ThemeWrapper';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { TripSaveProvider } from './contexts/TripSaveContext';
 
@@ -3307,9 +3308,10 @@ const InviteButton = () => {
     <ErrorBoundary>
         <TripSaveProvider>
         <UserPreferencesProvider>
+          <ThemeWrapper>
           <TripProvider>
           <AIChatProvider>
-          <div className="app" style={{ background: '#f5f5f5', padding: '20px', fontFamily: 'Roboto, Arial, sans-serif' }} role="main" aria-label="אפליקציית תכנון טיולים">
+          <div className="app" style={{ padding: '20px' }} role="main" aria-label="אפליקציית תכנון טיולים">
             {/* רכיב Header שמכיל את הניווט לדפים השונים */}
             <Header />
 
@@ -3665,6 +3667,7 @@ const InviteButton = () => {
           </div>
           </AIChatProvider>
         </TripProvider>
+          </ThemeWrapper>
       </UserPreferencesProvider>
       </TripSaveProvider>
   </ErrorBoundary>
