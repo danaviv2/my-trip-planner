@@ -16,6 +16,7 @@ versions/
 
 # misc
 .DS_Store
+public/env.js
 *\ 2.js
 *\ 2.jsx
 *.backup
