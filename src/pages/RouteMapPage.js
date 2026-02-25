@@ -48,7 +48,7 @@ const RouteMapPage = () => {
 
   const buildMapSrc = (from, to, mode) => {
     const modeKey = travelModes.find(m => m.value === mode)?.key || 'd';
-    return `https://maps.google.com/maps?saddr=${encodeURIComponent(from)}&daddr=${encodeURIComponent(to)}&dirflg=${modeKey}&output=embed&hl=he`;
+    return `https://maps.google.com/maps?saddr=${encodeURIComponent(from)}&daddr=${encodeURIComponent(to)}&dirflg=${modeKey}&output=embed`;
   };
 
   useEffect(() => {
