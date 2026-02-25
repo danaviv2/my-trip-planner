@@ -24,7 +24,6 @@ import {
   Tabs,
   Tab
 } from '@mui/material';
-import { GoogleMap, LoadScript, InfoWindow, DirectionsRenderer } from '@react-google-maps/api';
 import AddIcon from '@mui/icons-material/Add';
 import { FacebookShareButton, TwitterShareButton, EmailShareButton } from 'react-share';
 import { v4 as uuidv4 } from 'uuid';
