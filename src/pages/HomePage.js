@@ -24,6 +24,13 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [surpriseOpen, setSurpriseOpen] = useState(false);
   const [packingOpen, setPackingOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = () => {
+    const trimmed = searchQuery.trim();
+    if (trimmed) navigate(`/destination-info/${encodeURIComponent(trimmed)}`);
+    else navigate('/advanced-search');
+  };
 
   const mainFeatures = [
     {
@@ -169,6 +176,9 @@ const HomePage = () => {
               fullWidth
               placeholder="חפש יעד, עיר או מדינה..."
               variant="outlined"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   fontSize: '1.1rem',
@@ -185,7 +195,7 @@ const HomePage = () => {
               variant="contained"
               size="large"
               startIcon={<SearchIcon />}
-              onClick={() => navigate('/advanced-search')}
+              onClick={handleSearch}
               sx={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 px: 4,
