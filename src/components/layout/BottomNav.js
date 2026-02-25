@@ -35,6 +35,7 @@ const BottomNav = () => {
         left: 0,
         right: 0,
         zIndex: 1099,
+        paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
       <BottomNavigation

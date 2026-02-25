@@ -3310,7 +3310,7 @@ const InviteButton = () => {
           <ThemeWrapper>
           <TripProvider>
           <AIChatProvider>
-          <Box className="app" sx={{ p: { xs: '8px 8px 70px 8px', md: '20px' } }} role="main" aria-label="אפליקציית תכנון טיולים">
+          <Box className="app" sx={{ p: { xs: '8px 8px calc(70px + env(safe-area-inset-bottom)) 8px', md: '20px' } }} role="main" aria-label="אפליקציית תכנון טיולים">
             {/* רכיב Header שמכיל את הניווט לדפים השונים */}
             <Header />
 
