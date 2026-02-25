@@ -4,7 +4,7 @@ import {
   Container, Box, Typography, TextField, Button, Grid, Card, CardContent,
   CardMedia, Chip, Paper, InputAdornment, Slider, FormControl, InputLabel,
   Select, MenuItem, Checkbox, FormControlLabel, Rating, IconButton, Divider,
-  Autocomplete, ToggleButton, ToggleButtonGroup, Collapse, Fab, Alert
+  Autocomplete, ToggleButton, ToggleButtonGroup, Collapse, Fab
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -252,28 +252,6 @@ const AdvancedSearchPage = () => {
       </Box>
 
       <Container maxWidth="lg">
-        {/* Banner: demo data */}
-        <Alert
-          severity="info"
-          sx={{ mb: 3, borderRadius: 3, direction: 'rtl', textAlign: 'right' }}
-          action={
-            urlQuery ? (
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => navigate(`/destination-info/${encodeURIComponent(urlQuery)}`)}
-                sx={{ whiteSpace: 'nowrap' }}
-              >
-                מידע מלא על {urlQuery}
-              </Button>
-            ) : null
-          }
-        >
-          {urlQuery
-            ? `מציג תוצאות לדוגמה — לחץ על "מידע מלא" לקבלת מידע אמיתי על ${urlQuery}`
-            : 'מציג תוצאות לדוגמה בלבד. לחיפוש יעד ספציפי, השתמש בשדה החיפוש בדף הבית'}
-        </Alert>
-
         {/* Search Bar */}
         <Paper
           elevation={3}
@@ -287,9 +265,14 @@ const AdvancedSearchPage = () => {
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
             <TextField
               fullWidth
-              placeholder="חפש אטרקציות, מסעדות, מלונות..."
+              placeholder="חפש יעד, עיר או מדינה..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  navigate(`/destination-info/${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -302,6 +285,20 @@ const AdvancedSearchPage = () => {
             />
             <Button
               variant="contained"
+              startIcon={<SearchIcon />}
+              onClick={() => {
+                if (searchQuery.trim()) navigate(`/destination-info/${encodeURIComponent(searchQuery.trim())}`);
+              }}
+              sx={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                px: 3, py: 1.5, borderRadius: 3,
+                '&:hover': { background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)' }
+              }}
+            >
+              חפש יעד
+            </Button>
+            <Button
+              variant="outlined"
               startIcon={<FilterIcon />}
               onClick={() => setShowFilters(!showFilters)}
               sx={{
