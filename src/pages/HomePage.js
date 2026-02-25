@@ -69,15 +69,15 @@ const HomePage = () => {
     <Box sx={{
       minHeight: '100vh',
       background: 'linear-gradient(180deg, #ffffff 0%, #f8f9ff 50%, #fff5f8 100%)',
-      pb: 8,
+      pb: { xs: 4, md: 8 },
       pt: '64px' // פיצוי על AppBar קבוע
     }}>
       {/* Hero Section */}
       <Box sx={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
         color: 'white',
-        py: 8,
-        px: 3,
+        py: { xs: 4, md: 8 },
+        px: { xs: 2, md: 3 },
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden'
@@ -146,14 +146,14 @@ const HomePage = () => {
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ mt: -4, position: 'relative', zIndex: 2 }}>
+      <Container maxWidth="lg" sx={{ mt: { xs: -2, md: -4 }, position: 'relative', zIndex: 2, px: { xs: 2, md: 3 } }}>
 
         {/* תיבת חיפוש מרחפת */}
         <Paper
           elevation={8}
-          sx={{ p: 4, borderRadius: 4, background: 'white', mb: 6 }}
+          sx={{ p: { xs: 2.5, md: 4 }, borderRadius: 4, background: 'white', mb: { xs: 3, md: 6 } }}
         >
-          <Typography variant="h5" fontWeight="bold" mb={3} textAlign="center">
+          <Typography variant="h5" fontWeight="bold" mb={2} textAlign="center" sx={{ fontSize: { xs: '1.1rem', md: '1.5rem' } }}>
             🌍 לאן תרצה לטייל?
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' } }}>
@@ -199,7 +199,7 @@ const HomePage = () => {
         </Paper>
 
         {/* 4 כרטיסיות ניווט */}
-        <Grid container spacing={4} mb={8}>
+        <Grid container spacing={{ xs: 2, md: 4 }} mb={{ xs: 3, md: 8 }}>
           {mainFeatures.map((feature, index) => (
             <Grid item xs={12} sm={6} md={6} key={index}>
               <Card
@@ -217,10 +217,10 @@ const HomePage = () => {
                   }
                 }}
               >
-                <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                <CardContent sx={{ p: { xs: 2.5, md: 4 }, textAlign: 'center' }}>
                   <Box sx={{
-                    fontSize: '3rem',
-                    mb: 2,
+                    fontSize: { xs: '2rem', md: '3rem' },
+                    mb: 1,
                     display: 'inline-block',
                     animation: 'bounce 2.5s ease-in-out infinite',
                     animationDelay: feature.delay
@@ -229,17 +229,17 @@ const HomePage = () => {
                   </Box>
 
                   <Typography
-                    variant="h4"
+                    variant="h5"
                     fontWeight="bold"
-                    mb={1}
-                    sx={{ textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}
+                    mb={0.5}
+                    sx={{ textShadow: '0 2px 10px rgba(0,0,0,0.2)', fontSize: { xs: '1.1rem', md: '1.5rem' } }}
                   >
                     {feature.title}
                   </Typography>
 
                   <Typography
-                    variant="body1"
-                    sx={{ opacity: 0.95, fontSize: '1.1rem' }}
+                    variant="body2"
+                    sx={{ opacity: 0.95, fontSize: { xs: '0.85rem', md: '1rem' }, display: { xs: 'none', sm: 'block' } }}
                   >
                     {feature.description}
                   </Typography>
@@ -253,22 +253,22 @@ const HomePage = () => {
         <Paper
           elevation={3}
           sx={{
-            p: 5,
+            p: { xs: 2.5, md: 5 },
             borderRadius: 4,
             background: 'linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%)'
           }}
         >
           <Typography
-            variant="h4"
+            variant="h5"
             fontWeight="bold"
             textAlign="center"
-            mb={4}
-            sx={{ color: '#333' }}
+            mb={3}
+            sx={{ color: '#333', fontSize: { xs: '1.2rem', md: '1.5rem' } }}
           >
             🔥 יעדים פופולריים
           </Typography>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 1.5, md: 3 }}>
             {popularDestinations.map((dest, index) => (
               <Grid item xs={6} sm={4} md={2} key={index}>
                 <Button
@@ -277,12 +277,12 @@ const HomePage = () => {
                   sx={{
                     background: `linear-gradient(135deg, ${dest.color} 0%, ${dest.color}cc 100%)`,
                     color: 'white',
-                    py: 3,
-                    px: 2,
+                    py: { xs: 2, md: 3 },
+                    px: { xs: 1, md: 2 },
                     borderRadius: '50%',
                     aspectRatio: '1',
                     minWidth: 0,
-                    fontSize: '1rem',
+                    fontSize: { xs: '0.75rem', md: '1rem' },
                     fontWeight: 700,
                     flexDirection: 'column',
                     gap: 0.5,
@@ -294,7 +294,7 @@ const HomePage = () => {
                     }
                   }}
                 >
-                  <Box sx={{ fontSize: '3rem' }}>{dest.emoji}</Box>
+                  <Box sx={{ fontSize: { xs: '1.8rem', md: '3rem' } }}>{dest.emoji}</Box>
                   {dest.name}
                 </Button>
               </Grid>
@@ -303,7 +303,7 @@ const HomePage = () => {
         </Paper>
 
         {/* סטטיסטיקות */}
-        <Grid container spacing={4} mt={6}>
+        <Grid container spacing={{ xs: 2, md: 4 }} mt={{ xs: 3, md: 6 }}>
           {[
             { icon: '🗺️', title: 'תכנון חכם', desc: 'בנה מסלול מותאם אישית עם מפות אינטראקטיביות וניווט מדויק', path: '/trip-planner' },
             { icon: '🔍', title: 'חיפוש מתקדם', desc: 'מצא אטרקציות, מסעדות ומלונות לפי קטגוריה, מיקום ומחיר', path: '/advanced-search' },
@@ -314,7 +314,7 @@ const HomePage = () => {
                 elevation={2}
                 onClick={() => navigate(feature.path)}
                 sx={{
-                  p: 4,
+                  p: { xs: 2.5, md: 4 },
                   textAlign: 'center',
                   borderRadius: 3,
                   background: 'white',
@@ -327,7 +327,7 @@ const HomePage = () => {
                   }
                 }}
               >
-                <Typography sx={{ fontSize: '3rem', mb: 2 }}>
+                <Typography sx={{ fontSize: { xs: '2rem', md: '3rem' }, mb: 1 }}>
                   {feature.icon}
                 </Typography>
                 <Typography variant="h6" fontWeight="bold" mb={1}>
@@ -344,8 +344,8 @@ const HomePage = () => {
         {/* CTA סופי */}
         <Box
           sx={{
-            mt: 8,
-            p: 6,
+            mt: { xs: 4, md: 8 },
+            p: { xs: 3, md: 6 },
             borderRadius: 4,
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f5576c 100%)',
             textAlign: 'center',
@@ -362,10 +362,10 @@ const HomePage = () => {
             backgroundSize: '40px 40px',
           }} />
           <Box sx={{ position: 'relative', zIndex: 1 }}>
-            <Typography variant="h3" fontWeight="bold" mb={2} sx={{ fontSize: { xs: '1.8rem', md: '3rem' } }}>
+            <Typography variant="h3" fontWeight="bold" mb={1.5} sx={{ fontSize: { xs: '1.4rem', md: '3rem' } }}>
               מוכן להתחיל את ההרפתקה? 🚀
             </Typography>
-            <Typography variant="h6" mb={4} sx={{ opacity: 0.9, fontSize: { xs: '1rem', md: '1.25rem' } }}>
+            <Typography variant="h6" mb={3} sx={{ opacity: 0.9, fontSize: { xs: '0.9rem', md: '1.25rem' } }}>
               צור את הטיול המושלם שלך תוך דקות ספורות
             </Typography>
             <Button
@@ -375,9 +375,9 @@ const HomePage = () => {
               sx={{
                 bgcolor: 'white',
                 color: '#667eea',
-                px: 6,
-                py: 2,
-                fontSize: '1.3rem',
+                px: { xs: 4, md: 6 },
+                py: { xs: 1.5, md: 2 },
+                fontSize: { xs: '1rem', md: '1.3rem' },
                 fontWeight: 700,
                 borderRadius: 3,
                 transition: 'all 0.25s ease',
