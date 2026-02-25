@@ -34,7 +34,7 @@ import { fetchWeatherForecast, fetchGeoInfo } from '../components/WeatherForecas
  */
 const TripPlannerPage = () => {
   // שימוש בהעדפות משתמש מהקונטקסט
-  const { userPreferences, setUserPreferences } = useUserPreferences();
+  const { userPreferences, updateLocation } = useUserPreferences();
   
   // משתני מצב מהאפליקציה המקורית
   const [mainTab, setMainTab] = useState('plan');
@@ -108,7 +108,7 @@ const TripPlannerPage = () => {
       
       // אחרי פעולת החיפוש, נעדכן את ההעדפות
       if (endPoint) {
-        setUserPreferences(prev => ({ ...prev, location: endPoint }));
+        updateLocation(endPoint);
       }
       
     } catch (error) {
@@ -414,7 +414,7 @@ const TripPlannerPage = () => {
             {/* טופס העדפות */}
             <PreferencesForm 
               userPreferences={userPreferences}
-              setUserPreferences={setUserPreferences}
+
               onPlanTrip={planTripWithAI}
               onPlanRoadTrip={planRoadTrip}
             />

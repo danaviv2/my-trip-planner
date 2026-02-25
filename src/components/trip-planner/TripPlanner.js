@@ -1037,20 +1037,19 @@ const TripPlanner = () => {
               label="תאריך התחלה"
               value={startDate}
               onChange={(newDate) => setStartDate(newDate)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  fullWidth
-                  variant="outlined"
-                  InputProps={{
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  variant: 'outlined',
+                  InputProps: {
                     startAdornment: (
                       <InputAdornment position="start">
                         <DateRangeIcon />
                       </InputAdornment>
                     ),
-                  }}
-                />
-              )}
+                  },
+                },
+              }}
             />
           </LocalizationProvider>
         </Grid>
