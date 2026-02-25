@@ -487,7 +487,28 @@ const AdvancedSearchPage = () => {
           </Paper>
         </Collapse>
 
+        {/* Empty state - no search query */}
+        {!searchQuery.trim() && (
+          <Box sx={{ textAlign: 'center', py: 10 }}>
+            <Typography sx={{ fontSize: '4rem', mb: 2 }}>🔍</Typography>
+            <Typography variant="h5" fontWeight="bold" mb={1}>
+              חפש יעד לקבלת תוצאות
+            </Typography>
+            <Typography variant="body1" color="text.secondary" mb={3}>
+              רשום שם עיר או מדינה בשדה למעלה ולחץ על "חפש יעד"
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => navigate('/destination-info')}
+              sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 3, px: 4 }}
+            >
+              עיין ביעדים פופולריים
+            </Button>
+          </Box>
+        )}
+
         {/* Results Header */}
+        {searchQuery.trim() && (
         <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h5" fontWeight="bold">
             נמצאו {filteredResults.length} תוצאות
@@ -506,9 +527,10 @@ const AdvancedSearchPage = () => {
             </Box>
           )}
         </Box>
+        )}
 
         {/* Results Grid */}
-        {filteredResults.length > 0 ? (
+        {searchQuery.trim() && (filteredResults.length > 0 ? (
           <Grid container spacing={3}>
             {filteredResults.map((result) => (
               <Grid item xs={12} sm={6} md={4} key={result.id}>
@@ -716,7 +738,7 @@ const AdvancedSearchPage = () => {
               נקה חיפוש
             </Button>
           </Paper>
-        )}
+        ))}
       </Container>
 
       {/* Scroll to Top Button */}
