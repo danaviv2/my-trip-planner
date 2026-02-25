@@ -3,9 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Container, Box, Typography, TextField, Button, Grid, Card, CardContent,
   CardMedia, Chip, Paper, InputAdornment, Slider, FormControl, InputLabel,
-  Select, MenuItem, Checkbox, FormControlLabel, Rating, IconButton, Divider,
-  Autocomplete, ToggleButton, ToggleButtonGroup, Collapse, Fab
+  Select, MenuItem, Rating, IconButton, Divider,
+  ToggleButton, ToggleButtonGroup, Collapse, Fab, CircularProgress
 } from '@mui/material';
+import { fetchDestinationFromAI } from '../services/aiDestinationService';
 import {
   Search as SearchIcon,
   FilterList as FilterIcon,
@@ -22,6 +23,60 @@ import {
   KeyboardArrowUp as ArrowUpIcon
 } from '@mui/icons-material';
 
+// ממיר מחיר טקסטואלי למספר
+const parsePrice = (priceStr) => {
+  if (!priceStr) return 0;
+  const s = String(priceStr);
+  if (/חינם|free|0/i.test(s)) return 0;
+  const match = s.match(/(\d+)/);
+  return match ? parseInt(match[1]) : 0;
+};
+
+// ממיר נתוני AI לפורמט כרטיסיות
+const transformDestinationData = (data, destName) => {
+  const results = [];
+  const loc = `${destName}, ${data.country || ''}`;
+  const imgBase = `https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=500`;
+
+  (data.attractions || []).forEach((item, i) => {
+    results.push({
+      id: `a_${i}`, name: item.name, category: 'attractions',
+      location: loc,
+      image: `https://source.unsplash.com/500x300/?${encodeURIComponent(item.name + ' ' + destName)}`,
+      rating: item.rating || 4.2, price: parsePrice(item.price),
+      description: item.description || '',
+      tags: ['תרבות', 'אטרקציה'], reviews: 1000 + i * 347,
+      duration: item.recommendedDuration, tips: item.tips
+    });
+  });
+
+  (data.food?.restaurants || []).forEach((item, i) => {
+    const priceMap = { '$': 10, '$$': 30, '$$$': 65, '$$$$': 120 };
+    results.push({
+      id: `r_${i}`, name: item.name, category: 'restaurants',
+      location: item.area ? `${item.area}, ${loc}` : loc,
+      image: `https://source.unsplash.com/500x300/?restaurant,${encodeURIComponent(destName)}`,
+      rating: item.rating || 4.0, price: priceMap[item.priceRange] || 30,
+      description: `${item.description || ''} • ${item.cuisine || ''}`,
+      tags: ['אוכל', 'מסעדה'], reviews: 500 + i * 123,
+      website: item.website
+    });
+  });
+
+  (data.food?.markets || []).forEach((item, i) => {
+    results.push({
+      id: `m_${i}`, name: item.name, category: 'attractions',
+      location: loc,
+      image: item.image || `https://source.unsplash.com/500x300/?market,${encodeURIComponent(destName)}`,
+      rating: 4.3, price: 0,
+      description: item.description || '',
+      tags: ['שוק', 'קניות', 'אוכל'], reviews: 300 + i * 89
+    });
+  });
+
+  return results;
+};
+
 const AdvancedSearchPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,6 +90,9 @@ const AdvancedSearchPage = () => {
   const [sortBy, setSortBy] = useState('relevance');
   const [favorites, setFavorites] = useState([]);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchedDestination, setSearchedDestination] = useState('');
+  const [searchError, setSearchError] = useState('');
 
   // קטגוריות
   const categories = [
@@ -52,108 +110,29 @@ const AdvancedSearchPage = () => {
     'רומנטי', 'תרבות', 'אוכל', 'היסטוריה', 'אמנות', 'ספורט', 'קניות'
   ];
 
-  // תוצאות מדומות (נחליף בקריאה אמיתית ל-API)
-  const [results, setResults] = useState([
-    {
-      id: 1,
-      name: 'מגדל אייפל',
-      category: 'attractions',
-      location: 'פריז, צרפת',
-      image: 'https://images.unsplash.com/photo-1543349689-9a4d426bee8e?w=500',
-      rating: 4.8,
-      price: 25,
-      description: 'סמל פריז המפורסם - תצפית פנורמית מרהיבה על העיר',
-      tags: ['משפחות', 'תרבות', 'היסטוריה'],
-      reviews: 12450
-    },
-    {
-      id: 2,
-      name: 'Le Jules Verne',
-      category: 'restaurants',
-      location: 'פריז, צרפת',
-      image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=500',
-      rating: 4.6,
-      price: 85,
-      description: 'מסעדה יוקרתית במגדל אייפל עם מטבח צרפתי מעולה',
-      tags: ['זוגות', 'יוקרה', 'אוכל', 'רומנטי'],
-      reviews: 3420
-    },
-    {
-      id: 3,
-      name: 'מוזיאון הלובר',
-      category: 'attractions',
-      location: 'פריז, צרפת',
-      image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=500',
-      rating: 4.9,
-      price: 17,
-      description: 'המוזיאון המפורסם בעולם - בית למונה ליזה ואוצרות אמנות',
-      tags: ['משפחות', 'תרבות', 'אמנות', 'היסטוריה'],
-      reviews: 28930
-    },
-    {
-      id: 4,
-      name: 'Hotel Plaza Athénée',
-      category: 'hotels',
-      location: 'פריז, צרפת',
-      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500',
-      rating: 4.7,
-      price: 95,
-      description: 'מלון 5 כוכבים יוקרתי בלב פריז',
-      tags: ['זוגות', 'יוקרה', 'רומנטי'],
-      reviews: 1820
-    },
-    {
-      id: 5,
-      name: 'שדרות השאנז אליזה',
-      category: 'attractions',
-      location: 'פריז, צרפת',
-      image: 'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=500',
-      rating: 4.5,
-      price: 0,
-      description: 'שדרה מפורסמת עם חנויות יוקרה, בתי קפה ותיאטרונים',
-      tags: ['קניות', 'תרבות', 'חברים'],
-      reviews: 15670
-    },
-    {
-      id: 6,
-      name: 'Café de Flore',
-      category: 'restaurants',
-      location: 'פריז, צרפת',
-      image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500',
-      rating: 4.4,
-      price: 35,
-      description: 'בית קפה היסטורי שהיה מקום מפגש לאמנים',
-      tags: ['תרבות', 'היסטוריה', 'אוכל'],
-      reviews: 8920
-    },
-    {
-      id: 7,
-      name: 'גני לוקסמבורג',
-      category: 'nature',
-      location: 'פריז, צרפת',
-      image: 'https://images.unsplash.com/photo-1524396309943-e03f5249f002?w=500',
-      rating: 4.7,
-      price: 0,
-      description: 'גן ציבורי יפהפה עם פסלים, מזרקות ושטחי דשא',
-      tags: ['משפחות', 'טבע', 'רומנטי'],
-      reviews: 9340
-    },
-    {
-      id: 8,
-      name: 'קתדרלת נוטרדאם',
-      category: 'attractions',
-      location: 'פריז, צרפת',
-      image: 'https://images.unsplash.com/photo-1584707824245-087f3505cfe4?w=500',
-      rating: 4.8,
-      price: 10,
-      description: 'קתדרלה גותית מפורסמת בלב העיר',
-      tags: ['היסטוריה', 'תרבות', 'אמנות'],
-      reviews: 22100
+  const [results, setResults] = useState([]);
+
+  const handleDestinationSearch = async () => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
+    setIsSearching(true);
+    setSearchError('');
+    setSearchedDestination(trimmed);
+    setSearchQuery('');
+    setSelectedCategory('all');
+    try {
+      const aiData = await fetchDestinationFromAI(trimmed);
+      setResults(transformDestinationData(aiData, trimmed));
+    } catch (err) {
+      setSearchError(err.message === 'NO_API_KEY' ? 'no_api_key' : 'error');
+      setResults([]);
+    } finally {
+      setIsSearching(false);
     }
-  ]);
+  };
 
   // פילטור תוצאות
-  const [filteredResults, setFilteredResults] = useState(results);
+  const [filteredResults, setFilteredResults] = useState([]);
 
   useEffect(() => {
     let filtered = [...results];
@@ -270,7 +249,7 @@ const AdvancedSearchPage = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && searchQuery.trim()) {
-                  navigate(`/destination-info/${encodeURIComponent(searchQuery.trim())}`);
+                  handleDestinationSearch();
                 }
               }}
               InputProps={{
@@ -285,10 +264,9 @@ const AdvancedSearchPage = () => {
             />
             <Button
               variant="contained"
-              startIcon={<SearchIcon />}
-              onClick={() => {
-                if (searchQuery.trim()) navigate(`/destination-info/${encodeURIComponent(searchQuery.trim())}`);
-              }}
+              startIcon={isSearching ? <CircularProgress size={18} color="inherit" /> : <SearchIcon />}
+              onClick={handleDestinationSearch}
+              disabled={isSearching || !searchQuery.trim()}
               sx={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 px: 3, py: 1.5, borderRadius: 3,
@@ -487,8 +465,8 @@ const AdvancedSearchPage = () => {
           </Paper>
         </Collapse>
 
-        {/* Empty state - no search query */}
-        {!searchQuery.trim() && (
+        {/* Empty state - no search yet */}
+        {!searchedDestination && !isSearching && (
           <Box sx={{ textAlign: 'center', py: 10 }}>
             <Typography sx={{ fontSize: '4rem', mb: 2 }}>🔍</Typography>
             <Typography variant="h5" fontWeight="bold" mb={1}>
@@ -507,11 +485,50 @@ const AdvancedSearchPage = () => {
           </Box>
         )}
 
+        {/* Loading state */}
+        {isSearching && (
+          <Box sx={{ textAlign: 'center', py: 10 }}>
+            <CircularProgress size={60} sx={{ color: '#667eea', mb: 3 }} />
+            <Typography variant="h6" color="text.secondary">
+              מחפש מידע על {searchedDestination}...
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              AI אוסף עבורך את הנתונים הטובים ביותר
+            </Typography>
+          </Box>
+        )}
+
+        {/* Error state */}
+        {searchError && !isSearching && (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <Typography sx={{ fontSize: '3rem', mb: 2 }}>
+              {searchError === 'no_api_key' ? '🔑' : '⚠️'}
+            </Typography>
+            <Typography variant="h6" fontWeight="bold" mb={1}>
+              {searchError === 'no_api_key'
+                ? 'נדרש מפתח API'
+                : 'שגיאה בטעינת נתונים'}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" mb={3}>
+              {searchError === 'no_api_key'
+                ? 'הגדר REACT_APP_OPENAI_API_KEY כדי להפעיל חיפוש AI'
+                : 'לא הצלחנו לאסוף מידע על היעד. נסה שוב.'}
+            </Typography>
+            <Button
+              variant="outlined"
+              onClick={() => navigate(`/destination-info/${encodeURIComponent(searchedDestination)}`)}
+              sx={{ borderRadius: 3, px: 4 }}
+            >
+              עבור לדף {searchedDestination}
+            </Button>
+          </Box>
+        )}
+
         {/* Results Header */}
-        {searchQuery.trim() && (
-        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {searchedDestination && !isSearching && !searchError && (
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
           <Typography variant="h5" fontWeight="bold">
-            נמצאו {filteredResults.length} תוצאות
+            🗺️ {searchedDestination} — {filteredResults.length} תוצאות
           </Typography>
           {selectedTags.length > 0 && (
             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -530,7 +547,7 @@ const AdvancedSearchPage = () => {
         )}
 
         {/* Results Grid */}
-        {searchQuery.trim() && (filteredResults.length > 0 ? (
+        {searchedDestination && !isSearching && !searchError && (filteredResults.length > 0 ? (
           <Grid container spacing={3}>
             {filteredResults.map((result) => (
               <Grid item xs={12} sm={6} md={4} key={result.id}>
@@ -722,6 +739,9 @@ const AdvancedSearchPage = () => {
               variant="contained"
               onClick={() => {
                 setSearchQuery('');
+                setSearchedDestination('');
+                setSearchError('');
+                setResults([]);
                 setPriceRange([0, 100]);
                 setMinRating(0);
                 setSelectedTags([]);
