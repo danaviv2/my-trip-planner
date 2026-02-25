@@ -48,7 +48,7 @@ const WeatherWidget = ({ location, coordinates }) => {
    * טעינת מזג אוויר
    */
   const loadWeather = async () => {
-    if (!location && !coordinates) {
+    if (!coordinates && (!location || location.trim().length < 2)) {
       return;
     }
 

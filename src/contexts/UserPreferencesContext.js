@@ -16,10 +16,16 @@ export const UserPreferencesProvider = ({ children }) => {
     interests: [],
     travelStyle: 'balanced',
     budgetLevel: 'medium',
+    budget: 'medium',
     accessibility: false,
     notificationsEnabled: true,
     mapPreference: 'google',
-    unitSystem: 'metric'
+    unitSystem: 'metric',
+    location: '',
+    days: 7,
+    startDate: '',
+    themes: [],
+    advancedPreferences: {}
   });
   
   const [isLoading, setIsLoading] = useState(true);
@@ -111,6 +117,13 @@ export const UserPreferencesProvider = ({ children }) => {
     setUserPreferences(defaultPreferences);
   };
 
+  const updateLocation = (value) => updateSinglePreference('location', value);
+  const updateBudget = (value) => { updateSinglePreference('budget', value); updateSinglePreference('budgetLevel', value); };
+  const updateDays = (value) => updateSinglePreference('days', Number(value));
+  const updateStartDate = (value) => updateSinglePreference('startDate', value);
+  const updateThemes = (value) => updateSinglePreference('themes', value);
+  const updateAdvancedPreferences = (value) => updateSinglePreference('advancedPreferences', value);
+
   // ערך הקונטקסט המוחזר
   const contextValue = {
     userPreferences,
@@ -120,7 +133,13 @@ export const UserPreferencesProvider = ({ children }) => {
     addInterest,
     removeInterest,
     toggleDarkMode,
-    resetPreferences
+    resetPreferences,
+    updateLocation,
+    updateBudget,
+    updateDays,
+    updateStartDate,
+    updateThemes,
+    updateAdvancedPreferences
   };
 
   return (
