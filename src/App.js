@@ -3576,7 +3576,7 @@ const InviteButton = () => {
               }}
               onError={(error) => {
                 console.error('שגיאה בטעינת Google Maps:', error);
-                alert('שגיאה בטעינת Google Maps API. אנא בדוק את מפתח ה-API או חיבור האינטרנט.');
+                setIsMapsLoaded(false);
               }}
             >
               <GoogleMap
