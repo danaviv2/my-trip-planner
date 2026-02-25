@@ -21,7 +21,6 @@ import RouteNavigationButtons from '../components/trip-planner/RouteNavigationBu
 import AccommodationPlanner from '../components/trip-planner/AccommodationPlanner';
 import ShareButtons from '../components/shared/ShareButtons';
 import InviteButton from '../components/shared/InviteButton';
-import LoadScript from '../components/maps/LoadScript';
 import TravelServicesTab from '../components/travel-services/TravelServicesTab';
 import FlightIcon from '@mui/icons-material/Flight';
 import HotelIcon from '@mui/icons-material/Hotel';
@@ -69,9 +68,6 @@ const TripPlannerPage = () => {
   
   const mapRef = useRef();
   
-  // API Keys
-  const GOOGLE_API_KEY = process.env.REACT_APP_GOOGLE_API_KEY || '';
-  const GOOGLE_MAPS_LIBRARIES = ['places'];
 
   // פונקציות מקוריות מהאפליקציה
   const addWaypoint = () => {
@@ -574,22 +570,57 @@ const TripPlannerPage = () => {
         )}
       </Paper>
       
-      {/* מפה */}
-      <Paper elevation={3} sx={{ p: 0, mb: 4, borderRadius: '16px', overflow: 'hidden' }}>
-        <Box sx={{ height: '500px', width: '100%' }}>
-          <LoadScript
-            googleMapsApiKey={GOOGLE_API_KEY}
-            libraries={GOOGLE_MAPS_LIBRARIES}
-          >
-            {/* כאן תהיה המפה שלך */}
-            <Box sx={{ height: '100%', width: '100%', bgcolor: '#e0e0e0', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <Typography variant="body1" sx={{ color: '#666' }}>
-                מפה אינטראקטיבית תופיע כאן
-              </Typography>
+      {/* מפה - iframe */}
+      {(() => {
+        const parts = [startPoint, ...waypoints, endPoint].filter(Boolean);
+        let src;
+        if (parts.length >= 2) {
+          const saddr = encodeURIComponent(parts[0]);
+          const daddrParts = [encodeURIComponent(parts[1])];
+          for (let i = 2; i < parts.length; i++) {
+            daddrParts.push(`to:${encodeURIComponent(parts[i])}`);
+          }
+          const daddr = daddrParts.join('+');
+          src = `https://maps.google.com/maps?saddr=${saddr}&daddr=${daddr}&dirflg=d&output=embed&hl=he`;
+        } else if (parts.length === 1) {
+          src = `https://maps.google.com/maps?q=${encodeURIComponent(parts[0])}&output=embed&hl=he`;
+        } else {
+          const defaultLocation = userPreferences.location || 'ישראל';
+          src = `https://maps.google.com/maps?q=${encodeURIComponent(defaultLocation)}&output=embed&hl=he`;
+        }
+        return (
+          <Paper elevation={3} sx={{ p: 0, mb: 4, borderRadius: '16px', overflow: 'hidden' }}>
+            {parts.length >= 2 && (
+              <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', gap: 1, flexWrap: 'wrap' }}>
+                <Typography variant="body2" color="text.secondary">
+                  🗺️ מסלול: {parts.join(' → ')}
+                </Typography>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => window.open(`https://www.google.com/maps/dir/${parts.map(p => encodeURIComponent(p)).join('/')}`, '_blank')}
+                  sx={{ fontSize: '0.7rem', py: 0.3, px: 1 }}
+                >
+                  פתח לניווט ←
+                </Button>
+              </Box>
+            )}
+            <Box sx={{ height: { xs: '350px', md: '500px' }, width: '100%' }}>
+              <iframe
+                key={src}
+                src={src}
+                width="100%"
+                height="100%"
+                style={{ border: 0, display: 'block' }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="מפת מסלול"
+              />
             </Box>
-          </LoadScript>
-        </Box>
-      </Paper>
+          </Paper>
+        );
+      })()}
     </Box>
   );
 };

@@ -20,6 +20,7 @@ import {
 } from '@mui/icons-material';
 import NotificationCenter from '../notifications/NotificationCenter';
 import { useUserPreferences } from '../../contexts/UserPreferencesContext';
+import BottomNav from './BottomNav';
 
 const navLinks = [
   { label: 'דף הבית', path: '/', icon: <HomeIcon /> },
@@ -158,6 +159,8 @@ const Header = () => {
           ))}
         </List>
       </Drawer>
+
+      <BottomNav />
     </>
   );
 };

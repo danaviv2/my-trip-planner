@@ -15,3 +15,10 @@ root.render(
 );
 
 reportWebVitals();
+
+// רישום Service Worker לתמיכת PWA (iOS + Android)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
