@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Container, Box, Typography, TextField, Button, Grid, Card, CardContent,
   CardMedia, Chip, Paper, InputAdornment, Slider, FormControl, InputLabel,
   Select, MenuItem, Checkbox, FormControlLabel, Rating, IconButton, Divider,
-  Autocomplete, ToggleButton, ToggleButtonGroup, Collapse, Fab
+  Autocomplete, ToggleButton, ToggleButtonGroup, Collapse, Fab, Alert
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -24,7 +24,9 @@ import {
 
 const AdvancedSearchPage = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  const location = useLocation();
+  const urlQuery = new URLSearchParams(location.search).get('q') || '';
+  const [searchQuery, setSearchQuery] = useState(urlQuery);
   const [showFilters, setShowFilters] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [priceRange, setPriceRange] = useState([0, 100]);
@@ -250,6 +252,28 @@ const AdvancedSearchPage = () => {
       </Box>
 
       <Container maxWidth="lg">
+        {/* Banner: demo data */}
+        <Alert
+          severity="info"
+          sx={{ mb: 3, borderRadius: 3, direction: 'rtl', textAlign: 'right' }}
+          action={
+            urlQuery ? (
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => navigate(`/destination-info/${encodeURIComponent(urlQuery)}`)}
+                sx={{ whiteSpace: 'nowrap' }}
+              >
+                מידע מלא על {urlQuery}
+              </Button>
+            ) : null
+          }
+        >
+          {urlQuery
+            ? `מציג תוצאות לדוגמה — לחץ על "מידע מלא" לקבלת מידע אמיתי על ${urlQuery}`
+            : 'מציג תוצאות לדוגמה בלבד. לחיפוש יעד ספציפי, השתמש בשדה החיפוש בדף הבית'}
+        </Alert>
+
         {/* Search Bar */}
         <Paper
           elevation={3}
