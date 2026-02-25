@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -43,6 +43,8 @@ const WeatherWidget = ({ location, coordinates }) => {
   const [error, setError] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [suitability, setSuitability] = useState(null);
+  const isFetchingRef = useRef(false);
+  const lastLocationRef = useRef(null);
 
   /**
    * טעינת מזג אוויר
@@ -51,6 +53,11 @@ const WeatherWidget = ({ location, coordinates }) => {
     if (!coordinates && (!location || location.trim().length < 2)) {
       return;
     }
+
+    const locationKey = coordinates ? `${coordinates.lat},${coordinates.lng}` : location;
+    if (isFetchingRef.current || lastLocationRef.current === locationKey) return;
+    isFetchingRef.current = true;
+    lastLocationRef.current = locationKey;
 
     setIsLoading(true);
     setError(null);
@@ -86,6 +93,7 @@ const WeatherWidget = ({ location, coordinates }) => {
       setError('לא הצלחנו לטעון את מזג האוויר');
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   };
 

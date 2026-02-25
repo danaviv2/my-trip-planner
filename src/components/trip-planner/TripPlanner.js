@@ -111,6 +111,7 @@ import {
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTripContext } from '../../contexts/TripContext';
+import { useTripSave } from '../../contexts/TripSaveContext';
 import { useUserPreferences } from '../../contexts/UserPreferencesContext';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -248,7 +249,8 @@ const TripPlanner = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { tripData, tripPlan, updateTripPlan, saveTrip } = useTripContext();
+  const { tripData, tripPlan, updateTripPlan } = useTripContext();
+  const { saveTripToList: saveTrip } = useTripSave();
   const { userPreferences } = useUserPreferences();
   
   // מחלץ את פרמטר היעד מה-URL אם קיים
