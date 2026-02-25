@@ -3566,7 +3566,14 @@ const InviteButton = () => {
               const parts = [startPoint, ...waypoints, endPoint].filter(Boolean);
               let src;
               if (parts.length >= 2) {
-                src = `https://maps.google.com/maps/dir/${parts.map(p => encodeURIComponent(p)).join('/')}/?output=embed&hl=he`;
+                // פורמט saddr/daddr עם +to: לנקודות ביניים - עובד ב-iframe
+                const saddr = encodeURIComponent(parts[0]);
+                const daddrParts = [encodeURIComponent(parts[1])];
+                for (let i = 2; i < parts.length; i++) {
+                  daddrParts.push(`to:${encodeURIComponent(parts[i])}`);
+                }
+                const daddr = daddrParts.join('+');
+                src = `https://maps.google.com/maps?saddr=${saddr}&daddr=${daddr}&dirflg=d&output=embed&hl=he`;
               } else if (parts.length === 1) {
                 src = `https://maps.google.com/maps?q=${encodeURIComponent(parts[0])}&output=embed&hl=he`;
               } else {
