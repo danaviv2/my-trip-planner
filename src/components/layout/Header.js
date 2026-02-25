@@ -42,7 +42,7 @@ const Header = () => {
 
   return (
     <>
-      <AppBar position="fixed" sx={{ zIndex: 1100 }}>
+      <AppBar position="fixed" sx={{ zIndex: 1100, paddingTop: 'env(safe-area-inset-top)' }}>
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           {/* לוגו */}
           <Typography

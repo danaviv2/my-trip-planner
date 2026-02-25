@@ -78,7 +78,7 @@ const HomePage = () => {
       minHeight: '100vh',
       background: 'linear-gradient(180deg, #ffffff 0%, #f8f9ff 50%, #fff5f8 100%)',
       pb: { xs: 4, md: 8 },
-      pt: '64px' // פיצוי על AppBar קבוע
+      pt: 'calc(64px + env(safe-area-inset-top))' // פיצוי על AppBar + iOS status bar
     }}>
       {/* Hero Section */}
       <Box sx={{
