@@ -3561,93 +3561,50 @@ const InviteButton = () => {
               )}
             </Paper>
       
-            <LoadScript
-              googleMapsApiKey={GOOGLE_API_KEY}
-              libraries={GOOGLE_MAPS_LIBRARIES}
-              loading="async"
-              preventGoogleFonts={true}
-              onLoad={() => {
-                setIsMapsLoaded(true);
-                if (window.google && window.google.maps) {
-                  console.log('Google Maps API נטען בהצלחה');
-                } else {
-                  console.error('Google Maps API נכשל בטעינה');
-                }
-              }}
-              onError={(error) => {
-                console.error('שגיאה בטעינת Google Maps:', error);
-                setIsMapsLoaded(false);
-              }}
-            >
-              <GoogleMap
-                mapContainerStyle={mapContainerStyle}
-                center={mapCenter}
-                zoom={12}
-                onLoad={onMapLoad}
-                role="application"
-                aria-label="מפת Google של מסלולי טיול"
-              >
-                {directions && (
-                  <DirectionsRenderer
-                    directions={directions}
-                    options={{
-                      suppressMarkers: false,
-                      polylineOptions: { strokeColor: '#FF0000' },
-                    }}
-                  />
-                )}
-                {selectedAttraction && (
-                  <InfoWindow
-                    position={{ lat: selectedAttraction.location.lat, lng: selectedAttraction.location.lng }}
-                    onCloseClick={() => setSelectedAttraction(null)}
-                    aria-label={`מידע על ${selectedAttraction.name}`}
-                  >
-                    <Box sx={{ maxWidth: '250px', bgcolor: '#fff', p: 2, borderRadius: '8px', boxShadow: 1 }} role="dialog">
-                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                        <i className="material-icons" style={{ 
-                          color: CATEGORY_ICONS[selectedAttraction.category]?.color || '#888888',
-                          marginRight: '8px',
-                          fontSize: '24px'
-                        }}>
-                          {CATEGORY_ICONS[selectedAttraction.category]?.icon || 'place'}
-                        </i>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#2c3e50' }}>
-                          {selectedAttraction.name}
-                        </Typography>
-                      </div>
-                      <Typography variant="body2" sx={{ color: '#666' }}>
-                        קטגוריה: {CATEGORY_ICONS[selectedAttraction.category]?.label || selectedAttraction.category}
+            {/* מפה - iframe במקום Google Maps JS API */}
+            {(() => {
+              const parts = [startPoint, ...waypoints, endPoint].filter(Boolean);
+              let src;
+              if (parts.length >= 2) {
+                src = `https://maps.google.com/maps/dir/${parts.map(p => encodeURIComponent(p)).join('/')}/?output=embed&hl=he`;
+              } else if (parts.length === 1) {
+                src = `https://maps.google.com/maps?q=${encodeURIComponent(parts[0])}&output=embed&hl=he`;
+              } else {
+                src = 'https://maps.google.com/maps?q=ישראל&output=embed&hl=he';
+              }
+              return (
+                <Box sx={{ mt: 2, mb: 2 }}>
+                  {parts.length >= 2 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1, gap: 1, flexWrap: 'wrap' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        🗺️ מסלול: {parts.join(' → ')}
                       </Typography>
-                      <Typography variant="body2" sx={{ color: '#666' }}>
-                        דירוג: {selectedAttraction.rating} ⭐
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: '#666' }}>
-                        כתובת: {selectedAttraction.address}
-                      </Typography>
-                      {selectedAttraction.photo && (
-                        <img 
-                          src={selectedAttraction.photo} 
-                          alt={`${selectedAttraction.name} - תמונה`} 
-                          style={{ width: '100%', marginTop: '5px', borderRadius: '5px' }} 
-                        />
-                      )}
-                      {selectedAttraction.website && (
-                        <Button
-                          variant="outlined"
-                          href={selectedAttraction.website}
-                          target="_blank"
-                          sx={{ mt: 1, color: '#2196F3', borderColor: '#2196F3', borderRadius: '8px' }}
-                          aria-label="למידע נוסף על האטרקציה"
-                          startIcon={<i className="material-icons">open_in_new</i>}
-                        >
-                         למידע נוסף
-                        </Button>
-                      )}
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => window.open(`https://www.google.com/maps/dir/${parts.map(p => encodeURIComponent(p)).join('/')}`, '_blank')}
+                        sx={{ fontSize: '0.7rem', py: 0.3, px: 1 }}
+                      >
+                        פתח לניווט ←
+                      </Button>
                     </Box>
-                  </InfoWindow>
-                )}
-              </GoogleMap>
-            </LoadScript>
+                  )}
+                  <Box sx={{ width: { xs: '100%', md: '70%' }, mx: 'auto', height: { xs: '350px', md: '500px' }, borderRadius: '15px', overflow: 'hidden', boxShadow: '0 8px 16px rgba(0,0,0,0.2)' }}>
+                    <iframe
+                      key={src}
+                      src={src}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0, display: 'block' }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="מפת מסלול"
+                    />
+                  </Box>
+                </Box>
+              );
+            })()}
             <EditAttractionModal />
             <HotelModal />
             </>}
