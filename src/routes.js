@@ -15,6 +15,7 @@ const DestinationInfoPage = React.lazy(() => import('./pages/DestinationInfoPage
 const SmartTripPage = React.lazy(() => import('./pages/SmartTripPage'));
 const RouteMapPage = React.lazy(() => import('./pages/RouteMapPage'));
 const StatisticsPage = React.lazy(() => import('./pages/StatisticsPage'));
+const GroupTripPage = React.lazy(() => import('./pages/GroupTripPage'));
 
 /**
  * רכיב ניתוב ראשי של האפליקציה
@@ -58,6 +59,9 @@ const AppRoutes = () => {
       {/* מפת תכנון טיול */}
       <Route path="/trip-map" element={<TripPlannerMapView />} />
       
+      {/* טיול קבוצתי 🗳️ */}
+      <Route path="/group-trip" element={<GroupTripPage />} />
+
       {/* נתיב ברירת מחדל - מפנה לדף הבית */}
       <Route path="*" element={<HomePage />} />
       </Routes>

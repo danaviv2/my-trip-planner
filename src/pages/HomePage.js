@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container, Box, Typography, Button, Grid, Card, CardContent,
@@ -12,10 +12,18 @@ import {
   Star as StarIcon,
   TrendingUp as TrendingIcon,
   LocationOn as LocationIcon,
+  Casino as CasinoIcon,
+  Luggage as LuggageIcon,
+  Group as GroupIcon,
 } from '@mui/icons-material';
+import SurpriseTripModal from '../components/surprise/SurpriseTripModal';
+import VibeMatcher from '../components/vibe/VibeMatcher';
+import PackingListModal from '../components/packing/PackingListModal';
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const [surpriseOpen, setSurpriseOpen] = useState(false);
+  const [packingOpen, setPackingOpen] = useState(false);
 
   const mainFeatures = [
     {
@@ -249,6 +257,109 @@ const HomePage = () => {
           ))}
         </Grid>
 
+        {/* ======= SURPRISE ME SECTION ======= */}
+        <Box
+          sx={{
+            mb: { xs: 4, md: 6 },
+            p: { xs: 3, md: 5 },
+            borderRadius: 4,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+            textAlign: 'center',
+            color: 'white',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
+          <Box sx={{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }} />
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <Typography variant="h5" fontWeight="bold" mb={1} sx={{ fontSize: { xs: '1.2rem', md: '1.8rem' } }}>
+              לא יודע לאן לטוס? 🌍
+            </Typography>
+            <Typography variant="body1" mb={3} sx={{ opacity: 0.9 }}>
+              תן לנו לבחור בשבילך יעד מפתיע!
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<CasinoIcon />}
+              onClick={() => setSurpriseOpen(true)}
+              sx={{
+                background: 'white',
+                color: '#764ba2',
+                fontWeight: 800,
+                fontSize: { xs: '1rem', md: '1.3rem' },
+                px: { xs: 4, md: 6 },
+                py: { xs: 1.5, md: 2 },
+                borderRadius: 3,
+                boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
+                animation: 'pulse 2s ease-in-out infinite',
+                '&:hover': {
+                  background: 'rgba(255,255,255,0.95)',
+                  transform: 'scale(1.08)',
+                  boxShadow: '0 15px 40px rgba(0,0,0,0.3)'
+                }
+              }}
+            >
+              הפתיע אותי 🎲
+            </Button>
+          </Box>
+        </Box>
+
+        {/* ======= VIBE MATCHER SECTION ======= */}
+        <Paper
+          elevation={3}
+          sx={{
+            p: { xs: 2.5, md: 5 },
+            borderRadius: 4,
+            background: 'white',
+            mb: { xs: 4, md: 6 }
+          }}
+        >
+          <VibeMatcher />
+        </Paper>
+
+        {/* ======= QUICK ACTIONS ======= */}
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={{ xs: 4, md: 6 }} justifyContent="center">
+          <Button
+            variant="outlined"
+            size="large"
+            startIcon={<LuggageIcon />}
+            onClick={() => setPackingOpen(true)}
+            sx={{
+              borderRadius: 3,
+              py: 1.5,
+              px: 3,
+              fontWeight: 700,
+              borderColor: '#667eea',
+              color: '#667eea',
+              '&:hover': { bgcolor: '#667eea11' }
+            }}
+          >
+            מה לארוז? 🧳
+          </Button>
+          <Button
+            variant="outlined"
+            size="large"
+            startIcon={<GroupIcon />}
+            onClick={() => navigate('/group-trip')}
+            sx={{
+              borderRadius: 3,
+              py: 1.5,
+              px: 3,
+              fontWeight: 700,
+              borderColor: '#f5576c',
+              color: '#f5576c',
+              '&:hover': { bgcolor: '#f5576c11' }
+            }}
+          >
+            טיול קבוצתי 🗳️
+          </Button>
+        </Stack>
+
         {/* יעדים פופולריים */}
         <Paper
           elevation={3}
@@ -394,11 +505,19 @@ const HomePage = () => {
         </Box>
       </Container>
 
+      {/* Modals */}
+      <SurpriseTripModal open={surpriseOpen} onClose={() => setSurpriseOpen(false)} />
+      <PackingListModal open={packingOpen} onClose={() => setPackingOpen(false)} />
+
       <style>
         {`
           @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
+          }
+          @keyframes pulse {
+            0%, 100% { box-shadow: 0 8px 30px rgba(255,255,255,0.3); }
+            50% { box-shadow: 0 8px 50px rgba(255,255,255,0.6); transform: scale(1.03); }
           }
         `}
       </style>

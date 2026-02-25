@@ -13,7 +13,8 @@ import {
   Search as SearchIcon,
   Flight as FlightIcon,
   Explore as ExploreIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  Group as GroupIcon
 } from '@mui/icons-material';
 import NotificationCenter from '../notifications/NotificationCenter';
 
@@ -25,6 +26,7 @@ const navLinks = [
   { label: 'מפה', path: '/map', icon: <MapIcon /> },
   { label: 'מפת מסלולים', path: '/route-map', icon: <MapIcon /> },
   { label: '📊 דוחות', path: '/statistics', icon: <StatsIcon /> },
+  { label: '🗳️ טיול קבוצתי', path: '/group-trip', icon: <GroupIcon /> },
 ];
 
 const Header = () => {

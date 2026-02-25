@@ -52,6 +52,15 @@ import FlightIcon from '@mui/icons-material/Flight';
 import HotelIcon from '@mui/icons-material/Hotel';
 import DriveEtaIcon from '@mui/icons-material/DriveEta';
 
+// פיצ'רים חדשים
+import BudgetMeter from './components/budget/BudgetMeter';
+import PackingListModal from './components/packing/PackingListModal';
+
+// AI Features
+import { AIChatProvider } from './contexts/AIChatContext';
+import TravelAIChat from './components/ai/TravelAIChat';
+import AIItineraryGenerator from './components/ai/AIItineraryGenerator';
+
 
 
 // הגדרת ספריות Google Maps כקבוע סטטי מחוץ לרכיב
@@ -219,6 +228,9 @@ function App() {
   // הוספת מצב חדש ללינה והמודאל
   const [accommodations, setAccommodations] = useState([]);
   const [hotelModalOpen, setHotelModalOpen] = useState(false);
+
+  // מצב לפיצ'רים חדשים
+  const [packingModalOpen, setPackingModalOpen] = useState(false);
 
   // החלף במפתחות API אמיתיים שלך או ודא שהם מוגדרים במשתני הסביבה שלך
   const GOOGLE_API_KEY = process.env.REACT_APP_GOOGLE_API_KEY || 'המפתח_האמיתי_שלך_ל_GOOGLE_API';
@@ -3292,16 +3304,20 @@ const InviteButton = () => {
 
   // חשוב מאוד - זהו ה-return הראשי של הרכיב App
   return (
-    <ErrorBoundary>     
+    <ErrorBoundary>
         <TripSaveProvider>
         <UserPreferencesProvider>
           <TripProvider>
+          <AIChatProvider>
           <div className="app" style={{ background: '#f5f5f5', padding: '20px', fontFamily: 'Roboto, Arial, sans-serif' }} role="main" aria-label="אפליקציית תכנון טיולים">
             {/* רכיב Header שמכיל את הניווט לדפים השונים */}
             <Header />
-            
+
             {/* רכיב הנתיבים החדש שיטפל בניתוב לדפים השונים */}
             <AppRoutes />
+
+            {/* AI Travel Assistant - גלובלי בכל הדפים */}
+            <TravelAIChat />
 
             {isHomePage && <>
             <Paper elevation={6} sx={{ p: 3, m: '20px auto', maxWidth: '900px', bgcolor: '#ffffff', borderRadius: '16px', boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)' }} role="region" aria-label="אזור תכנון טיולים">
@@ -3421,6 +3437,31 @@ const InviteButton = () => {
                       <AddIcon />
                     </IconButton>
                   </Box>
+                  {/* מד תקציב חי 💰 */}
+                  <BudgetMeter
+                    destination={endPoint}
+                    days={userPreferences.days}
+                    budget={userPreferences.budget}
+                  />
+
+                  {/* מחולל מסלול AI ✨ */}
+                  <AIItineraryGenerator
+                    destination={endPoint}
+                    preferences={userPreferences}
+                  />
+
+                  {/* כפתור מה לארוז */}
+                  <Box sx={{ mb: 2 }}>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      onClick={() => setPackingModalOpen(true)}
+                      sx={{ borderRadius: '8px', py: 1.2, fontWeight: 600, borderColor: '#667eea', color: '#667eea' }}
+                    >
+                      🧳 מה לארוז?
+                    </Button>
+                  </Box>
+
                   <Box sx={{ textAlign: 'center', mb: 2 }} role="group" aria-label="חיפוש מסלול">
                     {isLoading ? (
                       <CircularProgress aria-label="טוען מסלול" />
@@ -3614,8 +3655,15 @@ const InviteButton = () => {
             })()}
             <EditAttractionModal />
             <HotelModal />
+            <PackingListModal
+              open={packingModalOpen}
+              onClose={() => setPackingModalOpen(false)}
+              initialDestination={endPoint}
+              initialDays={userPreferences.days}
+            />
             </>}
           </div>
+          </AIChatProvider>
         </TripProvider>
       </UserPreferencesProvider>
       </TripSaveProvider>
