@@ -47,7 +47,7 @@ const HomePage = () => {
       description: 'קבל מידע מפורט על היעד, כולל אטרקציות, טיפים ומזג אוויר',
       icon: <ExploreIcon sx={{ fontSize: 60 }} />,
       color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-      path: '/destination-info/פריז',
+      path: '/destination-info',
       emoji: '🏙️',
       delay: '0.2s'
     },
