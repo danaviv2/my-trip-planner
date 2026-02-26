@@ -1,0 +1,88 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "travelInfo": "Infos voyage",
+    "destination": "Infos destination",
+    "search": "Recherche",
+    "map": "Carte",
+    "routeMap": "Carte des itinéraires",
+    "statistics": "Rapports",
+    "groupTrip": "Voyage en groupe",
+    "myTrips": "Mes voyages",
+    "menu": "Menu",
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "darkMode": "Mode sombre",
+    "lightMode": "Mode clair"
+  },
+  "home": {
+    "hero": {
+      "title": "Planifiez le voyage parfait",
+      "subtitle": "Itinéraires personnalisés • Conseils locaux • Infos complètes",
+      "chip1": "Plus de 10 000 destinations",
+      "chip2": "Itinéraires sur mesure",
+      "chip3": "Navigation intelligente"
+    },
+    "search": {
+      "title": "Où voulez-vous voyager ?",
+      "placeholder": "Rechercher une destination, ville ou pays...",
+      "button": "Rechercher"
+    },
+    "features": {
+      "planner": { "title": "Continuer la planification", "desc": "Continuez à planifier votre voyage parfait" },
+      "destination": { "title": "Infos destination", "desc": "Obtenez des infos détaillées sur votre destination, attractions, conseils et météo" },
+      "search": { "title": "Recherche avancée", "desc": "Trouvez attractions, restaurants et hôtels par catégorie et filtres avancés" },
+      "map": { "title": "Carte des itinéraires", "desc": "Consultez une carte interactive et obtenez une navigation précise" },
+      "myTrips": { "title": "Mes voyages", "desc": "Tous vos voyages enregistrés en un seul endroit — voir, modifier et replaner" }
+    },
+    "surprise": {
+      "title": "Vous ne savez pas où aller ? 🌍",
+      "subtitle": "Laissez-nous choisir une destination surprise pour vous !",
+      "button": "Surprenez-moi 🎲"
+    },
+    "quickActions": {
+      "packing": "Que prendre ? 🧳",
+      "groupTrip": "Voyage en groupe 🗳️"
+    },
+    "popular": {
+      "title": "🔥 Destinations populaires"
+    },
+    "stats": {
+      "smartPlanning": { "title": "Planification intelligente", "desc": "Créez un itinéraire personnalisé avec des cartes interactives et une navigation précise" },
+      "advancedSearch": { "title": "Recherche avancée", "desc": "Trouvez attractions, restaurants et hôtels par catégorie, lieu et prix" },
+      "realtime": { "title": "Infos en temps réel", "desc": "Météo à jour, comparaisons de prix et recommandations saisonnières" }
+    },
+    "cta": {
+      "title": "Prêt à commencer l'aventure ? 🚀",
+      "subtitle": "Créez votre voyage parfait en quelques minutes",
+      "button": "Commencer →"
+    }
+  },
+  "bottomNav": {
+    "home": "Accueil",
+    "routes": "Itinéraires",
+    "search": "Recherche",
+    "myTrips": "Mes voyages",
+    "plan": "Planifier"
+  },
+  "share": {
+    "title": "Partager",
+    "whatsapp": "Partager sur WhatsApp",
+    "copyLink": "Copier le lien",
+    "facebook": "Partager sur Facebook",
+    "email": "Envoyer par e-mail",
+    "instagram": "Partager sur Instagram",
+    "twitter": "Partager sur X / Twitter",
+    "telegram": "Partager sur Telegram",
+    "linkedin": "Partager sur LinkedIn",
+    "pinterest": "Partager sur Pinterest",
+    "snapchat": "Partager sur Snapchat",
+    "tiktok": "Partager sur TikTok",
+    "copied": "Lien copié !",
+    "instagramHint": "Lien copié — ouvrez Instagram et collez dans votre Story 📸",
+    "snapchatHint": "Lien copié — ouvrez Snapchat et collez dans votre Story 👻",
+    "tiktokHint": "Lien copié — ouvrez TikTok et collez dans votre bio ou commentaire 🎵",
+    "cannotCopy": "Impossible de copier — copiez manuellement",
+    "close": "Fermer"
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "nav": {
+    "home": "Início",
+    "travelInfo": "Info de viagem",
+    "destination": "Info do destino",
+    "search": "Pesquisa",
+    "map": "Mapa",
+    "routeMap": "Mapa de rotas",
+    "statistics": "Relatórios",
+    "groupTrip": "Viagem em grupo",
+    "myTrips": "Minhas viagens",
+    "menu": "Menu",
+    "login": "Entrar",
+    "logout": "Sair",
+    "darkMode": "Modo escuro",
+    "lightMode": "Modo claro"
+  },
+  "home": {
+    "hero": {
+      "title": "Planeje a viagem perfeita",
+      "subtitle": "Roteiros personalizados • Dicas locais • Informações completas",
+      "chip1": "Mais de 10.000 destinos",
+      "chip2": "Roteiros sob medida",
+      "chip3": "Navegação inteligente"
+    },
+    "search": {
+      "title": "Para onde você quer viajar?",
+      "placeholder": "Pesquise um destino, cidade ou país...",
+      "button": "Pesquisar"
+    },
+    "features": {
+      "planner": { "title": "Continuar planejando", "desc": "Continue planejando sua viagem perfeita" },
+      "destination": { "title": "Info do destino", "desc": "Obtenha informações detalhadas sobre o destino, incluindo atrações, dicas e clima" },
+      "search": { "title": "Pesquisa avançada", "desc": "Encontre atrações, restaurantes e hotéis por categoria e filtros avançados" },
+      "map": { "title": "Mapa de rotas", "desc": "Veja um mapa interativo e obtenha navegação precisa para cada ponto do seu roteiro" },
+      "myTrips": { "title": "Minhas viagens", "desc": "Todas as suas viagens salvas em um só lugar — veja, edite e planeje novamente" }
+    },
+    "surprise": {
+      "title": "Não sabe para onde ir? 🌍",
+      "subtitle": "Deixe-nos escolher um destino surpresa para você!",
+      "button": "Me surpreenda 🎲"
+    },
+    "quickActions": {
+      "packing": "O que levar? 🧳",
+      "groupTrip": "Viagem em grupo 🗳️"
+    },
+    "popular": {
+      "title": "🔥 Destinos populares"
+    },
+    "stats": {
+      "smartPlanning": { "title": "Planejamento inteligente", "desc": "Crie um roteiro personalizado com mapas interativos e navegação precisa" },
+      "advancedSearch": { "title": "Pesquisa avançada", "desc": "Encontre atrações, restaurantes e hotéis por categoria, localização e preço" },
+      "realtime": { "title": "Informações em tempo real", "desc": "Clima atualizado, comparação de preços e recomendações por temporada" }
+    },
+    "cta": {
+      "title": "Pronto para começar a aventura? 🚀",
+      "subtitle": "Crie sua viagem perfeita em poucos minutos",
+      "button": "Começar →"
+    }
+  },
+  "bottomNav": {
+    "home": "Início",
+    "routes": "Rotas",
+    "search": "Pesquisa",
+    "myTrips": "Minhas viagens",
+    "plan": "Planejar"
+  },
+  "share": {
+    "title": "Compartilhar",
+    "whatsapp": "Compartilhar no WhatsApp",
+    "copyLink": "Copiar link",
+    "facebook": "Compartilhar no Facebook",
+    "email": "Enviar por e-mail",
+    "instagram": "Compartilhar no Instagram",
+    "twitter": "Compartilhar no X / Twitter",
+    "telegram": "Compartilhar no Telegram",
+    "linkedin": "Compartilhar no LinkedIn",
+    "pinterest": "Compartilhar no Pinterest",
+    "snapchat": "Compartilhar no Snapchat",
+    "tiktok": "Compartilhar no TikTok",
+    "copied": "Link copiado!",
+    "instagramHint": "Link copiado — abra o Instagram e cole no seu Story 📸",
+    "snapchatHint": "Link copiado — abra o Snapchat e cole no seu Story 👻",
+    "tiktokHint": "Link copiado — abra o TikTok e cole na sua bio ou comentário 🎵",
+    "cannotCopy": "Não foi possível copiar — copie manualmente",
+    "close": "Fechar"
+  }
+}
