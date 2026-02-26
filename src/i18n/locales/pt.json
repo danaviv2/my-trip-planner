@@ -29,11 +29,26 @@
       "button": "Pesquisar"
     },
     "features": {
-      "planner": { "title": "Continuar planejando", "desc": "Continue planejando sua viagem perfeita" },
-      "destination": { "title": "Info do destino", "desc": "Obtenha informações detalhadas sobre o destino, incluindo atrações, dicas e clima" },
-      "search": { "title": "Pesquisa avançada", "desc": "Encontre atrações, restaurantes e hotéis por categoria e filtros avançados" },
-      "map": { "title": "Mapa de rotas", "desc": "Veja um mapa interativo e obtenha navegação precisa para cada ponto do seu roteiro" },
-      "myTrips": { "title": "Minhas viagens", "desc": "Todas as suas viagens salvas em um só lugar — veja, edite e planeje novamente" }
+      "planner": {
+        "title": "Continuar planejando",
+        "desc": "Continue planejando sua viagem perfeita"
+      },
+      "destination": {
+        "title": "Info do destino",
+        "desc": "Obtenha informações detalhadas sobre o destino, incluindo atrações, dicas e clima"
+      },
+      "search": {
+        "title": "Pesquisa avançada",
+        "desc": "Encontre atrações, restaurantes e hotéis por categoria e filtros avançados"
+      },
+      "map": {
+        "title": "Mapa de rotas",
+        "desc": "Veja um mapa interativo e obtenha navegação precisa para cada ponto do seu roteiro"
+      },
+      "myTrips": {
+        "title": "Minhas viagens",
+        "desc": "Todas as suas viagens salvas em um só lugar — veja, edite e planeje novamente"
+      }
     },
     "surprise": {
       "title": "Não sabe para onde ir? 🌍",
@@ -48,9 +63,18 @@
       "title": "🔥 Destinos populares"
     },
     "stats": {
-      "smartPlanning": { "title": "Planejamento inteligente", "desc": "Crie um roteiro personalizado com mapas interativos e navegação precisa" },
-      "advancedSearch": { "title": "Pesquisa avançada", "desc": "Encontre atrações, restaurantes e hotéis por categoria, localização e preço" },
-      "realtime": { "title": "Informações em tempo real", "desc": "Clima atualizado, comparação de preços e recomendações por temporada" }
+      "smartPlanning": {
+        "title": "Planejamento inteligente",
+        "desc": "Crie um roteiro personalizado com mapas interativos e navegação precisa"
+      },
+      "advancedSearch": {
+        "title": "Pesquisa avançada",
+        "desc": "Encontre atrações, restaurantes e hotéis por categoria, localização e preço"
+      },
+      "realtime": {
+        "title": "Informações em tempo real",
+        "desc": "Clima atualizado, comparação de preços e recomendações por temporada"
+      }
     },
     "cta": {
       "title": "Pronto para começar a aventura? 🚀",
@@ -84,5 +108,59 @@
     "tiktokHint": "Link copiado — abra o TikTok e cole na sua bio ou comentário 🎵",
     "cannotCopy": "Não foi possível copiar — copie manualmente",
     "close": "Fechar"
+  },
+  "login": {
+    "subtitle_login": "Entrar na sua conta",
+    "subtitle_register": "Criar uma nova conta",
+    "subtitle_reset": "Redefinir senha",
+    "continueGoogle": "Continuar com o Google",
+    "or": "ou",
+    "fullName": "Nome completo",
+    "email": "E-mail",
+    "password": "Senha",
+    "btn_login": "Entrar",
+    "btn_register": "Cadastrar",
+    "btn_reset": "Enviar e-mail de redefinição",
+    "forgotPassword": "Esqueceu a senha?",
+    "noAccount": "Não tem uma conta?",
+    "register": "Cadastrar",
+    "hasAccount": "Já tem uma conta?",
+    "backToLogin": "Voltar para entrar",
+    "resetSent": "E-mail de redefinição de senha enviado",
+    "errors": {
+      "email-already-in-use": "Endereço de e-mail já em uso",
+      "invalid-email": "Endereço de e-mail inválido",
+      "user-not-found": "Usuário não encontrado",
+      "wrong-password": "Senha incorreta",
+      "invalid-credential": "E-mail ou senha inválidos",
+      "weak-password": "A senha deve ter pelo menos 6 caracteres",
+      "too-many-requests": "Muitas tentativas, tente novamente mais tarde",
+      "popup-closed-by-user": "A janela de login foi fechada",
+      "network-request-failed": "Erro de rede, verifique sua conexão",
+      "default": "Ocorreu um erro, tente novamente"
+    }
+  },
+  "myTrips": {
+    "title": "Minhas viagens",
+    "savedCount": "{{count}} viagens salvas",
+    "planNew": "Planejar nova viagem",
+    "allTrips": "Todas as viagens",
+    "newTrip": "Nova viagem",
+    "unknownDest": "Destino desconhecido",
+    "savedAt": "Salvo",
+    "shareTrip": "Compartilhar viagem",
+    "deleteTrip": "Excluir viagem",
+    "days": "{{count}} dias",
+    "continuePlanning": "Continuar planejando",
+    "budget_low": "Econômico",
+    "budget_medium": "Intermediário",
+    "budget_high": "Premium",
+    "empty_title": "Ainda não há viagens salvas",
+    "empty_subtitle": "Comece a planejar sua primeira viagem!",
+    "empty_btn": "Planejar nova viagem",
+    "delete_title": "Excluir viagem",
+    "delete_confirm": "Tem certeza que deseja excluir esta viagem? Esta ação não pode ser desfeita.",
+    "cancel": "Cancelar",
+    "delete": "Excluir"
   }
 }

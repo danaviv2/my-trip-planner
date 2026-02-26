@@ -29,11 +29,26 @@
       "button": "Search"
     },
     "features": {
-      "planner": { "title": "Continue Planning", "desc": "Continue planning your perfect trip" },
-      "destination": { "title": "Destination Info", "desc": "Get detailed info about your destination, including attractions, tips and weather" },
-      "search": { "title": "Advanced Search", "desc": "Search attractions, restaurants and hotels by category and advanced filters" },
-      "map": { "title": "Route Map", "desc": "View an interactive map and get precise navigation for every point on your route" },
-      "myTrips": { "title": "My Trips", "desc": "All your saved trips in one place — view, edit and plan again" }
+      "planner": {
+        "title": "Continue Planning",
+        "desc": "Continue planning your perfect trip"
+      },
+      "destination": {
+        "title": "Destination Info",
+        "desc": "Get detailed info about your destination, including attractions, tips and weather"
+      },
+      "search": {
+        "title": "Advanced Search",
+        "desc": "Search attractions, restaurants and hotels by category and advanced filters"
+      },
+      "map": {
+        "title": "Route Map",
+        "desc": "View an interactive map and get precise navigation for every point on your route"
+      },
+      "myTrips": {
+        "title": "My Trips",
+        "desc": "All your saved trips in one place — view, edit and plan again"
+      }
     },
     "surprise": {
       "title": "Not sure where to fly? 🌍",
@@ -48,9 +63,18 @@
       "title": "🔥 Popular Destinations"
     },
     "stats": {
-      "smartPlanning": { "title": "Smart Planning", "desc": "Build a personalized itinerary with interactive maps and precise navigation" },
-      "advancedSearch": { "title": "Advanced Search", "desc": "Find attractions, restaurants and hotels by category, location and price" },
-      "realtime": { "title": "Real-Time Info", "desc": "Up-to-date weather, price comparisons and seasonal recommendations" }
+      "smartPlanning": {
+        "title": "Smart Planning",
+        "desc": "Build a personalized itinerary with interactive maps and precise navigation"
+      },
+      "advancedSearch": {
+        "title": "Advanced Search",
+        "desc": "Find attractions, restaurants and hotels by category, location and price"
+      },
+      "realtime": {
+        "title": "Real-Time Info",
+        "desc": "Up-to-date weather, price comparisons and seasonal recommendations"
+      }
     },
     "cta": {
       "title": "Ready to start the adventure? 🚀",
@@ -84,5 +108,59 @@
     "tiktokHint": "Link copied — open TikTok and paste in your bio or comment 🎵",
     "cannotCopy": "Cannot copy — copy manually",
     "close": "Close"
+  },
+  "login": {
+    "subtitle_login": "Sign in to your account",
+    "subtitle_register": "Create a new account",
+    "subtitle_reset": "Reset password",
+    "continueGoogle": "Continue with Google",
+    "or": "or",
+    "fullName": "Full name",
+    "email": "Email",
+    "password": "Password",
+    "btn_login": "Sign in",
+    "btn_register": "Register",
+    "btn_reset": "Send reset email",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "register": "Register",
+    "hasAccount": "Already have an account?",
+    "backToLogin": "Back to sign in",
+    "resetSent": "Password reset email sent",
+    "errors": {
+      "email-already-in-use": "Email address already in use",
+      "invalid-email": "Invalid email address",
+      "user-not-found": "User not found",
+      "wrong-password": "Wrong password",
+      "invalid-credential": "Invalid email or password",
+      "weak-password": "Password must be at least 6 characters",
+      "too-many-requests": "Too many attempts, please try again later",
+      "popup-closed-by-user": "Sign-in window was closed",
+      "network-request-failed": "Network error, check your connection",
+      "default": "An error occurred, please try again"
+    }
+  },
+  "myTrips": {
+    "title": "My Trips",
+    "savedCount": "{{count}} saved trips",
+    "planNew": "Plan new trip",
+    "allTrips": "All trips",
+    "newTrip": "New trip",
+    "unknownDest": "Unknown destination",
+    "savedAt": "Saved",
+    "shareTrip": "Share trip",
+    "deleteTrip": "Delete trip",
+    "days": "{{count}} days",
+    "continuePlanning": "Continue planning",
+    "budget_low": "Budget",
+    "budget_medium": "Mid-range",
+    "budget_high": "Premium",
+    "empty_title": "No saved trips yet",
+    "empty_subtitle": "Start planning your first trip!",
+    "empty_btn": "Plan a new trip",
+    "delete_title": "Delete trip",
+    "delete_confirm": "Are you sure you want to delete this trip? This action cannot be undone.",
+    "cancel": "Cancel",
+    "delete": "Delete"
   }
 }
