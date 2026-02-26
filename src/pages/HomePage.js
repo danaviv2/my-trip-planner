@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container, Box, Typography, Button, Grid, Card, CardContent,
-  Paper, Chip, Stack, TextField
+  Paper, Chip, Stack, TextField, IconButton, Tooltip
 } from '@mui/material';
 import {
   Flight as FlightIcon,
@@ -15,7 +15,10 @@ import {
   Casino as CasinoIcon,
   Luggage as LuggageIcon,
   Group as GroupIcon,
+  BookmarkBorder as MyTripsIcon,
+  Share as ShareIcon,
 } from '@mui/icons-material';
+import ShareTripDialog from '../components/shared/ShareTripDialog';
 import SurpriseTripModal from '../components/surprise/SurpriseTripModal';
 import VibeMatcher from '../components/vibe/VibeMatcher';
 import PackingListModal from '../components/packing/PackingListModal';
@@ -25,6 +28,8 @@ const HomePage = () => {
   const [surpriseOpen, setSurpriseOpen] = useState(false);
   const [packingOpen, setPackingOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [shareTarget, setShareTarget] = useState(null);   // { label, url }
+  const [shareFeature, setShareFeature] = useState(null); // { title, path }
 
   const handleSearch = () => {
     const trimmed = searchQuery.trim();
@@ -68,6 +73,15 @@ const HomePage = () => {
       path: '/map',
       emoji: '🗺️',
       delay: '0.6s'
+    },
+    {
+      title: 'הטיולים שלי',
+      description: 'כל הטיולים השמורים שלך במקום אחד — צפה, ערוך ותכנן מחדש',
+      icon: <MyTripsIcon sx={{ fontSize: 60 }} />,
+      color: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+      path: '/my-trips',
+      emoji: '📋',
+      delay: '0.8s'
     }
   ];
 
@@ -229,12 +243,34 @@ const HomePage = () => {
                   background: feature.color,
                   color: 'white',
                   transition: 'all 0.3s ease',
+                  position: 'relative',
                   '&:hover': {
                     transform: 'translateY(-10px)',
                     boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
                   }
                 }}
               >
+                <Tooltip title={`שתף — ${feature.title}`}>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => { e.stopPropagation(); setShareFeature(feature); }}
+                    sx={{
+                      position: 'absolute',
+                      top: 10,
+                      right: 10,
+                      bgcolor: 'rgba(255,255,255,0.2)',
+                      color: 'white',
+                      width: 30,
+                      height: 30,
+                      backdropFilter: 'blur(4px)',
+                      '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' },
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    <ShareIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </Tooltip>
+
                 <CardContent sx={{ p: { xs: 2.5, md: 4 }, textAlign: 'center' }}>
                   <Box sx={{
                     fontSize: { xs: '2rem', md: '3rem' },
@@ -392,32 +428,54 @@ const HomePage = () => {
           <Grid container spacing={{ xs: 1.5, md: 3 }}>
             {popularDestinations.map((dest, index) => (
               <Grid item xs={6} sm={4} md={2} key={index}>
-                <Button
-                  fullWidth
-                  onClick={() => navigate(`/destination-info/${dest.name}`)}
-                  sx={{
-                    background: `linear-gradient(135deg, ${dest.color} 0%, ${dest.color}cc 100%)`,
-                    color: 'white',
-                    py: { xs: 2, md: 3 },
-                    px: { xs: 1, md: 2 },
-                    borderRadius: '50%',
-                    aspectRatio: '1',
-                    minWidth: 0,
-                    fontSize: { xs: '0.75rem', md: '1rem' },
-                    fontWeight: 700,
-                    flexDirection: 'column',
-                    gap: 0.5,
-                    boxShadow: `0 4px 15px ${dest.color}55`,
-                    transition: 'all 0.25s ease',
-                    '&:hover': {
-                      transform: 'translateY(-4px) scale(1.08)',
-                      boxShadow: `0 10px 30px ${dest.color}77`
-                    }
-                  }}
-                >
-                  <Box sx={{ fontSize: { xs: '1.8rem', md: '3rem' } }}>{dest.emoji}</Box>
-                  {dest.name}
-                </Button>
+                <Box sx={{ position: 'relative' }}>
+                  <Button
+                    fullWidth
+                    onClick={() => navigate(`/destination-info/${dest.name}`)}
+                    sx={{
+                      background: `linear-gradient(135deg, ${dest.color} 0%, ${dest.color}cc 100%)`,
+                      color: 'white',
+                      py: { xs: 2, md: 3 },
+                      px: { xs: 1, md: 2 },
+                      borderRadius: '50%',
+                      aspectRatio: '1',
+                      minWidth: 0,
+                      fontSize: { xs: '0.75rem', md: '1rem' },
+                      fontWeight: 700,
+                      flexDirection: 'column',
+                      gap: 0.5,
+                      boxShadow: `0 4px 15px ${dest.color}55`,
+                      transition: 'all 0.25s ease',
+                      '&:hover': {
+                        transform: 'translateY(-4px) scale(1.08)',
+                        boxShadow: `0 10px 30px ${dest.color}77`
+                      }
+                    }}
+                  >
+                    <Box sx={{ fontSize: { xs: '1.8rem', md: '3rem' } }}>{dest.emoji}</Box>
+                    {dest.name}
+                  </Button>
+                  <Tooltip title={`שתף — ${dest.name}`}>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => { e.stopPropagation(); setShareTarget(dest.name); }}
+                      sx={{
+                        position: 'absolute',
+                        top: 4,
+                        right: 4,
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        color: dest.color,
+                        width: 26,
+                        height: 26,
+                        '&:hover': { bgcolor: 'white', transform: 'scale(1.15)' },
+                        transition: 'all 0.2s',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                      }}
+                    >
+                      <ShareIcon sx={{ fontSize: 14 }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               </Grid>
             ))}
           </Grid>
@@ -441,6 +499,7 @@ const HomePage = () => {
                   background: 'white',
                   height: '100%',
                   cursor: 'pointer',
+                  position: 'relative',
                   transition: 'all 0.25s ease',
                   '&:hover': {
                     transform: 'translateY(-6px)',
@@ -448,6 +507,23 @@ const HomePage = () => {
                   }
                 }}
               >
+                <Tooltip title={`שתף — ${feature.title}`}>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => { e.stopPropagation(); setShareFeature(feature); }}
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      color: 'text.disabled',
+                      '&:hover': { color: '#667eea', bgcolor: 'rgba(102,126,234,0.08)' },
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    <ShareIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </Tooltip>
+
                 <Typography sx={{ fontSize: { xs: '2rem', md: '3rem' }, mb: 1 }}>
                   {feature.icon}
                 </Typography>
@@ -518,6 +594,17 @@ const HomePage = () => {
       {/* Modals */}
       <SurpriseTripModal open={surpriseOpen} onClose={() => setSurpriseOpen(false)} />
       <PackingListModal open={packingOpen} onClose={() => setPackingOpen(false)} />
+      <ShareTripDialog
+        open={shareTarget !== null}
+        onClose={() => setShareTarget(null)}
+        trip={{ destination: shareTarget }}
+      />
+      <ShareTripDialog
+        open={shareFeature !== null}
+        onClose={() => setShareFeature(null)}
+        shareUrl={shareFeature ? `${window.location.origin}${shareFeature.path}` : ''}
+        label={shareFeature?.title}
+      />
 
       <style>
         {`

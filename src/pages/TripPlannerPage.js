@@ -14,13 +14,16 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
+import { useTripSave } from '../contexts/TripSaveContext';
+import SaveIcon from '@mui/icons-material/Save';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import TravelInfoComponent from '../components/travel-info/TravelInfoComponent';
 import PreferencesForm from '../components/trip-planner/PreferencesForm';
 import TripPlanner from '../components/trip-planner/TripPlanner';
 import RouteNavigationButtons from '../components/trip-planner/RouteNavigationButtons';
 import AccommodationPlanner from '../components/trip-planner/AccommodationPlanner';
-import ShareButtons from '../components/shared/ShareButtons';
-import InviteButton from '../components/shared/InviteButton';
+import ShareTripDialog from '../components/shared/ShareTripDialog';
+import ShareIcon from '@mui/icons-material/Share';
 import TravelServicesTab from '../components/travel-services/TravelServicesTab';
 import FlightIcon from '@mui/icons-material/Flight';
 import HotelIcon from '@mui/icons-material/Hotel';
@@ -35,7 +38,10 @@ import { fetchWeatherForecast, fetchGeoInfo } from '../components/WeatherForecas
 const TripPlannerPage = () => {
   // שימוש בהעדפות משתמש מהקונטקסט
   const { userPreferences, updateLocation } = useUserPreferences();
-  
+  const { saveTripToList } = useTripSave();
+  const [saved, setSaved] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+
   // משתני מצב מהאפליקציה המקורית
   const [mainTab, setMainTab] = useState('plan');
   const [servicesTab, setServicesTab] = useState(0);
@@ -204,6 +210,22 @@ const TripPlannerPage = () => {
     }
   };
   
+  // שמירת טיול ל-Firestore דרך TripSaveContext
+  const handleSaveTrip = async () => {
+    await saveTripToList({
+      endPoint,
+      startPoint,
+      waypoints,
+      destination: endPoint || userPreferences.location,
+      days: userPreferences.days,
+      budget: userPreferences.budget,
+      startDate: userPreferences.startDate,
+      dailyItinerary: tripPlan.dailyItinerary,
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
+
   // פונקציה לשמירת טיול
   const saveTripLog = () => {
     const newLog = {
@@ -290,6 +312,27 @@ const TripPlannerPage = () => {
         {/* לשונית תכנון מסלול */}
         {mainTab === 'plan' && (
           <>
+            {/* כפתור שמירת טיול */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={saved ? <CheckCircleIcon /> : <SaveIcon />}
+                onClick={handleSaveTrip}
+                disabled={!endPoint && !userPreferences.location}
+                sx={{
+                  background: saved
+                    ? 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
+                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  px: 3,
+                  fontWeight: 700,
+                  transition: 'all 0.3s',
+                }}
+              >
+                {saved ? 'נשמר!' : 'שמור טיול'}
+              </Button>
+            </Box>
+
             {/* מידע על נסיעה */}
             <TravelInfoComponent />
             
@@ -470,15 +513,19 @@ const TripPlannerPage = () => {
               <Typography variant="h6" sx={{ mb: 2 }}>שתף ושמור את הטיול</Typography>
               <Grid container spacing={2}>
                 <Grid item>
-                  <ShareButtons />
+                  <Button
+                    variant="contained"
+                    startIcon={<ShareIcon />}
+                    onClick={() => setShareOpen(true)}
+                    sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+                  >
+                    שתף טיול
+                  </Button>
                 </Grid>
                 <Grid item>
-                  <InviteButton />
-                </Grid>
-                <Grid item>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
+                  <Button
+                    variant="contained"
+                    color="primary"
                     onClick={saveTripLog}
                     startIcon={<i className="material-icons">save</i>}
                   >
@@ -487,6 +534,17 @@ const TripPlannerPage = () => {
                 </Grid>
               </Grid>
             </Box>
+
+            <ShareTripDialog
+              open={shareOpen}
+              onClose={() => setShareOpen(false)}
+              trip={{
+                destination: endPoint,
+                days: userPreferences?.days,
+                budget: userPreferences?.budget,
+                startDate: userPreferences?.startDate,
+              }}
+            />
             
             {/* יומני טיולים קודמים */}
             <Box mt={3} mb={3}>
