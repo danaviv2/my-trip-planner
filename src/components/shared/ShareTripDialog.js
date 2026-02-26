@@ -13,6 +13,7 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import XIcon from '@mui/icons-material/X';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import PinterestIcon from '@mui/icons-material/Pinterest';
 
 const ShareButton = ({ icon, label, color, onClick }) => (
   <Button
@@ -67,6 +68,10 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
     const subject = encodeURIComponent(`טיול מדהים${destination ? ` ל${destination}` : ''}!`);
     const body = encodeURIComponent(`היי!\n\nבוא לראות את הטיול שלי:\n${shareUrl}\n\nבתכנון עם My Trip Planner 🌍`);
     window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_blank');
+  };
+
+  const handlePinterest = () => {
+    window.open(`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(shareUrl)}&description=${encodeURIComponent(shareText)}`, '_blank');
   };
 
   const handleLinkedIn = () => {
@@ -139,6 +144,12 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
               label="שלח במייל"
               color="#D44638"
               onClick={handleEmail}
+            />
+            <ShareButton
+              icon={<PinterestIcon />}
+              label="שתף ב-Pinterest"
+              color="#E60023"
+              onClick={handlePinterest}
             />
             <ShareButton
               icon={<LinkedInIcon />}
