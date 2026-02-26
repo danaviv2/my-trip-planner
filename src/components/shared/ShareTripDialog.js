@@ -16,6 +16,12 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import PinterestIcon from '@mui/icons-material/Pinterest';
 import SvgIcon from '@mui/material/SvgIcon';
 
+const TikTokIcon = (props) => (
+  <SvgIcon {...props} viewBox="0 0 24 24">
+    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.76a4.85 4.85 0 01-1.01-.07z"/>
+  </SvgIcon>
+);
+
 const SnapchatIcon = (props) => (
   <SvgIcon {...props} viewBox="0 0 24 24">
     <path d="M12.001 2C8.318 2 6.02 4.808 6.02 7.758c0 .548.054 1.084.148 1.605l-.7.32c-.27.124-.46.246-.46.492 0 .31.253.56.56.56.06 0 .12-.01.178-.03-.16.59-.378 1.14-.66 1.63-.03.05-.06.1-.09.148C4.3 13.1 3 13.54 3 14.37c0 .57.46.96 1.13 1.13.55.14 1.13.2 1.72.2.16 0 .32-.01.48-.02.36.54.54 1.16.54 1.8 0 .18-.01.36-.04.54-.03.17-.04.33-.04.49 0 .74.6 1.49 1.98 1.49.64 0 1.38-.14 2.25-.42.6-.2 1.23-.3 1.98-.3.75 0 1.38.1 1.98.3.87.28 1.61.42 2.25.42 1.38 0 1.98-.75 1.98-1.49 0-.16-.01-.32-.04-.49-.03-.18-.04-.36-.04-.54 0-.64.18-1.26.54-1.8.16.01.32.02.48.02.59 0 1.17-.06 1.72-.2.67-.17 1.13-.56 1.13-1.13 0-.83-1.3-1.27-1.996-1.467-.03-.048-.06-.098-.09-.148-.282-.49-.5-1.04-.66-1.63.058.02.118.03.178.03.307 0 .56-.25.56-.56 0-.246-.19-.368-.46-.492l-.7-.32c.094-.521.148-1.057.148-1.605C17.982 4.808 15.684 2 12.001 2z"/>
@@ -75,6 +81,15 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
     const subject = encodeURIComponent(`טיול מדהים${destination ? ` ל${destination}` : ''}!`);
     const body = encodeURIComponent(`היי!\n\nבוא לראות את הטיול שלי:\n${shareUrl}\n\nבתכנון עם My Trip Planner 🌍`);
     window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_blank');
+  };
+
+  const handleTikTok = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showSnackbar('הקישור הועתק — פתח TikTok והדבק בביו או בתגובה 🎵', 'info');
+    } catch {
+      showSnackbar('לא ניתן להעתיק — העתק ידנית', 'warning');
+    }
   };
 
   const handleSnapchat = async () => {
@@ -160,6 +175,12 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
               label="שלח במייל"
               color="#D44638"
               onClick={handleEmail}
+            />
+            <ShareButton
+              icon={<TikTokIcon />}
+              label="שתף ב-TikTok"
+              color="#010101"
+              onClick={handleTikTok}
             />
             <ShareButton
               icon={<SnapchatIcon />}
