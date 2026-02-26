@@ -21,33 +21,39 @@ import {
   Login as LoginIcon,
   Logout as LogoutIcon,
   BookmarkBorder as TripsIcon,
+  Language as LanguageIcon,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import NotificationCenter from '../notifications/NotificationCenter';
 import { useUserPreferences } from '../../contexts/UserPreferencesContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import BottomNav from './BottomNav';
-
-const navLinks = [
-  { label: 'דף הבית', path: '/', icon: <HomeIcon /> },
-  { label: 'פרטי נסיעה', path: '/travel-info', icon: <FlightIcon /> },
-  { label: 'מידע על יעד', path: '/destination-info', icon: <ExploreIcon /> },
-  { label: 'חיפוש', path: '/advanced-search', icon: <SearchIcon /> },
-  { label: 'מפה', path: '/map', icon: <MapIcon /> },
-  { label: 'מפת מסלולים', path: '/route-map', icon: <MapIcon /> },
-  { label: '📊 דוחות', path: '/statistics', icon: <StatsIcon /> },
-  { label: '🗳️ טיול קבוצתי', path: '/group-trip', icon: <GroupIcon /> },
-  { label: '✈️ הטיולים שלי', path: '/my-trips', icon: <TripsIcon /> },
-];
 
 const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [langAnchorEl, setLangAnchorEl] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
   const navigate = useNavigate();
   const { userPreferences, toggleDarkMode } = useUserPreferences();
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
+  const { language, currentLang, changeLanguage, LANGUAGES } = useLanguage();
+
+  const navLinks = [
+    { label: t('nav.home'), path: '/', icon: <HomeIcon /> },
+    { label: t('nav.travelInfo'), path: '/travel-info', icon: <FlightIcon /> },
+    { label: t('nav.destination'), path: '/destination-info', icon: <ExploreIcon /> },
+    { label: t('nav.search'), path: '/advanced-search', icon: <SearchIcon /> },
+    { label: t('nav.map'), path: '/map', icon: <MapIcon /> },
+    { label: t('nav.routeMap'), path: '/route-map', icon: <MapIcon /> },
+    { label: `📊 ${t('nav.statistics')}`, path: '/statistics', icon: <StatsIcon /> },
+    { label: `🗳️ ${t('nav.groupTrip')}`, path: '/group-trip', icon: <GroupIcon /> },
+    { label: `✈️ ${t('nav.myTrips')}`, path: '/my-trips', icon: <TripsIcon /> },
+  ];
 
   const handleAvatarClick = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -56,6 +62,40 @@ const Header = () => {
     await logout();
     navigate('/');
   };
+
+  const LanguageSwitcher = () => (
+    <>
+      <Tooltip title="Language / שפה">
+        <IconButton
+          color="inherit"
+          size="small"
+          onClick={(e) => setLangAnchorEl(e.currentTarget)}
+          sx={{ gap: 0.5 }}
+        >
+          <LanguageIcon fontSize="small" />
+          <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.75rem' }}>
+            {currentLang.flag}
+          </Typography>
+        </IconButton>
+      </Tooltip>
+      <Menu
+        anchorEl={langAnchorEl}
+        open={Boolean(langAnchorEl)}
+        onClose={() => setLangAnchorEl(null)}
+      >
+        {LANGUAGES.map((lang) => (
+          <MenuItem
+            key={lang.code}
+            selected={language === lang.code}
+            onClick={() => { changeLanguage(lang.code); setLangAnchorEl(null); }}
+            sx={{ gap: 1, fontWeight: language === lang.code ? 700 : 400 }}
+          >
+            {lang.flag} {lang.label}
+          </MenuItem>
+        ))}
+      </Menu>
+    </>
+  );
 
   return (
     <>
@@ -76,17 +116,17 @@ const Header = () => {
             ✈️ My Trip Planner
           </Typography>
 
-          {/* דסקטופ - כפתורים */}
+          {/* דסקטופ */}
           {!isMobile && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Tooltip title={userPreferences.darkMode ? 'מצב בהיר' : 'מצב כהה'}>
+              <LanguageSwitcher />
+              <Tooltip title={userPreferences.darkMode ? t('nav.lightMode') : t('nav.darkMode')}>
                 <IconButton color="inherit" onClick={toggleDarkMode} size="small">
                   {userPreferences.darkMode ? <LightModeIcon /> : <DarkModeIcon />}
                 </IconButton>
               </Tooltip>
               <NotificationCenter />
 
-              {/* כפתור התחברות / Avatar — תמיד גלוי, לפני הקישורים */}
               {user ? (
                 <>
                   <Tooltip title={user.displayName || user.email}>
@@ -101,10 +141,10 @@ const Header = () => {
                   </Tooltip>
                   <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                     <MenuItem onClick={() => { handleMenuClose(); navigate('/my-trips'); }}>
-                      <TripsIcon sx={{ mr: 1 }} fontSize="small" /> הטיולים שלי
+                      <TripsIcon sx={{ mr: 1 }} fontSize="small" /> {t('nav.myTrips')}
                     </MenuItem>
                     <MenuItem onClick={handleLogout}>
-                      <LogoutIcon sx={{ mr: 1 }} fontSize="small" /> התנתק
+                      <LogoutIcon sx={{ mr: 1 }} fontSize="small" /> {t('nav.logout')}
                     </MenuItem>
                   </Menu>
                 </>
@@ -117,7 +157,7 @@ const Header = () => {
                   startIcon={<LoginIcon />}
                   sx={{ mr: 1, borderColor: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', flexShrink: 0 }}
                 >
-                  התחברות
+                  {t('nav.login')}
                 </Button>
               )}
 
@@ -139,10 +179,11 @@ const Header = () => {
             </Box>
           )}
 
-          {/* מובייל - פעמון + המבורגר */}
+          {/* מובייל */}
           {isMobile && (
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Tooltip title={userPreferences.darkMode ? 'מצב בהיר' : 'מצב כהה'}>
+              <LanguageSwitcher />
+              <Tooltip title={userPreferences.darkMode ? t('nav.lightMode') : t('nav.darkMode')}>
                 <IconButton color="inherit" onClick={toggleDarkMode} size="small">
                   {userPreferences.darkMode ? <LightModeIcon /> : <DarkModeIcon />}
                 </IconButton>
@@ -160,10 +201,10 @@ const Header = () => {
                   </IconButton>
                   <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                     <MenuItem onClick={() => { handleMenuClose(); navigate('/my-trips'); }}>
-                      <TripsIcon sx={{ mr: 1 }} fontSize="small" /> הטיולים שלי
+                      <TripsIcon sx={{ mr: 1 }} fontSize="small" /> {t('nav.myTrips')}
                     </MenuItem>
                     <MenuItem onClick={handleLogout}>
-                      <LogoutIcon sx={{ mr: 1 }} fontSize="small" /> התנתק
+                      <LogoutIcon sx={{ mr: 1 }} fontSize="small" /> {t('nav.logout')}
                     </MenuItem>
                   </Menu>
                 </>
@@ -172,11 +213,7 @@ const Header = () => {
                   <LoginIcon />
                 </IconButton>
               )}
-              <IconButton
-                color="inherit"
-                onClick={() => setDrawerOpen(true)}
-                sx={{ ml: 1 }}
-              >
+              <IconButton color="inherit" onClick={() => setDrawerOpen(true)} sx={{ ml: 1 }}>
                 <MenuIcon />
               </IconButton>
             </Box>
@@ -199,7 +236,7 @@ const Header = () => {
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <Typography variant="h6" fontWeight="bold">✈️ תפריט</Typography>
+          <Typography variant="h6" fontWeight="bold">✈️ {t('nav.menu')}</Typography>
           <IconButton color="inherit" onClick={() => setDrawerOpen(false)}>
             <CloseIcon />
           </IconButton>
@@ -238,8 +275,30 @@ const Header = () => {
 
         <Divider />
 
-        {/* אזור משתמש בתחתית הדרואר */}
+        {/* אזור משתמש + שפה בתחתית */}
         <Box sx={{ p: 2 }}>
+          {/* בורר שפה */}
+          <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+            {LANGUAGES.map((lang) => (
+              <Button
+                key={lang.code}
+                size="small"
+                variant={language === lang.code ? 'contained' : 'outlined'}
+                onClick={() => { changeLanguage(lang.code); setDrawerOpen(false); }}
+                sx={{
+                  fontSize: '0.75rem',
+                  minWidth: 0,
+                  px: 1.5,
+                  ...(language === lang.code && {
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  }),
+                }}
+              >
+                {lang.flag} {lang.label}
+              </Button>
+            ))}
+          </Box>
+
           {user ? (
             <>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
@@ -256,7 +315,7 @@ const Header = () => {
                 startIcon={<LogoutIcon />}
                 onClick={() => { setDrawerOpen(false); handleLogout(); }}
               >
-                התנתק
+                {t('nav.logout')}
               </Button>
             </>
           ) : (
@@ -268,7 +327,7 @@ const Header = () => {
               onClick={() => setDrawerOpen(false)}
               sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
             >
-              התחברות
+              {t('nav.login')}
             </Button>
           )}
         </Box>

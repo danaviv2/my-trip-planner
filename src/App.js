@@ -47,6 +47,7 @@ import ThemeWrapper from './components/layout/ThemeWrapper';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { TripSaveProvider } from './contexts/TripSaveContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 
 // ייבוא הסמלים הנדרשים
 import FlightIcon from '@mui/icons-material/Flight';
@@ -3309,6 +3310,7 @@ const InviteButton = () => {
       <AuthProvider>
         <TripSaveProvider>
         <UserPreferencesProvider>
+        <LanguageProvider>
           <ThemeWrapper>
           <TripProvider>
           <AIChatProvider>
@@ -3669,6 +3671,7 @@ const InviteButton = () => {
           </AIChatProvider>
         </TripProvider>
           </ThemeWrapper>
+        </LanguageProvider>
       </UserPreferencesProvider>
         </TripSaveProvider>
       </AuthProvider>

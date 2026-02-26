@@ -9,20 +9,22 @@ import {
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMediaQuery, useTheme } from '@mui/material';
-
-const navItems = [
-  { label: 'בית', path: '/', icon: <HomeIcon /> },
-  { label: 'מסלולים', path: '/route-map', icon: <RouteIcon /> },
-  { label: 'חיפוש', path: '/advanced-search', icon: <SearchIcon /> },
-  { label: 'הטיולים שלי', path: '/my-trips', icon: <MyTripsIcon /> },
-  { label: 'תכנון', path: '/trip-planner', icon: <FlightTakeoffIcon /> },
-];
+import { useTranslation } from 'react-i18next';
 
 const BottomNav = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const navItems = [
+    { labelKey: 'bottomNav.home', path: '/', icon: <HomeIcon /> },
+    { labelKey: 'bottomNav.routes', path: '/route-map', icon: <RouteIcon /> },
+    { labelKey: 'bottomNav.search', path: '/advanced-search', icon: <SearchIcon /> },
+    { labelKey: 'bottomNav.myTrips', path: '/my-trips', icon: <MyTripsIcon /> },
+    { labelKey: 'bottomNav.plan', path: '/trip-planner', icon: <FlightTakeoffIcon /> },
+  ];
 
   if (!isMobile) return null;
 
@@ -46,16 +48,12 @@ const BottomNav = () => {
         {navItems.map((item) => (
           <BottomNavigationAction
             key={item.path}
-            label={item.label}
+            label={t(item.labelKey)}
             value={item.path}
             icon={item.icon}
             sx={{
-              '&.Mui-selected': {
-                color: '#667eea',
-              },
-              '& .MuiBottomNavigationAction-label': {
-                fontSize: '0.65rem',
-              },
+              '&.Mui-selected': { color: '#667eea' },
+              '& .MuiBottomNavigationAction-label': { fontSize: '0.65rem' },
             }}
           />
         ))}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Box, Typography, IconButton, Snackbar, Alert,
@@ -50,6 +51,7 @@ const ShareButton = ({ icon, label, color, onClick }) => (
 
 const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, label }) => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const { t } = useTranslation();
 
   const destination = trip.destination || trip.endPoint || '';
   const shareUrl = shareUrlProp || `${window.location.origin}/trip-planner?destination=${encodeURIComponent(destination)}`;
@@ -67,9 +69,9 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      showSnackbar('הקישור הועתק!');
+      showSnackbar(t('share.copied'));
     } catch {
-      showSnackbar('לא ניתן להעתיק — העתק ידנית', 'warning');
+      showSnackbar(t('share.cannotCopy'), 'warning');
     }
   };
 
@@ -86,18 +88,18 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
   const handleTikTok = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      showSnackbar('הקישור הועתק — פתח TikTok והדבק בביו או בתגובה 🎵', 'info');
+      showSnackbar(t('share.tiktokHint'), 'info');
     } catch {
-      showSnackbar('לא ניתן להעתיק — העתק ידנית', 'warning');
+      showSnackbar(t('share.cannotCopy'), 'warning');
     }
   };
 
   const handleSnapchat = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      showSnackbar('הקישור הועתק — פתח Snapchat והדבק בסטורי 👻', 'info');
+      showSnackbar(t('share.snapchatHint'), 'info');
     } catch {
-      showSnackbar('לא ניתן להעתיק — העתק ידנית', 'warning');
+      showSnackbar(t('share.cannotCopy'), 'warning');
     }
   };
 
@@ -120,9 +122,9 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
   const handleInstagram = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      showSnackbar('הקישור הועתק — פתח Instagram והדבק בסטורי 📸', 'info');
+      showSnackbar(t('share.instagramHint'), 'info');
     } catch {
-      showSnackbar('לא ניתן להעתיק — העתק ידנית', 'warning');
+      showSnackbar(t('share.cannotCopy'), 'warning');
     }
   };
 
@@ -137,7 +139,7 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
       >
         <DialogTitle sx={{ pr: 6, pb: 1 }}>
           <Typography variant="h6" fontWeight={700}>
-            {displayLabel ? `שתף — ${displayLabel}` : 'שתף'}
+            {displayLabel ? `${t('share.title')} — ${displayLabel}` : t('share.title')}
           </Typography>
           <IconButton
             onClick={onClose}
@@ -152,78 +154,23 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
 
         <DialogContent sx={{ pt: 2.5, pb: 1 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            <ShareButton
-              icon={<WhatsAppIcon />}
-              label="שתף ב-WhatsApp"
-              color="#25D366"
-              onClick={handleWhatsApp}
-            />
-            <ShareButton
-              icon={<LinkIcon />}
-              label="העתק קישור"
-              color="#667eea"
-              onClick={handleCopyLink}
-            />
-            <ShareButton
-              icon={<FacebookIcon />}
-              label="שתף ב-Facebook"
-              color="#1877F2"
-              onClick={handleFacebook}
-            />
-            <ShareButton
-              icon={<EmailIcon />}
-              label="שלח במייל"
-              color="#D44638"
-              onClick={handleEmail}
-            />
-            <ShareButton
-              icon={<TikTokIcon />}
-              label="שתף ב-TikTok"
-              color="#010101"
-              onClick={handleTikTok}
-            />
-            <ShareButton
-              icon={<SnapchatIcon />}
-              label="שתף ב-Snapchat"
-              color="#FFFC00"
-              onClick={handleSnapchat}
-            />
-            <ShareButton
-              icon={<PinterestIcon />}
-              label="שתף ב-Pinterest"
-              color="#E60023"
-              onClick={handlePinterest}
-            />
-            <ShareButton
-              icon={<LinkedInIcon />}
-              label="שתף ב-LinkedIn"
-              color="#0A66C2"
-              onClick={handleLinkedIn}
-            />
-            <ShareButton
-              icon={<TelegramIcon />}
-              label="שתף בטלגרם"
-              color="#26A5E4"
-              onClick={handleTelegram}
-            />
-            <ShareButton
-              icon={<XIcon />}
-              label="שתף ב-X / Twitter"
-              color="#000000"
-              onClick={handleTwitter}
-            />
-            <ShareButton
-              icon={<InstagramIcon />}
-              label="שתף ב-Instagram"
-              color="#C13584"
-              onClick={handleInstagram}
-            />
+            <ShareButton icon={<WhatsAppIcon />} label={t('share.whatsapp')} color="#25D366" onClick={handleWhatsApp} />
+            <ShareButton icon={<LinkIcon />} label={t('share.copyLink')} color="#667eea" onClick={handleCopyLink} />
+            <ShareButton icon={<FacebookIcon />} label={t('share.facebook')} color="#1877F2" onClick={handleFacebook} />
+            <ShareButton icon={<EmailIcon />} label={t('share.email')} color="#D44638" onClick={handleEmail} />
+            <ShareButton icon={<TikTokIcon />} label={t('share.tiktok')} color="#010101" onClick={handleTikTok} />
+            <ShareButton icon={<SnapchatIcon />} label={t('share.snapchat')} color="#FFFC00" onClick={handleSnapchat} />
+            <ShareButton icon={<PinterestIcon />} label={t('share.pinterest')} color="#E60023" onClick={handlePinterest} />
+            <ShareButton icon={<LinkedInIcon />} label={t('share.linkedin')} color="#0A66C2" onClick={handleLinkedIn} />
+            <ShareButton icon={<TelegramIcon />} label={t('share.telegram')} color="#26A5E4" onClick={handleTelegram} />
+            <ShareButton icon={<XIcon />} label={t('share.twitter')} color="#000000" onClick={handleTwitter} />
+            <ShareButton icon={<InstagramIcon />} label={t('share.instagram')} color="#C13584" onClick={handleInstagram} />
           </Box>
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
           <Button onClick={onClose} variant="text" color="inherit">
-            סגור
+            {t('share.close')}
           </Button>
         </DialogActions>
       </Dialog>

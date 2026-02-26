@@ -1,11 +1,20 @@
 import React from 'react';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { ThemeProvider, CssBaseline, createTheme } from '@mui/material';
 import { useUserPreferences } from '../../contexts/UserPreferencesContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { lightTheme, darkTheme } from '../../theme';
 
 const ThemeWrapper = ({ children }) => {
   const { userPreferences } = useUserPreferences();
-  const theme = userPreferences.darkMode ? darkTheme : lightTheme;
+  const { currentLang } = useLanguage();
+
+  const baseTheme = userPreferences.darkMode ? darkTheme : lightTheme;
+
+  // שכפול ה-theme עם כיוון נכון
+  const theme = createTheme({
+    ...baseTheme,
+    direction: currentLang.dir,
+  });
 
   return (
     <ThemeProvider theme={theme}>
