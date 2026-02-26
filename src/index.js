@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import './index.css';
-import './i18n/index'; // אתחול i18next לפני כל שאר
+import './i18n/index.js'; // אתחול i18next לפני כל שאר
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 

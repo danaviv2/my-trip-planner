@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LANGUAGES } from '../i18n';
+import { LANGUAGES } from '../i18n/index';
 
 const LanguageContext = createContext();
 
