@@ -4,7 +4,7 @@ import {
   Home as HomeIcon,
   AltRoute as RouteIcon,
   Search as SearchIcon,
-  Explore as ExploreIcon,
+  BookmarkBorder as MyTripsIcon,
   FlightTakeoff as FlightTakeoffIcon
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -14,7 +14,7 @@ const navItems = [
   { label: 'בית', path: '/', icon: <HomeIcon /> },
   { label: 'מסלולים', path: '/route-map', icon: <RouteIcon /> },
   { label: 'חיפוש', path: '/advanced-search', icon: <SearchIcon /> },
-  { label: 'יעד', path: '/destination-info', icon: <ExploreIcon /> },
+  { label: 'הטיולים שלי', path: '/my-trips', icon: <MyTripsIcon /> },
   { label: 'תכנון', path: '/trip-planner', icon: <FlightTakeoffIcon /> },
 ];
 

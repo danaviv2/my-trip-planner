@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Fade from '@mui/material/Fade';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Use lazy-loading for heavy pages to reduce bundle size and avoid loading
 // browser-only libs during SSR/test/build phases.
@@ -17,6 +18,8 @@ const SmartTripPage = React.lazy(() => import('./pages/SmartTripPage'));
 const RouteMapPage = React.lazy(() => import('./pages/RouteMapPage'));
 const StatisticsPage = React.lazy(() => import('./pages/StatisticsPage'));
 const GroupTripPage = React.lazy(() => import('./pages/GroupTripPage'));
+const LoginPage = React.lazy(() => import('./components/auth/LoginPage'));
+const MyTripsPage = React.lazy(() => import('./pages/MyTripsPage'));
 
 /**
  * רכיב ניתוב ראשי של האפליקציה
@@ -45,14 +48,14 @@ const AppRoutes = () => {
       <Route path="/route-map" element={<RouteMapPage />} />
       
       {/* דוחות וסטטיסטיקות 📊 */}
-      <Route path="/statistics" element={<StatisticsPage />} />
+      <Route path="/statistics" element={<ProtectedRoute><StatisticsPage /></ProtectedRoute>} />
       
       {/* מידע על יעד */}
       <Route path="/destination-info" element={<DestinationInfoPage />} />
       <Route path="/destination-info/:destination" element={<DestinationInfoPage />} />
       
       {/* תכנון טיול */}
-      <Route path="/trip-planner" element={<TripPlannerPage />} />
+      <Route path="/trip-planner" element={<ProtectedRoute><TripPlannerPage /></ProtectedRoute>} />
       
       {/* מידע על נסיעה */}
       <Route path="/travel-info" element={<TravelInfoPage />} />
@@ -64,7 +67,13 @@ const AppRoutes = () => {
       <Route path="/trip-map" element={<TripPlannerMapView />} />
       
       {/* טיול קבוצתי 🗳️ */}
-      <Route path="/group-trip" element={<GroupTripPage />} />
+      <Route path="/group-trip" element={<ProtectedRoute><GroupTripPage /></ProtectedRoute>} />
+
+      {/* הטיולים שלי */}
+      <Route path="/my-trips" element={<ProtectedRoute><MyTripsPage /></ProtectedRoute>} />
+
+      {/* התחברות */}
+      <Route path="/login" element={<LoginPage />} />
 
       {/* נתיב ברירת מחדל - מפנה לדף הבית */}
       <Route path="*" element={<HomePage />} />

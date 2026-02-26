@@ -16,8 +16,8 @@ root.render(
 
 reportWebVitals();
 
-// רישום Service Worker לתמיכת PWA (iOS + Android)
-if ('serviceWorker' in navigator) {
+// רישום Service Worker לתמיכת PWA — רק בפרודקשן
+if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });

@@ -1,11 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import { saveTrip as fsaveTrip, loadTrips as floadTrips, deleteTrip as fdeleteTrip } from '../services/firestoreService';
 
 const TripSaveContext = createContext();
 
 export const TripSaveProvider = ({ children }) => {
   const [currentTrip, setCurrentTrip] = useState(null);
   const [savedTrips, setSavedTrips] = useState([]);
+  const { user } = useAuth();
 
+  // טעינת טיול נוכחי מ-localStorage
   useEffect(() => {
     const saved = localStorage.getItem('currentTrip');
     if (saved) {
@@ -17,13 +21,38 @@ export const TripSaveProvider = ({ children }) => {
     }
   }, []);
 
+  // כאשר משתמש מתחבר — טען טיולים מ-Firestore
+  useEffect(() => {
+    if (!user) {
+      // טעינת טיולים מ-localStorage כ-fallback כאשר לא מחובר
+      const local = localStorage.getItem('savedTrips');
+      if (local) {
+        try { setSavedTrips(JSON.parse(local)); } catch {}
+      }
+      return;
+    }
+
+    floadTrips(user.uid)
+      .then((trips) => {
+        setSavedTrips(trips);
+        localStorage.setItem('savedTrips', JSON.stringify(trips));
+      })
+      .catch((err) => {
+        console.error('שגיאה בטעינת טיולים מ-Firestore:', err);
+        // fallback ל-localStorage
+        const local = localStorage.getItem('savedTrips');
+        if (local) {
+          try { setSavedTrips(JSON.parse(local)); } catch {}
+        }
+      });
+  }, [user]);
+
   const saveCurrentTrip = (tripData) => {
     setCurrentTrip(tripData);
     localStorage.setItem('currentTrip', JSON.stringify(tripData));
-    console.log('✅ טיול נשמר:', tripData);
   };
 
-  const saveTripToList = (tripData) => {
+  const saveTripToList = async (tripData) => {
     const trip = {
       id: Date.now(),
       ...tripData,
@@ -32,14 +61,31 @@ export const TripSaveProvider = ({ children }) => {
     const updated = [...savedTrips, trip];
     setSavedTrips(updated);
     localStorage.setItem('savedTrips', JSON.stringify(updated));
+
+    if (user) {
+      try {
+        await fsaveTrip(user.uid, trip);
+      } catch (err) {
+        console.error('שגיאה בשמירה ל-Firestore:', err);
+      }
+    }
+
     alert('✅ הטיול נשמר בהצלחה!');
     return trip;
   };
 
-  const deleteTrip = (tripId) => {
+  const deleteTrip = async (tripId) => {
     const updated = savedTrips.filter(t => t.id !== tripId);
     setSavedTrips(updated);
     localStorage.setItem('savedTrips', JSON.stringify(updated));
+
+    if (user) {
+      try {
+        await fdeleteTrip(user.uid, tripId);
+      } catch (err) {
+        console.error('שגיאה במחיקה מ-Firestore:', err);
+      }
+    }
   };
 
   const clearCurrentTrip = () => {

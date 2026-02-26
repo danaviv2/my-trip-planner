@@ -46,6 +46,7 @@ import Header from './components/layout/Header';
 import ThemeWrapper from './components/layout/ThemeWrapper';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { TripSaveProvider } from './contexts/TripSaveContext';
+import { AuthProvider } from './contexts/AuthContext';
 
 // ייבוא הסמלים הנדרשים
 import FlightIcon from '@mui/icons-material/Flight';
@@ -3305,6 +3306,7 @@ const InviteButton = () => {
   // חשוב מאוד - זהו ה-return הראשי של הרכיב App
   return (
     <ErrorBoundary>
+      <AuthProvider>
         <TripSaveProvider>
         <UserPreferencesProvider>
           <ThemeWrapper>
@@ -3668,7 +3670,8 @@ const InviteButton = () => {
         </TripProvider>
           </ThemeWrapper>
       </UserPreferencesProvider>
-      </TripSaveProvider>
+        </TripSaveProvider>
+      </AuthProvider>
   </ErrorBoundary>
   );
 }
