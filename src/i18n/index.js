@@ -11,7 +11,7 @@ export const LANGUAGES = [
   { code: 'en', label: 'English',  dir: 'ltr', flag: '🇺🇸' },
   { code: 'fr', label: 'Français', dir: 'ltr', flag: '🇫🇷' },
   { code: 'es', label: 'Español',  dir: 'ltr', flag: '🇪🇸' },
-  { code: 'pt', label: 'Português',dir: 'ltr', flag: '🇧🇷' },
+  { code: 'pt', label: 'Português',dir: 'ltr', flag: '🇵🇹' },
 ];
 
 i18n
