@@ -1,10 +1,11 @@
 // components/travel-info/AirportInfoModal.js
 import React, { useState, useEffect } from 'react';
-import { 
-  Modal, 
-  Box, 
-  Typography, 
-  CircularProgress, 
+import { useTranslation } from 'react-i18next';
+import {
+  Modal,
+  Box,
+  Typography,
+  CircularProgress,
   Divider,
   Paper,
   Grid,
@@ -12,6 +13,7 @@ import {
 } from '@mui/material';
 
 const AirportInfoModal = ({ open, onClose, airportCode }) => {
+  const { t } = useTranslation();
   const [airportData, setAirportData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -24,7 +26,7 @@ const AirportInfoModal = ({ open, onClose, airportCode }) => {
   
   const fetchAirportInfo = async (code) => {
     if (!code || code.length < 3) {
-      setError('קוד שדה תעופה לא תקין');
+      setError(t('airportModal.invalidCode'));
       return;
     }
     
@@ -40,54 +42,54 @@ const AirportInfoModal = ({ open, onClose, airportCode }) => {
       switch(code.toUpperCase()) {
         case 'TLV':
           data = {
-            name: 'נמל התעופה בן גוריון',
+            name: 'Ben Gurion Airport',
             code: 'TLV',
-            city: 'תל אביב',
-            country: 'ישראל',
+            city: 'Tel Aviv',
+            country: 'Israel',
             timezone: 'UTC+3',
             terminals: ['T1', 'T3'],
             coordinates: { lat: 32.0055, lng: 34.8854 },
             info: {
               website: 'https://www.iaa.gov.il/',
               phone: '+972-3-9723333',
-              facilities: ['חנויות', 'מסעדות', 'חניה', 'מטבע זר', 'רכבת'],
-              transportation: ['רכבת', 'מונית', 'אוטובוס', 'השכרת רכב']
+              facilities: [t('airportModal.facilityShops'), t('airportModal.facilityRestaurants'), t('airportModal.facilityParking'), t('airportModal.facilityCurrency'), t('airportModal.facilityTrain')],
+              transportation: [t('airportModal.transTrain'), t('airportModal.transTaxi'), t('airportModal.transBus'), t('airportModal.transCarRental')]
             }
           };
           break;
         case 'CDG':
           data = {
-            name: 'נמל התעופה שארל דה גול',
+            name: 'Charles de Gaulle Airport',
             code: 'CDG',
-            city: 'פריז',
-            country: 'צרפת',
+            city: 'Paris',
+            country: 'France',
             timezone: 'UTC+2',
             terminals: ['T1', 'T2A', 'T2B', 'T2C', 'T2D', 'T2E', 'T2F', 'T3'],
             coordinates: { lat: 49.0097, lng: 2.5479 },
             info: {
               website: 'https://www.parisaeroport.fr/',
               phone: '+33-1-70363950',
-              facilities: ['חנויות', 'מסעדות', 'חניה', 'מטבע זר', 'לאונג\'ים'],
-              transportation: ['רכבת', 'מטרו', 'מונית', 'אוטובוס', 'השכרת רכב']
+              facilities: [t('airportModal.facilityShops'), t('airportModal.facilityRestaurants'), t('airportModal.facilityParking'), t('airportModal.facilityCurrency'), t('airportModal.facilityLounges')],
+              transportation: [t('airportModal.transTrain'), t('airportModal.transMetro'), t('airportModal.transTaxi'), t('airportModal.transBus'), t('airportModal.transCarRental')]
             }
           };
           break;
         default:
           data = {
-            name: `נמל תעופה ${code}`,
+            name: t('airportModal.defaultName', { code }),
             code: code.toUpperCase(),
-            city: 'לא ידוע',
-            country: 'לא ידוע',
-            timezone: 'לא ידוע',
+            city: t('airportModal.unknown'),
+            country: t('airportModal.unknown'),
+            timezone: t('airportModal.unknown'),
             info: {
-              note: 'מידע מפורט אינו זמין עבור שדה תעופה זה'
+              note: t('airportModal.defaultNote')
             }
           };
       }
       
       setAirportData(data);
     } catch (error) {
-      setError('שגיאה בטעינת מידע שדה התעופה: ' + error.message);
+      setError(t('airportModal.loadError', { msg: error.message }));
     } finally {
       setIsLoading(false);
     }
@@ -147,7 +149,7 @@ const AirportInfoModal = ({ open, onClose, airportCode }) => {
               <Grid item xs={12} sm={6}>
                 <Paper sx={{ p: 2, height: '100%' }}>
                   <Typography variant="subtitle2" sx={{ mb: 1, color: '#666' }}>
-                    מיקום
+                    {t('airportModal.location')}
                   </Typography>
                   <Typography variant="body1">
                     {airportData.city}, {airportData.country}
@@ -157,7 +159,7 @@ const AirportInfoModal = ({ open, onClose, airportCode }) => {
               <Grid item xs={12} sm={6}>
                 <Paper sx={{ p: 2, height: '100%' }}>
                   <Typography variant="subtitle2" sx={{ mb: 1, color: '#666' }}>
-                    אזור זמן
+                    {t('airportModal.timezone')}
                   </Typography>
                   <Typography variant="body1">
                     {airportData.timezone}
@@ -169,7 +171,7 @@ const AirportInfoModal = ({ open, onClose, airportCode }) => {
             {airportData.terminals && (
               <Box sx={{ mb: 3 }}>
                 <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold' }}>
-                  טרמינלים
+                  {t('airportModal.terminals')}
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {airportData.terminals.map(terminal => (
@@ -195,7 +197,7 @@ const AirportInfoModal = ({ open, onClose, airportCode }) => {
                 {airportData.info.facilities && (
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold' }}>
-                      שירותים ומתקנים
+                      {t('airportModal.facilitiesTitle')}
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                       {airportData.info.facilities.map(facility => (
@@ -219,7 +221,7 @@ const AirportInfoModal = ({ open, onClose, airportCode }) => {
                 {airportData.info.transportation && (
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold' }}>
-                      אפשרויות תחבורה
+                      {t('airportModal.transportationTitle')}
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                       {airportData.info.transportation.map(transport => (
@@ -243,7 +245,7 @@ const AirportInfoModal = ({ open, onClose, airportCode }) => {
                 {airportData.info.website && (
                   <Box sx={{ mb: 1 }}>
                     <Typography variant="subtitle2" sx={{ color: '#666' }}>
-                      אתר רשמי
+                      {t('airportModal.website')}
                     </Typography>
                     <Typography variant="body2" component="a" href={airportData.info.website} target="_blank" rel="noopener noreferrer" sx={{ color: '#2196F3' }}>
                       {airportData.info.website}
@@ -254,7 +256,7 @@ const AirportInfoModal = ({ open, onClose, airportCode }) => {
                 {airportData.info.phone && (
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="subtitle2" sx={{ color: '#666' }}>
-                      טלפון
+                      {t('airportModal.phone')}
                     </Typography>
                     <Typography variant="body2">
                       {airportData.info.phone}
@@ -279,7 +281,7 @@ const AirportInfoModal = ({ open, onClose, airportCode }) => {
                   startIcon={<i className="material-icons">map</i>}
                   onClick={() => window.open(`https://www.google.com/maps?q=${airportData.coordinates.lat},${airportData.coordinates.lng}`)}
                 >
-                  הצג במפה
+                  {t('airportModal.showOnMap')}
                 </Button>
                 <Button 
                   variant="outlined"
@@ -287,17 +289,17 @@ const AirportInfoModal = ({ open, onClose, airportCode }) => {
                   sx={{ mr: 2 }}
                   onClick={() => window.open(`https://www.flightradar24.com/airport/${airportData.code}`)}
                 >
-                  צפה בטיסות חיות
+                  {t('airportModal.liveFlights')}
                 </Button>
               </Box>
             )}
           </>
         ) : (
-          <Typography sx={{ p: 2 }}>אין מידע זמין</Typography>
+          <Typography sx={{ p: 2 }}>{t('airportModal.noData')}</Typography>
         )}
         
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, pt: 2, borderTop: '1px solid #e0e0e0' }}>
-          <Button onClick={onClose}>סגור</Button>
+          <Button onClick={onClose}>{t('airportModal.close')}</Button>
         </Box>
       </Box>
     </Modal>

@@ -110,11 +110,11 @@ const DestinationInfoPage = () => {
       if (err.message === 'NO_API_KEY') {
         setError('no_api_key');
       } else if (err.message === 'TIMEOUT') {
-        setError('הבקשה לקחה יותר מדי זמן. נסה שוב.');
+        setError(t('destInfo.errorTimeout'));
       } else if (err.message === 'INVALID_RESPONSE') {
-        setError('התקבלה תגובה לא תקינה מהשרת. נסה שוב.');
+        setError(t('destInfo.errorInvalidResponse'));
       } else {
-        setError('שגיאה בטעינת מידע על היעד. נסה שוב.');
+        setError(t('destInfo.errorLoading'));
       }
     } finally {
       setIsLoading(false);
@@ -891,14 +891,14 @@ const DestinationInfoPage = () => {
         <Box>
           <Typography sx={{ fontSize: '4rem', mb: 2 }}>⚠️</Typography>
           <Typography variant="h5" fontWeight="bold" mb={1}>{error}</Typography>
-          <Typography variant="body2" color="text.secondary" mb={3}>בדוק את חיבור האינטרנט ונסה שוב</Typography>
+          <Typography variant="body2" color="text.secondary" mb={3}>{t('destInfo.errorCheckConnection')}</Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
             <Button variant="contained" onClick={() => fetchDestinationData(destination)}
               sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 2 }}>
-              נסה שוב
+              {t('destInfo.errorRetry')}
             </Button>
             <Button variant="outlined" onClick={() => navigate('/destination-info')} sx={{ borderRadius: 2 }}>
-              חזור לבחירת יעד
+              {t('destInfo.errorBackToSearch')}
             </Button>
           </Box>
         </Box>

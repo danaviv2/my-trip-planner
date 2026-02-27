@@ -56,7 +56,7 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
   const destination = trip.destination || trip.endPoint || '';
   const shareUrl = shareUrlProp || `${window.location.origin}/trip-planner?destination=${encodeURIComponent(destination)}`;
   const displayLabel = label || destination;
-  const shareText = `בוא לנסות${displayLabel ? ` — ${displayLabel}` : ''}! 🌍✈️\n${shareUrl}`;
+  const shareText = t('share.shareText', { label: displayLabel ? ` — ${displayLabel}` : '', url: shareUrl });
 
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
@@ -80,8 +80,8 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
   };
 
   const handleEmail = () => {
-    const subject = encodeURIComponent(`טיול מדהים${destination ? ` ל${destination}` : ''}!`);
-    const body = encodeURIComponent(`היי!\n\nבוא לראות את הטיול שלי:\n${shareUrl}\n\nבתכנון עם My Trip Planner 🌍`);
+    const subject = encodeURIComponent(t('share.emailSubject', { destination: destination ? t('share.emailDestination', { destination }) : '' }));
+    const body = encodeURIComponent(t('share.emailBody', { url: shareUrl }));
     window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_blank');
   };
 

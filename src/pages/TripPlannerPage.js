@@ -32,6 +32,7 @@ import FlightSearch from '../components/travel-services/FlightSearch';
 import HotelSearch from '../components/travel-services/HotelSearch';
 import CarRentalSearch from '../components/travel-services/CarRentalSearch';
 import { fetchWeatherForecast, fetchGeoInfo } from '../components/WeatherForecast';
+import { useTranslation } from 'react-i18next';
 /**
  * דף תכנון מסלול - מרכז את כל פונקציונליות תכנון הטיול
  */
@@ -39,6 +40,7 @@ const TripPlannerPage = () => {
   // שימוש בהעדפות משתמש מהקונטקסט
   const { userPreferences, updateLocation } = useUserPreferences();
   const { saveTripToList } = useTripSave();
+  const { t } = useTranslation();
   const [saved, setSaved] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
@@ -58,7 +60,7 @@ const TripPlannerPage = () => {
   const [isMapsLoaded, setIsMapsLoaded] = useState(false);
   const [tripLogs, setTripLogs] = useState(JSON.parse(localStorage.getItem('tripLogs')) || []);
   const [tripPlan, setTripPlan] = useState({
-    location: 'בורדו, צרפת',
+    location: 'Bordeaux, France',
     duration: 7,
     theme: ['nature', 'winery', 'culinary'],
     dailyItinerary: [],
@@ -94,7 +96,7 @@ const TripPlannerPage = () => {
   // פונקציית החיפוש מהאפליקציה המקורית
   const searchRoute = async () => {
     if (!startPoint || !endPoint) {
-      alert('אנא מלא את נקודת ההתחלה ואת היעד.');
+      alert(t('tripPlanner.fillStartAndEnd'));
       return;
     }
 
@@ -108,8 +110,8 @@ const TripPlannerPage = () => {
       
       // דוגמה להגדרת מידע מסלול
       setRouteInfo({
-        distance: '150 ק"מ',
-        duration: '2 שעות ו-30 דקות'
+        distance: '150 km',
+        duration: '2h 30m'
       });
       
       // אחרי פעולת החיפוש, נעדכן את ההעדפות
@@ -119,7 +121,7 @@ const TripPlannerPage = () => {
       
     } catch (error) {
       console.error('שגיאה בחיפוש המסלול:', error);
-      alert('שגיאה בחיפוש מסלול: ' + (error.message || 'שגיאה לא ידועה'));
+      alert(t('tripPlanner.routeSearchError', { msg: error.message || '' }));
     } finally {
       setIsLoading(false);
     }
@@ -138,27 +140,27 @@ const TripPlannerPage = () => {
       // דוגמה לתכנית
       const mockItinerary = Array(userPreferences.days).fill(0).map((_, i) => ({
         day: i + 1,
-        date: `יום ${getDayName(i)}`,
+        date: `Day ${getDayName(i)}`,
         location: userPreferences.location,
-        summary: i === 0 ? `הגעה והתמקמות ב${userPreferences.location}` : `יום ${i + 1} ב${userPreferences.location}`,
+        summary: i === 0 ? `Arrival in ${userPreferences.location}` : `Day ${i + 1} in ${userPreferences.location}`,
         schedule: [
           {
             timeStart: "09:00",
             timeEnd: "11:00",
             type: "attraction",
-            activity: "ביקור באתר",
-            name: `אטרקציה ${i + 1}`,
-            address: `${userPreferences.location}, מרכז העיר`,
-            description: "ביקור באתר מרכזי בעיר"
+            activity: "Site Visit",
+            name: `Attraction ${i + 1}`,
+            address: `${userPreferences.location}, City Center`,
+            description: "Visit to a central city attraction"
           },
           {
             timeStart: "12:00",
             timeEnd: "13:30",
             type: "lunch",
-            activity: "ארוחת צהריים",
-            name: `מסעדה מקומית`,
-            address: `${userPreferences.location}, רחוב המסעדות`,
-            description: "מסעדה אותנטית עם אוכל מקומי"
+            activity: "Lunch",
+            name: `Local Restaurant`,
+            address: `${userPreferences.location}, Restaurant Street`,
+            description: "Authentic restaurant with local food"
           }
         ]
       }));
@@ -171,7 +173,7 @@ const TripPlannerPage = () => {
       
     } catch (error) {
       console.error('שגיאה בתכנון הטיול:', error);
-      alert('התרחשה שגיאה בתכנון הטיול.');
+      alert(t('tripPlanner.planError'));
     } finally {
       setIsLoading(false);
     }
@@ -187,11 +189,11 @@ const TripPlannerPage = () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // לוגיקת הדוגמה
-      alert('תכנון טיול מתגלגל הושלם!');
+      alert(t('tripPlanner.roadTripDone'));
       
     } catch (error) {
       console.error('שגיאה בתכנון טיול מתגלגל:', error);
-      alert('התרחשה שגיאה בתכנון הטיול המתגלגל.');
+      alert(t('tripPlanner.roadTripError'));
     } finally {
       setIsLoading(false);
     }
@@ -206,7 +208,7 @@ const TripPlannerPage = () => {
           : [...prev, filter].filter(f => f !== 'all' || prev.length === 1)
       );
     } catch (error) {
-      alert('שגיאה בעדכון הסינון: ' + (error.message || 'שגיאה לא ידועה'));
+      alert(t('tripPlanner.filterError', { msg: error.message || '' }));
     }
   };
   
@@ -240,12 +242,12 @@ const TripPlannerPage = () => {
     const updatedLogs = [...tripLogs, newLog];
     setTripLogs(updatedLogs);
     localStorage.setItem('tripLogs', JSON.stringify(updatedLogs));
-    alert('הטיול נשמר בהצלחה!');
+    alert(t('tripPlanner.tripSaved'));
   };
   
   // פונקציות עזר
   const getDayName = (dayIndex) => {
-    const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     return days[dayIndex % 7];
   };
   
@@ -276,8 +278,8 @@ const TripPlannerPage = () => {
         }}>
           <i className="material-icons" style={{ marginRight: '8px', fontSize: '36px' }}>explore</i>
           {userPreferences.location 
-            ? `תכנון טיול ל${userPreferences.location}`
-            : 'תכנון טיול מותאם אישית'}
+            ? t('tripPlanner.title', { location: userPreferences.location })
+            : t('tripPlanner.titleDefault')}
         </Typography>
         
         {/* לשוניות ראשיות */}
@@ -290,19 +292,19 @@ const TripPlannerPage = () => {
           >
             <Tab 
               value="plan" 
-              label="תכנון מסלול" 
+              label={t('tripPlanner.tabPlan')}
               icon={<i className="material-icons">map</i>} 
               iconPosition="start"
             />
             <Tab 
               value="services" 
-              label="שירותי נסיעות" 
+              label={t('tripPlanner.tabServices')}
               icon={<i className="material-icons">flight</i>} 
               iconPosition="start"
             />
             <Tab 
               value="destination" 
-              label="מידע על היעד" 
+              label={t('tripPlanner.tabDestination')}
               icon={<i className="material-icons">location_city</i>} 
               iconPosition="start"
             />
@@ -329,7 +331,7 @@ const TripPlannerPage = () => {
                   transition: 'all 0.3s',
                 }}
               >
-                {saved ? 'נשמר!' : 'שמור טיול'}
+                {saved ? t('tripPlanner.saved') : t('tripPlanner.save')}
               </Button>
             </Box>
 
@@ -340,13 +342,13 @@ const TripPlannerPage = () => {
             <Paper elevation={1} sx={{ p: 3, mb: 3, bgcolor: '#f8f9fa', borderRadius: '12px' }}>
               <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
                 <i className="material-icons" style={{ marginRight: '8px' }}>directions</i>
-                הגדרת מסלול
+                {t('tripPlanner.routeSetup')}
               </Typography>
               
               <Box display="flex" alignItems="center" sx={{ mb: 2 }}>
                 <TextField
                   fullWidth
-                  label="נקודת ההתחלה"
+                  label={t('tripPlanner.startPoint')}
                   value={startPoint}
                   onChange={(e) => setStartPoint(e.target.value)}
                   sx={{ mr: 1 }}
@@ -361,7 +363,7 @@ const TripPlannerPage = () => {
                 <Box key={index} display="flex" alignItems="center" sx={{ mb: 1 }}>
                   <TextField
                     fullWidth
-                    label={`תחנה ${index + 1}`}
+                    label={t('tripPlanner.waypoint', { num: index + 1 })}
                     value={wp}
                     onChange={(e) => {
                       const newWaypoints = [...waypoints];
@@ -380,7 +382,7 @@ const TripPlannerPage = () => {
               <Box display="flex" alignItems="center" sx={{ mb: 2 }}>
                 <TextField
                   fullWidth
-                  label="הוסף תחנה ביניים"
+                  label={t('tripPlanner.addWaypoint')}
                   value={waypointInput}
                   onChange={(e) => setWaypointInput(e.target.value)}
                   sx={{ mr: 1 }}
@@ -394,7 +396,7 @@ const TripPlannerPage = () => {
               <Box display="flex" alignItems="center" sx={{ mb: 2 }}>
                 <TextField
                   fullWidth
-                  label="היעד"
+                  label={t('tripPlanner.destination')}
                   value={endPoint}
                   onChange={(e) => setEndPoint(e.target.value)}
                   sx={{ mr: 1 }}
@@ -411,7 +413,7 @@ const TripPlannerPage = () => {
                 ) : (
                   <Button variant="contained" color="primary" fullWidth onClick={searchRoute} 
                     sx={{ background: '#2196F3', padding: '10px 20px' }}>
-                    חפש מסלול
+                    {t('tripPlanner.searchRoute')}
                   </Button>
                 )}
               </Box>
@@ -421,10 +423,10 @@ const TripPlannerPage = () => {
             {routeInfo.distance && (
               <Box sx={{ mt: 2, p: 2, bgcolor: '#f0f0f0', borderRadius: '8px', boxShadow: 1, mb: 3 }}>
                 <Typography variant="subtitle1" sx={{ color: '#2c3e50', fontWeight: 'bold' }}>
-                  פרטי המסלול:
+                  {t('tripPlanner.routeDetails')}
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#666' }}>
-                  מרחק: {routeInfo.distance} | זמן נסיעה: {routeInfo.duration}
+                  {t('tripPlanner.distance')}: {routeInfo.distance} | {t('tripPlanner.travelTime')}: {routeInfo.duration}
                 </Typography>
               </Box>
             )}
@@ -435,21 +437,21 @@ const TripPlannerPage = () => {
                 variant={activeFilters.includes('all') ? 'contained' : 'outlined'} 
                 onClick={() => handleButtonFilter('all')}
               >
-                הכל
+                {t('tripPlanner.filterAll')}
               </Button>
-              <Button 
-                variant={activeFilters.includes('nature') ? 'contained' : 'outlined'} 
+              <Button
+                variant={activeFilters.includes('nature') ? 'contained' : 'outlined'}
                 onClick={() => handleButtonFilter('nature')}
                 color="success"
               >
-                טבע
+                {t('tripPlanner.filterNature')}
               </Button>
-              <Button 
-                variant={activeFilters.includes('restaurant') ? 'contained' : 'outlined'} 
+              <Button
+                variant={activeFilters.includes('restaurant') ? 'contained' : 'outlined'}
                 onClick={() => handleButtonFilter('restaurant')}
                 color="warning"
               >
-                מסעדות
+                {t('tripPlanner.filterRestaurants')}
               </Button>
               {/* שאר הכפתורים */}
             </Box>
@@ -472,7 +474,7 @@ const TripPlannerPage = () => {
                 mb: 2
               }}>
                 <i className="material-icons" style={{ marginRight: '8px' }}>wb_sunny</i>
-                תחזית מזג אוויר
+                {t('tripPlanner.weatherForecast')}
               </Typography>
                 {/* WeatherForecast הוסר */} 
                 destination={userPreferences.location} 
@@ -510,7 +512,7 @@ const TripPlannerPage = () => {
             
             {/* אפשרויות שיתוף ושמירה */}
             <Box mt={3} mb={3}>
-              <Typography variant="h6" sx={{ mb: 2 }}>שתף ושמור את הטיול</Typography>
+              <Typography variant="h6" sx={{ mb: 2 }}>{t('tripPlanner.shareAndSave')}</Typography>
               <Grid container spacing={2}>
                 <Grid item>
                   <Button
@@ -519,7 +521,7 @@ const TripPlannerPage = () => {
                     onClick={() => setShareOpen(true)}
                     sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
                   >
-                    שתף טיול
+                    {t('tripPlanner.shareTrip')}
                   </Button>
                 </Grid>
                 <Grid item>
@@ -529,7 +531,7 @@ const TripPlannerPage = () => {
                     onClick={saveTripLog}
                     startIcon={<i className="material-icons">save</i>}
                   >
-                    שמור מסלול
+                    {t('tripPlanner.saveRoute')}
                   </Button>
                 </Grid>
               </Grid>
@@ -549,20 +551,20 @@ const TripPlannerPage = () => {
             {/* יומני טיולים קודמים */}
             <Box mt={3} mb={3}>
               <Typography variant="h6" sx={{ mb: 2 }}>
-                יומני טיולים קודמים
+                {t('tripPlanner.tripLogs')}
               </Typography>
               {tripLogs.map(log => (
                 <Paper key={log.id} sx={{ p: 2, m: '5px 0', bgcolor: '#f9f9f9', borderRadius: '8px', boxShadow: 1 }}>
-                  <Typography>תאריך: {new Date(log.date).toLocaleDateString()}</Typography>
-                  <Typography>התחלה: {log.startPoint}</Typography>
-                  <Typography>יעד: {log.endPoint}</Typography>
-                  <Typography>תחנות ביניים: {log.waypoints.join(', ')}</Typography>
+                  <Typography>{t('tripPlanner.date')}: {new Date(log.date).toLocaleDateString()}</Typography>
+                  <Typography>{t('tripPlanner.start')}: {log.startPoint}</Typography>
+                  <Typography>{t('tripPlanner.end')}: {log.endPoint}</Typography>
+                  <Typography>{t('tripPlanner.waypoints')}: {log.waypoints.join(', ')}</Typography>
                   <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                    <Button variant="outlined" color="secondary" onClick={() => editTripLog(log.id, { startPoint: prompt('עדכן נקודת התחלה:', log.startPoint) || log.startPoint, endPoint: prompt('עדכן יעד:', log.endPoint) || log.endPoint, waypoints: prompt('עדכן תחנות ביניים (הפרד עם פסיק):', log.waypoints.join(', '))?.split(', ') || log.waypoints })}>
-                      ערוך
+                    <Button variant="outlined" color="secondary" onClick={() => editTripLog(log.id, { startPoint: prompt(t('tripPlanner.updateStart'), log.startPoint) || log.startPoint, endPoint: prompt(t('tripPlanner.updateEnd'), log.endPoint) || log.endPoint, waypoints: prompt(t('tripPlanner.updateWaypoints'), log.waypoints.join(', '))?.split(', ') || log.waypoints })}>
+                      {t('tripPlanner.edit')}
                     </Button>
                     <Button variant="outlined" color="error" onClick={() => deleteTripLog(log.id)}>
-                      מחק
+                      {t('tripPlanner.delete')}
                     </Button>
                   </Box>
                 </Paper>
@@ -575,7 +577,7 @@ const TripPlannerPage = () => {
         {mainTab === 'services' && (
           <>
             <Typography variant="h5" align="center" gutterBottom sx={{ mb: 3 }}>
-              שירותי נסיעות
+              {t('tripPlanner.servicesTitle')}
             </Typography>
             
             <Tabs 
@@ -584,14 +586,14 @@ const TripPlannerPage = () => {
               variant="fullWidth"
               sx={{ mb: 3 }}
             >
-              <Tab label="טיסות" icon={<FlightIcon />} />
-              <Tab label="מלונות" icon={<HotelIcon />} />
-              <Tab label="השכרת רכב" icon={<DriveEtaIcon />} />
+              <Tab label={t('tripPlanner.flights')} icon={<FlightIcon />} />
+              <Tab label={t('tripPlanner.hotels')} icon={<HotelIcon />} />
+              <Tab label={t('tripPlanner.carRental')} icon={<DriveEtaIcon />} />
             </Tabs>
             
             {servicesTab === 0 && (
               <FlightSearch 
-                origin={startPoint || "תל אביב"} 
+                origin={startPoint || "Tel Aviv"}
                 destination={endPoint || userPreferences.location}
               />
             )}
@@ -614,14 +616,14 @@ const TripPlannerPage = () => {
         {mainTab === 'destination' && (
           <>
             <Typography variant="h5" align="center" gutterBottom sx={{ mb: 3 }}>
-              מידע על {userPreferences.location}
+              {t('tripPlanner.destinationInfo', { location: userPreferences.location })}
             </Typography>
             
             {/* כאן ייכנס רכיב מידע על היעד */}
             <Box sx={{ textAlign: 'center', p: 5, color: '#666' }}>
               <i className="material-icons" style={{ fontSize: '64px', color: '#ccc' }}>info</i>
               <Typography variant="body1">
-                מידע מפורט על היעד יתווסף בהמשך.
+                {t('tripPlanner.destinationInfoPlaceholder')}
               </Typography>
             </Box>
           </>
@@ -651,7 +653,7 @@ const TripPlannerPage = () => {
             {parts.length >= 2 && (
               <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', gap: 1, flexWrap: 'wrap' }}>
                 <Typography variant="body2" color="text.secondary">
-                  🗺️ מסלול: {parts.join(' → ')}
+                  🗺️ {t('tripPlanner.route')}: {parts.join(' → ')}
                 </Typography>
                 <Button
                   size="small"
@@ -659,7 +661,7 @@ const TripPlannerPage = () => {
                   onClick={() => window.open(`https://www.google.com/maps/dir/${parts.map(p => encodeURIComponent(p)).join('/')}`, '_blank')}
                   sx={{ fontSize: '0.7rem', py: 0.3, px: 1 }}
                 >
-                  פתח לניווט ←
+                  {t('tripPlanner.openNavigation')} ←
                 </Button>
               </Box>
             )}

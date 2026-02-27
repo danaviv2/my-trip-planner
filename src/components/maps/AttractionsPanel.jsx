@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -33,6 +34,7 @@ import {
 import googlePlacesService from '../../services/googlePlacesService';
 
 const AttractionsPanel = ({ center, onPlaceSelect }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(0);
   const [places, setPlaces] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,12 +42,12 @@ const AttractionsPanel = ({ center, onPlaceSelect }) => {
   const [expandedPlace, setExpandedPlace] = useState(null);
 
   const categories = [
-    { label: 'אטרקציות', icon: <AttractionsIcon />, type: 'tourist_attraction' },
-    { label: 'מסעדות', icon: <RestaurantIcon />, type: 'restaurant' },
-    { label: 'מלונות', icon: <HotelIcon />, type: 'lodging' },
-    { label: 'מוזיאונים', icon: <MuseumIcon />, type: 'museum' },
-    { label: 'קניות', icon: <ShoppingIcon />, type: 'shopping_mall' },
-    { label: 'בידור', icon: <NightlifeIcon />, type: 'night_club' }
+    { label: t('attractionsPanel.catAttractions'), icon: <AttractionsIcon />, type: 'tourist_attraction' },
+    { label: t('attractionsPanel.catRestaurants'), icon: <RestaurantIcon />, type: 'restaurant' },
+    { label: t('attractionsPanel.catHotels'), icon: <HotelIcon />, type: 'lodging' },
+    { label: t('attractionsPanel.catMuseums'), icon: <MuseumIcon />, type: 'museum' },
+    { label: t('attractionsPanel.catShopping'), icon: <ShoppingIcon />, type: 'shopping_mall' },
+    { label: t('attractionsPanel.catNightlife'), icon: <NightlifeIcon />, type: 'night_club' }
   ];
 
   /**
@@ -123,7 +125,7 @@ const AttractionsPanel = ({ center, onPlaceSelect }) => {
   };
 
   const getPriceLevelText = (level) => {
-    if (!level) return 'לא זמין';
+    if (!level) return t('attractionsPanel.priceNotAvailable');
     return '₪'.repeat(level);
   };
 
@@ -132,7 +134,7 @@ const AttractionsPanel = ({ center, onPlaceSelect }) => {
       {/* כותרת */}
       <Box sx={{ p: 2, bgcolor: 'primary.main', color: 'white' }}>
         <Typography variant="h6" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
-          <PlaceIcon /> אטרקציות ומקומות
+          <PlaceIcon /> {t('attractionsPanel.title')}
         </Typography>
       </Box>
 
@@ -141,7 +143,7 @@ const AttractionsPanel = ({ center, onPlaceSelect }) => {
         <TextField
           fullWidth
           size="small"
-          placeholder="חפש מקום..."
+          placeholder={t('attractionsPanel.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -181,7 +183,7 @@ const AttractionsPanel = ({ center, onPlaceSelect }) => {
           </Box>
         ) : places.length === 0 ? (
           <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
-            לא נמצאו תוצאות
+            {t('attractionsPanel.noResults')}
           </Typography>
         ) : (
           <List>
@@ -220,7 +222,7 @@ const AttractionsPanel = ({ center, onPlaceSelect }) => {
                       <Box>
                         <Rating value={place.rating} precision={0.1} size="small" readOnly />
                         <Typography variant="caption" display="block">
-                          {place.userRatingsTotal} ביקורות
+                          {t('attractionsPanel.reviews', { count: place.userRatingsTotal })}
                         </Typography>
                         {place.priceLevel > 0 && (
                           <Chip
@@ -250,7 +252,7 @@ const AttractionsPanel = ({ center, onPlaceSelect }) => {
                     
                     {place.details?.openingHours && (
                       <Chip
-                        label={place.details.openingHours.openNow ? '🟢 פתוח עכשיו' : '🔴 סגור'}
+                        label={place.details.openingHours.openNow ? t('attractionsPanel.openNow') : t('attractionsPanel.closed')}
                         size="small"
                         color={place.details.openingHours.openNow ? 'success' : 'error'}
                         sx={{ mb: 1 }}
@@ -264,7 +266,7 @@ const AttractionsPanel = ({ center, onPlaceSelect }) => {
                         target="_blank"
                         sx={{ mt: 1 }}
                       >
-                        🌐 אתר האינטרנט
+                        🌐 {t('attractionsPanel.website')}
                       </Button>
                     )}
                   </Box>

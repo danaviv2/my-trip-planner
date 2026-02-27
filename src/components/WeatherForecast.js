@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -12,6 +13,7 @@ import WbSunnyIcon from '@mui/icons-material/WbSunny';
 import { fetchWeatherForecast } from '../services/weatherAPI';
 
 const WeatherForecast = ({ destination }) => {
+  const { t } = useTranslation();
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -27,7 +29,7 @@ const WeatherForecast = ({ destination }) => {
           setLoading(false);
         })
         .catch(err => {
-          setError('שגיאה בטעינת מזג אוויר');
+          setError(t('weather.loadError'));
           setLoading(false);
           console.error(err);
         });
@@ -58,7 +60,7 @@ const WeatherForecast = ({ destination }) => {
     <Paper sx={{ p: 3, mt: 2 }}>
       <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
         <WbSunnyIcon sx={{ mr: 1 }} />
-        מזג אוויר ב{weatherData.locationHebrew || destination}
+        {t('weather.title', { location: destination })}
       </Typography>
       
       <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -66,13 +68,13 @@ const WeatherForecast = ({ destination }) => {
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">
-                טמפרטורה
+                {t('weather.temperature')}
               </Typography>
               <Typography variant="h4">
                 {weatherData.temp}°C
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                מרגיש כמו {weatherData.feels_like}°C
+                {t('weather.feelsLike', { temp: weatherData.feels_like })}
               </Typography>
             </CardContent>
           </Card>
@@ -82,7 +84,7 @@ const WeatherForecast = ({ destination }) => {
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">
-                תיאור
+                {t('weather.description')}
               </Typography>
               <Typography variant="h6">
                 {weatherData.description}
@@ -95,7 +97,7 @@ const WeatherForecast = ({ destination }) => {
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">
-                לחות
+                {t('weather.humidity')}
               </Typography>
               <Typography variant="h4">
                 {weatherData.humidity}%
@@ -108,7 +110,7 @@ const WeatherForecast = ({ destination }) => {
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">
-                מהירות רוח
+                {t('weather.windSpeed')}
               </Typography>
               <Typography variant="h4">
                 {weatherData.windSpeed} m/s
