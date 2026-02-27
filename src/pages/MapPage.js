@@ -1,51 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
-  Box,
-  Paper,
-  Typography,
-  Button,
-  Chip,
-  InputAdornment,
-  TextField,
-  useTheme,
-  useMediaQuery,
+  Container, Box, Paper, Typography, Button, Chip, InputAdornment,
+  TextField, useTheme, useMediaQuery,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import HistoryIcon from '@mui/icons-material/History';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-// יעדים פופולריים לחיפוש מהיר
+import { useTranslation } from 'react-i18next';
+
 const popularDestinations = [
-  'פריז, צרפת',
-  'בורדו, צרפת',
-  'ניו יורק, ארה"ב',
-  'רומא, איטליה',
-  'ברצלונה, ספרד',
-  'לונדון, בריטניה',
-  'ברלין, גרמניה',
-  'אמסטרדם, הולנד',
-  'וינה, אוסטריה',
-  'אתונה, יוון',
-  'ירושלים, ישראל',
-  'תל אביב, ישראל',
-  'אילת, ישראל',
-  'חיפה, ישראל',
-  'דובאי, איחוד האמירויות',
-  'טוקיו, יפן',
-  'בנגקוק, תאילנד',
-  'סידני, אוסטרליה',
-  'ניו דלהי, הודו',
-  'ריו דה ז׳נרו, ברזיל',
-  'קייפטאון, דרום אפריקה'
+  'Paris, France',
+  'New York, USA',
+  'Rome, Italy',
+  'Barcelona, Spain',
+  'London, UK',
+  'Berlin, Germany',
+  'Amsterdam, Netherlands',
+  'Vienna, Austria',
+  'Athens, Greece',
+  'Dubai, UAE',
+  'Tokyo, Japan',
+  'Bangkok, Thailand',
+  'Sydney, Australia',
+  'Cape Town, South Africa',
+  'Rio de Janeiro, Brazil',
 ];
 
 const MapPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { t } = useTranslation();
 
   const [searchInput, setSearchInput] = useState('');
-  const [mapQuery, setMapQuery] = useState('תל אביב, ישראל');
+  const [mapQuery, setMapQuery] = useState('Tel Aviv, Israel');
   const [recentSearches, setRecentSearches] = useState([]);
 
   useEffect(() => {
@@ -72,11 +60,10 @@ const MapPage = () => {
     localStorage.setItem('mapRecentSearches', JSON.stringify(updated));
   };
 
-  const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed&hl=he`;
+  const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9ff', pt: '64px', pb: 4 }}>
-      {/* כותרת */}
       <Box sx={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         color: 'white',
@@ -86,15 +73,14 @@ const MapPage = () => {
         mb: 3
       }}>
         <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.4rem', md: '2rem' } }}>
-          🗺️ מפה אינטראקטיבית
+          {t('map.title')}
         </Typography>
         <Typography variant="body1" sx={{ opacity: 0.9, mt: 0.5, fontSize: { xs: '0.85rem', md: '1rem' } }}>
-          חפש כל יעד בעולם וצפה במפה
+          {t('map.subtitle')}
         </Typography>
       </Box>
 
       <Container maxWidth="lg">
-        {/* שורת חיפוש */}
         <Paper elevation={4} sx={{ p: { xs: 2, md: 3 }, borderRadius: 3, mb: 3 }}>
           <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
             <TextField
@@ -102,7 +88,7 @@ const MapPage = () => {
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              placeholder="חפש עיר, יעד, אטרקציה..."
+              placeholder={t('map.search_placeholder')}
               variant="outlined"
               size="small"
               InputProps={{
@@ -126,14 +112,13 @@ const MapPage = () => {
                 fontWeight: 600
               }}
             >
-              {isMobile ? '' : 'חפש'}
+              {isMobile ? '' : t('map.search_btn')}
             </Button>
           </Box>
 
-          {/* יעדים פופולריים */}
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: recentSearches.length ? 1.5 : 0 }}>
             <Typography variant="caption" color="text.secondary" sx={{ width: '100%', mb: 0.5 }}>
-              יעדים פופולריים:
+              {t('map.popular_label')}
             </Typography>
             {popularDestinations.slice(0, isMobile ? 4 : 7).map(dest => (
               <Chip
@@ -152,11 +137,10 @@ const MapPage = () => {
             ))}
           </Box>
 
-          {/* חיפושים אחרונים */}
           {recentSearches.length > 0 && (
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
               <HistoryIcon fontSize="small" color="action" />
-              <Typography variant="caption" color="text.secondary">אחרונים:</Typography>
+              <Typography variant="caption" color="text.secondary">{t('map.recent_label')}</Typography>
               {recentSearches.map((s, i) => (
                 <Chip
                   key={i}
@@ -177,9 +161,7 @@ const MapPage = () => {
           )}
         </Paper>
 
-        {/* המפה */}
         <Paper elevation={4} sx={{ borderRadius: 3, overflow: 'hidden' }}>
-          {/* כותרת המפה */}
           <Box sx={{
             px: 2, py: 1.5,
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -187,9 +169,7 @@ const MapPage = () => {
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <LocationOnIcon color="primary" fontSize="small" />
-              <Typography variant="subtitle1" fontWeight={600}>
-                {mapQuery}
-              </Typography>
+              <Typography variant="subtitle1" fontWeight={600}>{mapQuery}</Typography>
             </Box>
             <Button
               size="small"
@@ -197,11 +177,10 @@ const MapPage = () => {
               onClick={() => window.open(`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}`, '_blank')}
               sx={{ fontSize: '0.75rem' }}
             >
-              פתח ב-Google Maps
+              {t('map.open_google_maps')}
             </Button>
           </Box>
 
-          {/* iframe מפה */}
           <Box sx={{ position: 'relative', width: '100%', height: { xs: '55vh', md: '65vh' } }}>
             <iframe
               key={mapQuery}
@@ -212,7 +191,7 @@ const MapPage = () => {
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title={`מפה של ${mapQuery}`}
+              title={mapQuery}
             />
           </Box>
         </Paper>

@@ -3,11 +3,13 @@ import { Box, Tabs, Tab, Paper } from '@mui/material';
 import FlightIcon from '@mui/icons-material/Flight';
 import HotelIcon from '@mui/icons-material/Hotel';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import { useTranslation } from 'react-i18next';
 import FlightSearch from './FlightSearch';
 import HotelSearch from './HotelSearch';
 import CarRentalSearch from './CarRentalSearch';
 
 const TravelServicesTab = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(0);
 
   const handleTabChange = (event, newValue) => {
@@ -24,9 +26,9 @@ const TravelServicesTab = () => {
           textColor="primary"
           indicatorColor="primary"
         >
-          <Tab icon={<FlightIcon />} label="טיסות" iconPosition="start" />
-          <Tab icon={<HotelIcon />} label="מלונות" iconPosition="start" />
-          <Tab icon={<DirectionsCarIcon />} label="השכרת רכב" iconPosition="start" />
+          <Tab icon={<FlightIcon />} label={t('travelServices.flights_tab')} iconPosition="start" />
+          <Tab icon={<HotelIcon />} label={t('travelServices.hotels_tab')} iconPosition="start" />
+          <Tab icon={<DirectionsCarIcon />} label={t('travelServices.car_rental_tab')} iconPosition="start" />
         </Tabs>
       </Paper>
 

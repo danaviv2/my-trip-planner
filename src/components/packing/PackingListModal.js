@@ -10,91 +10,89 @@ import PrintIcon from '@mui/icons-material/Print';
 import ShareIcon from '@mui/icons-material/Share';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LuggageIcon from '@mui/icons-material/Luggage';
+import { useTranslation } from 'react-i18next';
 
 const PACKING_DATA = {
   documents: {
-    label: '📄 מסמכים',
-    always: ['דרכון', 'תעודת זהות', 'ביטוח נסיעות', 'כרטיסי טיסה (הדפסה/PDF)', 'הזמנות מלון'],
+    label: '📄 Documents',
+    always: ['Passport', 'ID card', 'Travel insurance', 'Flight tickets (print/PDF)', 'Hotel bookings'],
     conditional: {
-      long: ['ויזה (אם נדרש)', 'כרטיסי אשראי נוספים', 'העתקי מסמכים'],
-      international: ['טופס כניסה', 'הצהרת מטבע'],
+      long: ['Visa (if required)', 'Extra credit cards', 'Document copies'],
+      international: ['Entry form', 'Currency declaration'],
     }
   },
   clothes: {
-    label: '👗 בגדים',
-    always: ['תחתונים (x ימים)', 'גרביים (x ימים)', 'פיג\'מה'],
+    label: '👗 Clothes',
+    always: ['Underwear (x days)', 'Socks (x days)', 'Pajamas'],
     conditional: {
-      beach: ['בגדי ים (x2)', 'חולצות קלות', 'מכנסיים קצרים', 'שמלה/כיסוי חוף'],
-      mountains: ['מכנסי הרים', 'חולצות שכבות', 'כובע חם', 'כפפות', 'ג\'קט חם'],
-      cold: ['מעיל שחף', 'סוודר', 'מכנסיים ארוכים (x3)', 'חולצות תרמיות'],
-      hot: ['חולצות קלות', 'מכנסיים קצרים/שמלות', 'כובע שמש', 'לבוש נושם'],
-      formal: ['חליפה/שמלה פורמלית', 'נעלי עקב/נעלי עסקים', 'עניבה'],
+      beach: ['Swimwear (x2)', 'Light shirts', 'Shorts', 'Dress/beach cover-up'],
+      mountains: ['Hiking pants', 'Layered shirts', 'Warm hat', 'Gloves', 'Warm jacket'],
+      cold: ['Winter coat', 'Sweater', 'Long pants (x3)', 'Thermal shirts'],
+      hot: ['Light shirts', 'Shorts/dresses', 'Sun hat', 'Breathable clothing'],
+      formal: ['Suit/formal dress', 'Heels/dress shoes', 'Tie'],
     }
   },
   shoes: {
-    label: '👟 נעליים',
-    always: ['נעליים נוחות ליום-יום'],
+    label: '👟 Shoes',
+    always: ['Comfortable everyday shoes'],
     conditional: {
-      beach: ['כפכפים', 'נעלי ים'],
-      mountains: ['נעלי הרים/טרקינג'],
-      formal: ['נעלי עסקים/עקב'],
-      cold: ['מגפיים חמים'],
+      beach: ['Flip flops', 'Water shoes'],
+      mountains: ['Hiking/trekking boots'],
+      formal: ['Dress shoes/heels'],
+      cold: ['Warm boots'],
     }
   },
   toiletries: {
-    label: '🪥 טואלטיקה',
-    always: ['שמפו ומרכך', 'סבון', 'מברשת שיניים + משחה', 'גילוח', 'דאודורנט', 'לק/מגבת'],
+    label: '🪥 Toiletries',
+    always: ['Shampoo & conditioner', 'Soap', 'Toothbrush + toothpaste', 'Razor', 'Deodorant', 'Nail file/towel'],
     conditional: {
-      beach: ['קרם הגנה SPF 50+', 'לאחר שמש', 'גוגלס שמש'],
-      long: ['תרופות קבועות', 'אדפיל/משכך כאבים', 'תרסיס לחרקים'],
+      beach: ['SPF 50+ sunscreen', 'After-sun lotion', 'Sunglasses'],
+      long: ['Regular medications', 'Ibuprofen/painkiller', 'Insect repellent'],
     }
   },
   electronics: {
-    label: '💻 אלקטרוניקה',
-    always: ['טלפון + מטען', 'אוזניות', 'בנק כוח'],
+    label: '💻 Electronics',
+    always: ['Phone + charger', 'Earphones', 'Power bank'],
     conditional: {
-      long: ['מחשב נייד/טאבלט', 'מתאם חשמל', 'מצלמה + כרטיס זיכרון'],
-      adventure: ['מצלמת אקשן (GoPro)', 'רחפן קטן', 'מכשיר GPS'],
+      long: ['Laptop/tablet', 'Power adapter', 'Camera + memory card'],
+      adventure: ['Action camera (GoPro)', 'Small drone', 'GPS device'],
     }
   },
   health: {
-    label: '💊 בריאות',
-    always: ['תרופות קבועות', 'אדפיל', 'בנדאז\' (גבס)', 'גל ידיים'],
+    label: '💊 Health',
+    always: ['Regular medications', 'Ibuprofen', 'Bandages', 'Hand sanitizer'],
     conditional: {
-      tropical: ['כדורי מניעת מלריה', 'חיסונים מתאימים', 'תרסיס נגד יתושים DEET'],
-      adventure: ['ערכת עזרה ראשונה', 'תרסיס נגד קרציות', 'מגן ברכיים'],
-      long: ['ויטמינים', 'תרופה נגד שלשול'],
+      tropical: ['Malaria pills', 'Relevant vaccines', 'DEET insect repellent'],
+      adventure: ['First aid kit', 'Tick repellent', 'Knee guards'],
+      long: ['Vitamins', 'Anti-diarrhea medication'],
     }
   },
   misc: {
-    label: '🎒 שונות',
-    always: ['ארנק', 'מטבע מקומי קצת', 'ספר/קינדל', 'מסכת עיניים לטיסה'],
+    label: '🎒 Miscellaneous',
+    always: ['Wallet', 'Some local currency', 'Book/Kindle', 'Eye mask for flight'],
     conditional: {
-      long: ['כרית צוואר לטיסה', 'אטמי אוזניים', 'שמיכה קטנה'],
-      adventure: ['מנעול מזוודה', 'שרשרת ביטחון לתיק', 'כובע הרים'],
-      beach: ['שק חול קטן', 'מגבת חוף'],
+      long: ['Neck pillow for flight', 'Ear plugs', 'Small blanket'],
+      adventure: ['Luggage lock', 'Bag security strap', 'Hiking hat'],
+      beach: ['Small sand bag', 'Beach towel'],
     }
   }
 };
 
-// קביעת תנאים לפי קלט
 function getConditions({ destination = '', tripType = 'general', days = 7 }) {
   const conditions = new Set();
   if (days >= 7) conditions.add('long');
   if (days < 7) conditions.add('short');
 
-  const dest = destination.toLowerCase();
-  const isInternational = !['תל אביב', 'ירושלים', 'חיפה', 'אילת', 'ים המלח'].some(c => destination.includes(c));
+  const isInternational = !['Tel Aviv', 'Jerusalem', 'Haifa', 'Eilat', 'Dead Sea', 'תל אביב', 'ירושלים', 'חיפה', 'אילת', 'ים המלח'].some(c => destination.includes(c));
   if (isInternational) conditions.add('international');
 
-  // זיהוי אקלים
-  if (['תאילנד', 'בלי', 'מלדיביים', 'קייפטאון', 'ריו', 'קרייביאן', 'ח\'ינון', 'סינגפור', 'הנוי'].some(k => destination.includes(k)))
+  if (['Thailand', 'Bali', 'Maldives', 'Cape Town', 'Rio', 'Caribbean', 'Singapore', 'Hanoi', 'תאילנד', 'בלי', 'מלדיביים'].some(k => destination.toLowerCase().includes(k.toLowerCase())))
     conditions.add('tropical');
-  if (['חוף', 'קו', 'ביץ', 'סנטוריני', 'ברצלונה', 'ריביירה', 'מיקונוס'].some(k => destination.includes(k) || tripType === 'beach'))
+  if (['beach', 'coast', 'Santorini', 'Barcelona', 'Riviera', 'Mykonos', 'חוף', 'סנטוריני', 'ברצלונה'].some(k => destination.toLowerCase().includes(k.toLowerCase()) || tripType === 'beach'))
     conditions.add('beach');
-  if (['הרים', 'נפאל', 'אלפים', 'קילימנג\'רו', 'פטגוניה', 'איסלנד', 'ניו זילנד'].some(k => destination.includes(k) || tripType === 'mountains'))
+  if (['mountains', 'Nepal', 'Alps', 'Kilimanjaro', 'Patagonia', 'Iceland', 'New Zealand', 'הרים', 'נפאל', 'אלפים', 'איסלנד'].some(k => destination.toLowerCase().includes(k.toLowerCase()) || tripType === 'mountains'))
     conditions.add('mountains');
-  if (['צרפת', 'איטליה', 'ספרד', 'תיאטרון', 'אופרה', 'גאלה'].some(k => destination.includes(k) || tripType === 'formal'))
+  if (['France', 'Italy', 'Spain', 'theater', 'opera', 'gala', 'צרפת', 'איטליה', 'ספרד'].some(k => destination.toLowerCase().includes(k.toLowerCase()) || tripType === 'formal'))
     conditions.add('formal');
   if (tripType === 'adventure') conditions.add('adventure');
 
@@ -104,6 +102,7 @@ function getConditions({ destination = '', tripType = 'general', days = 7 }) {
 const STORAGE_KEY = 'packingList_checked';
 
 export default function PackingListModal({ open, onClose, initialDestination = '', initialDays = 7 }) {
+  const { t } = useTranslation();
   const [destination, setDestination] = useState(initialDestination);
   const [days, setDays] = useState(initialDays);
   const [tripType, setTripType] = useState('general');
@@ -131,9 +130,7 @@ export default function PackingListModal({ open, onClose, initialDestination = '
     localStorage.removeItem(STORAGE_KEY);
   };
 
-  const countChecked = () => {
-    return Object.values(checked).filter(Boolean).length;
-  };
+  const countChecked = () => Object.values(checked).filter(Boolean).length;
 
   const totalItems = useMemo(() => {
     let count = 0;
@@ -146,17 +143,15 @@ export default function PackingListModal({ open, onClose, initialDestination = '
     return count;
   }, [conditions]);
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => window.print();
 
   const handleShare = async () => {
-    const text = `רשימת ארוז לטיול ל${destination} (${days} ימים)`;
+    const text = `${t('packing.title')} ${destination} (${days} days)`;
     if (navigator.share) {
-      await navigator.share({ title: 'רשימת ארוז', text });
+      await navigator.share({ title: t('packing.title'), text });
     } else {
       await navigator.clipboard.writeText(text);
-      alert('הטקסט הועתק ללוח');
+      alert(t('packing.copied'));
     }
   };
 
@@ -176,28 +171,26 @@ export default function PackingListModal({ open, onClose, initialDestination = '
         boxShadow: '0 30px 80px rgba(0,0,0,0.2)',
         outline: 'none'
       }}>
-        {/* כותרת */}
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Box display="flex" alignItems="center" gap={1}>
             <LuggageIcon sx={{ color: '#667eea', fontSize: 28 }} />
-            <Typography variant="h5" fontWeight="bold">מה לארוז? 🧳</Typography>
+            <Typography variant="h5" fontWeight="bold">{t('packing.title')}</Typography>
           </Box>
           <IconButton onClick={onClose}><CloseIcon /></IconButton>
         </Box>
 
-        {/* טופס קלט */}
         <Paper sx={{ p: 2, borderRadius: 3, bgcolor: '#f8f9ff', mb: 3 }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <TextField
-              label="יעד"
+              label={t('packing.destination')}
               value={destination}
               onChange={e => setDestination(e.target.value)}
               fullWidth
               size="small"
-              placeholder="לדוגמה: בלי, פריז..."
+              placeholder={t('packing.dest_placeholder')}
             />
             <TextField
-              label="מספר ימים"
+              label={t('packing.days_label')}
               type="number"
               value={days}
               onChange={e => setDays(Math.max(1, parseInt(e.target.value) || 1))}
@@ -205,29 +198,27 @@ export default function PackingListModal({ open, onClose, initialDestination = '
               sx={{ minWidth: 100 }}
             />
             <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>סוג טיול</InputLabel>
-              <Select value={tripType} label="סוג טיול" onChange={e => setTripType(e.target.value)}>
-                <MenuItem value="general">כללי</MenuItem>
-                <MenuItem value="beach">חוף</MenuItem>
-                <MenuItem value="mountains">הרים</MenuItem>
-                <MenuItem value="adventure">הרפתקה</MenuItem>
-                <MenuItem value="formal">עסקי/פורמלי</MenuItem>
+              <InputLabel>{t('packing.trip_type')}</InputLabel>
+              <Select value={tripType} label={t('packing.trip_type')} onChange={e => setTripType(e.target.value)}>
+                <MenuItem value="general">{t('packing.type_general')}</MenuItem>
+                <MenuItem value="beach">{t('packing.type_beach')}</MenuItem>
+                <MenuItem value="mountains">{t('packing.type_mountains')}</MenuItem>
+                <MenuItem value="adventure">{t('packing.type_adventure')}</MenuItem>
+                <MenuItem value="formal">{t('packing.type_formal')}</MenuItem>
               </Select>
             </FormControl>
           </Stack>
         </Paper>
 
-        {/* התקדמות */}
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="body2" color="text.secondary">
-            סומן: {countChecked()} / {totalItems} פריטים
+            {t('packing.checked_count', { checked: countChecked(), total: totalItems })}
           </Typography>
           <Button size="small" color="error" onClick={resetList}>
-            אפס הכל
+            {t('packing.reset')}
           </Button>
         </Box>
 
-        {/* רשימות לפי קטגוריה */}
         {Object.entries(PACKING_DATA).map(([catKey, cat]) => {
           const conditionalItems = Object.entries(cat.conditional)
             .filter(([cond]) => conditions.has(cond))
@@ -275,7 +266,6 @@ export default function PackingListModal({ open, onClose, initialDestination = '
 
         <Divider sx={{ my: 2 }} />
 
-        {/* כפתורי פעולה */}
         <Stack direction="row" spacing={2}>
           <Button
             variant="outlined"
@@ -284,7 +274,7 @@ export default function PackingListModal({ open, onClose, initialDestination = '
             fullWidth
             sx={{ borderRadius: 2 }}
           >
-            הדפס
+            {t('packing.print')}
           </Button>
           <Button
             variant="contained"
@@ -296,7 +286,7 @@ export default function PackingListModal({ open, onClose, initialDestination = '
               borderRadius: 2
             }}
           >
-            שתף
+            {t('packing.share')}
           </Button>
         </Stack>
       </Box>

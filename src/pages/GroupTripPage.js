@@ -12,23 +12,24 @@ import GroupIcon from '@mui/icons-material/Group';
 import AddIcon from '@mui/icons-material/Add';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const DESTINATION_OPTIONS = [
-  { name: 'פריז', emoji: '🗼', country: 'צרפת' },
-  { name: 'ברצלונה', emoji: '🏖️', country: 'ספרד' },
-  { name: 'רומא', emoji: '🏛️', country: 'איטליה' },
-  { name: 'לונדון', emoji: '🎡', country: 'אנגליה' },
-  { name: 'אמסטרדם', emoji: '🚲', country: 'הולנד' },
-  { name: 'בנגקוק', emoji: '🛕', country: 'תאילנד' },
-  { name: 'בלי', emoji: '🌺', country: 'אינדונזיה' },
-  { name: 'ניו יורק', emoji: '🗽', country: 'ארה"ב' },
-  { name: 'טוקיו', emoji: '🗼', country: 'יפן' },
-  { name: 'דובאי', emoji: '🌆', country: 'איחוד האמירויות' },
-  { name: 'סנטוריני', emoji: '🌅', country: 'יוון' },
-  { name: 'מרקש', emoji: '🕌', country: 'מרוקו' },
-  { name: 'ליסבון', emoji: '🌉', country: 'פורטוגל' },
-  { name: 'איסלנד - רייקיאביק', emoji: '🌋', country: 'איסלנד' },
-  { name: 'קיוטו', emoji: '⛩️', country: 'יפן' },
+  { name: 'Paris', emoji: '🗼', country: 'France' },
+  { name: 'Barcelona', emoji: '🏖️', country: 'Spain' },
+  { name: 'Rome', emoji: '🏛️', country: 'Italy' },
+  { name: 'London', emoji: '🎡', country: 'England' },
+  { name: 'Amsterdam', emoji: '🚲', country: 'Netherlands' },
+  { name: 'Bangkok', emoji: '🛕', country: 'Thailand' },
+  { name: 'Bali', emoji: '🌺', country: 'Indonesia' },
+  { name: 'New York', emoji: '🗽', country: 'USA' },
+  { name: 'Tokyo', emoji: '🗼', country: 'Japan' },
+  { name: 'Dubai', emoji: '🌆', country: 'UAE' },
+  { name: 'Santorini', emoji: '🌅', country: 'Greece' },
+  { name: 'Marrakech', emoji: '🕌', country: 'Morocco' },
+  { name: 'Lisbon', emoji: '🌉', country: 'Portugal' },
+  { name: 'Iceland - Reykjavik', emoji: '🌋', country: 'Iceland' },
+  { name: 'Kyoto', emoji: '⛩️', country: 'Japan' },
 ];
 
 const STORAGE_KEY = 'groupTrip_v1';
@@ -49,7 +50,8 @@ function generateRoomCode() {
 
 export default function GroupTripPage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1); // 1: הגדרה, 2: הצבעה, 3: תוצאות
+  const { t } = useTranslation();
+  const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [session, setSession] = useState(null);
   const [selectedVotes, setSelectedVotes] = useState([]);
@@ -67,7 +69,7 @@ export default function GroupTripPage() {
 
   const handleCreateSession = () => {
     if (!name.trim()) {
-      setSnackMsg('אנא הזן שם');
+      setSnackMsg(t('groupTrip.err_name'));
       setSnackOpen(true);
       return;
     }
@@ -85,13 +87,13 @@ export default function GroupTripPage() {
 
   const handleJoinOrLoad = () => {
     if (!name.trim()) {
-      setSnackMsg('אנא הזן שם');
+      setSnackMsg(t('groupTrip.err_name'));
       setSnackOpen(true);
       return;
     }
     const existing = loadSession();
     if (!existing) {
-      setSnackMsg('לא נמצא חדר. צור חדר חדש.');
+      setSnackMsg(t('groupTrip.err_no_room'));
       setSnackOpen(true);
       return;
     }
@@ -99,7 +101,6 @@ export default function GroupTripPage() {
     if (!alreadyIn) {
       existing.participants.push({ name: name.trim(), votes: [] });
     } else {
-      // check if already voted
       if (alreadyIn.votes.length > 0) {
         setHasVoted(true);
         setSelectedVotes(alreadyIn.votes);
@@ -114,23 +115,21 @@ export default function GroupTripPage() {
     if (hasVoted) return;
     setSelectedVotes(prev => {
       if (prev.includes(destName)) return prev.filter(v => v !== destName);
-      if (prev.length >= 3) return prev; // מקסימום 3
+      if (prev.length >= 3) return prev;
       return [...prev, destName];
     });
   };
 
   const handleSubmitVotes = () => {
     if (selectedVotes.length === 0) {
-      setSnackMsg('אנא בחר לפחות יעד אחד');
+      setSnackMsg(t('groupTrip.err_select'));
       setSnackOpen(true);
       return;
     }
     const updated = { ...session };
-    // עדכן votes map
     selectedVotes.forEach(dest => {
       updated.votes[dest] = (updated.votes[dest] || 0) + 1;
     });
-    // עדכן participant
     const participant = updated.participants.find(p => p.name === name);
     if (participant) participant.votes = selectedVotes;
     else updated.participants.push({ name, votes: selectedVotes });
@@ -138,7 +137,7 @@ export default function GroupTripPage() {
     saveSession(updated);
     setSession(updated);
     setHasVoted(true);
-    setSnackMsg('הצבעתך נשמרה! 🎉');
+    setSnackMsg(t('groupTrip.vote_saved'));
     setSnackOpen(true);
   };
 
@@ -158,14 +157,12 @@ export default function GroupTripPage() {
   const copyLink = () => {
     const url = window.location.href;
     navigator.clipboard.writeText(url + `?room=${session?.code}`);
-    setSnackMsg('הלינק הועתק! שתף עם החברים 🔗');
+    setSnackMsg(t('groupTrip.link_copied'));
     setSnackOpen(true);
   };
 
-  // תוצאות מיון
   const sortedResults = session
-    ? Object.entries(session.votes || {})
-        .sort(([, a], [, b]) => b - a)
+    ? Object.entries(session.votes || {}).sort(([, a], [, b]) => b - a)
     : [];
   const maxVotes = sortedResults.length > 0 ? sortedResults[0][1] : 1;
   const winner = sortedResults.length > 0 ? sortedResults[0] : null;
@@ -178,7 +175,6 @@ export default function GroupTripPage() {
       pb: 8
     }}>
       <Container maxWidth="md">
-        {/* כותרת */}
         <Box textAlign="center" mb={5}>
           <Typography variant="h3" fontWeight={800} sx={{
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -186,14 +182,14 @@ export default function GroupTripPage() {
             WebkitTextFillColor: 'transparent',
             fontSize: { xs: '1.8rem', md: '3rem' }
           }}>
-            🗳️ טיול קבוצתי
+            {t('groupTrip.page_title')}
           </Typography>
           <Typography variant="h6" color="text.secondary" mt={1}>
-            הצביעו יחד ובחרו את היעד המנצח
+            {t('groupTrip.page_subtitle')}
           </Typography>
         </Box>
 
-        {/* שלב 1: הגדרה */}
+        {/* Step 1: Setup */}
         {step === 1 && (
           <Paper elevation={4} sx={{ p: { xs: 3, md: 5 }, borderRadius: 4 }}>
             <Box display="flex" alignItems="center" gap={2} mb={3}>
@@ -201,17 +197,17 @@ export default function GroupTripPage() {
                 <GroupIcon />
               </Avatar>
               <Box>
-                <Typography variant="h5" fontWeight="bold">צור חדר הצבעה</Typography>
-                <Typography variant="body2" color="text.secondary">הזמן חברים ובחרו יחד</Typography>
+                <Typography variant="h5" fontWeight="bold">{t('groupTrip.step1_title')}</Typography>
+                <Typography variant="body2" color="text.secondary">{t('groupTrip.step1_subtitle')}</Typography>
               </Box>
             </Box>
 
             <TextField
               fullWidth
-              label="השם שלך"
+              label={t('groupTrip.name_label')}
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="הזן שם..."
+              placeholder={t('groupTrip.name_placeholder')}
               sx={{ mb: 3 }}
               onKeyDown={e => e.key === 'Enter' && handleCreateSession()}
             />
@@ -230,7 +226,7 @@ export default function GroupTripPage() {
                   fontWeight: 700
                 }}
               >
-                צור חדר חדש
+                {t('groupTrip.create_room')}
               </Button>
               <Button
                 variant="outlined"
@@ -239,30 +235,29 @@ export default function GroupTripPage() {
                 onClick={handleJoinOrLoad}
                 sx={{ py: 1.5, borderRadius: 3, fontWeight: 700 }}
               >
-                הצטרף לחדר קיים
+                {t('groupTrip.join_room')}
               </Button>
             </Stack>
 
             <Box mt={3} p={2} bgcolor="#f8f9ff" borderRadius={2}>
               <Typography variant="body2" color="text.secondary" textAlign="center">
-                💡 הנתונים נשמרים מקומית בדפדפן. שתף את הלינק עם החברים שלך כדי לאפשר הצבעה משותפת.
+                {t('groupTrip.local_tip')}
               </Typography>
             </Box>
           </Paper>
         )}
 
-        {/* שלב 2: הצבעה */}
+        {/* Step 2: Voting */}
         {step === 2 && session && (
           <>
-            {/* כרטיס מידע */}
             <Paper elevation={3} sx={{ p: 3, borderRadius: 3, mb: 3 }}>
               <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
                 <Box>
                   <Typography variant="h6" fontWeight="bold">
-                    🎯 קוד חדר: <Chip label={session.code} sx={{ fontWeight: 700, fontSize: '1rem', bgcolor: '#667eea22', color: '#667eea' }} />
+                    🎯 {t('groupTrip.room_code')}: <Chip label={session.code} sx={{ fontWeight: 700, fontSize: '1rem', bgcolor: '#667eea22', color: '#667eea' }} />
                   </Typography>
                   <Typography variant="body2" color="text.secondary" mt={0.5}>
-                    {session.participants.length} משתתפים רשומים
+                    {t('groupTrip.participants_count', { count: session.participants.length })}
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={1}>
@@ -273,7 +268,7 @@ export default function GroupTripPage() {
                     size="small"
                     sx={{ borderRadius: 2 }}
                   >
-                    העתק לינק
+                    {t('groupTrip.copy_link')}
                   </Button>
                   <Button
                     variant="contained"
@@ -282,15 +277,14 @@ export default function GroupTripPage() {
                     size="small"
                     sx={{ background: 'linear-gradient(135deg, #f5576c 0%, #f093fb 100%)', borderRadius: 2 }}
                   >
-                    הצג תוצאות
+                    {t('groupTrip.show_results')}
                   </Button>
                 </Stack>
               </Box>
 
-              {/* משתתפים */}
               {session.participants.length > 0 && (
                 <Box mt={2}>
-                  <Typography variant="body2" color="text.secondary" mb={1}>משתתפים:</Typography>
+                  <Typography variant="body2" color="text.secondary" mb={1}>{t('groupTrip.participants_label')}</Typography>
                   <Stack direction="row" flexWrap="wrap" gap={1}>
                     {session.participants.map((p, i) => (
                       <Chip
@@ -307,7 +301,7 @@ export default function GroupTripPage() {
             </Paper>
 
             <Typography variant="h6" fontWeight="bold" mb={2} textAlign="center">
-              {hasVoted ? '✅ הצבעת! ממתין לשאר...' : `בחר עד 3 יעדים מועדפים (נבחרו: ${selectedVotes.length}/3)`}
+              {hasVoted ? t('groupTrip.voted_waiting') : t('groupTrip.select_up_to', { count: selectedVotes.length })}
             </Typography>
 
             <Grid container spacing={2} mb={3}>
@@ -362,18 +356,18 @@ export default function GroupTripPage() {
                     fontSize: '1.1rem'
                   }}
                 >
-                  הצבע! 🗳️
+                  {t('groupTrip.vote_btn')}
                 </Button>
               </Box>
             )}
           </>
         )}
 
-        {/* שלב 3: תוצאות */}
+        {/* Step 3: Results */}
         {step === 3 && session && (
           <Paper elevation={4} sx={{ p: { xs: 3, md: 5 }, borderRadius: 4 }}>
             <Typography variant="h4" fontWeight={800} textAlign="center" mb={1}>
-              🏆 תוצאות ההצבעה
+              {t('groupTrip.results_title')}
             </Typography>
 
             {winner && (
@@ -393,7 +387,7 @@ export default function GroupTripPage() {
                   {DESTINATION_OPTIONS.find(d => d.name === winner[0])?.emoji || '🌍'} {winner[0]}
                 </Typography>
                 <Typography variant="h6" color="white" sx={{ opacity: 0.9, mt: 0.5 }}>
-                  {winner[1]} קולות · המנצח!
+                  {t('groupTrip.winner_votes', { count: winner[1] })}
                 </Typography>
                 <Button
                   variant="contained"
@@ -407,18 +401,18 @@ export default function GroupTripPage() {
                   }}
                   onClick={() => navigate(`/trip-planner?destination=${encodeURIComponent(winner[0])}`)}
                 >
-                  תכנן את הטיול ל{winner[0]} ←
+                  {t('groupTrip.plan_winner', { dest: winner[0] })}
                 </Button>
               </Box>
             )}
 
             {sortedResults.length === 0 && (
               <Typography textAlign="center" color="text.secondary">
-                עדיין אין הצבעות. הזמן חברים!
+                {t('groupTrip.no_votes')}
               </Typography>
             )}
 
-            <Typography variant="h6" fontWeight="bold" mb={2}>כל התוצאות:</Typography>
+            <Typography variant="h6" fontWeight="bold" mb={2}>{t('groupTrip.all_results')}</Typography>
             {sortedResults.map(([dest, votes], i) => {
               const destObj = DESTINATION_OPTIONS.find(d => d.name === dest);
               const pct = Math.round((votes / maxVotes) * 100);
@@ -429,7 +423,7 @@ export default function GroupTripPage() {
                       <Typography>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</Typography>
                       <Typography fontWeight={600}>{destObj?.emoji} {dest}</Typography>
                     </Box>
-                    <Typography fontWeight={700} color="#667eea">{votes} קולות</Typography>
+                    <Typography fontWeight={700} color="#667eea">{t('groupTrip.votes_count', { count: votes })}</Typography>
                   </Box>
                   <LinearProgress
                     variant="determinate"
@@ -459,7 +453,7 @@ export default function GroupTripPage() {
                 onClick={() => setStep(2)}
                 sx={{ borderRadius: 2 }}
               >
-                חזור להצבעה
+                {t('groupTrip.back_to_voting')}
               </Button>
               <Button
                 variant="contained"
@@ -468,7 +462,7 @@ export default function GroupTripPage() {
                 onClick={handleReset}
                 sx={{ borderRadius: 2 }}
               >
-                אפס והתחל מחדש
+                {t('groupTrip.reset')}
               </Button>
             </Stack>
           </Paper>

@@ -1,17 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Container,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  Chip,
-  InputAdornment,
-  Grid,
-  useTheme,
-  useMediaQuery,
-  Alert
+  Box, Container, Paper, Typography, TextField, Button, Chip,
+  InputAdornment, Grid, useTheme, useMediaQuery, Alert
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import DirectionsIcon from '@mui/icons-material/Directions';
@@ -19,29 +9,31 @@ import SwapVertIcon from '@mui/icons-material/SwapVert';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import FlagIcon from '@mui/icons-material/Flag';
+import { useTranslation } from 'react-i18next';
 
 const popularRoutes = [
-  { from: 'תל אביב', to: 'ירושלים' },
-  { from: 'תל אביב', to: 'חיפה' },
-  { from: 'ירושלים', to: 'אילת' },
-  { from: 'תל אביב', to: 'אילת' },
-  { from: 'חיפה', to: 'ירושלים' },
-  { from: 'תל אביב', to: 'פריז' },
-];
-
-const travelModes = [
-  { value: 'driving', label: '🚗 נסיעה', key: 'd' },
-  { value: 'transit', label: '🚌 תחבורה', key: 'r' },
-  { value: 'walking', label: '🚶 הליכה', key: 'w' },
-  { value: 'bicycling', label: '🚴 אופניים', key: 'b' },
+  { from: 'Tel Aviv', to: 'Jerusalem' },
+  { from: 'Tel Aviv', to: 'Haifa' },
+  { from: 'Jerusalem', to: 'Eilat' },
+  { from: 'Tel Aviv', to: 'Eilat' },
+  { from: 'Tel Aviv', to: 'Paris' },
+  { from: 'London', to: 'Paris' },
 ];
 
 const RouteMapPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { t } = useTranslation();
 
-  const [origin, setOrigin] = useState('תל אביב');
-  const [destination, setDestination] = useState('ירושלים');
+  const travelModes = [
+    { value: 'driving', label: t('routeMap.mode_driving'), key: 'd' },
+    { value: 'transit', label: t('routeMap.mode_transit'), key: 'r' },
+    { value: 'walking', label: t('routeMap.mode_walking'), key: 'w' },
+    { value: 'bicycling', label: t('routeMap.mode_bicycling'), key: 'b' },
+  ];
+
+  const [origin, setOrigin] = useState('Tel Aviv');
+  const [destination, setDestination] = useState('Jerusalem');
   const [travelMode, setTravelMode] = useState('driving');
   const [mapSrc, setMapSrc] = useState('');
   const [searched, setSearched] = useState(false);
@@ -52,7 +44,7 @@ const RouteMapPage = () => {
   };
 
   useEffect(() => {
-    setMapSrc(buildMapSrc('תל אביב', 'ירושלים', 'driving'));
+    setMapSrc(buildMapSrc('Tel Aviv', 'Jerusalem', 'driving'));
     setSearched(true);
   }, []);
 
@@ -81,7 +73,6 @@ const RouteMapPage = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9ff', pt: '64px', pb: 4 }}>
-      {/* כותרת */}
       <Box sx={{
         background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
         color: 'white',
@@ -91,26 +82,23 @@ const RouteMapPage = () => {
         mb: 3
       }}>
         <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.4rem', md: '2rem' } }}>
-          🗺️ מפת מסלולים
+          {t('routeMap.title')}
         </Typography>
         <Typography variant="body1" sx={{ opacity: 0.9, mt: 0.5, fontSize: { xs: '0.85rem', md: '1rem' } }}>
-          חפש מסלול בין כל שתי נקודות בעולם
+          {t('routeMap.subtitle')}
         </Typography>
       </Box>
 
       <Container maxWidth="lg">
-        {/* כרטיס חיפוש */}
         <Paper elevation={4} sx={{ p: { xs: 2, md: 3 }, borderRadius: 3, mb: 3 }}>
           <Grid container spacing={2} alignItems="flex-start">
-            {/* שדות מקור ויעד */}
             <Grid item xs={12} md={5}>
               <TextField
                 fullWidth
                 value={origin}
                 onChange={e => setOrigin(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                label="מוצא"
-                placeholder="תל אביב, ישראל"
+                label={t('routeMap.origin')}
                 variant="outlined"
                 size="small"
                 InputProps={{
@@ -129,7 +117,7 @@ const RouteMapPage = () => {
                   startIcon={<SwapVertIcon />}
                   sx={{ color: 'text.secondary', fontSize: '0.75rem' }}
                 >
-                  החלף
+                  {t('routeMap.swap')}
                 </Button>
               </Box>
               <TextField
@@ -137,8 +125,7 @@ const RouteMapPage = () => {
                 value={destination}
                 onChange={e => setDestination(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                label="יעד"
-                placeholder="ירושלים, ישראל"
+                label={t('routeMap.destination')}
                 variant="outlined"
                 size="small"
                 InputProps={{
@@ -151,10 +138,9 @@ const RouteMapPage = () => {
               />
             </Grid>
 
-            {/* אופן נסיעה + כפתור */}
             <Grid item xs={12} md={4}>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                אופן נסיעה:
+                {t('routeMap.travel_mode')}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
                 {travelModes.map(mode => (
@@ -175,7 +161,6 @@ const RouteMapPage = () => {
               </Box>
             </Grid>
 
-            {/* כפתורי פעולה */}
             <Grid item xs={12} md={3}>
               <Button
                 fullWidth
@@ -191,7 +176,7 @@ const RouteMapPage = () => {
                   mb: 1
                 }}
               >
-                חפש מסלול
+                {t('routeMap.search_btn')}
               </Button>
               <Button
                 fullWidth
@@ -201,15 +186,14 @@ const RouteMapPage = () => {
                 size="small"
                 sx={{ borderRadius: 2, color: '#43e97b', borderColor: '#43e97b' }}
               >
-                פתח ב-Google Maps
+                {t('routeMap.open_google_maps')}
               </Button>
             </Grid>
           </Grid>
 
-          {/* מסלולים פופולריים */}
           <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
             <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
-              מסלולים פופולריים:
+              {t('routeMap.popular_routes')}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.5 }}>
               {popularRoutes.map((route, i) => (
@@ -227,10 +211,8 @@ const RouteMapPage = () => {
           </Box>
         </Paper>
 
-        {/* מפה */}
         {searched && (
           <Paper elevation={4} sx={{ borderRadius: 3, overflow: 'hidden' }}>
-            {/* כותרת מפה */}
             <Box sx={{
               px: 2, py: 1.5,
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -254,11 +236,10 @@ const RouteMapPage = () => {
                 onClick={() => window.open(`https://maps.google.com/maps?q=${encodeURIComponent(destination)}`, '_blank')}
                 sx={{ fontSize: '0.75rem', color: 'text.secondary' }}
               >
-                חפש יעד
+                {t('routeMap.search_dest')}
               </Button>
             </Box>
 
-            {/* iframe */}
             <Box sx={{ width: '100%', height: { xs: '60vh', md: '70vh' } }}>
               <iframe
                 key={mapSrc}
@@ -269,15 +250,14 @@ const RouteMapPage = () => {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title={`מסלול מ-${origin} ל-${destination}`}
+                title={`${origin} → ${destination}`}
               />
             </Box>
           </Paper>
         )}
 
-        {/* הסבר */}
         <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
-          💡 לניווט מדויק ופנייה בפנייה — פתח את המסלול ב-Google Maps בכפתור למעלה
+          {t('routeMap.tip')}
         </Alert>
       </Container>
     </Box>

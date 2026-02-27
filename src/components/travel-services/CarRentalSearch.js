@@ -16,8 +16,10 @@ import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import SearchIcon from '@mui/icons-material/Search';
 import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
 import AirlineSeatReclineNormalIcon from '@mui/icons-material/AirlineSeatReclineNormal';
+import { useTranslation } from 'react-i18next';
 
 const CarRentalSearch = () => {
+  const { t } = useTranslation();
   const [location, setLocation] = useState('');
   const [pickupDate, setPickupDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
@@ -31,31 +33,31 @@ const CarRentalSearch = () => {
       const mockCars = [
         {
           id: 1,
-          name: 'טויוטה יאריס',
-          category: 'קומפקט',
-          transmission: 'אוטומט',
+          name: 'Toyota Yaris',
+          category: 'Compact',
+          transmission: 'Automatic',
           passengers: 5,
-          fuel: 'בנזין',
+          fuel: 'Petrol',
           price: 150,
           image: 'https://source.unsplash.com/400x300/?toyota,car'
         },
         {
           id: 2,
-          name: 'הונדה סיוויק',
-          category: 'בינוני',
-          transmission: 'אוטומט',
+          name: 'Honda Civic',
+          category: 'Mid-size',
+          transmission: 'Automatic',
           passengers: 5,
-          fuel: 'בנזין',
+          fuel: 'Petrol',
           price: 180,
           image: 'https://source.unsplash.com/400x300/?honda,car'
         },
         {
           id: 3,
-          name: 'קיה ספורטאז׳',
+          name: 'Kia Sportage',
           category: 'SUV',
-          transmission: 'אוטומט',
+          transmission: 'Automatic',
           passengers: 7,
-          fuel: 'היברידי',
+          fuel: 'Hybrid',
           price: 250,
           image: 'https://source.unsplash.com/400x300/?suv,car'
         }
@@ -71,42 +73,42 @@ const CarRentalSearch = () => {
       <Paper sx={{ p: 3, mb: 3 }}>
         <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
           <DirectionsCarIcon sx={{ mr: 1 }} />
-          השכרת רכב
+          {t('travelServices.car_rental_title')}
         </Typography>
-        
+
         <Grid container spacing={2} sx={{ mt: 2 }}>
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
-              label="מיקום איסוף"
+              label={t('travelServices.pickup_location')}
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="שדה תעופה בן גוריון"
+              placeholder="Ben Gurion Airport"
             />
           </Grid>
-          
+
           <Grid item xs={12} md={3}>
             <TextField
               fullWidth
-              label="תאריך איסוף"
+              label={t('travelServices.pickup_date')}
               type="date"
               value={pickupDate}
               onChange={(e) => setPickupDate(e.target.value)}
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={3}>
             <TextField
               fullWidth
-              label="תאריך החזרה"
+              label={t('travelServices.car_return_date')}
               type="date"
               value={returnDate}
               onChange={(e) => setReturnDate(e.target.value)}
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={2}>
             <Button
               fullWidth
@@ -117,7 +119,7 @@ const CarRentalSearch = () => {
               startIcon={loading ? <CircularProgress size={20} /> : <SearchIcon />}
               sx={{ height: '56px' }}
             >
-              {loading ? 'מחפש...' : 'חפש'}
+              {loading ? t('travelServices.searching') : t('travelServices.search_btn')}
             </Button>
           </Grid>
         </Grid>
@@ -145,7 +147,7 @@ const CarRentalSearch = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                       <AirlineSeatReclineNormalIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
                       <Typography variant="body2">
-                        {car.passengers} מקומות
+                        {car.passengers} {t('travelServices.seats')}
                       </Typography>
                     </Box>
                     
@@ -163,10 +165,10 @@ const CarRentalSearch = () => {
                   
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="h6" color="primary">
-                      ₪{car.price}/יום
+                      ${car.price}{t('travelServices.per_day')}
                     </Typography>
                     <Button variant="contained" size="small">
-                      הזמן
+                      {t('travelServices.book_btn')}
                     </Button>
                   </Box>
                 </CardContent>

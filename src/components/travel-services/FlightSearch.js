@@ -15,8 +15,10 @@ import {
 } from '@mui/material';
 import FlightIcon from '@mui/icons-material/Flight';
 import SearchIcon from '@mui/icons-material/Search';
+import { useTranslation } from 'react-i18next';
 
 const FlightSearch = () => {
+  const { t } = useTranslation();
   const [tripType, setTripType] = useState('roundtrip');
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
@@ -33,36 +35,36 @@ const FlightSearch = () => {
       const mockFlights = [
         {
           id: 1,
-          airline: 'אל על',
-          origin: origin || 'תל אביב',
-          destination: destination || 'פריז',
+          airline: 'El Al',
+          origin: origin || 'Tel Aviv',
+          destination: destination || 'Paris',
           departure: '08:00',
           arrival: '12:30',
-          duration: '4ש 30ד',
+          duration: '4h 30m',
           price: 1200,
-          stops: 'ישיר'
+          direct: true
         },
         {
           id: 2,
-          airline: 'ויזאייר',
-          origin: origin || 'תל אביב',
-          destination: destination || 'פריז',
+          airline: 'Wizz Air',
+          origin: origin || 'Tel Aviv',
+          destination: destination || 'Paris',
           departure: '14:15',
           arrival: '18:45',
-          duration: '4ש 30ד',
+          duration: '4h 30m',
           price: 890,
-          stops: 'ישיר'
+          direct: true
         },
         {
           id: 3,
-          airline: 'טורקיש איירליינס',
-          origin: origin || 'תל אביב',
-          destination: destination || 'פריז',
+          airline: 'Turkish Airlines',
+          origin: origin || 'Tel Aviv',
+          destination: destination || 'Paris',
           departure: '06:30',
           arrival: '14:20',
-          duration: '7ש 50ד',
+          duration: '7h 50m',
           price: 750,
-          stops: '1 עצירה'
+          direct: false
         }
       ];
       
@@ -76,9 +78,9 @@ const FlightSearch = () => {
       <Paper sx={{ p: 3, mb: 3 }}>
         <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
           <FlightIcon sx={{ mr: 1 }} />
-          חיפוש טיסות
+          {t('travelServices.search_flights_title')}
         </Typography>
-        
+
         <Box sx={{ mb: 3 }}>
           <ToggleButtonGroup
             value={tripType}
@@ -86,48 +88,48 @@ const FlightSearch = () => {
             onChange={(e, newValue) => newValue && setTripType(newValue)}
             size="small"
           >
-            <ToggleButton value="roundtrip">הלוך חזור</ToggleButton>
-            <ToggleButton value="oneway">כיוון אחד</ToggleButton>
+            <ToggleButton value="roundtrip">{t('travelServices.roundtrip')}</ToggleButton>
+            <ToggleButton value="oneway">{t('travelServices.oneway')}</ToggleButton>
           </ToggleButtonGroup>
         </Box>
-        
+
         <Grid container spacing={2}>
           <Grid item xs={12} md={3}>
             <TextField
               fullWidth
-              label="מוצא"
+              label={t('travelServices.origin')}
               value={origin}
               onChange={(e) => setOrigin(e.target.value)}
-              placeholder="תל אביב"
+              placeholder="Tel Aviv"
             />
           </Grid>
-          
+
           <Grid item xs={12} md={3}>
             <TextField
               fullWidth
-              label="יעד"
+              label={t('travelServices.destination')}
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              placeholder="פריז"
+              placeholder="Paris"
             />
           </Grid>
-          
+
           <Grid item xs={12} md={2}>
             <TextField
               fullWidth
-              label="תאריך יציאה"
+              label={t('travelServices.departure_date')}
               type="date"
               value={departureDate}
               onChange={(e) => setDepartureDate(e.target.value)}
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          
+
           {tripType === 'roundtrip' && (
             <Grid item xs={12} md={2}>
               <TextField
                 fullWidth
-                label="תאריך חזרה"
+                label={t('travelServices.return_date')}
                 type="date"
                 value={returnDate}
                 onChange={(e) => setReturnDate(e.target.value)}
@@ -135,18 +137,18 @@ const FlightSearch = () => {
               />
             </Grid>
           )}
-          
+
           <Grid item xs={12} md={tripType === 'roundtrip' ? 1 : 2}>
             <TextField
               fullWidth
-              label="נוסעים"
+              label={t('travelServices.passengers')}
               type="number"
               value={passengers}
               onChange={(e) => setPassengers(parseInt(e.target.value))}
               inputProps={{ min: 1, max: 9 }}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={tripType === 'roundtrip' ? 1 : 2}>
             <Button
               fullWidth
@@ -157,7 +159,7 @@ const FlightSearch = () => {
               startIcon={loading ? <CircularProgress size={20} /> : <SearchIcon />}
               sx={{ height: '56px' }}
             >
-              {loading ? 'מחפש...' : 'חפש'}
+              {loading ? t('travelServices.searching') : t('travelServices.search_btn')}
             </Button>
           </Grid>
         </Grid>
@@ -171,7 +173,11 @@ const FlightSearch = () => {
                 <Grid container spacing={2} alignItems="center">
                   <Grid item xs={12} md={2}>
                     <Typography variant="h6">{flight.airline}</Typography>
-                    <Chip label={flight.stops} size="small" color={flight.stops === 'ישיר' ? 'success' : 'default'} />
+                    <Chip
+                      label={flight.direct ? t('travelServices.direct') : t('travelServices.one_stop')}
+                      size="small"
+                      color={flight.direct ? 'success' : 'default'}
+                    />
                   </Grid>
                   
                   <Grid item xs={12} md={6}>
@@ -195,16 +201,16 @@ const FlightSearch = () => {
                   
                   <Grid item xs={12} md={2}>
                     <Typography variant="h5" color="primary" align="center">
-                      ₪{flight.price}
+                      ${flight.price}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" display="block" align="center">
-                      לנוסע
+                      {t('travelServices.per_passenger')}
                     </Typography>
                   </Grid>
-                  
+
                   <Grid item xs={12} md={2}>
                     <Button variant="contained" fullWidth>
-                      בחר
+                      {t('travelServices.select_btn')}
                     </Button>
                   </Grid>
                 </Grid>

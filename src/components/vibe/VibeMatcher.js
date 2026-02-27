@@ -3,31 +3,33 @@ import {
   Box, Typography, Grid, Card, CardContent, Chip, Button, Paper, Collapse
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const VIBES = [
-  { id: 'beach', emoji: '🏖️', label: 'חוף', color: '#00BCD4' },
-  { id: 'mountains', emoji: '🏔️', label: 'הרים', color: '#607D8B' },
-  { id: 'culture', emoji: '🎨', label: 'תרבות', color: '#9C27B0' },
-  { id: 'food', emoji: '🍕', label: 'אוכל', color: '#FF5722' },
-  { id: 'party', emoji: '🎉', label: 'מסיבה', color: '#E91E63' },
-  { id: 'relax', emoji: '🧘', label: 'שקט', color: '#4CAF50' },
-  { id: 'romantic', emoji: '💑', label: 'רומנטי', color: '#F06292' },
-  { id: 'adventure', emoji: '🧗', label: 'הרפתקה', color: '#FF9800' },
+  { id: 'beach', emoji: '🏖️', color: '#00BCD4' },
+  { id: 'mountains', emoji: '🏔️', color: '#607D8B' },
+  { id: 'culture', emoji: '🎨', color: '#9C27B0' },
+  { id: 'food', emoji: '🍕', color: '#FF5722' },
+  { id: 'party', emoji: '🎉', color: '#E91E63' },
+  { id: 'relax', emoji: '🧘', color: '#4CAF50' },
+  { id: 'romantic', emoji: '💑', color: '#F06292' },
+  { id: 'adventure', emoji: '🧗', color: '#FF9800' },
 ];
 
 const DESTINATIONS_BY_VIBE = {
-  beach: ['תאילנד - קו סמוי', 'מלדיביים', 'בלי, אינדונזיה', 'ברצלונה', 'סנטוריני', 'ריו דה ז\'ניירו'],
-  mountains: ['נפאל - היימלאיה', 'פטגוניה', 'הרי האלפים - שוויץ', 'ניו זילנד', 'גרנד קניון', 'דולומיטים - איטליה'],
-  culture: ['קיוטו, יפן', 'רומא, איטליה', 'אתונה, יוון', 'מצרים - קהיר', 'קמבודיה - אנגקור וואט', 'פרו - מאצ\'ו פיצ\'ו'],
-  food: ['טוקיו, יפן', 'ספרד - סן סבסטיאן', 'איטליה - בולוניה', 'תאילנד - בנגקוק', 'הודו - מומבאי', 'צרפת - ליון'],
-  party: ['איביזה, ספרד', 'ברצלונה', 'לאס וגאס', 'ריו - קרניבל', 'מיקונוס, יוון', 'בנגקוק'],
-  relax: ['מלדיביים', 'קוסמוי, תאילנד', 'אורנג\'ה, דרום צרפת', 'קיוטו - גני זן', 'ניו זילנד', 'בלי - אובוד'],
-  romantic: ['סנטוריני, יוון', 'פריז, צרפת', 'ונציה, איטליה', 'פראג', 'קיוטו - פריחת הדובדבן', 'ורונה, איטליה'],
-  adventure: ['פטגוניה', 'ניו זילנד - קווינסטאון', 'איסלנד', 'קוסטה ריקה', 'מזימביק - גלישה', 'עמאן, ירדן'],
+  beach: ['Thailand - Koh Samui', 'Maldives', 'Bali, Indonesia', 'Barcelona', 'Santorini', 'Rio de Janeiro'],
+  mountains: ['Nepal - Himalayas', 'Patagonia', 'Swiss Alps', 'New Zealand', 'Grand Canyon', 'Dolomites - Italy'],
+  culture: ['Kyoto, Japan', 'Rome, Italy', 'Athens, Greece', 'Egypt - Cairo', 'Cambodia - Angkor Wat', 'Peru - Machu Picchu'],
+  food: ['Tokyo, Japan', 'Spain - San Sebastián', 'Italy - Bologna', 'Thailand - Bangkok', 'India - Mumbai', 'France - Lyon'],
+  party: ['Ibiza, Spain', 'Barcelona', 'Las Vegas', 'Rio - Carnival', 'Mykonos, Greece', 'Bangkok'],
+  relax: ['Maldives', 'Koh Samui, Thailand', 'Provence, France', 'Kyoto - Zen Gardens', 'New Zealand', 'Bali - Ubud'],
+  romantic: ['Santorini, Greece', 'Paris, France', 'Venice, Italy', 'Prague', 'Kyoto - Cherry Blossoms', 'Verona, Italy'],
+  adventure: ['Patagonia', 'New Zealand - Queenstown', 'Iceland', 'Costa Rica', 'Mozambique - Surfing', 'Amman, Jordan'],
 };
 
 export default function VibeMatcher() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [selected, setSelected] = useState([]);
   const [showResults, setShowResults] = useState(false);
 
@@ -35,7 +37,7 @@ export default function VibeMatcher() {
     setShowResults(false);
     setSelected(prev => {
       if (prev.includes(id)) return prev.filter(v => v !== id);
-      if (prev.length >= 3) return prev; // מקסימום 3
+      if (prev.length >= 3) return prev;
       return [...prev, id];
     });
   };
@@ -59,16 +61,17 @@ export default function VibeMatcher() {
   return (
     <Box>
       <Typography variant="h5" fontWeight="bold" textAlign="center" mb={1}>
-        🎯 Match the Vibe
+        {t('vibe.title')}
       </Typography>
       <Typography variant="body1" color="text.secondary" textAlign="center" mb={3}>
-        בחר עד 3 ווייבים ונמצא לך יעדים מושלמים
+        {t('vibe.subtitle')}
       </Typography>
 
       <Grid container spacing={1.5} mb={3} justifyContent="center">
         {VIBES.map(vibe => {
           const isSelected = selected.includes(vibe.id);
           const isDisabled = !isSelected && selected.length >= 3;
+          const vibeLabel = t(`vibe.vibe_${vibe.id}`);
           return (
             <Grid item xs={6} sm={3} key={vibe.id}>
               <Card
@@ -95,7 +98,7 @@ export default function VibeMatcher() {
                     {vibe.emoji}
                   </Typography>
                   <Typography variant="body2" fontWeight={isSelected ? 700 : 500} color={isSelected ? vibe.color : 'text.primary'}>
-                    {vibe.label}
+                    {vibeLabel}
                   </Typography>
                 </CardContent>
               </Card>
@@ -109,10 +112,11 @@ export default function VibeMatcher() {
           <Box mb={1.5}>
             {selected.map(id => {
               const v = VIBES.find(x => x.id === id);
+              const label = t(`vibe.vibe_${id}`);
               return (
                 <Chip
                   key={id}
-                  label={`${v.emoji} ${v.label}`}
+                  label={`${v.emoji} ${label}`}
                   onDelete={() => toggleVibe(id)}
                   sx={{ m: 0.5, bgcolor: `${v.color}22`, color: v.color, fontWeight: 600 }}
                 />
@@ -133,7 +137,7 @@ export default function VibeMatcher() {
               '&:hover': { transform: 'scale(1.05)' }
             }}
           >
-            מצא יעדים מושלמים 🎯
+            {t('vibe.find_btn')}
           </Button>
         </Box>
       )}
@@ -141,7 +145,7 @@ export default function VibeMatcher() {
       <Collapse in={showResults && matches.length > 0}>
         <Box mt={2}>
           <Typography variant="h6" fontWeight="bold" textAlign="center" mb={2}>
-            ✨ יעדים מומלצים עבורך
+            {t('vibe.results_title')}
           </Typography>
           <Grid container spacing={2} justifyContent="center">
             {matches.map((dest, i) => (
@@ -184,7 +188,7 @@ export default function VibeMatcher() {
                       fontSize: '0.8rem'
                     }}
                   >
-                    תכנן טיול →
+                    {t('vibe.plan_trip')}
                   </Button>
                 </Paper>
               </Grid>

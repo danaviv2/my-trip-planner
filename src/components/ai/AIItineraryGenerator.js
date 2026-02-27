@@ -8,6 +8,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
+import { useTranslation } from 'react-i18next';
 import { callOpenAI, getErrorMessage } from '../../services/openaiService';
 
 const BUDGET_LABELS = { low: 'תקציבי', medium: 'בינוני', high: 'פרמיום' };
@@ -63,6 +64,12 @@ function DaySkeleton() {
 }
 
 function DayCard({ day, defaultExpanded }) {
+  const { t } = useTranslation();
+  const timePeriods = [
+    { time: t('aiItinerary.morning'), content: day.morning },
+    { time: t('aiItinerary.afternoon'), content: day.afternoon },
+    { time: t('aiItinerary.evening'), content: day.evening },
+  ];
   return (
     <Accordion
       defaultExpanded={defaultExpanded}
@@ -108,11 +115,7 @@ function DayCard({ day, defaultExpanded }) {
       </AccordionSummary>
       <AccordionDetails sx={{ pt: 0, pb: 2 }}>
         <Stack spacing={1.5}>
-          {[
-            { time: '☀️ בוקר', content: day.morning },
-            { time: '🌤️ אחה"צ', content: day.afternoon },
-            { time: '🌙 ערב', content: day.evening },
-          ].map(({ time, content }) => (
+          {timePeriods.map(({ time, content }) => (
             <Box key={time} display="flex" gap={1.5} alignItems="flex-start">
               <Typography variant="body2" sx={{ minWidth: 70, fontWeight: 600, color: '#667eea', flexShrink: 0 }}>
                 {time}
@@ -125,7 +128,7 @@ function DayCard({ day, defaultExpanded }) {
           {day.food && (
             <Box display="flex" gap={1.5} alignItems="flex-start">
               <Typography variant="body2" sx={{ minWidth: 70, fontWeight: 600, color: '#f5576c', flexShrink: 0 }}>
-                🍽️ אוכל
+                {t('aiItinerary.food')}
               </Typography>
               <Typography variant="body2" color="text.secondary">{day.food}</Typography>
             </Box>
@@ -140,7 +143,7 @@ function DayCard({ day, defaultExpanded }) {
               }}
             >
               <Typography variant="body2" sx={{ color: '#856404' }}>
-                💡 <strong>טיפ:</strong> {day.tip}
+                💡 <strong>{t('aiItinerary.tip_label')}</strong> {day.tip}
               </Typography>
             </Box>
           )}
@@ -151,6 +154,7 @@ function DayCard({ day, defaultExpanded }) {
 }
 
 export default function AIItineraryGenerator({ destination, preferences }) {
+  const { t } = useTranslation();
   const [itinerary, setItinerary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -201,7 +205,7 @@ export default function AIItineraryGenerator({ destination, preferences }) {
     } catch (err) {
       clearInterval(progressInterval);
       if (err.message === 'JSON_PARSE') {
-        setError('קיבלנו תגובה לא תקנית — נסה שוב');
+        setError(t('aiItinerary.parse_error'));
       } else {
         setError(getErrorMessage(err));
       }
@@ -235,7 +239,7 @@ export default function AIItineraryGenerator({ destination, preferences }) {
       }}>
         <Box display="flex" alignItems="center" gap={1}>
           <AutoAwesomeIcon />
-          <Typography fontWeight={700} fontSize="1rem">מסלול חכם עם AI ✨</Typography>
+          <Typography fontWeight={700} fontSize="1rem">{t('aiItinerary.header')}</Typography>
         </Box>
         {itinerary && (
           <Chip
@@ -252,10 +256,10 @@ export default function AIItineraryGenerator({ destination, preferences }) {
           <>
             <Typography variant="body2" color="text.secondary" mb={2} textAlign="center">
               {isDisabled
-                ? '🗺️ הזן יעד כדי ליצור מסלול AI מותאם אישית'
-                : `🌍 ניצור מסלול ל-${preferences?.days || 7} ימים ב-${destination}`}
+                ? t('aiItinerary.enter_dest')
+                : t('aiItinerary.will_create', { days: preferences?.days || 7, destination })}
             </Typography>
-            <Tooltip title={isDisabled ? 'הזן יעד תחילה' : ''} placement="top">
+            <Tooltip title={isDisabled ? t('aiItinerary.tooltip_disabled') : ''} placement="top">
               <span style={{ display: 'block' }}>
                 <Button
                   variant="contained"
@@ -273,7 +277,7 @@ export default function AIItineraryGenerator({ destination, preferences }) {
                     '&:hover': { transform: 'scale(1.02)' }
                   }}
                 >
-                  צור מסלול עם AI 🤖
+                  {t('aiItinerary.generate_btn')}
                 </Button>
               </span>
             </Tooltip>
@@ -284,7 +288,7 @@ export default function AIItineraryGenerator({ destination, preferences }) {
         {loading && (
           <Box>
             <Typography variant="body2" color="text.secondary" textAlign="center" mb={2}>
-              🤖 AI בונה לך מסלול מושלם ל-{destination}...
+              {t('aiItinerary.building', { destination })}
             </Typography>
             {progress > 0 && (
               <LinearProgress
@@ -309,7 +313,7 @@ export default function AIItineraryGenerator({ destination, preferences }) {
         {/* Error */}
         {error && (
           <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} action={
-            <Button size="small" onClick={generate} startIcon={<RefreshIcon />}>נסה שוב</Button>
+            <Button size="small" onClick={generate} startIcon={<RefreshIcon />}>{t('aiItinerary.retry')}</Button>
           }>
             {error}
           </Alert>
@@ -330,7 +334,7 @@ export default function AIItineraryGenerator({ destination, preferences }) {
 
             {itinerary.mustSee?.length > 0 && (
               <Box mt={2}>
-                <Typography variant="body2" fontWeight={700} mb={1}>🌟 חובה לראות:</Typography>
+                <Typography variant="body2" fontWeight={700} mb={1}>{t('aiItinerary.must_see')}</Typography>
                 <Stack direction="row" flexWrap="wrap" gap={0.8}>
                   {itinerary.mustSee.map((item) => (
                     <Chip key={item} label={item} size="small" sx={{ bgcolor: '#667eea22', color: '#667eea', fontWeight: 600 }} />
@@ -341,7 +345,7 @@ export default function AIItineraryGenerator({ destination, preferences }) {
 
             {itinerary.avoid && (
               <Alert severity="warning" sx={{ mt: 2, borderRadius: 2 }}>
-                ⚠️ <strong>כדאי להימנע:</strong> {itinerary.avoid}
+                <strong>{t('aiItinerary.avoid_label')}</strong> {itinerary.avoid}
               </Alert>
             )}
 
@@ -354,7 +358,7 @@ export default function AIItineraryGenerator({ destination, preferences }) {
               onClick={generate}
               sx={{ borderRadius: 2, borderColor: '#667eea', color: '#667eea' }}
             >
-              תכנן מחדש
+              {t('aiItinerary.regenerate')}
             </Button>
           </Box>
         )}

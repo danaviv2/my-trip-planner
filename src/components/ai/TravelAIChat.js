@@ -9,6 +9,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import PersonIcon from '@mui/icons-material/Person';
+import { useTranslation } from 'react-i18next';
 import { useAIChat } from '../../contexts/AIChatContext';
 import { streamOpenAI, getErrorMessage } from '../../services/openaiService';
 
@@ -19,14 +20,6 @@ const SYSTEM_PROMPT = `אתה "טריפי" — עוזר נסיעות חכם וא
 אם שואלים על ויזה — ציין בדיוק מה נדרש לאזרח ישראלי.
 השתמש באמוג'י במינון. אל תיצור HTML.`;
 
-const QUICK_PROMPTS = [
-  'יעדים חמים לחורף 🌞',
-  'טיול זול לאירופה 💶',
-  'ויזה לתאילנד 📋',
-  'מה לארוז לבלי? 🧳',
-  'מסלול 5 ימים רומא 🏛️',
-  'יעד רומנטי לזוג 💑',
-];
 
 function ChatBubble({ message }) {
   const isUser = message.role === 'user';
@@ -110,9 +103,18 @@ function TypingIndicator() {
 }
 
 export default function TravelAIChat() {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { isOpen, open, close, messages, addMessage, updateLastAssistant, clearHistory, isStreaming, setIsStreaming } = useAIChat();
+  const QUICK_PROMPTS = [
+    t('aiChat.quick_1'),
+    t('aiChat.quick_2'),
+    t('aiChat.quick_3'),
+    t('aiChat.quick_4'),
+    t('aiChat.quick_5'),
+    t('aiChat.quick_6'),
+  ];
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
   const messagesEndRef = useRef(null);
@@ -161,7 +163,7 @@ export default function TravelAIChat() {
       (err) => {
         setIsStreaming(false);
         setError(getErrorMessage(err));
-        updateLastAssistant('מצטער, לא הצלחתי להתחבר. נסה שוב 🙏');
+        updateLastAssistant(t('aiChat.error_msg'));
         abortRef.current = null;
       },
       { maxTokens: 600 }
@@ -177,7 +179,7 @@ export default function TravelAIChat() {
     <>
       {/* Floating Action Button */}
       {!isOpen && (
-        <Tooltip title="טריפי - עוזר הנסיעות שלך 🌍" placement="right">
+        <Tooltip title={t('aiChat.tooltip')} placement="right">
           <Fab
             onClick={open}
             sx={{
@@ -236,12 +238,12 @@ export default function TravelAIChat() {
               <SmartToyIcon />
             </Avatar>
             <Box>
-              <Typography fontWeight={700} lineHeight={1.2}>טריפי</Typography>
-              <Typography variant="caption" sx={{ opacity: 0.85 }}>עוזר נסיעות AI 🌍</Typography>
+              <Typography fontWeight={700} lineHeight={1.2}>{t('aiChat.title')}</Typography>
+              <Typography variant="caption" sx={{ opacity: 0.85 }}>{t('aiChat.subtitle')}</Typography>
             </Box>
           </Box>
           <Box>
-            <Tooltip title="נקה שיחה">
+            <Tooltip title={t('aiChat.clear')}>
               <IconButton color="inherit" size="small" onClick={clearHistory} sx={{ mr: 0.5 }}>
                 <DeleteOutlineIcon fontSize="small" />
               </IconButton>
@@ -299,7 +301,7 @@ export default function TravelAIChat() {
               maxRows={3}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="שאל אותי על הטיול שלך..."
+              placeholder={t('aiChat.placeholder')}
               disabled={isStreaming}
               size="small"
               onKeyDown={(e) => {

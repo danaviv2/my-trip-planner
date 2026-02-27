@@ -16,8 +16,10 @@ import {
 import HotelIcon from '@mui/icons-material/Hotel';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import SearchIcon from '@mui/icons-material/Search';
+import { useTranslation } from 'react-i18next';
 
 const HotelSearch = () => {
+  const { t } = useTranslation();
   const [destination, setDestination] = useState('');
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
@@ -33,30 +35,30 @@ const HotelSearch = () => {
       const mockHotels = [
         {
           id: 1,
-          name: 'מלון גרנד',
-          location: destination || 'תל אביב',
+          name: 'Grand Hotel',
+          location: destination || 'Tel Aviv',
           rating: 4.5,
           price: 450,
           image: 'https://source.unsplash.com/400x300/?hotel,luxury',
-          amenities: ['WiFi', 'בריכה', 'חניה']
+          amenities: ['WiFi', 'Pool', 'Parking']
         },
         {
           id: 2,
-          name: 'מלון פלאזה',
-          location: destination || 'תל אביב',
+          name: 'Plaza Hotel',
+          location: destination || 'Tel Aviv',
           rating: 4.2,
           price: 380,
           image: 'https://source.unsplash.com/400x300/?hotel,room',
-          amenities: ['WiFi', 'ארוחת בוקר', 'מזגן']
+          amenities: ['WiFi', 'Breakfast', 'A/C']
         },
         {
           id: 3,
-          name: 'מלון סנטרל',
-          location: destination || 'תל אביב',
+          name: 'Central Hotel',
+          location: destination || 'Tel Aviv',
           rating: 4.0,
           price: 320,
           image: 'https://source.unsplash.com/400x300/?hotel,modern',
-          amenities: ['WiFi', 'חניה']
+          amenities: ['WiFi', 'Parking']
         }
       ];
       
@@ -70,14 +72,14 @@ const HotelSearch = () => {
       <Paper sx={{ p: 3, mb: 3 }}>
         <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
           <HotelIcon sx={{ mr: 1 }} />
-          חיפוש מלונות
+          {t('travelServices.search_hotels_title')}
         </Typography>
-        
+
         <Grid container spacing={2} sx={{ mt: 2 }}>
           <Grid item xs={12} md={3}>
             <TextField
               fullWidth
-              label="יעד"
+              label={t('travelServices.destination')}
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
               InputProps={{
@@ -85,40 +87,40 @@ const HotelSearch = () => {
               }}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={2}>
             <TextField
               fullWidth
-              label="תאריך הגעה"
+              label={t('travelServices.checkin_date')}
               type="date"
               value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)}
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={2}>
             <TextField
               fullWidth
-              label="תאריך עזיבה"
+              label={t('travelServices.checkout_date')}
               type="date"
               value={checkOut}
               onChange={(e) => setCheckOut(e.target.value)}
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={2}>
             <TextField
               fullWidth
-              label="מספר אורחים"
+              label={t('travelServices.guests')}
               type="number"
               value={guests}
               onChange={(e) => setGuests(parseInt(e.target.value))}
               inputProps={{ min: 1, max: 10 }}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={3}>
             <Button
               fullWidth
@@ -129,7 +131,7 @@ const HotelSearch = () => {
               startIcon={loading ? <CircularProgress size={20} /> : <SearchIcon />}
               sx={{ height: '56px' }}
             >
-              {loading ? 'מחפש...' : 'חפש'}
+              {loading ? t('travelServices.searching') : t('travelServices.search_btn')}
             </Button>
           </Grid>
         </Grid>
@@ -178,10 +180,10 @@ const HotelSearch = () => {
                   
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="h6" color="primary">
-                      ₪{hotel.price}
+                      ${hotel.price}
                     </Typography>
                     <Button variant="contained" size="small">
-                      הזמן
+                      {t('travelServices.book_btn')}
                     </Button>
                   </Box>
                 </CardContent>
