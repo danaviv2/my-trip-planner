@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -62,6 +63,7 @@ import { fetchDestinationFromAI } from '../services/aiDestinationService';
 import { useTripContext } from '../contexts/TripContext';
 
 const DestinationInfoPage = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -1152,14 +1154,14 @@ const DestinationInfoPage = () => {
                     alignItems: 'center'
                   }}
                 >
-                  <img 
-                    src={destinationData.currentWeather.icon} 
-                    alt="מזג אוויר" 
+                  <img
+                    src={destinationData.currentWeather.icon}
+                    alt={t('destInfo.quick_weather')}
                     style={{ width: 32, height: 32 }}
                   />
                 </Box>
                 <Box>
-                  <Typography variant="subtitle2" color="text.secondary">מזג אוויר</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">{t('destInfo.quick_weather')}</Typography>
                   <Typography variant="subtitle1" fontWeight="bold">
                     {destinationData.currentWeather.temperature}°C, {destinationData.currentWeather.description}
                   </Typography>
@@ -1183,9 +1185,9 @@ const DestinationInfoPage = () => {
                 <LanguageIcon sx={{ color: theme.palette.secondary.main }} />
               </Box>
               <Box>
-                <Typography variant="subtitle2" color="text.secondary">שפה</Typography>
+                <Typography variant="subtitle2" color="text.secondary">{t('destInfo.quick_language')}</Typography>
                 <Typography variant="subtitle1" fontWeight="bold">
-                  {destinationData.generalInfo?.language || 'לא זמין'}
+                  {destinationData.generalInfo?.language || t('destInfo.not_available')}
                 </Typography>
               </Box>
             </Box>
@@ -1206,9 +1208,9 @@ const DestinationInfoPage = () => {
                 <CurrencyIcon sx={{ color: '#FFC107' }} />
               </Box>
               <Box>
-                <Typography variant="subtitle2" color="text.secondary">מטבע</Typography>
+                <Typography variant="subtitle2" color="text.secondary">{t('destInfo.quick_currency')}</Typography>
                 <Typography variant="subtitle1" fontWeight="bold">
-                  {destinationData.generalInfo?.currency || 'לא זמין'}
+                  {destinationData.generalInfo?.currency || t('destInfo.not_available')}
                 </Typography>
               </Box>
             </Box>
@@ -1229,9 +1231,9 @@ const DestinationInfoPage = () => {
                 <ScheduleIcon sx={{ color: '#4CAF50' }} />
               </Box>
               <Box>
-                <Typography variant="subtitle2" color="text.secondary">זמן מומלץ לביקור</Typography>
+                <Typography variant="subtitle2" color="text.secondary">{t('destInfo.quick_best_time')}</Typography>
                 <Typography variant="subtitle1" fontWeight="bold">
-                  {destinationData.generalInfo?.bestTimeToVisit || 'לא זמין'}
+                  {destinationData.generalInfo?.bestTimeToVisit || t('destInfo.not_available')}
                 </Typography>
               </Box>
             </Box>
@@ -1259,7 +1261,7 @@ const DestinationInfoPage = () => {
                   textTransform: 'none'
                 }}
               >
-                תכנן טיול ל{destinationData.name}
+                {t('destInfo.plan_trip_btn', { dest: destinationData.name })}
               </Button>
             </Box>
           </Paper>
@@ -1288,50 +1290,50 @@ const DestinationInfoPage = () => {
               }
             }}
           >
-            <Tab 
-              label="מידע כללי" 
-              icon={<LanguageIcon />} 
-              iconPosition="start" 
-              sx={{ direction: 'rtl' }}
-            />
-            <Tab 
-              label="אטרקציות" 
-              icon={<AttractionsIcon />} 
-              iconPosition="start" 
-              sx={{ direction: 'rtl' }}
-            />
-            <Tab 
-              label="אוכל ומסעדות" 
-              icon={<RestaurantIcon />} 
-              iconPosition="start" 
-              sx={{ direction: 'rtl' }}
-            />
-            <Tab 
-              label="תחבורה" 
-              icon={<TransportIcon />} 
-              iconPosition="start" 
+            <Tab
+              label={t('destInfo.tab_general')}
+              icon={<LanguageIcon />}
+              iconPosition="start"
               sx={{ direction: 'rtl' }}
             />
             <Tab
-              label="טיפים"
+              label={t('destInfo.tab_attractions')}
+              icon={<AttractionsIcon />}
+              iconPosition="start"
+              sx={{ direction: 'rtl' }}
+            />
+            <Tab
+              label={t('destInfo.tab_food')}
+              icon={<RestaurantIcon />}
+              iconPosition="start"
+              sx={{ direction: 'rtl' }}
+            />
+            <Tab
+              label={t('destInfo.tab_transport')}
+              icon={<TransportIcon />}
+              iconPosition="start"
+              sx={{ direction: 'rtl' }}
+            />
+            <Tab
+              label={t('destInfo.tab_tips')}
               icon={<TipsIcon />}
               iconPosition="start"
               sx={{ direction: 'rtl' }}
             />
             <Tab
-              label="לו״ז מומלץ"
+              label={t('destInfo.tab_itinerary')}
               icon={<ItineraryIcon />}
               iconPosition="start"
               sx={{ direction: 'rtl' }}
             />
             <Tab
-              label="תקציב"
+              label={t('destInfo.tab_budget')}
               icon={<BudgetIcon />}
               iconPosition="start"
               sx={{ direction: 'rtl' }}
             />
             <Tab
-              label="מידע מעשי"
+              label={t('destInfo.tab_practical')}
               icon={<PracticalIcon />}
               iconPosition="start"
               sx={{ direction: 'rtl' }}
@@ -1352,7 +1354,7 @@ const DestinationInfoPage = () => {
                 >
                   <Box sx={{ flex: 2 }}>
                     <Typography variant="h5" fontWeight="bold" gutterBottom>
-                      אודות {destinationData.name}
+                      {t('destInfo.about_title', { dest: destinationData.name })}
                     </Typography>
                     <Typography variant="body1" paragraph>
                       {destinationData.description}
@@ -1364,14 +1366,14 @@ const DestinationInfoPage = () => {
                         startIcon={<HotelIcon />}
                         sx={{ borderRadius: '8px', textTransform: 'none' }}
                       >
-                        מלונות מומלצים
+                        {t('destInfo.recommended_hotels')}
                       </Button>
                       <Button
                         variant="outlined"
                         startIcon={<ImageIcon />}
                         sx={{ borderRadius: '8px', textTransform: 'none' }}
                       >
-                        גלריית תמונות
+                        {t('destInfo.photo_gallery')}
                       </Button>
                     </Box>
                   </Box>
@@ -1392,43 +1394,43 @@ const DestinationInfoPage = () => {
                       }}
                     >
                       <Typography variant="h6" gutterBottom>
-                        מידע שימושי
+                        {t('destInfo.useful_info')}
                       </Typography>
                       <List dense disablePadding>
                         <ListItem disableGutters>
                           <ListItemIcon sx={{ minWidth: '36px' }}>
                             <LanguageIcon fontSize="small" color="primary" />
                           </ListItemIcon>
-                          <ListItemText 
-                            primary="שפה" 
-                            secondary={destinationData.generalInfo?.language || 'לא זמין'} 
+                          <ListItemText
+                            primary={t('destInfo.quick_language')}
+                            secondary={destinationData.generalInfo?.language || t('destInfo.not_available')}
                           />
                         </ListItem>
                         <ListItem disableGutters>
                           <ListItemIcon sx={{ minWidth: '36px' }}>
                             <CurrencyIcon fontSize="small" color="primary" />
                           </ListItemIcon>
-                          <ListItemText 
-                            primary="מטבע" 
-                            secondary={destinationData.generalInfo?.currency || 'לא זמין'} 
+                          <ListItemText
+                            primary={t('destInfo.quick_currency')}
+                            secondary={destinationData.generalInfo?.currency || t('destInfo.not_available')}
                           />
                         </ListItem>
                         <ListItem disableGutters>
                           <ListItemIcon sx={{ minWidth: '36px' }}>
                             <ScheduleIcon fontSize="small" color="primary" />
                           </ListItemIcon>
-                          <ListItemText 
-                            primary="אזור זמן" 
-                            secondary={destinationData.generalInfo?.timezone || 'לא זמין'} 
+                          <ListItemText
+                            primary={t('destInfo.timezone')}
+                            secondary={destinationData.generalInfo?.timezone || t('destInfo.not_available')}
                           />
                         </ListItem>
                         <ListItem disableGutters>
                           <ListItemIcon sx={{ minWidth: '36px' }}>
                             <FlightIcon fontSize="small" color="primary" />
                           </ListItemIcon>
-                          <ListItemText 
-                            primary="נמל תעופה" 
-                            secondary={destinationData.generalInfo?.airport || 'לא זמין'} 
+                          <ListItemText
+                            primary={t('destInfo.airport')}
+                            secondary={destinationData.generalInfo?.airport || t('destInfo.not_available')}
                           />
                         </ListItem>
                       </List>
@@ -1444,34 +1446,34 @@ const DestinationInfoPage = () => {
                       }}
                     >
                       <Typography variant="h6" gutterBottom>
-                        מזג אוויר ועונות
+                        {t('destInfo.weather_seasons')}
                       </Typography>
                       <List dense disablePadding>
                         <ListItem disableGutters>
                           <ListItemIcon sx={{ minWidth: '36px' }}>
                             <SunnyIcon fontSize="small" color="warning" />
                           </ListItemIcon>
-                          <ListItemText 
-                            primary="קיץ" 
-                            secondary={destinationData.generalInfo?.seasons?.summer || 'לא זמין'} 
+                          <ListItemText
+                            primary={t('destInfo.summer')}
+                            secondary={destinationData.generalInfo?.seasons?.summer || t('destInfo.not_available')}
                           />
                         </ListItem>
                         <ListItem disableGutters>
                           <ListItemIcon sx={{ minWidth: '36px' }}>
                             <ThermostatIcon fontSize="small" color="primary" />
                           </ListItemIcon>
-                          <ListItemText 
-                            primary="חורף" 
-                            secondary={destinationData.generalInfo?.seasons?.winter || 'לא זמין'} 
+                          <ListItemText
+                            primary={t('destInfo.winter')}
+                            secondary={destinationData.generalInfo?.seasons?.winter || t('destInfo.not_available')}
                           />
                         </ListItem>
                         <ListItem disableGutters>
                           <ListItemIcon sx={{ minWidth: '36px' }}>
                             <ScheduleIcon fontSize="small" color="success" />
                           </ListItemIcon>
-                          <ListItemText 
-                            primary="עונה מומלצת לביקור" 
-                            secondary={destinationData.generalInfo?.bestTimeToVisit || 'לא זמין'} 
+                          <ListItemText
+                            primary={t('destInfo.best_season')}
+                            secondary={destinationData.generalInfo?.bestTimeToVisit || t('destInfo.not_available')}
                           />
                         </ListItem>
                       </List>
@@ -1483,7 +1485,7 @@ const DestinationInfoPage = () => {
                 {destinationData.events && destinationData.events.length > 0 && (
                   <Box sx={{ mt: 4 }}>
                     <Typography variant="h5" fontWeight="bold" gutterBottom>
-                      אירועים ופסטיבלים עיקריים
+                      {t('destInfo.events')}
                     </Typography>
                     <Grid container spacing={2} sx={{ mt: 1 }}>
                       {destinationData.events.map((event, index) => (
@@ -1528,10 +1530,10 @@ const DestinationInfoPage = () => {
             {activeTab === 1 && (
               <Box sx={{ direction: 'rtl' }}>
                 <Typography variant="h5" fontWeight="bold" gutterBottom>
-                  אטרקציות מומלצות ב{destinationData.name}
+                  {t('destInfo.attractions_title', { dest: destinationData.name })}
                 </Typography>
                 <Typography variant="body1" paragraph>
-                  המקומות החשובים ביותר שכדאי לבקר בהם בעת ביקור ב{destinationData.name}.
+                  {t('destInfo.attractions_subtitle')}
                 </Typography>
                 
                 {destinationData.attractions && destinationData.attractions.length > 0 ? (
@@ -1607,7 +1609,7 @@ const DestinationInfoPage = () => {
                                 fontSize: '0.9rem'
                               }}
                             >
-                              הצג במפה
+                              {t('destInfo.show_map')}
                             </Button>
                           </Box>
                         </Card>
@@ -1615,7 +1617,7 @@ const DestinationInfoPage = () => {
                     ))}
                   </Grid>
                 ) : (
-                  <Typography variant="body2">אין מידע זמין על אטרקציות ביעד זה.</Typography>
+                  <Typography variant="body2">{t('destInfo.no_attractions')}</Typography>
                 )}
                 
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -1625,7 +1627,7 @@ const DestinationInfoPage = () => {
                     onClick={() => window.open(`https://www.google.com/search?q=אטרקציות+תיירות+${encodeURIComponent(destinationData.name)}`, '_blank')}
                     sx={{ borderRadius: '8px', textTransform: 'none' }}
                   >
-                    הצג עוד אטרקציות ב{destinationData.name}
+                    {t('destInfo.show_more', { dest: destinationData.name })}
                   </Button>
                 </Box>
               </Box>
@@ -1635,17 +1637,17 @@ const DestinationInfoPage = () => {
             {activeTab === 2 && (
               <Box sx={{ direction: 'rtl' }}>
                 <Typography variant="h5" fontWeight="bold" gutterBottom>
-                  אוכל ומסעדות ב{destinationData.name}
+                  {t('destInfo.food_title', { dest: destinationData.name })}
                 </Typography>
                 <Typography variant="body1" paragraph>
-                  {destinationData.food?.intro || `מידע על אוכל ומסעדות ב-${destinationData.name} יתווסף בקרוב.`}
+                  {destinationData.food?.intro || t('destInfo.food_coming_soon', { dest: destinationData.name })}
                 </Typography>
                 
                 {/* מאכלים מקומיים */}
                 {destinationData.food?.dishes && destinationData.food.dishes.length > 0 && (
                   <Box sx={{ mb: 5 }}>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                      מאכלים מקומיים שאסור להחמיץ
+                      {t('destInfo.local_dishes')}
                     </Typography>
                     <Grid container spacing={2}>
                       {destinationData.food.dishes.map((dish, idx) => (
@@ -1690,7 +1692,7 @@ const DestinationInfoPage = () => {
                 {destinationData.food?.restaurants && destinationData.food.restaurants.length > 0 && (
                   <Box sx={{ mb: 5 }}>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                      מסעדות מומלצות
+                      {t('destInfo.recommended_restaurants')}
                     </Typography>
                     <Grid container spacing={3}>
                       {destinationData.food.restaurants.map((restaurant, idx) => (
@@ -1706,7 +1708,7 @@ const DestinationInfoPage = () => {
                 {destinationData.food?.markets && destinationData.food.markets.length > 0 && (
                   <Box>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                      שווקי אוכל ואזורי קולינריה
+                      {t('destInfo.food_markets')}
                     </Typography>
                     <Grid container spacing={3}>
                       {destinationData.food.markets.map((market, idx) => (
@@ -1740,7 +1742,7 @@ const DestinationInfoPage = () => {
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 <ScheduleIcon fontSize="small" color="action" />
                                 <Typography variant="body2" color="text.secondary">
-                                  {market.hours || 'שעות פעילות לא זמינות'}
+                                  {market.hours || t('destInfo.hours_not_available')}
                                 </Typography>
                               </Box>
                             </CardContent>
@@ -1755,7 +1757,7 @@ const DestinationInfoPage = () => {
                  (!destinationData.food?.restaurants || destinationData.food.restaurants.length === 0) && 
                  (!destinationData.food?.markets || destinationData.food.markets.length === 0) && (
                   <Box sx={{ textAlign: 'center', py: 5 }}>
-                    <Typography variant="body1">אין מידע זמין על אוכל ומסעדות ביעד זה.</Typography>
+                    <Typography variant="body1">{t('destInfo.no_food_info')}</Typography>
                   </Box>
                 )}
               </Box>
@@ -1765,10 +1767,10 @@ const DestinationInfoPage = () => {
             {activeTab === 3 && (
               <Box sx={{ direction: 'rtl' }}>
                 <Typography variant="h5" fontWeight="bold" gutterBottom>
-                  תחבורה והתניידות ב{destinationData.name}
+                  {t('destInfo.transport_title', { dest: destinationData.name })}
                 </Typography>
                 <Typography variant="body1" paragraph>
-                  {destinationData.transportation?.overview || `מידע על תחבורה ב-${destinationData.name} יתווסף בקרוב.`}
+                  {destinationData.transportation?.overview || t('destInfo.transport_coming_soon', { dest: destinationData.name })}
                 </Typography>
                 
                 {destinationData.transportation?.options && destinationData.transportation.options.length > 0 ? (
@@ -1819,7 +1821,7 @@ const DestinationInfoPage = () => {
                               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                 <CurrencyIcon fontSize="small" color="action" sx={{ mr: 1 }} />
                                 <Typography variant="body2">
-                                  <strong>עלות:</strong> {option.cost}
+                                  <strong>{t('destInfo.cost')}</strong> {option.cost}
                                 </Typography>
                               </Box>
                             )}
@@ -1828,7 +1830,7 @@ const DestinationInfoPage = () => {
                               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                 <ScheduleIcon fontSize="small" color="action" sx={{ mr: 1 }} />
                                 <Typography variant="body2">
-                                  <strong>שעות פעילות:</strong> {option.hours}
+                                  <strong>{t('destInfo.hours')}</strong> {option.hours}
                                 </Typography>
                               </Box>
                             )}
@@ -1838,13 +1840,13 @@ const DestinationInfoPage = () => {
                                 variant="outlined"
                                 size="small"
                                 onClick={() => window.open(option.website)}
-                                sx={{ 
-                                  mt: 2, 
+                                sx={{
+                                  mt: 2,
                                   borderRadius: '8px',
                                   textTransform: 'none'
                                 }}
                               >
-                                למידע נוסף
+                                {t('destInfo.more_info')}
                               </Button>
                             )}
                           </Box>
@@ -1854,7 +1856,7 @@ const DestinationInfoPage = () => {
                   </Grid>
                 ) : (
                   <Box sx={{ mb: 4 }}>
-                    <Typography variant="body2">אין מידע זמין על אפשרויות תחבורה ביעד זה.</Typography>
+                    <Typography variant="body2">{t('destInfo.no_transport_info')}</Typography>
                   </Box>
                 )}
                 
@@ -1862,7 +1864,7 @@ const DestinationInfoPage = () => {
                 {destinationData.transportation?.tips && destinationData.transportation.tips.length > 0 && (
                   <Box>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                      טיפים להתניידות
+                      {t('destInfo.transport_tips')}
                     </Typography>
                     <Grid container spacing={2}>
                       {destinationData.transportation.tips.map((tip, index) => (
@@ -1894,14 +1896,14 @@ const DestinationInfoPage = () => {
             {activeTab === 4 && (
               <Box sx={{ direction: 'rtl' }}>
                 <Typography variant="h5" fontWeight="bold" gutterBottom>
-                  טיפים למטייל ב{destinationData.name}
+                  {t('destInfo.tips_title', { dest: destinationData.name })}
                 </Typography>
                 
                 {/* טיפים לפני הנסיעה */}
                 {destinationData.tips?.beforeTravel && destinationData.tips.beforeTravel.length > 0 && (
                   <Box sx={{ mb: 4 }}>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                      לפני הנסיעה
+                      {t('destInfo.before_travel')}
                     </Typography>
                     <Grid container spacing={2}>
                       {destinationData.tips.beforeTravel.map((tip, index) => (
@@ -1954,7 +1956,7 @@ const DestinationInfoPage = () => {
                 {destinationData.tips?.hours && (
                   <Box sx={{ mb: 4 }}>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                      שעות פעילות
+                      {t('destInfo.hours_operation')}
                     </Typography>
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={4}>
@@ -1970,11 +1972,11 @@ const DestinationInfoPage = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                             <i className="material-icons" style={{ color: theme.palette.primary.main }}>shopping_bag</i>
                             <Typography variant="subtitle1" fontWeight="bold">
-                              חנויות
+                              {t('destInfo.shopping')}
                             </Typography>
                           </Box>
                           <Typography variant="body2">
-                            {destinationData.tips.hours.shopping || 'מידע לא זמין'}
+                            {destinationData.tips.hours.shopping || t('destInfo.info_not_available')}
                           </Typography>
                         </Paper>
                       </Grid>
@@ -1991,12 +1993,12 @@ const DestinationInfoPage = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                             <i className="material-icons" style={{ color: theme.palette.primary.main }}>restaurant</i>
                             <Typography variant="subtitle1" fontWeight="bold">
-                              מסעדות
+                              {t('destInfo.restaurants_label')}
                             </Typography>
                           </Box>
                           <Typography variant="body2">
-                            {destinationData.tips.hours.restaurants || 'מידע לא זמין'}
-                            </Typography>
+                            {destinationData.tips.hours.restaurants || t('destInfo.info_not_available')}
+</Typography>
                         </Paper>
                       </Grid>
                       <Grid item xs={12} sm={4}>
@@ -2012,11 +2014,11 @@ const DestinationInfoPage = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                             <i className="material-icons" style={{ color: theme.palette.primary.main }}>attractions</i>
                             <Typography variant="subtitle1" fontWeight="bold">
-                              אטרקציות
+                              {t('destInfo.attractions_label')}
                             </Typography>
                           </Box>
                           <Typography variant="body2">
-                            {destinationData.tips.hours.attractions || 'מידע לא זמין'}
+                            {destinationData.tips.hours.attractions || t('destInfo.info_not_available')}
                           </Typography>
                         </Paper>
                       </Grid>
@@ -2028,7 +2030,7 @@ const DestinationInfoPage = () => {
                 {destinationData.tips?.local && destinationData.tips.local.length > 0 && (
                   <Box>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                      טיפים מקומיים
+                      {t('destInfo.local_tips')}
                     </Typography>
                     <Grid container spacing={2}>
                       {destinationData.tips.local.map((tip, index) => (
@@ -2067,11 +2069,11 @@ const DestinationInfoPage = () => {
                 {!destinationData.itinerary ? (
                   <Box textAlign="center" py={6}>
                     <Typography sx={{ fontSize: '3rem', mb: 2 }}>🤖</Typography>
-                    <Typography variant="h6" color="text.secondary">מידע זה זמין עבור יעדים שנטענו דרך חיפוש AI</Typography>
+                    <Typography variant="h6" color="text.secondary">{t('destInfo.ai_required')}</Typography>
                   </Box>
                 ) : (
                   <>
-                    <Typography variant="h5" fontWeight="bold" mb={3}>📅 לוח זמנים מומלץ</Typography>
+                    <Typography variant="h5" fontWeight="bold" mb={3}>{t('destInfo.itinerary_title')}</Typography>
                     {['3days', '5days'].map((plan) => {
                       const days = destinationData.itinerary[plan];
                       if (!days) return null;
@@ -2079,7 +2081,7 @@ const DestinationInfoPage = () => {
                         <Box key={plan} mb={5}>
                           <Typography variant="h6" fontWeight="bold" mb={2}
                             sx={{ color: plan === '3days' ? '#667eea' : '#f5576c' }}>
-                            {plan === '3days' ? '🗓️ תכנית 3 ימים' : '🗓️ תכנית 5 ימים'}
+                            {plan === '3days' ? t('destInfo.plan_3days') : t('destInfo.plan_5days')}
                           </Typography>
                           {days.map((day) => (
                             <Paper key={day.day} elevation={2} sx={{ mb: 2, borderRadius: 3, overflow: 'hidden' }}>
@@ -2087,19 +2089,19 @@ const DestinationInfoPage = () => {
                                 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
                                 : 'linear-gradient(135deg, #f5576c 0%, #f093fb 100%)',
                                 color: 'white', px: 3, py: 1.5 }}>
-                                <Typography fontWeight="bold">יום {day.day} — {day.title}</Typography>
+                                <Typography fontWeight="bold">{t('destInfo.day_title', { num: day.day, title: day.title })}</Typography>
                               </Box>
                               <Box sx={{ p: 3 }}>
                                 <Grid container spacing={2}>
                                   {[
-                                    { icon: '🌅', label: 'בוקר', value: day.morning },
-                                    { icon: '☀️', label: 'צהריים', value: day.afternoon },
-                                    { icon: '🌙', label: 'ערב', value: day.evening },
-                                  ].map(({ icon, label, value }) => (
+                                    { label: t('destInfo.morning'), value: day.morning },
+                                    { label: t('destInfo.afternoon'), value: day.afternoon },
+                                    { label: t('destInfo.evening'), value: day.evening },
+                                  ].map(({ label, value }) => (
                                     <Grid item xs={12} sm={4} key={label}>
                                       <Box sx={{ p: 1.5, bgcolor: 'rgba(0,0,0,0.02)', borderRadius: 2 }}>
                                         <Typography variant="subtitle2" fontWeight="bold" mb={0.5}>
-                                          {icon} {label}
+                                          {label}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">{value}</Typography>
                                       </Box>
@@ -2108,12 +2110,12 @@ const DestinationInfoPage = () => {
                                 </Grid>
                                 {day.food && (
                                   <Box sx={{ mt: 2, p: 1.5, bgcolor: '#fff8e1', borderRadius: 2 }}>
-                                    <Typography variant="body2"><strong>🍽️ אוכל:</strong> {day.food}</Typography>
+                                    <Typography variant="body2"><strong>{t('destInfo.food_label')}</strong> {day.food}</Typography>
                                   </Box>
                                 )}
                                 {day.tip && (
                                   <Box sx={{ mt: 1, p: 1.5, bgcolor: '#e8f5e9', borderRadius: 2 }}>
-                                    <Typography variant="body2"><strong>💡 טיפ:</strong> {day.tip}</Typography>
+                                    <Typography variant="body2"><strong>{t('destInfo.tip_label')}</strong> {day.tip}</Typography>
                                   </Box>
                                 )}
                               </Box>
@@ -2133,19 +2135,19 @@ const DestinationInfoPage = () => {
                 {!destinationData.budget ? (
                   <Box textAlign="center" py={6}>
                     <Typography sx={{ fontSize: '3rem', mb: 2 }}>🤖</Typography>
-                    <Typography variant="h6" color="text.secondary">מידע זה זמין עבור יעדים שנטענו דרך חיפוש AI</Typography>
+                    <Typography variant="h6" color="text.secondary">{t('destInfo.ai_required')}</Typography>
                   </Box>
                 ) : (
                   <>
-                    <Typography variant="h5" fontWeight="bold" mb={1}>💰 תקציב יומי משוער</Typography>
+                    <Typography variant="h5" fontWeight="bold" mb={1}>{t('destInfo.budget_title')}</Typography>
                     {destinationData.budget.note && (
                       <Typography variant="body2" color="text.secondary" mb={3}>{destinationData.budget.note}</Typography>
                     )}
                     <Grid container spacing={3} mb={4}>
                       {[
-                        { key: 'budget', label: 'תקציבאי 🎒', color: '#43e97b', bg: '#e8f5e9' },
-                        { key: 'mid', label: 'ממוצע 🏨', color: '#4facfe', bg: '#e3f2fd' },
-                        { key: 'luxury', label: 'יוקרה ✨', color: '#f5576c', bg: '#fce4ec' },
+                        { key: 'budget', label: t('destInfo.budget_type_budget'), color: '#43e97b', bg: '#e8f5e9' },
+                        { key: 'mid', label: t('destInfo.budget_type_mid'), color: '#4facfe', bg: '#e3f2fd' },
+                        { key: 'luxury', label: t('destInfo.budget_type_luxury'), color: '#f5576c', bg: '#fce4ec' },
                       ].map(({ key, label, color, bg }) => {
                         const tier = destinationData.budget[key];
                         if (!tier) return null;
@@ -2156,14 +2158,14 @@ const DestinationInfoPage = () => {
                               <Box sx={{ bgcolor: color, color: 'white', p: 2, textAlign: 'center' }}>
                                 <Typography variant="h6" fontWeight="bold">{label}</Typography>
                                 <Typography variant="h4" fontWeight="bold">{cur}{tier.total}</Typography>
-                                <Typography variant="caption">לאדם ליום</Typography>
+                                <Typography variant="caption">{t('destInfo.per_person_day')}</Typography>
                               </Box>
                               <Box sx={{ p: 2, bgcolor: bg }}>
                                 {[
-                                  { label: '🏠 לינה', val: tier.accommodation },
-                                  { label: '🍽️ אוכל', val: tier.food },
-                                  { label: '🚌 תחבורה', val: tier.transport },
-                                  { label: '🎭 פעילויות', val: tier.activities },
+                                  { label: t('destInfo.accommodation'), val: tier.accommodation },
+                                  { label: t('destInfo.food_expense'), val: tier.food },
+                                  { label: t('destInfo.transport_expense'), val: tier.transport },
+                                  { label: t('destInfo.activities'), val: tier.activities },
                                 ].map(({ label: l, val }) => (
                                   <Box key={l} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                                     <Typography variant="body2">{l}</Typography>
@@ -2183,7 +2185,7 @@ const DestinationInfoPage = () => {
                     </Grid>
                     {destinationData.budget.tips?.length > 0 && (
                       <Box>
-                        <Typography variant="h6" fontWeight="bold" mb={2}>💡 טיפים לחיסכון</Typography>
+                        <Typography variant="h6" fontWeight="bold" mb={2}>{t('destInfo.savings_tips')}</Typography>
                         {destinationData.budget.tips.map((tip, i) => (
                           <Box key={i} sx={{ display: 'flex', gap: 1, mb: 1.5, p: 2, bgcolor: '#fff8e1', borderRadius: 2 }}>
                             <CheckIcon sx={{ color: '#f9a825', fontSize: 20, mt: 0.2 }} />
@@ -2203,14 +2205,14 @@ const DestinationInfoPage = () => {
                 {!destinationData.practical ? (
                   <Box textAlign="center" py={6}>
                     <Typography sx={{ fontSize: '3rem', mb: 2 }}>🤖</Typography>
-                    <Typography variant="h6" color="text.secondary">מידע זה זמין עבור יעדים שנטענו דרך חיפוש AI</Typography>
+                    <Typography variant="h6" color="text.secondary">{t('destInfo.ai_required')}</Typography>
                   </Box>
                 ) : (
                   <Grid container spacing={3}>
                     {/* ויזה + בטיחות */}
                     <Grid item xs={12} md={6}>
                       <Paper elevation={2} sx={{ p: 3, borderRadius: 3, height: '100%' }}>
-                        <Typography variant="h6" fontWeight="bold" mb={2}>✈️ ויזה לישראלים</Typography>
+                        <Typography variant="h6" fontWeight="bold" mb={2}>{t('destInfo.visa')}</Typography>
                         <Typography variant="body2" color="text.secondary">{destinationData.practical.visa}</Typography>
                       </Paper>
                     </Grid>
@@ -2219,7 +2221,7 @@ const DestinationInfoPage = () => {
                         <Paper elevation={2} sx={{ p: 3, borderRadius: 3, height: '100%',
                           border: `2px solid ${destinationData.practical.safety.color === 'green' ? '#43e97b' : destinationData.practical.safety.color === 'yellow' ? '#fdd835' : '#f5576c'}` }}>
                           <Typography variant="h6" fontWeight="bold" mb={1}>
-                            🛡️ בטיחות — {destinationData.practical.safety.level}
+                            {t('destInfo.safety', { level: destinationData.practical?.safety?.level })}
                           </Typography>
                           <Typography variant="body2" color="text.secondary" mb={2}>{destinationData.practical.safety.overview}</Typography>
                           {destinationData.practical.safety.tips?.map((t, i) => (
@@ -2245,17 +2247,17 @@ const DestinationInfoPage = () => {
                     {/* מידע מעשי - חשמל, SIM, מטבע, בריאות */}
                     <Grid item xs={12}>
                       <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
-                        <Typography variant="h6" fontWeight="bold" mb={2}>🔧 פרטים מעשיים</Typography>
+                        <Typography variant="h6" fontWeight="bold" mb={2}>{t('destInfo.practical_title')}</Typography>
                         <Grid container spacing={2}>
                           {[
-                            { icon: '🔌', label: 'שקע חשמל', val: `${destinationData.practical.plugType} | ${destinationData.practical.voltage}` },
-                            { icon: '📱', label: 'כרטיס SIM', val: destinationData.practical.simCard },
-                            { icon: '💱', label: 'המרת מטבע', val: destinationData.practical.currencyTips },
-                            { icon: '🏥', label: 'בריאות', val: destinationData.practical.health },
-                          ].map(({ icon, label, val }) => val && (
+                            { label: t('destInfo.power_outlet'), val: `${destinationData.practical.plugType} | ${destinationData.practical.voltage}` },
+                            { label: t('destInfo.sim_card'), val: destinationData.practical.simCard },
+                            { label: t('destInfo.currency_exchange'), val: destinationData.practical.currencyTips },
+                            { label: t('destInfo.health'), val: destinationData.practical.health },
+                          ].map(({ label, val }) => val && (
                             <Grid item xs={12} sm={6} key={label}>
                               <Box sx={{ p: 2, bgcolor: 'rgba(0,0,0,0.02)', borderRadius: 2 }}>
-                                <Typography variant="subtitle2" fontWeight="bold" mb={0.5}>{icon} {label}</Typography>
+                                <Typography variant="subtitle2" fontWeight="bold" mb={0.5}>{label}</Typography>
                                 <Typography variant="body2" color="text.secondary">{val}</Typography>
                               </Box>
                             </Grid>
@@ -2263,11 +2265,11 @@ const DestinationInfoPage = () => {
                         </Grid>
                         {destinationData.practical.emergencyNumbers && (
                           <Box sx={{ mt: 2, p: 2, bgcolor: '#fce4ec', borderRadius: 2 }}>
-                            <Typography variant="subtitle2" fontWeight="bold" mb={1}>🆘 מספרי חירום</Typography>
+                            <Typography variant="subtitle2" fontWeight="bold" mb={1}>{t('destInfo.emergency')}</Typography>
                             <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
                               {Object.entries(destinationData.practical.emergencyNumbers).map(([k, v]) => (
                                 <Typography key={k} variant="body2">
-                                  <strong>{k === 'police' ? '👮 משטרה' : k === 'ambulance' ? '🚑 אמבולנס' : '📞 תיירים'}:</strong> {v}
+                                  <strong>{k === 'police' ? t('destInfo.police') : k === 'ambulance' ? t('destInfo.ambulance') : t('destInfo.tourists')}:</strong> {v}
                                 </Typography>
                               ))}
                             </Box>
@@ -2280,7 +2282,7 @@ const DestinationInfoPage = () => {
                     {destinationData.practical.neighborhoods?.length > 0 && (
                       <Grid item xs={12}>
                         <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
-                          <Typography variant="h6" fontWeight="bold" mb={2}>🏘️ שכונות מומלצות ללינה</Typography>
+                          <Typography variant="h6" fontWeight="bold" mb={2}>{t('destInfo.neighborhoods')}</Typography>
                           <Grid container spacing={2}>
                             {destinationData.practical.neighborhoods.map((n, i) => (
                               <Grid item xs={12} sm={6} md={4} key={i}>
@@ -2303,11 +2305,11 @@ const DestinationInfoPage = () => {
                     {destinationData.practical.shopping && (
                       <Grid item xs={12} md={6}>
                         <Paper elevation={2} sx={{ p: 3, borderRadius: 3, height: '100%' }}>
-                          <Typography variant="h6" fontWeight="bold" mb={2}>🛍️ קניות</Typography>
+                          <Typography variant="h6" fontWeight="bold" mb={2}>{t('destInfo.shopping_title')}</Typography>
                           <Typography variant="body2" color="text.secondary" mb={2}>{destinationData.practical.shopping.intro}</Typography>
                           {destinationData.practical.shopping.items?.length > 0 && (
                             <Box mb={2}>
-                              <Typography variant="subtitle2" fontWeight="bold" mb={1}>מה לקנות:</Typography>
+                              <Typography variant="subtitle2" fontWeight="bold" mb={1}>{t('destInfo.what_to_buy')}</Typography>
                               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                                 {destinationData.practical.shopping.items.map((item, i) => (
                                   <Chip key={i} label={item} size="small" sx={{ bgcolor: '#e3f2fd' }} />
@@ -2327,7 +2329,7 @@ const DestinationInfoPage = () => {
                     {destinationData.practical.nightlife && (
                       <Grid item xs={12} md={6}>
                         <Paper elevation={2} sx={{ p: 3, borderRadius: 3, height: '100%' }}>
-                          <Typography variant="h6" fontWeight="bold" mb={2}>🌙 חיי לילה</Typography>
+                          <Typography variant="h6" fontWeight="bold" mb={2}>{t('destInfo.nightlife')}</Typography>
                           <Typography variant="body2" color="text.secondary" mb={2}>{destinationData.practical.nightlife.intro}</Typography>
                           {destinationData.practical.nightlife.areas?.map((a, i) => (
                             <Box key={i} sx={{ p: 1.5, border: '1px solid rgba(0,0,0,0.08)', borderRadius: 2, mb: 1 }}>
@@ -2354,7 +2356,7 @@ const DestinationInfoPage = () => {
           <Box sx={{ mb: 6 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, direction: 'rtl' }}>
               <Typography variant="h5" fontWeight="bold">
-                יעדים נוספים באזור
+                {t('destInfo.nearby')}
               </Typography>
               <Button
                 variant="text"
@@ -2362,7 +2364,7 @@ const DestinationInfoPage = () => {
                 onClick={() => window.open(`https://www.google.com/search?q=יעדים+קרובים+ל${encodeURIComponent(destinationData.name)}`, '_blank')}
                 sx={{ textTransform: 'none' }}
               >
-                הצג הכל
+                {t('destInfo.show_all')}
               </Button>
             </Box>
             <Grid container spacing={3}>
@@ -2432,7 +2434,7 @@ const DestinationInfoPage = () => {
                         }}
                       >
                         <Typography variant="caption" fontWeight="bold">
-                          {destination.distance} ק"מ
+                          {t('destInfo.km', { dist: destination.distance })}
                         </Typography>
                       </Box>
                     </Box>
@@ -2456,10 +2458,10 @@ const DestinationInfoPage = () => {
           }}
         >
           <Typography variant="h5" fontWeight="bold" gutterBottom>
-            מוכנים לתכנן את הטיול שלכם ל{destinationData.name}?
+            {t('destInfo.cta_title', { dest: destinationData.name })}
           </Typography>
           <Typography variant="body1" sx={{ maxWidth: '700px', margin: '0 auto', mb: 3 }}>
-            צרו את המסלול המושלם עם אטרקציות, מסעדות ומלונות מותאמים אישית. תוכלו לשמור ולשתף את הטיול שלכם עם החברים.
+            {t('destInfo.cta_subtitle')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Button
@@ -2480,7 +2482,7 @@ const DestinationInfoPage = () => {
                 }
               }}
             >
-              תכנן טיול עכשיו
+              {t('destInfo.plan_now')}
             </Button>
             <Button
               variant="outlined"
@@ -2499,7 +2501,7 @@ const DestinationInfoPage = () => {
                 }
               }}
             >
-              ייעוץ מסלול מותאם אישית
+              {t('destInfo.route_consultation')}
             </Button>
           </Box>
         </Paper>

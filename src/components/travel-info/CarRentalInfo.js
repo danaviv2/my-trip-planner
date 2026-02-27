@@ -1,5 +1,6 @@
 // src/components/travel-info/CarRentalInfo.js
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Box, Typography, TextField, Button, IconButton, Grid, Paper
 } from '@mui/material';
@@ -8,6 +9,7 @@ import {
  * CarRentalInfo - רכיב לניהול פרטי השכרת רכב
  */
 const CarRentalInfo = ({ carRental, setCarRental, showCarRental, setShowCarRental }) => {
+  const { t } = useTranslation();
   // עדכון שדה בפרטי השכרת הרכב
   const updateCarRental = (field, value) => {
     setCarRental(prev => ({
@@ -32,7 +34,7 @@ const CarRentalInfo = ({ carRental, setCarRental, showCarRental, setShowCarRenta
       >
         <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
           <i className="material-icons" style={{ marginRight: '8px', color: '#4CAF50' }}>directions_car</i>
-          השכרת רכב
+          {t('travelInfoPage.car_section')}
         </Typography>
         <IconButton size="small">
           <i className="material-icons">{showCarRental ? 'expand_less' : 'expand_more'}</i>
@@ -45,7 +47,7 @@ const CarRentalInfo = ({ carRental, setCarRental, showCarRental, setShowCarRenta
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="חברת השכרה"
+                label={t('travelInfoPage.rental_company')}
                 value={carRental.company}
                 onChange={(e) => updateCarRental('company', e.target.value)}
                 size="small"
@@ -54,7 +56,7 @@ const CarRentalInfo = ({ carRental, setCarRental, showCarRental, setShowCarRenta
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="מספר הזמנה/אישור"
+                label={t('travelInfoPage.confirmation_number')}
                 value={carRental.confirmationNumber}
                 onChange={(e) => updateCarRental('confirmationNumber', e.target.value)}
                 size="small"
@@ -63,7 +65,7 @@ const CarRentalInfo = ({ carRental, setCarRental, showCarRental, setShowCarRenta
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="תאריך קבלת הרכב"
+                label={t('travelInfoPage.pickup_date_car')}
                 type="date"
                 value={carRental.pickupDate}
                 onChange={(e) => updateCarRental('pickupDate', e.target.value)}
@@ -74,7 +76,7 @@ const CarRentalInfo = ({ carRental, setCarRental, showCarRental, setShowCarRenta
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="שעת קבלת הרכב"
+                label={t('travelInfoPage.pickup_time_car')}
                 type="time"
                 value={carRental.pickupTime}
                 onChange={(e) => updateCarRental('pickupTime', e.target.value)}
@@ -85,7 +87,7 @@ const CarRentalInfo = ({ carRental, setCarRental, showCarRental, setShowCarRenta
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="מיקום קבלת הרכב"
+                label={t('travelInfoPage.pickup_location_car')}
                 value={carRental.pickupLocation}
                 onChange={(e) => updateCarRental('pickupLocation', e.target.value)}
                 size="small"
@@ -94,7 +96,7 @@ const CarRentalInfo = ({ carRental, setCarRental, showCarRental, setShowCarRenta
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="תאריך החזרת הרכב"
+                label={t('travelInfoPage.return_date_car2')}
                 type="date"
                 value={carRental.returnDate}
                 onChange={(e) => updateCarRental('returnDate', e.target.value)}
@@ -105,7 +107,7 @@ const CarRentalInfo = ({ carRental, setCarRental, showCarRental, setShowCarRenta
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="שעת החזרת הרכב"
+                label={t('travelInfoPage.return_time_car')}
                 type="time"
                 value={carRental.returnTime}
                 onChange={(e) => updateCarRental('returnTime', e.target.value)}
@@ -116,7 +118,7 @@ const CarRentalInfo = ({ carRental, setCarRental, showCarRental, setShowCarRenta
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="מיקום החזרת הרכב"
+                label={t('travelInfoPage.return_location_car')}
                 value={carRental.returnLocation}
                 onChange={(e) => updateCarRental('returnLocation', e.target.value)}
                 size="small"
@@ -125,7 +127,7 @@ const CarRentalInfo = ({ carRental, setCarRental, showCarRental, setShowCarRenta
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="סוג רכב"
+                label={t('travelInfoPage.car_type')}
                 value={carRental.carType}
                 onChange={(e) => updateCarRental('carType', e.target.value)}
                 size="small"
@@ -142,11 +144,11 @@ const CarRentalInfo = ({ carRental, setCarRental, showCarRental, setShowCarRenta
                 if (carRental.company) {
                   window.open(`https://www.google.com/search?q=${encodeURIComponent(`${carRental.company} car rental`)}`, '_blank');
                 } else {
-                  alert('נא להזין שם חברת השכרה');
+                  alert(t('travelInfoPage.alert_fill_company'));
                 }
               }}
             >
-              בדוק מידע על חברת ההשכרה
+              {t('travelInfoPage.check_company')}
             </Button>
             <Button
               variant="outlined"
@@ -156,11 +158,11 @@ const CarRentalInfo = ({ carRental, setCarRental, showCarRental, setShowCarRenta
                 if (carRental.pickupLocation) {
                   window.open(`https://www.google.com/maps/search/${encodeURIComponent(`${carRental.company || ''} car rental ${carRental.pickupLocation}`)}`, '_blank');
                 } else {
-                  alert('נא להזין מיקום איסוף');
+                  alert(t('travelInfoPage.alert_fill_pickup'));
                 }
               }}
             >
-              הצג במפה
+              {t('travelInfoPage.show_map')}
             </Button>
           </Box>
         </Paper>

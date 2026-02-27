@@ -88,12 +88,12 @@ const HomePage = () => {
   ];
 
   const popularDestinations = [
-    { name: 'פריז', emoji: '🗼', color: '#667eea' },
-    { name: 'רומא', emoji: '🏛️', color: '#f5576c' },
-    { name: 'ברצלונה', emoji: '🏖️', color: '#4facfe' },
-    { name: 'לונדון', emoji: '🎡', color: '#43e97b' },
-    { name: 'אמסטרדם', emoji: '🚲', color: '#f093fb' },
-    { name: 'דובאי', emoji: '🏙️', color: '#fa709a' }
+    { name: 'Paris', emoji: '🗼', color: '#667eea' },
+    { name: 'Rome', emoji: '🏛️', color: '#f5576c' },
+    { name: 'Barcelona', emoji: '🏖️', color: '#4facfe' },
+    { name: 'London', emoji: '🎡', color: '#43e97b' },
+    { name: 'Amsterdam', emoji: '🚲', color: '#f093fb' },
+    { name: 'Dubai', emoji: '🏙️', color: '#fa709a' }
   ];
 
   const statsFeatures = [

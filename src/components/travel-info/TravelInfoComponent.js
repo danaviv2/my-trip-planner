@@ -1,5 +1,6 @@
 // src/components/travel-info/TravelInfoComponent.js
 import React, { useState, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Box, Paper, Typography, Button, IconButton 
 } from '@mui/material';
@@ -12,6 +13,7 @@ import EmailImportModal from './EmailImportModal';
  * מציג ומנהל מידע על טיסות והשכרת רכב
  */
 const TravelInfoComponent = () => {
+  const { t } = useTranslation();
   // מצבים לניהול פרטי הטיסות
   const [flights, setFlights] = useState([
     { id: 1, type: 'departure', flightNumber: '', airline: '', date: '', departureTime: '', departureAirport: '', arrivalTime: '', arrivalAirport: '', terminal: '' }
@@ -42,7 +44,7 @@ const TravelInfoComponent = () => {
     <Paper elevation={3} sx={{ p: 3, borderRadius: '10px', mb: 3 }}>
       <Typography variant="h5" sx={{ mb: 2, display: 'flex', alignItems: 'center', fontWeight: 'bold' }}>
         <i className="material-icons" style={{ marginRight: '8px', color: '#2196F3' }}>flight</i>
-        פרטי נסיעה
+        {t('travelInfoPage.title')}
       </Typography>
       
       <Box sx={{ mb: 3, display: 'flex', gap: 1 }}>
@@ -52,7 +54,7 @@ const TravelInfoComponent = () => {
           startIcon={<i className="material-icons">email</i>}
           onClick={() => setEmailImportModalOpen(true)}
         >
-          ייבא פרטים ממייל
+          {t('travelInfoPage.import_email')}
         </Button>
         
         <Button 
@@ -60,7 +62,7 @@ const TravelInfoComponent = () => {
           startIcon={<i className="material-icons">print</i>}
           onClick={() => window.print()}
         >
-          הדפס פרטי נסיעה
+          {t('travelInfoPage.print')}
         </Button>
       </Box>
       

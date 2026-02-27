@@ -1,5 +1,6 @@
 // src/components/travel-info/FlightInfo.js
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Box, Typography, TextField, Button, IconButton, Grid, Paper
 } from '@mui/material';
@@ -8,6 +9,7 @@ import {
  * FlightInfo - רכיב לניהול פרטי טיסות
  */
 const FlightInfo = ({ flights, setFlights, showFlights, setShowFlights }) => {
+  const { t } = useTranslation();
   // פונקציה להוספת טיסה נוספת
   const addFlight = () => {
     const newId = Math.max(...flights.map(f => f.id), 0) + 1;
@@ -59,7 +61,7 @@ const FlightInfo = ({ flights, setFlights, showFlights, setShowFlights }) => {
       >
         <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
           <i className="material-icons" style={{ marginRight: '8px', color: '#2196F3' }}>flight</i>
-          טיסות
+          {t('travelInfoPage.flights_section')}
         </Typography>
         <IconButton size="small">
           <i className="material-icons">{showFlights ? 'expand_less' : 'expand_more'}</i>
@@ -72,7 +74,7 @@ const FlightInfo = ({ flights, setFlights, showFlights, setShowFlights }) => {
             <Paper key={flight.id} sx={{ p: 2, mb: 2, borderRadius: '8px', bgcolor: '#f5f5f5' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                  {flight.type === 'departure' ? 'טיסה ליעד' : 'טיסה חזרה'}
+                  {flight.type === 'departure' ? t('travelInfoPage.flight_departure') : t('travelInfoPage.flight_return')}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <IconButton 
@@ -89,7 +91,7 @@ const FlightInfo = ({ flights, setFlights, showFlights, setShowFlights }) => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="חברת תעופה"
+                    label={t('travelInfoPage.airline')}
                     value={flight.airline}
                     onChange={(e) => updateFlight(flight.id, 'airline', e.target.value)}
                     size="small"
@@ -98,7 +100,7 @@ const FlightInfo = ({ flights, setFlights, showFlights, setShowFlights }) => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="מספר טיסה"
+                    label={t('travelInfoPage.flight_number')}
                     value={flight.flightNumber}
                     onChange={(e) => updateFlight(flight.id, 'flightNumber', e.target.value)}
                     size="small"
@@ -107,7 +109,7 @@ const FlightInfo = ({ flights, setFlights, showFlights, setShowFlights }) => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="תאריך"
+                    label={t('travelInfoPage.date')}
                     type="date"
                     value={flight.date}
                     onChange={(e) => updateFlight(flight.id, 'date', e.target.value)}
@@ -118,7 +120,7 @@ const FlightInfo = ({ flights, setFlights, showFlights, setShowFlights }) => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="טרמינל"
+                    label={t('travelInfoPage.terminal')}
                     value={flight.terminal}
                     onChange={(e) => updateFlight(flight.id, 'terminal', e.target.value)}
                     size="small"
@@ -127,7 +129,7 @@ const FlightInfo = ({ flights, setFlights, showFlights, setShowFlights }) => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="שדה תעופה יציאה"
+                    label={t('travelInfoPage.departure_airport')}
                     value={flight.departureAirport}
                     onChange={(e) => updateFlight(flight.id, 'departureAirport', e.target.value)}
                     size="small"
@@ -146,7 +148,7 @@ const FlightInfo = ({ flights, setFlights, showFlights, setShowFlights }) => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="שעת יציאה"
+                    label={t('travelInfoPage.departure_time')}
                     type="time"
                     value={flight.departureTime}
                     onChange={(e) => updateFlight(flight.id, 'departureTime', e.target.value)}
@@ -157,7 +159,7 @@ const FlightInfo = ({ flights, setFlights, showFlights, setShowFlights }) => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="שדה תעופה הגעה"
+                    label={t('travelInfoPage.arrival_airport')}
                     value={flight.arrivalAirport}
                     onChange={(e) => updateFlight(flight.id, 'arrivalAirport', e.target.value)}
                     size="small"
@@ -176,7 +178,7 @@ const FlightInfo = ({ flights, setFlights, showFlights, setShowFlights }) => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="שעת הגעה"
+                    label={t('travelInfoPage.arrival_time')}
                     type="time"
                     value={flight.arrivalTime}
                     onChange={(e) => updateFlight(flight.id, 'arrivalTime', e.target.value)}
@@ -198,11 +200,11 @@ const FlightInfo = ({ flights, setFlights, showFlights, setShowFlights }) => {
                       const date = new Date(flight.date).getDate();
                       window.open(`https://www.flightstats.com/v2/flight-tracker/${flight.airline}/${flight.flightNumber}?year=${year}&month=${month}&date=${date}`, '_blank');
                     } else {
-                      alert('נא למלא חברת תעופה, מספר טיסה ותאריך לפני בדיקת הסטטוס');
+                      alert(t('travelInfoPage.alert_fill_flight'));
                     }
                   }}
                 >
-                  בדוק סטטוס טיסה
+                  {t('travelInfoPage.check_status')}
                 </Button>
               </Box>
             </Paper>
@@ -214,7 +216,7 @@ const FlightInfo = ({ flights, setFlights, showFlights, setShowFlights }) => {
             onClick={addFlight}
             sx={{ mb: 2 }}
           >
-            הוסף טיסה
+            {t('travelInfoPage.add_flight')}
           </Button>
         </>
       )}
