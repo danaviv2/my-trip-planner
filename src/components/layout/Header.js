@@ -84,7 +84,17 @@ const Header = () => {
         onClose={() => setLangAnchorEl(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        PaperProps={{ sx: { mt: 1 } }}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            transformOrigin: 'top right',
+            animation: 'langMenuOpen 0.2s ease-out',
+            '@keyframes langMenuOpen': {
+              '0%':   { opacity: 0, transform: 'scale(0.85) translateY(-6px)' },
+              '100%': { opacity: 1, transform: 'scale(1)   translateY(0)' },
+            },
+          },
+        }}
       >
         {LANGUAGES.map((lang) => (
           <MenuItem
