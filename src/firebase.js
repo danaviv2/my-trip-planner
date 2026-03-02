@@ -3,10 +3,10 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: window.env?.REACT_APP_FIREBASE_API_KEY,
-  authDomain: window.env?.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: window.env?.REACT_APP_FIREBASE_PROJECT_ID,
-  appId: window.env?.REACT_APP_FIREBASE_APP_ID,
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || window.env?.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || window.env?.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || window.env?.REACT_APP_FIREBASE_PROJECT_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID || window.env?.REACT_APP_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
