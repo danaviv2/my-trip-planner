@@ -1,6 +1,28 @@
-const API_KEY = process.env.REACT_APP_OPENAI_API_KEY || '';
-const ENDPOINT = 'https://api.openai.com/v1/chat/completions';
-const MODEL = 'gpt-4o-mini';
+const API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY || '';
+const MODEL = 'gemini-2.0-flash';
+const BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}`;
+
+/**
+ * Convert OpenAI-style messages to Gemini format.
+ * system → systemInstruction, assistant → model role
+ */
+function convertMessages(messages) {
+  let systemInstruction = null;
+  const contents = [];
+
+  for (const msg of messages) {
+    if (msg.role === 'system') {
+      systemInstruction = { parts: [{ text: msg.content }] };
+    } else {
+      contents.push({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }],
+      });
+    }
+  }
+
+  return { systemInstruction, contents };
+}
 
 /**
  * Non-streaming call — returns full text string.
@@ -11,15 +33,16 @@ export async function callOpenAI(messages, { maxTokens = 600, temperature = 0.7 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30000);
 
+  const { systemInstruction, contents } = convertMessages(messages);
+  const body = { contents, generationConfig: { maxOutputTokens: maxTokens, temperature } };
+  if (systemInstruction) body.systemInstruction = systemInstruction;
+
   try {
-    const res = await fetch(ENDPOINT, {
+    const res = await fetch(`${BASE_URL}:generateContent?key=${API_KEY}`, {
       method: 'POST',
       signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${API_KEY}`,
-      },
-      body: JSON.stringify({ model: MODEL, messages, max_tokens: maxTokens, temperature }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
     });
 
     clearTimeout(timeout);
@@ -28,7 +51,7 @@ export async function callOpenAI(messages, { maxTokens = 600, temperature = 0.7 
     if (!res.ok) throw new Error(`API_ERROR_${res.status}`);
 
     const data = await res.json();
-    return data.choices?.[0]?.message?.content?.trim() || '';
+    return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
   } catch (err) {
     clearTimeout(timeout);
     if (err.name === 'AbortError') throw new Error('TIMEOUT');
@@ -50,14 +73,15 @@ export function streamOpenAI(messages, onChunk, onDone, onError, { maxTokens = 1
   const timeout = setTimeout(() => controller.abort(), 60000);
   let isCancelled = false;
 
-  fetch(ENDPOINT, {
+  const { systemInstruction, contents } = convertMessages(messages);
+  const body = { contents, generationConfig: { maxOutputTokens: maxTokens, temperature } };
+  if (systemInstruction) body.systemInstruction = systemInstruction;
+
+  fetch(`${BASE_URL}:streamGenerateContent?key=${API_KEY}&alt=sse`, {
     method: 'POST',
     signal: controller.signal,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${API_KEY}`,
-    },
-    body: JSON.stringify({ model: MODEL, messages, max_tokens: maxTokens, temperature, stream: true }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   })
     .then(async (res) => {
       clearTimeout(timeout);
@@ -77,12 +101,8 @@ export function streamOpenAI(messages, onChunk, onDone, onError, { maxTokens = 1
 
         for (const line of lines) {
           const json = line.slice(6).trim();
-          if (json === '[DONE]') {
-            if (!isCancelled) onDone(accumulated);
-            return;
-          }
           try {
-            const token = JSON.parse(json)?.choices?.[0]?.delta?.content || '';
+            const token = JSON.parse(json)?.candidates?.[0]?.content?.parts?.[0]?.text || '';
             accumulated += token;
             if (token && !isCancelled) onChunk(accumulated);
           } catch (_) {}
@@ -107,7 +127,7 @@ export function streamOpenAI(messages, onChunk, onDone, onError, { maxTokens = 1
 
 export function getErrorMessage(err) {
   if (!err) return 'שגיאה לא ידועה';
-  if (err.message === 'NO_API_KEY') return 'מפתח API לא מוגדר';
+  if (err.message === 'NO_API_KEY') return 'מפתח Gemini API לא מוגדר';
   if (err.message === 'RATE_LIMIT') return 'יותר מדי בקשות — נסה שוב בעוד שניות';
   if (err.message === 'TIMEOUT') return 'הבקשה לקחה יותר מדי זמן — נסה שוב';
   return 'שגיאת חיבור — בדוק את האינטרנט';

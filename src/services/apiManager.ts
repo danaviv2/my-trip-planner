@@ -4,7 +4,7 @@ import type { APIKeys, APIEndpoints, ApiResponse, APIError } from '../types/inde
 export const API_KEYS: APIKeys = {
   googleMaps: process.env.REACT_APP_GOOGLE_API_KEY || '',
   weather: process.env.REACT_APP_WEATHER_API_KEY || '',
-  openai: process.env.REACT_APP_OPENAI_API_KEY || '',
+  openai: process.env.REACT_APP_GEMINI_API_KEY || '',
   rapidapi: process.env.REACT_APP_RAPIDAPI_KEY || ''
 };
 
@@ -16,7 +16,7 @@ export const validateApiKeys = (): boolean => {
   
   if (!API_KEYS.googleMaps) missing.push('Google Maps');
   if (!API_KEYS.weather) missing.push('Weather');
-  if (!API_KEYS.openai) missing.push('OpenAI');
+  if (!API_KEYS.openai) missing.push('Gemini');
   if (!API_KEYS.rapidapi) missing.push('RapidAPI');
   
   if (missing.length > 0) {

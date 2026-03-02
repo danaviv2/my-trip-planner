@@ -2,61 +2,65 @@ import type { API_KEYS } from './apiManager';
 import { API_KEYS as KEYS } from './apiManager';
 import type { SmartAdvice, UserPreferences, AIRecommendation } from '../types/index';
 
-interface OpenAIMessage {
+interface GeminiMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
 }
 
-interface OpenAIResponse {
-  choices: Array<{
-    message: {
-      content: string;
-    };
-  }>;
-}
-
 /**
- * OpenAI based AI recommendations service
+ * Gemini based AI recommendations service
  * Provides smart recommendations for trips, attractions, restaurants and more
  */
 class AIRecommendationsService {
   private apiKey: string;
-  private apiUrl: string = 'https://api.openai.com/v1/chat/completions';
+  private model: string = 'gemini-2.0-flash';
 
   constructor() {
-    this.apiKey = KEYS.openai || '';
+    this.apiKey = process.env.REACT_APP_GEMINI_API_KEY || (window as any).env?.REACT_APP_GEMINI_API_KEY || '';
   }
 
   /**
-   * Generic OpenAI API call
+   * Generic Gemini API call
    */
   private async callOpenAI(
-    messages: OpenAIMessage[],
+    messages: GeminiMessage[],
     temperature: number = 0.7
   ): Promise<string> {
+    let systemInstruction: any = null;
+    const contents: any[] = [];
+
+    for (const msg of messages) {
+      if (msg.role === 'system') {
+        systemInstruction = { parts: [{ text: msg.content }] };
+      } else {
+        contents.push({
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: msg.content }],
+        });
+      }
+    }
+
+    const body: any = { contents, generationConfig: { maxOutputTokens: 1500, temperature } };
+    if (systemInstruction) body.systemInstruction = systemInstruction;
+
     try {
-      const response = await fetch(this.apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-4',
-          messages: messages,
-          temperature: temperature,
-          max_tokens: 1500
-        })
-      });
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error(`OpenAI API Error: ${response.status}`);
+        throw new Error(`Gemini API Error: ${response.status}`);
       }
 
-      const data: OpenAIResponse = await response.json();
-      return data.choices[0].message.content;
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     } catch (error) {
-      console.error('❌ Error in OpenAI call:', error);
+      console.error('❌ Error in Gemini call:', error);
       throw error;
     }
   }

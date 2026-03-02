@@ -1,7 +1,9 @@
-const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_API_KEY || '';
+const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY || '';
+const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 export const fetchDestinationFromAI = async (destinationName) => {
-  if (!OPENAI_API_KEY) {
+  if (!GEMINI_API_KEY) {
     throw new Error('NO_API_KEY');
   }
 
@@ -86,18 +88,13 @@ Required JSON structure:
   try {
     console.log(`🌍 מחפש מידע AI על: ${destinationName}`);
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.5,
-        max_tokens: 3500
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 3500, temperature: 0.5 }
       })
     });
 
@@ -105,12 +102,12 @@ Required JSON structure:
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('OpenAI error:', response.status, errText);
+      console.error('Gemini error:', response.status, errText);
       throw new Error(`API_ERROR_${response.status}`);
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     console.log('✅ תגובת AI התקבלה');
 
     // נקה markdown אם יש
