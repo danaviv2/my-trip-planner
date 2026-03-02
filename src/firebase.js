@@ -3,10 +3,12 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || window.env?.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || window.env?.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || window.env?.REACT_APP_FIREBASE_PROJECT_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || window.env?.REACT_APP_FIREBASE_APP_ID,
+  apiKey: "AIzaSyAeQ8o6IacieEB64I6aZciSBnxoOKukw3I",
+  authDomain: "my-trip-planner-3a72d.firebaseapp.com",
+  projectId: "my-trip-planner-3a72d",
+  storageBucket: "my-trip-planner-3a72d.firebasestorage.app",
+  messagingSenderId: "203669954170",
+  appId: "1:203669954170:web:111dadbf58509f485865c3",
 };
 
 const app = initializeApp(firebaseConfig);
