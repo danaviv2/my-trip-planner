@@ -33,6 +33,7 @@ import HotelSearch from '../components/travel-services/HotelSearch';
 import CarRentalSearch from '../components/travel-services/CarRentalSearch';
 import { fetchWeatherForecast, fetchGeoInfo } from '../components/WeatherForecast';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 /**
  * דף תכנון מסלול - מרכז את כל פונקציונליות תכנון הטיול
  */
@@ -41,6 +42,7 @@ const TripPlannerPage = () => {
   const { userPreferences, updateLocation } = useUserPreferences();
   const { saveTripToList } = useTripSave();
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const [saved, setSaved] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
@@ -75,7 +77,12 @@ const TripPlannerPage = () => {
   const [hotelModalOpen, setHotelModalOpen] = useState(false);
   
   const mapRef = useRef();
-  
+
+  // קרא יעד מה-URL (?destination=Paris) והגדר את endPoint
+  useEffect(() => {
+    const dest = searchParams.get('destination');
+    if (dest) setEndPoint(dest);
+  }, [searchParams]);
 
   // פונקציות מקוריות מהאפליקציה
   const addWaypoint = () => {
@@ -641,12 +648,12 @@ const TripPlannerPage = () => {
             daddrParts.push(`to:${encodeURIComponent(parts[i])}`);
           }
           const daddr = daddrParts.join('+');
-          src = `https://maps.google.com/maps?saddr=${saddr}&daddr=${daddr}&dirflg=d&output=embed&hl=he`;
+          src = `https://maps.google.com/maps?saddr=${saddr}&daddr=${daddr}&dirflg=d&output=embed&hl=en`;
         } else if (parts.length === 1) {
-          src = `https://maps.google.com/maps?q=${encodeURIComponent(parts[0])}&output=embed&hl=he`;
+          src = `https://maps.google.com/maps?q=${encodeURIComponent(parts[0])}&output=embed&hl=en`;
         } else {
           const defaultLocation = userPreferences.location || 'ישראל';
-          src = `https://maps.google.com/maps?q=${encodeURIComponent(defaultLocation)}&output=embed&hl=he`;
+          src = `https://maps.google.com/maps?q=${encodeURIComponent(defaultLocation)}&output=embed&hl=en`;
         }
         return (
           <Paper elevation={3} sx={{ p: 0, mb: 4, borderRadius: '16px', overflow: 'hidden' }}>

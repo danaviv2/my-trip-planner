@@ -303,11 +303,9 @@ const searchRoute = async () => {
     return;
   }
 
-  if (!isMapsLoaded || !mapRef.current) {
-    alert('Google Maps לא נטען נכון. אנא נסה שוב.');
-    setAttractions([]);
-    setDirections(null);
-    setIsLoading(false);
+  // אם Google Maps JS API אינו זמין — המפה (iframe) כבר מציגה את המסלול אוטומטית
+  if (!window.google?.maps || !isMapsLoaded || !mapRef.current) {
+    setRouteInfo({ distance: '', duration: '' });
     return;
   }
 
@@ -3619,11 +3617,12 @@ const InviteButton = () => {
                   daddrParts.push(`to:${encodeURIComponent(parts[i])}`);
                 }
                 const daddr = daddrParts.join('+');
-                src = `https://maps.google.com/maps?saddr=${saddr}&daddr=${daddr}&dirflg=d&output=embed&hl=he`;
+                src = `https://maps.google.com/maps?saddr=${saddr}&daddr=${daddr}&dirflg=d&output=embed&hl=en`;
               } else if (parts.length === 1) {
-                src = `https://maps.google.com/maps?q=${encodeURIComponent(parts[0])}&output=embed&hl=he`;
+                src = `https://maps.google.com/maps?q=${encodeURIComponent(parts[0])}&output=embed&hl=en`;
               } else {
-                src = 'https://maps.google.com/maps?q=ישראל&output=embed&hl=he';
+                const fallback = userPreferences.location || 'world';
+                src = `https://maps.google.com/maps?q=${encodeURIComponent(fallback)}&output=embed&hl=en`;
               }
               return (
                 <Box sx={{ mt: 2, mb: 2 }}>

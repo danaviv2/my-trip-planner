@@ -27,14 +27,17 @@ function convertMessages(messages) {
 /**
  * Non-streaming call — returns full text string.
  */
-export async function callOpenAI(messages, { maxTokens = 600, temperature = 0.7 } = {}) {
+export async function callOpenAI(messages, { maxTokens = 4096, temperature = 0.7 } = {}) {
   if (!API_KEY) throw new Error('NO_API_KEY');
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30000);
 
   const { systemInstruction, contents } = convertMessages(messages);
-  const body = { contents, generationConfig: { maxOutputTokens: maxTokens, temperature } };
+  const body = {
+    contents,
+    generationConfig: { maxOutputTokens: maxTokens, temperature, thinkingConfig: { thinkingBudget: 0 } },
+  };
   if (systemInstruction) body.systemInstruction = systemInstruction;
 
   try {
@@ -51,7 +54,9 @@ export async function callOpenAI(messages, { maxTokens = 600, temperature = 0.7 
     if (!res.ok) throw new Error(`API_ERROR_${res.status}`);
 
     const data = await res.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    const text = (parts.find(p => !p.thought && p.text) || parts[0])?.text || '';
+    return text.replace(/[\uFEFF\u200B\u200C\u200D\u00AD\u2060]/g, '').trim();
   } catch (err) {
     clearTimeout(timeout);
     if (err.name === 'AbortError') throw new Error('TIMEOUT');
@@ -63,7 +68,7 @@ export async function callOpenAI(messages, { maxTokens = 600, temperature = 0.7 
  * Streaming call — calls onChunk(accumulatedText) for each SSE token.
  * Returns an abort function.
  */
-export function streamOpenAI(messages, onChunk, onDone, onError, { maxTokens = 1200, temperature = 0.7 } = {}) {
+export function streamOpenAI(messages, onChunk, onDone, onError, { maxTokens = 4096, temperature = 0.7 } = {}) {
   if (!API_KEY) {
     onError(new Error('NO_API_KEY'));
     return () => {};
@@ -74,7 +79,10 @@ export function streamOpenAI(messages, onChunk, onDone, onError, { maxTokens = 1
   let isCancelled = false;
 
   const { systemInstruction, contents } = convertMessages(messages);
-  const body = { contents, generationConfig: { maxOutputTokens: maxTokens, temperature } };
+  const body = {
+    contents,
+    generationConfig: { maxOutputTokens: maxTokens, temperature, thinkingConfig: { thinkingBudget: 0 } },
+  };
   if (systemInstruction) body.systemInstruction = systemInstruction;
 
   fetch(`${BASE_URL}:streamGenerateContent?key=${API_KEY}&alt=sse`, {
@@ -102,7 +110,9 @@ export function streamOpenAI(messages, onChunk, onDone, onError, { maxTokens = 1
         for (const line of lines) {
           const json = line.slice(6).trim();
           try {
-            const token = JSON.parse(json)?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            const parsed = JSON.parse(json);
+          const sparts = parsed?.candidates?.[0]?.content?.parts || [];
+          const token = (sparts.find(p => !p.thought && p.text) || sparts[0])?.text || '';
             accumulated += token;
             if (token && !isCancelled) onChunk(accumulated);
           } catch (_) {}

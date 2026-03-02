@@ -179,7 +179,7 @@ export default function AIItineraryGenerator({ destination, preferences }) {
           { role: 'system', content: 'אתה מתכנן טיולים מקצועי. החזר JSON תקין בלבד, ללא markdown, ללא ```json.' },
           { role: 'user', content: prompt }
         ],
-        { maxTokens: 2000, temperature: 0.7 }
+        { maxTokens: 4096, temperature: 0.7 }
       );
 
       clearInterval(progressInterval);
@@ -188,9 +188,9 @@ export default function AIItineraryGenerator({ destination, preferences }) {
       // Parse JSON
       let parsed;
       try {
-        // נסה לחלץ JSON גם אם יש תוכן נוסף
-        const jsonMatch = raw.match(/\{[\s\S]*\}/);
-        parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+        const clean = raw.replace(/[\uFEFF\u200B\u200C\u200D\u00AD\u2060]/g, '');
+        const jsonMatch = clean.match(/\{[\s\S]*\}/);
+        parsed = JSON.parse(jsonMatch ? jsonMatch[0] : clean);
       } catch {
         throw new Error('JSON_PARSE');
       }
