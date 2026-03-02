@@ -557,6 +557,7 @@
     "cta_subtitle": "Créez l'itinéraire parfait avec des attractions, restaurants et hôtels personnalisés. Vous pouvez sauvegarder et partager votre voyage avec vos amis.",
     "plan_now": "Planifier maintenant",
     "route_consultation": "Consultation d'itinéraire personnalisé",
+    "errorRateLimit": "Trop de requêtes — attendez 30 secondes et réessayez",
     "errorTimeout": "Délai dépassé — veuillez réessayer",
     "errorInvalidResponse": "Réponse du serveur invalide",
     "errorLoading": "Erreur de chargement des informations",

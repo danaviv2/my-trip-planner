@@ -557,6 +557,7 @@
     "cta_subtitle": "Create the perfect route with personalized attractions, restaurants and hotels. You can save and share your trip with friends.",
     "plan_now": "Plan Trip Now",
     "route_consultation": "Personalized Route Consultation",
+    "errorRateLimit": "Too many requests — wait 30 seconds and try again",
     "errorTimeout": "Timeout — please try again",
     "errorInvalidResponse": "Invalid server response",
     "errorLoading": "Error loading information",

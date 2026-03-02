@@ -103,6 +103,7 @@ Required JSON structure:
     if (!response.ok) {
       const errText = await response.text();
       console.error('Gemini error:', response.status, errText);
+      if (response.status === 429) throw new Error('RATE_LIMIT');
       throw new Error(`API_ERROR_${response.status}`);
     }
 

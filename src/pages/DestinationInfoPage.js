@@ -109,6 +109,8 @@ const DestinationInfoPage = () => {
       console.error('שגיאה בטעינת יעד:', err.message);
       if (err.message === 'NO_API_KEY') {
         setError('no_api_key');
+      } else if (err.message === 'RATE_LIMIT') {
+        setError(t('destInfo.errorRateLimit'));
       } else if (err.message === 'TIMEOUT') {
         setError(t('destInfo.errorTimeout'));
       } else if (err.message === 'INVALID_RESPONSE') {
