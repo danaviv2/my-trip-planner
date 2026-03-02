@@ -918,7 +918,7 @@ const DestinationInfoPage = () => {
           </Typography>
           <Typography variant="body1" color="text.secondary" mb={4}>
             {isNoKey
-              ? 'כדי לחפש כל יעד בעולם, הוסף מפתח OpenAI ל-.env: REACT_APP_OPENAI_API_KEY'
+              ? 'כדי לחפש כל יעד בעולם, הוסף מפתח Gemini ל-.env: REACT_APP_GEMINI_API_KEY'
               : 'לא הצלחנו לטעון מידע על יעד זה. נסה שוב או בחר מהיעדים הפופולריים.'}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>

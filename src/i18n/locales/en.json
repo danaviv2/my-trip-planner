@@ -244,7 +244,7 @@
     "loading": "Searching for info about {{dest}}...",
     "loading_sub": "AI is collecting the best data for you",
     "err_no_key_title": "API Key Required",
-    "err_no_key_body": "Set REACT_APP_OPENAI_API_KEY to enable AI search",
+    "err_no_key_body": "Set REACT_APP_GEMINI_API_KEY to enable AI search",
     "err_load_title": "Error Loading Data",
     "err_load_body": "Could not collect info about the destination. Please try again.",
     "go_to_dest": "Go to {{dest}} page",

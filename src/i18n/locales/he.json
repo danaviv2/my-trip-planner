@@ -244,7 +244,7 @@
     "loading": "מחפש מידע על {{dest}}...",
     "loading_sub": "AI אוסף עבורך את הנתונים הטובים ביותר",
     "err_no_key_title": "נדרש מפתח API",
-    "err_no_key_body": "הגדר REACT_APP_OPENAI_API_KEY כדי להפעיל חיפוש AI",
+    "err_no_key_body": "הגדר REACT_APP_GEMINI_API_KEY כדי להפעיל חיפוש AI",
     "err_load_title": "שגיאה בטעינת נתונים",
     "err_load_body": "לא הצלחנו לאסוף מידע על היעד. נסה שוב.",
     "go_to_dest": "עבור לדף {{dest}}",

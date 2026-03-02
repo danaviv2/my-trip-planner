@@ -244,7 +244,7 @@
     "loading": "Buscando informações sobre {{dest}}...",
     "loading_sub": "A IA está coletando os melhores dados para você",
     "err_no_key_title": "Chave API necessária",
-    "err_no_key_body": "Configure REACT_APP_OPENAI_API_KEY para ativar a pesquisa com IA",
+    "err_no_key_body": "Configure REACT_APP_GEMINI_API_KEY para ativar a pesquisa com IA",
     "err_load_title": "Erro ao carregar dados",
     "err_load_body": "Não foi possível coletar informações sobre o destino. Tente novamente.",
     "go_to_dest": "Ir para a página de {{dest}}",
