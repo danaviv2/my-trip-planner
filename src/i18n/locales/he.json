@@ -692,5 +692,19 @@
     "openNow": "🟢 פתוח עכשיו",
     "closed": "🔴 סגור",
     "website": "אתר האינטרנט"
+  },
+  "activities": {
+    "recommended": "פעילויות מומלצות",
+    "noActivities": "אין פעילויות להצגה",
+    "intro": "גלה את הפעילויות הטובות ביותר ביעד שלך",
+    "learnMore": "קרא עוד",
+    "bookNow": "הזמן עכשיו",
+    "viewAll": "הצג הכל"
+  },
+  "gallery": {
+    "more": "עוד"
+  },
+  "common": {
+    "from": "החל מ-"
   }
 }

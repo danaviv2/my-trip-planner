@@ -692,5 +692,19 @@
     "openNow": "🟢 Aberto agora",
     "closed": "🔴 Fechado",
     "website": "Site"
+  },
+  "activities": {
+    "recommended": "Atividades recomendadas",
+    "noActivities": "Sem atividades para mostrar",
+    "intro": "Descubra as melhores atividades no seu destino",
+    "learnMore": "Saber mais",
+    "bookNow": "Reservar agora",
+    "viewAll": "Ver tudo"
+  },
+  "gallery": {
+    "more": "mais"
+  },
+  "common": {
+    "from": "A partir de"
   }
 }

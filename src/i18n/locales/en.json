@@ -692,5 +692,19 @@
     "openNow": "🟢 Open Now",
     "closed": "🔴 Closed",
     "website": "Website"
+  },
+  "activities": {
+    "recommended": "Recommended Activities",
+    "noActivities": "No activities to display",
+    "intro": "Discover the best activities at your destination",
+    "learnMore": "Learn More",
+    "bookNow": "Book Now",
+    "viewAll": "View All"
+  },
+  "gallery": {
+    "more": "more"
+  },
+  "common": {
+    "from": "From"
   }
 }
