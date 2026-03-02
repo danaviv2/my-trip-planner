@@ -1,4 +1,4 @@
-const API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY || 'AIzaSyC_TbhNBl42AgSAsmUsyFYhA7SwfUae8Ag';
+const API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY;
 const MODEL = 'gemini-2.5-flash';
 const BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}`;
 
