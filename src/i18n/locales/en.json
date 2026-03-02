@@ -610,7 +610,16 @@
     "routeLabel": "Route:",
     "navBtn": "Navigate",
     "saveBtn": "Save Trip",
-    "saved": "Saved!"
+    "saved": "Saved!",
+    "shareAndSave": "Share & Save",
+    "shareTrip": "Share Trip",
+    "tripLogs": "Trip Logs",
+    "date": "Date",
+    "start": "Start",
+    "end": "End",
+    "waypoints": "Waypoints",
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "airportModal": {
     "invalidCode": "Invalid airport code",

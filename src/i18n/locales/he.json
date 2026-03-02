@@ -610,7 +610,16 @@
     "routeLabel": "מסלול:",
     "navBtn": "נווט",
     "saveBtn": "שמור טיול",
-    "saved": "נשמר!"
+    "saved": "נשמר!",
+    "shareAndSave": "שתף ושמור",
+    "shareTrip": "שתף טיול",
+    "tripLogs": "יומני טיול",
+    "date": "תאריך",
+    "start": "התחלה",
+    "end": "סיום",
+    "waypoints": "תחנות ביניים",
+    "edit": "ערוך",
+    "delete": "מחק"
   },
   "airportModal": {
     "invalidCode": "קוד שדה תעופה לא תקין",

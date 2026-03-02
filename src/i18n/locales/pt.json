@@ -610,7 +610,16 @@
     "routeLabel": "Rota:",
     "navBtn": "Navegar",
     "saveBtn": "Salvar viagem",
-    "saved": "Salvo!"
+    "saved": "Salvo!",
+    "shareAndSave": "Partilhar e guardar",
+    "shareTrip": "Partilhar viagem",
+    "tripLogs": "Registos de viagem",
+    "date": "Data",
+    "start": "Início",
+    "end": "Fim",
+    "waypoints": "Paragens",
+    "edit": "Editar",
+    "delete": "Eliminar"
   },
   "airportModal": {
     "invalidCode": "Código de aeroporto inválido",

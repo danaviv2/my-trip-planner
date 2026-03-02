@@ -610,7 +610,16 @@
     "routeLabel": "Itinéraire :",
     "navBtn": "Naviguer",
     "saveBtn": "Sauvegarder le voyage",
-    "saved": "Sauvegardé !"
+    "saved": "Sauvegardé !",
+    "shareAndSave": "Partager et sauvegarder",
+    "shareTrip": "Partager le voyage",
+    "tripLogs": "Journaux de voyage",
+    "date": "Date",
+    "start": "Départ",
+    "end": "Arrivée",
+    "waypoints": "Étapes",
+    "edit": "Modifier",
+    "delete": "Supprimer"
   },
   "airportModal": {
     "invalidCode": "Code d'aéroport invalide",
