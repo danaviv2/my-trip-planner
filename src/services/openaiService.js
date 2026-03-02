@@ -1,5 +1,5 @@
 const API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY || 'AIzaSyCLuRpcz9OXh8sRk92zetsTBqwdLNkovcE';
-const MODEL = 'gemini-1.5-flash';
+const MODEL = 'gemini-2.0-flash-lite';
 const BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}`;
 
 /**
