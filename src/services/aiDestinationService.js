@@ -122,7 +122,7 @@ Required JSON structure:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 3500, temperature: 0.5 }
+        generationConfig: { maxOutputTokens: 8192, temperature: 0.5, thinkingConfig: { thinkingBudget: 0 } }
       })
     });
 
@@ -136,11 +136,21 @@ Required JSON structure:
     }
 
     const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    // Gemini 2.5 Flash returns thinking tokens in parts marked with {thought:true}
+    // We need the actual response part, not the thinking part
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    const content = (parts.find(p => !p.thought && p.text) || parts[0])?.text || '';
     console.log('✅ תגובת AI התקבלה');
 
     // נקה markdown אם יש
-    const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    let cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    // חלץ רק את ה-JSON הראשי (מ-{ הראשון עד } האחרון)
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+    }
 
     // בדוק שהתגובה היא JSON ולא HTML
     if (!cleaned.startsWith('{')) {
@@ -148,7 +158,16 @@ Required JSON structure:
       throw new Error('INVALID_RESPONSE');
     }
 
-    const parsed = JSON.parse(cleaned);
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (jsonErr) {
+      // ניסיון תיקון: הסר תווי שליטה בתוך מחרוזות
+      const fixed = cleaned.replace(/[\x00-\x1F\x7F]/g, (c) =>
+        c === '\n' ? '\\n' : c === '\r' ? '\\r' : c === '\t' ? '\\t' : ''
+      );
+      parsed = JSON.parse(fixed);
+    }
 
     // תמונות דינמיות לפי seed של שם היעד
     const coverImage = `https://picsum.photos/seed/${seed}/1200/600`;
