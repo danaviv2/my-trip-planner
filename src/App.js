@@ -3634,7 +3634,7 @@ const InviteButton = () => {
                       <Button
                         size="small"
                         variant="outlined"
-                        onClick={() => window.open(`https://www.google.com/maps/dir/${parts.map(p => encodeURIComponent(p)).join('/')}`, '_blank')}
+                        onClick={() => window.open(`https://www.google.com/maps/dir/${parts.map(p => encodeURIComponent(p)).join('/')}?hl=en`, '_blank')}
                         sx={{ fontSize: '0.7rem', py: 0.3, px: 1 }}
                       >
                         פתח לניווט ←
