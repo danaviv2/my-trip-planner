@@ -2,9 +2,37 @@ const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT
 const GEMINI_MODEL = 'gemini-2.0-flash-lite';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
+const CACHE_PREFIX = 'dest_ai_';
+const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+function getCached(name) {
+  try {
+    const raw = localStorage.getItem(CACHE_PREFIX + name.toLowerCase());
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_TTL) {
+      localStorage.removeItem(CACHE_PREFIX + name.toLowerCase());
+      return null;
+    }
+    return data;
+  } catch { return null; }
+}
+
+function setCache(name, data) {
+  try {
+    localStorage.setItem(CACHE_PREFIX + name.toLowerCase(), JSON.stringify({ data, ts: Date.now() }));
+  } catch {}
+}
+
 export const fetchDestinationFromAI = async (destinationName) => {
   if (!GEMINI_API_KEY) {
     throw new Error('NO_API_KEY');
+  }
+
+  const cached = getCached(destinationName);
+  if (cached) {
+    console.log(`📦 נטען מהמטמון: ${destinationName}`);
+    return cached;
   }
 
   const seed = destinationName.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
@@ -144,7 +172,7 @@ Required JSON structure:
       image: `https://picsum.photos/seed/${seed + i + 40}/300/200`
     }));
 
-    return {
+    const result = {
       name: destinationName,
       ...parsed,
       coverImage,
@@ -166,6 +194,9 @@ Required JSON structure:
         humidity: 70, windSpeed: 3
       }
     };
+
+    setCache(destinationName, result);
+    return result;
 
   } catch (err) {
     clearTimeout(timeout);
