@@ -665,7 +665,12 @@ const TripPlannerPage = () => {
                 <Button
                   size="small"
                   variant="outlined"
-                  onClick={() => window.open(`https://www.google.com/maps/dir/${parts.map(p => encodeURIComponent(p)).join('/')}?hl=en`, '_blank')}
+                  onClick={() => {
+                    const [origin, ...rest] = parts;
+                    const daddrParts = [encodeURIComponent(rest[0])];
+                    for (let i = 1; i < rest.length; i++) daddrParts.push(`to:${encodeURIComponent(rest[i])}`);
+                    window.open(`https://maps.google.com/maps?saddr=${encodeURIComponent(origin)}&daddr=${daddrParts.join('+')}&dirflg=d&hl=en`, '_blank');
+                  }}
                   sx={{ fontSize: '0.7rem', py: 0.3, px: 1 }}
                 >
                   {t('tripPlanner.openNavigation')} ←
