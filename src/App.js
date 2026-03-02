@@ -3635,10 +3635,19 @@ const InviteButton = () => {
                         size="small"
                         variant="outlined"
                         onClick={() => {
+                          const txt = parts.join(' ').toLowerCase();
+                          let gl = '';
+                          if (/paris|bordeaux|lyon|marseille|nice|toulouse|france/.test(txt)) gl = 'fr';
+                          else if (/london|manchester|birmingham|england/.test(txt)) gl = 'gb';
+                          else if (/rome|milan|naples|italy/.test(txt)) gl = 'it';
+                          else if (/madrid|barcelona|seville|spain/.test(txt)) gl = 'es';
+                          else if (/berlin|munich|hamburg|germany/.test(txt)) gl = 'de';
+                          else if (/amsterdam|rotterdam|netherlands/.test(txt)) gl = 'nl';
                           const [origin, ...rest] = parts;
                           const daddrParts = [encodeURIComponent(rest[0])];
                           for (let i = 1; i < rest.length; i++) daddrParts.push(`to:${encodeURIComponent(rest[i])}`);
-                          window.open(`https://maps.google.com/maps?saddr=${encodeURIComponent(origin)}&daddr=${daddrParts.join('+')}&dirflg=d&hl=en`, '_blank');
+                          const url = `https://maps.google.com/maps?saddr=${encodeURIComponent(origin)}&daddr=${daddrParts.join('+')}&dirflg=d&hl=en${gl ? `&gl=${gl}` : ''}`;
+                          window.open(url, '_blank');
                         }}
                         sx={{ fontSize: '0.7rem', py: 0.3, px: 1 }}
                       >
