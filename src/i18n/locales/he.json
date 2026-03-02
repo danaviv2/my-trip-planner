@@ -629,6 +629,7 @@
     "updateEnd": "עדכן יעד",
     "updateWaypoints": "עדכן תחנות ביניים",
     "weatherForecast": "תחזית מזג אוויר",
+    "destinationInfo": "מידע על יעד",
     "destinationInfoPlaceholder": "הזן יעד לקבלת מידע",
     "shareTrip": "שתף טיול",
     "tripLogs": "יומני טיול",
@@ -702,7 +703,9 @@
     "viewAll": "הצג הכל"
   },
   "gallery": {
-    "more": "עוד"
+    "more": "עוד",
+    "image": "תמונה",
+    "thumbnail": "תמונה ממוזערת"
   },
   "common": {
     "from": "החל מ-"

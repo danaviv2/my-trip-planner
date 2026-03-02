@@ -629,6 +629,7 @@
     "updateEnd": "Modifier la destination",
     "updateWaypoints": "Modifier les étapes",
     "weatherForecast": "Prévisions météo",
+    "destinationInfo": "Info destination",
     "destinationInfoPlaceholder": "Entrez une destination",
     "shareTrip": "Partager le voyage",
     "tripLogs": "Journaux de voyage",
@@ -702,7 +703,9 @@
     "viewAll": "Voir tout"
   },
   "gallery": {
-    "more": "autres"
+    "more": "autres",
+    "image": "Image",
+    "thumbnail": "Miniature"
   },
   "common": {
     "from": "À partir de"

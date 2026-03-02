@@ -629,6 +629,7 @@
     "updateEnd": "Actualizar destino",
     "updateWaypoints": "Actualizar paradas",
     "weatherForecast": "Pronóstico del tiempo",
+    "destinationInfo": "Info del destino",
     "destinationInfoPlaceholder": "Ingresa un destino",
     "shareTrip": "Compartir viaje",
     "tripLogs": "Registros de viaje",
@@ -702,7 +703,9 @@
     "viewAll": "Ver todo"
   },
   "gallery": {
-    "more": "más"
+    "more": "más",
+    "image": "Imagen",
+    "thumbnail": "Miniatura"
   },
   "common": {
     "from": "Desde"

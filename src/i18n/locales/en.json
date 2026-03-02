@@ -629,6 +629,7 @@
     "updateEnd": "Update destination",
     "updateWaypoints": "Update waypoints",
     "weatherForecast": "Weather Forecast",
+    "destinationInfo": "Destination Info",
     "destinationInfoPlaceholder": "Enter a destination for info",
     "shareTrip": "Share Trip",
     "tripLogs": "Trip Logs",
@@ -702,7 +703,9 @@
     "viewAll": "View All"
   },
   "gallery": {
-    "more": "more"
+    "more": "more",
+    "image": "Image",
+    "thumbnail": "Thumbnail"
   },
   "common": {
     "from": "From"
