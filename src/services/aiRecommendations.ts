@@ -13,7 +13,7 @@ interface GeminiMessage {
  */
 class AIRecommendationsService {
   private apiKey: string;
-  private model: string = 'gemini-2.0-flash';
+  private model: string = 'gemini-2.5-flash';
 
   constructor() {
     this.apiKey = process.env.REACT_APP_GEMINI_API_KEY || (window as any).env?.REACT_APP_GEMINI_API_KEY || 'AIzaSyC_TbhNBl42AgSAsmUsyFYhA7SwfUae8Ag';
