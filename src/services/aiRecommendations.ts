@@ -189,7 +189,7 @@ class AIRecommendationsService {
   ]
 }`;
 
-    const messages: OpenAIMessage[] = [
+    const messages: GeminiMessage[] = [
       {
         role: 'system' as const,
         content: 'אתה מדריך טיולים מומחה. תגיב תמיד בעברית ובפורמט JSON.'
@@ -246,7 +246,7 @@ JSON:
   ]
 }`;
 
-    const messages: OpenAIMessage[] = [
+    const messages: GeminiMessage[] = [
       {
         role: 'system' as const,
         content: 'אתה מערכת הערכה חכמה של תכניות טיול. תגיב בעברית ובפורמט JSON.'
@@ -296,7 +296,7 @@ JSON:
   "tips": ["טיפ 1", "טיפ 2", "טיפ 3"]
 }`;
 
-    const messages: OpenAIMessage[] = [
+    const messages: GeminiMessage[] = [
       {
         role: 'system' as const,
         content: 'אתה יועץ טיולים מומחה. תגיב בעברית ובפורמט JSON.'
@@ -335,7 +335,7 @@ JSON:
     const prompt = `כתוב תיאור קצר ומרתק (2-3 משפטים) על ${placeName} - ${placeType}.
 התיאור צריך להיות מעניין, אינפורמטיבי ולגרום לאנשים לרצות לבקר במקום.`;
 
-    const messages: OpenAIMessage[] = [
+    const messages: GeminiMessage[] = [
       {
         role: 'system' as const,
         content: 'אתה כותב טיפוס טיולים. תגיב בעברית.'
