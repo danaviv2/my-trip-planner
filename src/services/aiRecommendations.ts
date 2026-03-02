@@ -16,7 +16,7 @@ class AIRecommendationsService {
   private model: string = 'gemini-2.0-flash-lite';
 
   constructor() {
-    this.apiKey = process.env.REACT_APP_GEMINI_API_KEY || (window as any).env?.REACT_APP_GEMINI_API_KEY || 'AIzaSyCLuRpcz9OXh8sRk92zetsTBqwdLNkovcE';
+    this.apiKey = process.env.REACT_APP_GEMINI_API_KEY || (window as any).env?.REACT_APP_GEMINI_API_KEY || 'AIzaSyC_TbhNBl42AgSAsmUsyFYhA7SwfUae8Ag';
   }
 
   /**
