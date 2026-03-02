@@ -132,7 +132,7 @@ const Header = () => {
           {/* דסקטופ */}
           {!isMobile && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <LanguageSwitcher />
+              {LanguageSwitcher()}
               <Tooltip title={userPreferences.darkMode ? t('nav.lightMode') : t('nav.darkMode')}>
                 <IconButton color="inherit" onClick={toggleDarkMode} size="small">
                   {userPreferences.darkMode ? <LightModeIcon /> : <DarkModeIcon />}
@@ -195,7 +195,7 @@ const Header = () => {
           {/* מובייל */}
           {isMobile && (
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <LanguageSwitcher />
+              {LanguageSwitcher()}
               <Tooltip title={userPreferences.darkMode ? t('nav.lightMode') : t('nav.darkMode')}>
                 <IconButton color="inherit" onClick={toggleDarkMode} size="small">
                   {userPreferences.darkMode ? <LightModeIcon /> : <DarkModeIcon />}
