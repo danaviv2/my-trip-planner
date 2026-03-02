@@ -142,17 +142,20 @@ Required JSON structure:
     const content = (parts.find(p => !p.thought && p.text) || parts[0])?.text || '';
     console.log('✅ תגובת AI התקבלה');
 
-    // נקה markdown אם יש
-    let cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    // נקה markdown + BOM + תווים בלתי נראים
+    let cleaned = content
+      .replace(/```json\s*/gi, '')
+      .replace(/```\s*/g, '')
+      .replace(/[\uFEFF\u200B\u200C\u200D\u00AD\u2060\u00A0]/g, '') // invisible unicode
+      .trim();
 
-    // חלץ רק את ה-JSON הראשי (מ-{ הראשון עד } האחרון)
+    // חלץ רק את ה-JSON (מ-{ הראשון עד } האחרון)
     const firstBrace = cleaned.indexOf('{');
     const lastBrace = cleaned.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace !== -1) {
       cleaned = cleaned.slice(firstBrace, lastBrace + 1);
     }
 
-    // בדוק שהתגובה היא JSON ולא HTML
     if (!cleaned.startsWith('{')) {
       console.error('תגובה לא תקינה:', cleaned.substring(0, 200));
       throw new Error('INVALID_RESPONSE');
@@ -162,10 +165,11 @@ Required JSON structure:
     try {
       parsed = JSON.parse(cleaned);
     } catch (jsonErr) {
-      // ניסיון תיקון: הסר תווי שליטה בתוך מחרוזות
-      const fixed = cleaned.replace(/[\x00-\x1F\x7F]/g, (c) =>
-        c === '\n' ? '\\n' : c === '\r' ? '\\r' : c === '\t' ? '\\t' : ''
-      );
+      console.warn('⚠️ JSON parse failed, chars 0-5:', [...cleaned.substring(0,5)].map(c=>c.charCodeAt(0)));
+      // הסר תווי שליטה ותווים בלתי חוקיים ב-JSON
+      const fixed = cleaned
+        .replace(/[\uFEFF\u200B\u200C\u200D\u00AD\u2060]/g, '')
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
       parsed = JSON.parse(fixed);
     }
 
