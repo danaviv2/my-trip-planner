@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Button, Paper, Skeleton, Alert,
   Accordion, AccordionSummary, AccordionDetails,
@@ -10,6 +10,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
 import { useTranslation } from 'react-i18next';
 import { callOpenAI, getErrorMessage } from '../../services/openaiService';
+import { fetchTripWeather } from '../../services/openMeteoService';
 
 const BUDGET_LABELS = { low: 'תקציבי', medium: 'בינוני', high: 'פרמיום' };
 const PACE_LABELS = { slow: 'איטי', medium: 'בינוני', fast: 'מהיר' };
@@ -63,7 +64,7 @@ function DaySkeleton() {
   );
 }
 
-function DayCard({ day, defaultExpanded }) {
+function DayCard({ day, defaultExpanded, weatherInfo, weatherLoading }) {
   const { t } = useTranslation();
   const timePeriods = [
     { time: t('aiItinerary.morning'), content: day.morning },
@@ -108,6 +109,22 @@ function DayCard({ day, defaultExpanded }) {
               {day.theme} {day.title}
             </Typography>
           </Box>
+          {weatherLoading
+            ? <Skeleton width={80} height={22} sx={{ ml: 1, borderRadius: 1 }} />
+            : weatherInfo && (
+              <Chip
+                label={`${weatherInfo.emoji} ${weatherInfo.minTemp}°–${weatherInfo.maxTemp}° | ${weatherInfo.rainProb}%`}
+                size="small"
+                sx={{
+                  bgcolor: weatherInfo.isRainy ? '#fff3e0' : '#e8f5e9',
+                  color: weatherInfo.isRainy ? '#e65100' : '#2e7d32',
+                  fontWeight: 600,
+                  fontSize: '0.72rem',
+                  ml: 1
+                }}
+              />
+            )
+          }
           {day.cost && (
             <Chip label={day.cost} size="small" sx={{ bgcolor: '#e8f5e9', color: '#2e7d32', fontWeight: 600, fontSize: '0.75rem' }} />
           )}
@@ -115,6 +132,14 @@ function DayCard({ day, defaultExpanded }) {
       </AccordionSummary>
       <AccordionDetails sx={{ pt: 0, pb: 2 }}>
         <Stack spacing={1.5}>
+          {weatherInfo?.isRainy && (
+            <Box sx={{ p: 1.2, borderRadius: 2, bgcolor: '#fff8e1', border: '1px solid #ffb300', mb: 0.5 }}>
+              <Typography variant="body2" sx={{ color: '#e65100', fontSize: '0.82rem' }}>
+                🌧️ <strong>יום גשום צפוי</strong> — שקול פעילות מקורה:
+                מוזיאונים, שווקים מקורים, טעימות יין, ספא
+              </Typography>
+            </Box>
+          )}
           {timePeriods.map(({ time, content }) => (
             <Box key={time} display="flex" gap={1.5} alignItems="flex-start">
               <Typography variant="body2" sx={{ minWidth: 70, fontWeight: 600, color: '#667eea', flexShrink: 0 }}>
@@ -159,6 +184,17 @@ export default function AIItineraryGenerator({ destination, preferences }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
+  const [weather, setWeather] = useState([]);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+
+  useEffect(() => {
+    if (!itinerary || !destination) return;
+    setWeatherLoading(true);
+    fetchTripWeather(destination, preferences?.startDate, itinerary.days?.length)
+      .then(data => setWeather(data || []))
+      .catch(() => setWeather([]))
+      .finally(() => setWeatherLoading(false));
+  }, [itinerary, destination, preferences?.startDate]);
 
   const generate = async () => {
     if (!destination) return;
@@ -329,7 +365,8 @@ export default function AIItineraryGenerator({ destination, preferences }) {
             )}
 
             {itinerary.days?.map((day, i) => (
-              <DayCard key={day.day} day={day} defaultExpanded={i === 0} />
+              <DayCard key={day.day} day={day} defaultExpanded={i === 0}
+                       weatherInfo={weather[i]} weatherLoading={weatherLoading} />
             ))}
 
             {itinerary.mustSee?.length > 0 && (
