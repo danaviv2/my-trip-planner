@@ -22,7 +22,8 @@ import {
   TableRow,
   Grid,
   Tabs,
-  Tab
+  Tab,
+  Toolbar
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { FacebookShareButton, TwitterShareButton, EmailShareButton } from 'react-share';
@@ -3315,6 +3316,7 @@ const InviteButton = () => {
           <Box className="app" sx={{ p: { xs: '8px 8px calc(70px + env(safe-area-inset-bottom)) 8px', md: '20px' } }} role="main" aria-label="אפליקציית תכנון טיולים">
             {/* רכיב Header שמכיל את הניווט לדפים השונים */}
             <Header />
+            <Toolbar /> {/* spacer — מונע מהתוכן להיות מוסתר מתחת ל-AppBar הקבוע */}
 
             {/* רכיב הנתיבים החדש שיטפל בניתוב לדפים השונים */}
             <AppRoutes />

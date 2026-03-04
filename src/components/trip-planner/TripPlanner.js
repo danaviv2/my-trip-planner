@@ -249,7 +249,7 @@ const TripPlanner = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { tripData, tripPlan, updateTripPlan } = useTripContext();
+  const { tripData, tripPlan, updateTripPlan, planTripWithAI, tripLoading, selectedDayIndex, setSelectedDayIndex } = useTripContext();
   const { saveTripToList: saveTrip } = useTripSave();
   const { userPreferences } = useUserPreferences();
   
@@ -264,7 +264,7 @@ const TripPlanner = () => {
   
   // מידע בסיסי על הטיול
   const [destination, setDestination] = useState(destinationParam || tripData?.destination || '');
-  const [tripDays, setTripDays] = useState(tripPlan?.duration || 5);
+  const [tripDays, setTripDays] = useState(tripPlan?.duration || Number(userPreferences?.days) || 5);
   const [startDate, setStartDate] = useState(
     tripPlan?.startDate ? new Date(tripPlan.startDate) : new Date()
   );
@@ -668,7 +668,7 @@ const TripPlanner = () => {
       setLoading(false);
       
       setTimeout(() => {
-        navigate('/');
+        navigate('/my-trips');
       }, 1500);
     } catch (error) {
       console.error('שגיאה בשמירת הטיול:', error);
@@ -761,35 +761,34 @@ const TripPlanner = () => {
     setActiveFilters([...activeFilters, categoryId]);
   };
 
-  // יצירת המלצות AI
-  const generateAiSuggestions = () => {
-    setIsGeneratingAiSuggestions(true);
-    
-    try {
-      setTimeout(() => {
-        const mockSuggestions = [
-          {
-            id: 'ai-1',
-            title: 'סיור בוקר במוזיאונים',
-            description: 'ביקור בלובר בבוקר כשפחות עמוס, ואחריו ארוחת צהריים בגני טוילרי הסמוכים.',
-            attractions: [2],
-            dayIndex: 0
-          },
-        ];
-        
-        setAiSuggestions(mockSuggestions);
-        setShowAiSuggestions(true);
-        setIsGeneratingAiSuggestions(false);
-        
-        setSnackbarMessage('נוצרו המלצות חדשות');
-        setSnackbarOpen(true);
-      }, 2000);
-    } catch (error) {
-      console.error('שגיאה ביצירת המלצות:', error);
-      setIsGeneratingAiSuggestions(false);
-      
-      setSnackbarMessage('שגיאה ביצירת המלצות');
+  // יצירת מסלול מפורט עם AI
+  const generateAiSuggestions = async () => {
+    if (!destination) {
+      setSnackbarMessage('נא להזין יעד לפני יצירת המסלול');
       setSnackbarOpen(true);
+      return;
+    }
+    setIsGeneratingAiSuggestions(true);
+    try {
+      const result = await planTripWithAI({
+        destination,
+        days: tripDays,
+        interests,
+        budget: userPreferences?.budget || 'medium',
+      });
+      if (result.success) {
+        setSnackbarMessage('המסלול נוצר בהצלחה! 🎉');
+        setSelectedDayIndex(0);
+      } else {
+        setSnackbarMessage(result.error || 'שגיאה ביצירת המסלול');
+      }
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('שגיאה ביצירת מסלול:', error);
+      setSnackbarMessage('שגיאה ביצירת המסלול');
+      setSnackbarOpen(true);
+    } finally {
+      setIsGeneratingAiSuggestions(false);
     }
   };
 
@@ -1418,32 +1417,32 @@ const TripPlanner = () => {
   );
 
   // שלב 3 - לוח זמנים
-  const renderItineraryStep = () => (
-    <Box>
-      <Typography variant="h6" gutterBottom>
-        תכנון לוח זמנים
-      </Typography>
-      
-      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+  const renderItineraryStep = () => {
+    const days = tripPlan?.dailyItinerary || [];
+    const currentDay = days[selectedDayIndex];
+
+    return (
+      <Box>
+        <Typography variant="h6" gutterBottom>
+          תכנון לוח זמנים
+        </Typography>
+
+        {/* כפתור יצירת מסלול */}
+        <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
           <Button
             variant="contained"
-            color="primary"
-            startIcon={<AIIcon />}
+            startIcon={isGeneratingAiSuggestions ? <CircularProgress size={18} color="inherit" /> : <AIIcon />}
             onClick={generateAiSuggestions}
-            disabled={isGeneratingAiSuggestions}
-            sx={{ mr: 1 }}
+            disabled={isGeneratingAiSuggestions || !destination}
+            sx={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              px: 3,
+              fontWeight: 700,
+            }}
           >
-            {isGeneratingAiSuggestions ? (
-              <>
-                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-                מייצר המלצות...
-              </>
-            ) : (
-              'המלצות חכמות'
-            )}
+            {isGeneratingAiSuggestions ? 'מייצר מסלול...' : days.length > 0 ? 'צור מסלול מחדש' : 'צור מסלול חכם'}
           </Button>
-          
+
           <Button
             variant={showPackingList ? 'contained' : 'outlined'}
             color="secondary"
@@ -1452,15 +1451,142 @@ const TripPlanner = () => {
           >
             רשימת ציוד
           </Button>
+
+          {!destination && (
+            <Typography variant="caption" color="error">
+              יש להזין יעד בשלב 1 תחילה
+            </Typography>
+          )}
         </Box>
+
+        {/* מסלול לפי ימים */}
+        {days.length > 0 ? (
+          <Box>
+            {/* לשוניות ימים */}
+            <Tabs
+              value={selectedDayIndex}
+              onChange={(_, v) => setSelectedDayIndex(v)}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
+            >
+              {days.map((day, i) => (
+                <Tab
+                  key={i}
+                  label={`יום ${day.day}`}
+                  sx={{ fontWeight: selectedDayIndex === i ? 700 : 400, minWidth: 80 }}
+                />
+              ))}
+            </Tabs>
+
+            {/* תוכן היום הנבחר */}
+            {currentDay && (
+              <Box>
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    {currentDay.title}
+                  </Typography>
+                  {currentDay.theme && (
+                    <Typography variant="body2" color="text.secondary">
+                      {currentDay.theme}
+                    </Typography>
+                  )}
+                </Box>
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  {(currentDay.activities || []).map((activity, i) => (
+                    <Paper
+                      key={i}
+                      elevation={1}
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        borderRight: '4px solid',
+                        borderRightColor:
+                          activity.type === 'food' ? '#ff9800'
+                          : activity.type === 'attraction' || activity.type === 'museum' ? '#667eea'
+                          : activity.type === 'nature' || activity.type === 'beach' ? '#43a047'
+                          : activity.type === 'nightlife' ? '#7b1fa2'
+                          : '#90a4ae',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="h6" component="span">{activity.emoji || '📍'}</Typography>
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight={700}>
+                              {activity.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {activity.time} · {activity.duration}
+                            </Typography>
+                          </Box>
+                        </Box>
+                        {activity.price && (
+                          <Typography variant="caption" sx={{ bgcolor: '#f5f5f5', px: 1, py: 0.3, borderRadius: 1, whiteSpace: 'nowrap' }}>
+                            {activity.price}
+                          </Typography>
+                        )}
+                      </Box>
+
+                      {activity.description && (
+                        <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+                          {activity.description}
+                        </Typography>
+                      )}
+
+                      {activity.tips && (
+                        <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: '#667eea', fontStyle: 'italic' }}>
+                          💡 {activity.tips}
+                        </Typography>
+                      )}
+
+                      {activity.address && (
+                        <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: 'text.disabled' }}>
+                          📍 {activity.address}
+                        </Typography>
+                      )}
+                    </Paper>
+                  ))}
+                </Box>
+              </Box>
+            )}
+          </Box>
+        ) : (
+          /* מצב ריק — קריאה לפעולה */
+          <Box
+            sx={{
+              textAlign: 'center',
+              py: 6,
+              px: 3,
+              bgcolor: '#f8f9fa',
+              borderRadius: 3,
+              border: '2px dashed #dee2e6',
+            }}
+          >
+            <Typography variant="h2" sx={{ mb: 1 }}>✈️</Typography>
+            <Typography variant="h6" gutterBottom>
+              המסלול שלך ממתין להיווצר
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              לחץ על "צור מסלול חכם" ו-AI יבנה לך תכנית יומית מפורטת
+              {destination ? ` ל${destination}` : ''}
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AIIcon />}
+              onClick={generateAiSuggestions}
+              disabled={isGeneratingAiSuggestions || !destination}
+              sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+            >
+              {isGeneratingAiSuggestions ? 'מייצר...' : 'צור מסלול חכם'}
+            </Button>
+          </Box>
+        )}
       </Box>
-      
-      <Typography variant="body2" color="text.secondary">
-        תוכל להוסיף פעילויות מהרשימה או לגרור אותן בין ימים שונים
-      </Typography>
-    </Box>
-  );
-  
+    );
+  };
+
   // רינדור ראשי
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>

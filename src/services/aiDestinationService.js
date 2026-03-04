@@ -1,3 +1,5 @@
+import { jsonrepair } from 'jsonrepair';
+
 const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY;
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
@@ -164,14 +166,9 @@ Required JSON structure:
     let parsed;
     try {
       parsed = JSON.parse(cleaned);
-    } catch (jsonErr) {
-      console.warn('⚠️ JSON parse failed, chars 0-5:', [...cleaned.substring(0,5)].map(c=>c.charCodeAt(0)));
-      // הסר תווי שליטה ותווים בלתי חוקיים ב-JSON
-      const fixed = cleaned
-        .replace(/[\uFEFF\u200B\u200C\u200D\u00AD\u2060]/g, '')
-        // eslint-disable-next-line no-control-regex
-        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-      parsed = JSON.parse(fixed);
+    } catch {
+      console.warn('⚠️ JSON parse failed, trying jsonrepair...');
+      parsed = JSON.parse(jsonrepair(cleaned));
     }
 
     // תמונות דינמיות לפי seed של שם היעד

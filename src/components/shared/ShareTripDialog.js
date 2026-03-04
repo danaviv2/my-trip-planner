@@ -138,7 +138,7 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
         PaperProps={{ sx: { borderRadius: 3 } }}
       >
         <DialogTitle sx={{ pr: 6, pb: 1 }}>
-          <Typography variant="h6" fontWeight={700}>
+          <Typography variant="h6" component="span" fontWeight={700}>
             {displayLabel ? `${t('share.title')} — ${displayLabel}` : t('share.title')}
           </Typography>
           <IconButton

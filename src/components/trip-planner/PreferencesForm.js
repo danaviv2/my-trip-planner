@@ -49,7 +49,12 @@ const { userPreferences, updateLocation, updateBudget, updateDays, updateStartDa
       hasChildren,
       specialNeeds
     });
-    planTripWithAI();
+    planTripWithAI({
+      destination: userPreferences.location,
+      days: Number(userPreferences.days) || 5,
+      interests: userPreferences.themes || [],
+      budget: userPreferences.budget || 'medium',
+    });
   };
   
   return (

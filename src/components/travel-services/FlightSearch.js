@@ -1,222 +1,191 @@
 import React, { useState } from 'react';
 import {
-  Box,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  Grid,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  ToggleButtonGroup,
-  ToggleButton
+  Box, Paper, Typography, TextField, Button, Grid,
+  ToggleButtonGroup, ToggleButton, Alert, Divider
 } from '@mui/material';
 import FlightIcon from '@mui/icons-material/Flight';
-import SearchIcon from '@mui/icons-material/Search';
-import { useTranslation } from 'react-i18next';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+
+const BOOKING_SITES = [
+  {
+    name: 'Google Flights',
+    color: '#4285F4',
+    logo: '✈️',
+    getUrl: ({ origin, destination, departureDate, returnDate, passengers, tripType }) => {
+      const q = `flights from ${origin || 'Tel Aviv'} to ${destination || ''}${departureDate ? ` on ${departureDate}` : ''}`;
+      return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}&curr=ILS`;
+    }
+  },
+  {
+    name: 'Skyscanner',
+    color: '#00B2A9',
+    logo: '🔍',
+    getUrl: ({ origin, destination, departureDate, returnDate, passengers, tripType }) => {
+      const dep = departureDate ? departureDate.replace(/-/g, '') : '';
+      const ret = returnDate ? returnDate.replace(/-/g, '') : '';
+      const originSlug = (origin || 'tlv').toLowerCase().replace(/\s+/g, '-');
+      const destSlug = (destination || '').toLowerCase().replace(/\s+/g, '-');
+      const retPart = tripType === 'roundtrip' && ret ? `/${ret}` : '';
+      return `https://www.skyscanner.co.il/transport/flights/${originSlug}/${destSlug}/${dep}${retPart}/?adults=${passengers}&currency=ILS`;
+    }
+  },
+  {
+    name: 'Kayak',
+    color: '#FF690F',
+    logo: '🚣',
+    getUrl: ({ origin, destination, departureDate, returnDate, passengers, tripType }) => {
+      const dep = departureDate ? departureDate.replace(/-/g, '') : '';
+      const ret = returnDate ? returnDate.replace(/-/g, '') : '';
+      const retPart = tripType === 'roundtrip' && ret ? `/${ret}` : '';
+      return `https://www.kayak.com/flights/${origin || 'TLV'}-${destination || ''}/${dep}${retPart}/${passengers}adults?currency=ILS`;
+    }
+  },
+];
 
 const FlightSearch = () => {
-  const { t } = useTranslation();
   const [tripType, setTripType] = useState('roundtrip');
-  const [origin, setOrigin] = useState('');
+  const [origin, setOrigin] = useState('תל אביב');
   const [destination, setDestination] = useState('');
   const [departureDate, setDepartureDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
   const [passengers, setPassengers] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [flights, setFlights] = useState([]);
+  const [searched, setSearched] = useState(false);
+
+  const params = { origin, destination, departureDate, returnDate, passengers, tripType };
 
   const handleSearch = () => {
-    setLoading(true);
-    
-    setTimeout(() => {
-      const mockFlights = [
-        {
-          id: 1,
-          airline: 'El Al',
-          origin: origin || 'Tel Aviv',
-          destination: destination || 'Paris',
-          departure: '08:00',
-          arrival: '12:30',
-          duration: '4h 30m',
-          price: 1200,
-          direct: true
-        },
-        {
-          id: 2,
-          airline: 'Wizz Air',
-          origin: origin || 'Tel Aviv',
-          destination: destination || 'Paris',
-          departure: '14:15',
-          arrival: '18:45',
-          duration: '4h 30m',
-          price: 890,
-          direct: true
-        },
-        {
-          id: 3,
-          airline: 'Turkish Airlines',
-          origin: origin || 'Tel Aviv',
-          destination: destination || 'Paris',
-          departure: '06:30',
-          arrival: '14:20',
-          duration: '7h 50m',
-          price: 750,
-          direct: false
-        }
-      ];
-      
-      setFlights(mockFlights);
-      setLoading(false);
-    }, 1500);
+    if (!destination) return;
+    setSearched(true);
+  };
+
+  const openSite = (site) => {
+    window.open(site.getUrl(params), '_blank', 'noopener,noreferrer');
   };
 
   return (
     <Box>
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-          <FlightIcon sx={{ mr: 1 }} />
-          {t('travelServices.search_flights_title')}
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
+        <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <FlightIcon />
+          חיפוש טיסות
         </Typography>
 
-        <Box sx={{ mb: 3 }}>
+        <Alert severity="info" sx={{ mb: 2 }}>
+          מחירי הטיסות מוצגים ישירות דרך אתרי ההזמנה — תמיד עדכניים ואמיתיים
+        </Alert>
+
+        <Box sx={{ mb: 2 }}>
           <ToggleButtonGroup
             value={tripType}
             exclusive
-            onChange={(e, newValue) => newValue && setTripType(newValue)}
+            onChange={(e, v) => v && setTripType(v)}
             size="small"
           >
-            <ToggleButton value="roundtrip">{t('travelServices.roundtrip')}</ToggleButton>
-            <ToggleButton value="oneway">{t('travelServices.oneway')}</ToggleButton>
+            <ToggleButton value="roundtrip">הלוך ושוב</ToggleButton>
+            <ToggleButton value="oneway">כיוון אחד</ToggleButton>
           </ToggleButtonGroup>
         </Box>
 
         <Grid container spacing={2}>
           <Grid item xs={12} md={3}>
             <TextField
-              fullWidth
-              label={t('travelServices.origin')}
+              fullWidth label="מוצא"
               value={origin}
               onChange={(e) => setOrigin(e.target.value)}
-              placeholder="Tel Aviv"
+              placeholder="תל אביב"
             />
           </Grid>
-
           <Grid item xs={12} md={3}>
             <TextField
-              fullWidth
-              label={t('travelServices.destination')}
+              fullWidth label="יעד"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              placeholder="Paris"
+              placeholder="פריז, לוס אנג'לס..."
             />
           </Grid>
-
           <Grid item xs={12} md={2}>
             <TextField
-              fullWidth
-              label={t('travelServices.departure_date')}
-              type="date"
+              fullWidth label="תאריך יציאה" type="date"
               value={departureDate}
               onChange={(e) => setDepartureDate(e.target.value)}
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-
           {tripType === 'roundtrip' && (
             <Grid item xs={12} md={2}>
               <TextField
-                fullWidth
-                label={t('travelServices.return_date')}
-                type="date"
+                fullWidth label="תאריך חזרה" type="date"
                 value={returnDate}
                 onChange={(e) => setReturnDate(e.target.value)}
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
           )}
-
-          <Grid item xs={12} md={tripType === 'roundtrip' ? 1 : 2}>
+          <Grid item xs={6} md={1}>
             <TextField
-              fullWidth
-              label={t('travelServices.passengers')}
-              type="number"
+              fullWidth label="נוסעים" type="number"
               value={passengers}
-              onChange={(e) => setPassengers(parseInt(e.target.value))}
+              onChange={(e) => setPassengers(Math.max(1, parseInt(e.target.value) || 1))}
               inputProps={{ min: 1, max: 9 }}
             />
           </Grid>
-
-          <Grid item xs={12} md={tripType === 'roundtrip' ? 1 : 2}>
+          <Grid item xs={6} md={tripType === 'roundtrip' ? 1 : 3}>
             <Button
-              fullWidth
-              variant="contained"
-              size="large"
+              fullWidth variant="contained" size="large"
               onClick={handleSearch}
-              disabled={loading}
-              startIcon={loading ? <CircularProgress size={20} /> : <SearchIcon />}
-              sx={{ height: '56px' }}
+              disabled={!destination}
+              sx={{ height: '56px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
             >
-              {loading ? t('travelServices.searching') : t('travelServices.search_btn')}
+              חפש
             </Button>
           </Grid>
         </Grid>
       </Paper>
 
-      {flights.length > 0 && (
+      {/* תוצאות — קישורים לאתרי הזמנה אמיתיים */}
+      {searched && destination && (
         <Box>
-          {flights.map((flight) => (
-            <Card key={flight.id} sx={{ mb: 2 }}>
-              <CardContent>
-                <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} md={2}>
-                    <Typography variant="h6">{flight.airline}</Typography>
-                    <Chip
-                      label={flight.direct ? t('travelServices.direct') : t('travelServices.one_stop')}
-                      size="small"
-                      color={flight.direct ? 'success' : 'default'}
-                    />
-                  </Grid>
-                  
-                  <Grid item xs={12} md={6}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around' }}>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="h5">{flight.departure}</Typography>
-                        <Typography variant="body2" color="text.secondary">{flight.origin}</Typography>
-                      </Box>
-                      
-                      <Box sx={{ textAlign: 'center', mx: 2 }}>
-                        <FlightIcon sx={{ transform: 'rotate(90deg)' }} />
-                        <Typography variant="caption" display="block">{flight.duration}</Typography>
-                      </Box>
-                      
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="h5">{flight.arrival}</Typography>
-                        <Typography variant="body2" color="text.secondary">{flight.destination}</Typography>
-                      </Box>
-                    </Box>
-                  </Grid>
-                  
-                  <Grid item xs={12} md={2}>
-                    <Typography variant="h5" color="primary" align="center">
-                      ${flight.price}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block" align="center">
-                      {t('travelServices.per_passenger')}
-                    </Typography>
-                  </Grid>
-
-                  <Grid item xs={12} md={2}>
-                    <Button variant="contained" fullWidth>
-                      {t('travelServices.select_btn')}
-                    </Button>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          ))}
+          <Typography variant="h6" gutterBottom>
+            בחר אתר להשוואת מחירים:
+          </Typography>
+          <Grid container spacing={2}>
+            {BOOKING_SITES.map((site) => (
+              <Grid item xs={12} md={4} key={site.name}>
+                <Paper
+                  sx={{
+                    p: 3, borderRadius: 3, cursor: 'pointer', textAlign: 'center',
+                    border: '2px solid transparent',
+                    transition: 'all 0.2s',
+                    '&:hover': { borderColor: site.color, transform: 'translateY(-2px)', boxShadow: 4 }
+                  }}
+                  onClick={() => openSite(site)}
+                >
+                  <Typography variant="h3" sx={{ mb: 1 }}>{site.logo}</Typography>
+                  <Typography variant="h6" fontWeight={700} sx={{ color: site.color }}>
+                    {site.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    {origin} → {destination}
+                    {departureDate && ` · ${new Date(departureDate).toLocaleDateString('he-IL')}`}
+                    {tripType === 'roundtrip' && returnDate && ` ↩ ${new Date(returnDate).toLocaleDateString('he-IL')}`}
+                    {` · ${passengers} נוסע${passengers > 1 ? 'ים' : ''}`}
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    endIcon={<OpenInNewIcon />}
+                    sx={{ background: site.color }}
+                    onClick={(e) => { e.stopPropagation(); openSite(site); }}
+                  >
+                    חפש ב-{site.name}
+                  </Button>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="caption" color="text.secondary">
+            * המחירים מוצגים ישירות על ידי אתרי ההזמנה ומשקפים את המחירים בזמן אמת
+          </Typography>
         </Box>
       )}
     </Box>
