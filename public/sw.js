@@ -1,4 +1,5 @@
-const CACHE_NAME = 'trip-planner-v1';
+const CACHE_NAME = 'trip-planner-v3';
+const FONTS_CACHE = 'trip-planner-fonts-v1';
 
 const STATIC_ASSETS = [
   '/',
@@ -6,6 +7,7 @@ const STATIC_ASSETS = [
   '/manifest.json',
   '/logo192.png',
   '/logo512.png',
+  '/favicon.png',
   '/favicon.ico',
 ];
 
@@ -21,24 +23,45 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+      Promise.all(
+        keys
+          .filter((k) => k !== CACHE_NAME && k !== FONTS_CACHE)
+          .map((k) => caches.delete(k))
+      )
     )
   );
   self.clients.claim();
 });
 
-// בקשות — Network First לניווט, Cache First לשאר
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-
-  // דלג על בקשות שאינן GET (כגון POST)
   if (request.method !== 'GET') return;
 
-  // דלג על בקשות לשירותים חיצוניים (Google Maps, Fonts וכו')
   const url = new URL(request.url);
+
+  // Google Fonts — Stale While Revalidate
+  if (
+    url.hostname === 'fonts.googleapis.com' ||
+    url.hostname === 'fonts.gstatic.com'
+  ) {
+    event.respondWith(
+      caches.open(FONTS_CACHE).then((cache) =>
+        cache.match(request).then((cached) => {
+          const fetchPromise = fetch(request).then((response) => {
+            cache.put(request, response.clone());
+            return response;
+          });
+          return cached || fetchPromise;
+        })
+      )
+    );
+    return;
+  }
+
+  // דלג על בקשות חיצוניות אחרות (API, Firebase וכו')
   if (url.origin !== self.location.origin) return;
 
-  // ניווט בין דפים — Network First עם fallback ל-index.html
+  // ניווט — Network First עם fallback ל-index.html (תמיכה ב-React Router)
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -52,7 +75,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // נכסים סטטיים — Cache First
+  // JS / CSS / תמונות — Cache First, ואם אין ברשת שמור לקאש
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
@@ -62,6 +85,11 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return response;
+      }).catch(() => {
+        // אם זו בקשת ניווט שנכשלה — החזר index.html
+        if (request.destination === 'document') {
+          return caches.match('/index.html');
+        }
       });
     })
   );
