@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import useAppUpdate from './hooks/useAppUpdate';
 import {
   Typography,
   TextField,
@@ -23,7 +24,9 @@ import {
   Grid,
   Tabs,
   Tab,
-  Toolbar
+  Toolbar,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { FacebookShareButton, TwitterShareButton, EmailShareButton } from 'react-share';
@@ -183,6 +186,7 @@ const mapContainerStyle = {
   boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
 };
 function App() {
+  const { updateAvailable, applyUpdate } = useAppUpdate();
   const navigate = useNavigate();
   const location = useLocation();
   const isHomePage = location.pathname === '/';
@@ -3316,13 +3320,34 @@ const InviteButton = () => {
           <Box className="app" sx={{ p: { xs: '8px 8px calc(70px + env(safe-area-inset-bottom)) 8px', md: '20px' } }} role="main" aria-label="אפליקציית תכנון טיולים">
             {/* רכיב Header שמכיל את הניווט לדפים השונים */}
             <Header />
-            <Toolbar /> {/* spacer — מונע מהתוכן להיות מוסתר מתחת ל-AppBar הקבוע */}
+            {/* spacer — גובה AppBar + safe-area-inset-top (notch / Dynamic Island) */}
+            <Box sx={{ height: { xs: 'calc(56px + env(safe-area-inset-top))', md: '64px' } }} />
 
             {/* רכיב הנתיבים החדש שיטפל בניתוב לדפים השונים */}
             <AppRoutes />
 
             {/* AI Travel Assistant - גלובלי בכל הדפים */}
             <TravelAIChat />
+
+            {/* באנר עדכון גרסה */}
+            <Snackbar
+              open={updateAvailable}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+              sx={{ mb: { xs: 8, md: 2 } }}
+            >
+              <Alert
+                severity="info"
+                variant="filled"
+                action={
+                  <Button color="inherit" size="small" fontWeight={700} onClick={applyUpdate}>
+                    רענן עכשיו
+                  </Button>
+                }
+                sx={{ width: '100%', bgcolor: '#667eea', alignItems: 'center' }}
+              >
+                ✨ גרסה חדשה זמינה!
+              </Alert>
+            </Snackbar>
 
             {isHomePage && <>
             <Paper elevation={6} sx={{ p: 3, m: '20px auto', maxWidth: '900px', bgcolor: '#ffffff', borderRadius: '16px', boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)' }} role="region" aria-label="אזור תכנון טיולים">
