@@ -169,6 +169,7 @@ Required JSON structure:
       // הסר תווי שליטה ותווים בלתי חוקיים ב-JSON
       const fixed = cleaned
         .replace(/[\uFEFF\u200B\u200C\u200D\u00AD\u2060]/g, '')
+        // eslint-disable-next-line no-control-regex
         .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
       parsed = JSON.parse(fixed);
     }
