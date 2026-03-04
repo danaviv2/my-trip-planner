@@ -15,6 +15,9 @@ root.render(
   </React.StrictMode>
 );
 
+// הסתר splash screen אחרי שReact סיים לרנדר
+if (window.__hideSplash) window.__hideSplash();
+
 reportWebVitals();
 
 // רישום Service Worker לתמיכת PWA — רק בפרודקשן
