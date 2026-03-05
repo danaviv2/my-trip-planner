@@ -30,9 +30,9 @@ const TripCard = ({ trip, onDelete, onShare }) => {
   const { currentLang } = useLanguage();
 
   const destination = trip.endPoint || trip.destination || trip.location || t('myTrips.unknownDest');
-  const days = trip.days || trip.duration || trip.userPreferences?.days || null;
+  const days = trip.days || trip.duration || trip.userPreferences?.days || trip.dailyItinerary?.length || null;
   const budget = trip.budget || trip.userPreferences?.budget || null;
-  const startDate = trip.startDate || trip.userPreferences?.startDate || null;
+  const startDate = trip.startDate || trip.userPreferences?.startDate || trip.date || null;
 
   const formatDate = (iso) => {
     if (!iso) return null;
@@ -131,9 +131,29 @@ const MyTripsPage = () => {
   const navigate = useNavigate();
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [shareTarget, setShareTarget] = useState(null);
+  const [tripLogs, setTripLogs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('tripLogs') || '[]'); } catch { return []; }
+  });
+
+  // מיזוג savedTrips + tripLogs (ללא כפילויות)
+  const savedIds = new Set(savedTrips.map(t => String(t.id)));
+  const logsNotInSaved = tripLogs.filter(l => !savedIds.has(String(l.id)));
+  const allTrips = [...savedTrips, ...logsNotInSaved].sort((a, b) =>
+    new Date(b.savedAt || b.date || 0) - new Date(a.savedAt || a.date || 0)
+  );
 
   const handleDeleteConfirm = () => {
-    if (deleteTarget !== null) { deleteTrip(deleteTarget); setDeleteTarget(null); }
+    if (deleteTarget === null) return;
+    // מחק מ-savedTrips אם שם
+    if (savedIds.has(String(deleteTarget))) {
+      deleteTrip(deleteTarget);
+    } else {
+      // מחק מ-tripLogs
+      const updated = tripLogs.filter(l => l.id !== deleteTarget);
+      setTripLogs(updated);
+      localStorage.setItem('tripLogs', JSON.stringify(updated));
+    }
+    setDeleteTarget(null);
   };
 
   return (
@@ -148,7 +168,7 @@ const MyTripsPage = () => {
             <Typography variant="h4" fontWeight={800} color="white">{t('myTrips.title')}</Typography>
             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
               {user?.displayName || user?.email}
-              {savedTrips.length > 0 && ` · ${t('myTrips.savedCount', { count: savedTrips.length })}`}
+              {allTrips.length > 0 && ` · ${t('myTrips.savedCount', { count: allTrips.length })}`}
             </Typography>
           </Box>
           <Button variant="contained" size="large" startIcon={<AddIcon />}
@@ -159,18 +179,18 @@ const MyTripsPage = () => {
         </Box>
 
         <Box sx={{ bgcolor: 'white', borderRadius: 3, p: { xs: 2, md: 4 }, minHeight: 400 }}>
-          {savedTrips.length === 0 ? <EmptyState /> : (
+          {allTrips.length === 0 ? <EmptyState /> : (
             <>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h6" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <FlightIcon color="primary" /> {t('myTrips.allTrips')}
+                  <FlightIcon color="primary" /> {t('myTrips.allTrips')} ({allTrips.length})
                 </Typography>
                 <Button variant="outlined" startIcon={<AddIcon />} href="/trip-planner">
                   {t('myTrips.newTrip')}
                 </Button>
               </Box>
               <Grid container spacing={3}>
-                {savedTrips.map((trip) => (
+                {allTrips.map((trip) => (
                   <Grid item xs={12} sm={6} md={4} key={trip.id}>
                     <TripCard trip={trip} onDelete={setDeleteTarget} onShare={setShareTarget} />
                   </Grid>

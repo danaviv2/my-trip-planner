@@ -33,7 +33,6 @@ import { v4 as uuidv4 } from 'uuid';
 import ErrorBoundary from './ErrorBoundary'; // ודא שקובץ זה קיים בנתיב src/ErrorBoundary.js
 import './style.css';
 import WeatherWidget from "./components/maps/WeatherWidget";
-import PriceComparison from "./components/maps/PriceComparison";
 import HotelSearch from './components/travel-services/HotelSearch';
 import FlightSearch from './components/travel-services/FlightSearch';
 import CarRentalSearch from './components/travel-services/CarRentalSearch';
@@ -2309,33 +2308,7 @@ const getStopColor = (index) => {
   <WeatherWidget location={userPreferences.location} />
 </Paper>
 
-        {/* השוואת מחירים */}
-        <Paper elevation={3} sx={{ 
-          p: 3, 
-          background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-          color: 'white',
-          mb: 3
-        }}>
-          <Typography variant="h6" sx={{ 
-            display: 'flex',
-            alignItems: 'center',
-            mb: 2,
-            fontWeight: 'bold'
-          }}>
-            <i className="material-icons" style={{ marginRight: '8px' }}>attach_money</i>
-            �� השוואת מחירים
-          </Typography>
-          <PriceComparison 
-            origin="תל אביב"
-            destination={userPreferences.location}
-            dates={{
-              startDate: userPreferences.startDate,
-              endDate: new Date(new Date(userPreferences.startDate).getTime() + userPreferences.days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-            }}
-          />
-        </Paper>
-
-        {tripPlan.dailyItinerary.length > 0 ? (
+                {tripPlan.dailyItinerary.length > 0 ? (
           viewMode === 'detailed' ? (
             // תצוגה מפורטת - תצוגת לוח זמנים מלאה
             tripPlan.dailyItinerary.map((day) => (
@@ -3556,9 +3529,9 @@ const InviteButton = () => {
                         <Typography sx={{ color: '#666' }}>תאריך: {new Date(log.date).toLocaleDateString()}</Typography>
                         <Typography sx={{ color: '#666' }}>התחלה: {log.startPoint}</Typography>
                         <Typography sx={{ color: '#666' }}>יעד: {log.endPoint}</Typography>
-                        <Typography sx={{ color: '#666' }}>תחנות ביניים: {log.waypoints.join(', ')}</Typography>
+                        <Typography sx={{ color: '#666' }}>תחנות ביניים: {(log.waypoints || []).join(', ')}</Typography>
                         <Box sx={{ mt: 1, display: 'flex', gap: 1 }} role="group" aria-label="פעולות על יומן טיול">
-                          <Button variant="outlined" color="secondary" onClick={() => editTripLog(log.id, { startPoint: prompt('עדכן נקודת התחלה:', log.startPoint) || log.startPoint, endPoint: prompt('עדכן יעד:', log.endPoint) || log.endPoint, waypoints: prompt('עדכן תחנות ביניים (הפרד עם פסיק):', log.waypoints.join(', '))?.split(', ') || log.waypoints })} sx={{ borderRadius: '8px' }} aria-label="ערוך יומן טיול">
+                          <Button variant="outlined" color="secondary" onClick={() => editTripLog(log.id, { startPoint: prompt('עדכן נקודת התחלה:', log.startPoint) || log.startPoint, endPoint: prompt('עדכן יעד:', log.endPoint) || log.endPoint, waypoints: prompt('עדכן תחנות ביניים (הפרד עם פסיק):', (log.waypoints || []).join(', '))?.split(', ') || log.waypoints })} sx={{ borderRadius: '8px' }} aria-label="ערוך יומן טיול">
                             ערוך
                           </Button>
                           <Button variant="outlined" color="error" onClick={() => deleteTripLog(log.id)} sx={{ borderRadius: '8px' }} aria-label="מחק יומן טיול">

@@ -60,7 +60,23 @@ export const TripSaveProvider = ({ children }) => {
     localStorage.setItem('currentTrip', JSON.stringify(tripData));
   };
 
-  const saveTripToList = async (tripData) => {
+  const saveTripToList = async (tripData, existingId = null) => {
+    if (existingId) {
+      // עדכון טיול קיים
+      const updated = savedTrips.map(t =>
+        String(t.id) === String(existingId)
+          ? { ...t, ...tripData, savedAt: new Date().toISOString() }
+          : t
+      );
+      setSavedTrips(updated);
+      localStorage.setItem('savedTrips', JSON.stringify(updated));
+      const updatedTrip = updated.find(t => String(t.id) === String(existingId));
+      if (user && updatedTrip) {
+        try { await fsaveTrip(user.uid, updatedTrip); } catch {}
+      }
+      return updatedTrip;
+    }
+
     const trip = {
       id: Date.now(),
       ...tripData,

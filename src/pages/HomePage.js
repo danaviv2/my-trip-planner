@@ -33,12 +33,6 @@ const HomePage = () => {
   const [shareTarget, setShareTarget] = useState(null);
   const [shareFeature, setShareFeature] = useState(null);
 
-  const handleSearch = () => {
-    const trimmed = searchQuery.trim();
-    if (trimmed) navigate(`/destination-info/${encodeURIComponent(trimmed)}`);
-    else navigate('/advanced-search');
-  };
-
   const mainFeatures = [
     {
       title: t('home.features.planner.title'),
@@ -96,11 +90,6 @@ const HomePage = () => {
     { name: 'Dubai', emoji: '🏙️', color: '#fa709a' }
   ];
 
-  const statsFeatures = [
-    { icon: '🗺️', title: t('home.stats.smartPlanning.title'), desc: t('home.stats.smartPlanning.desc'), path: '/trip-planner' },
-    { icon: '🔍', title: t('home.stats.advancedSearch.title'), desc: t('home.stats.advancedSearch.desc'), path: '/advanced-search' },
-    { icon: '⛅', title: t('home.stats.realtime.title'), desc: t('home.stats.realtime.desc'), path: '/destination-info' },
-  ];
 
   return (
     <Box sx={{
@@ -168,43 +157,63 @@ const HomePage = () => {
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ mt: { xs: -2, md: -4 }, position: 'relative', zIndex: 2, px: { xs: 2, md: 3 } }}>
+      <Container maxWidth="lg" sx={{ mt: { xs: 3, md: 4 }, position: 'relative', zIndex: 2, px: { xs: 2, md: 3 } }}>
 
-        {/* תיבת חיפוש */}
-        <Paper elevation={8} sx={{ p: { xs: 2.5, md: 4 }, borderRadius: 4, background: 'white', mb: { xs: 3, md: 6 } }}>
-          <Typography variant="h5" fontWeight="bold" mb={2} textAlign="center" sx={{ fontSize: { xs: '1.1rem', md: '1.5rem' } }}>
-            🌍 {t('home.search.title')}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' } }}>
-            <TextField
-              fullWidth
-              placeholder={t('home.search.placeholder')}
-              variant="outlined"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  fontSize: '1.1rem', borderRadius: 2,
-                  '&:hover fieldset': { borderColor: '#667eea' },
-                  '&.Mui-focused fieldset': { borderColor: '#667eea', boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)' }
-                }
-              }}
-            />
-            <Button
-              variant="contained" size="large" startIcon={<SearchIcon />}
-              onClick={handleSearch}
-              sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                px: 4, py: 2, borderRadius: 2, fontSize: '1.1rem', fontWeight: 600,
-                whiteSpace: 'nowrap', transition: 'all 0.2s ease',
-                '&:hover': { transform: 'scale(1.05)', boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)' }
-              }}
-            >
-              {t('home.search.button')}
-            </Button>
+        {/* CTA */}
+        <Box sx={{
+          mb: { xs: 3, md: 6 }, p: { xs: 3, md: 6 }, borderRadius: 4,
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f5576c 100%)',
+          textAlign: 'center', color: 'white', position: 'relative', overflow: 'hidden'
+        }}>
+          <Box sx={{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }} />
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <Typography variant="h3" fontWeight="bold" mb={1.5} sx={{ fontSize: { xs: '1.4rem', md: '3rem' } }}>
+              {t('home.cta.title')}
+            </Typography>
+            <Typography variant="h6" mb={3} sx={{ opacity: 0.9, fontSize: { xs: '0.9rem', md: '1.25rem' } }}>
+              {t('home.cta.subtitle')}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' }, maxWidth: 560, mx: 'auto', mb: 2 }}>
+              <TextField
+                fullWidth
+                placeholder={t('home.search.placeholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && navigate(`/trip-planner${searchQuery.trim() ? `?destination=${encodeURIComponent(searchQuery.trim())}` : ''}`)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: 'rgba(255,255,255,0.15)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: 2,
+                    fontSize: '1.1rem',
+                    color: 'white',
+                    '& fieldset': { borderColor: 'rgba(255,255,255,0.4)' },
+                    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.8)' },
+                    '&.Mui-focused fieldset': { borderColor: 'white' },
+                    '& input::placeholder': { color: 'rgba(255,255,255,0.7)', opacity: 1 },
+                  }
+                }}
+              />
+              <Button
+                variant="contained" size="large"
+                startIcon={<FlightIcon />}
+                onClick={() => navigate(`/trip-planner${searchQuery.trim() ? `?destination=${encodeURIComponent(searchQuery.trim())}` : ''}`)}
+                sx={{
+                  bgcolor: 'white', color: '#667eea', px: { xs: 4, md: 5 }, py: 1.5,
+                  fontSize: '1.1rem', fontWeight: 700, borderRadius: 2,
+                  whiteSpace: 'nowrap', transition: 'all 0.25s ease',
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', transform: 'scale(1.05)', boxShadow: '0 12px 40px rgba(0,0,0,0.2)' }
+                }}
+              >
+                {t('home.cta.button')}
+              </Button>
+            </Box>
           </Box>
-        </Paper>
+        </Box>
 
         {/* כרטיסי ניווט ראשיים */}
         <Grid container spacing={{ xs: 2, md: 4 }} mb={{ xs: 3, md: 8 }}>
@@ -364,73 +373,6 @@ const HomePage = () => {
           </Grid>
         </Paper>
 
-        {/* כרטיסי סטטיסטיקות */}
-        <Grid container spacing={{ xs: 2, md: 4 }} mt={{ xs: 3, md: 6 }}>
-          {statsFeatures.map((feature, index) => (
-            <Grid item xs={12} sm={4} key={index}>
-              <Paper
-                elevation={2}
-                onClick={() => navigate(feature.path)}
-                sx={{
-                  p: { xs: 2.5, md: 4 }, textAlign: 'center', borderRadius: 3,
-                  background: 'white', height: '100%', cursor: 'pointer',
-                  position: 'relative', transition: 'all 0.25s ease',
-                  '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 12px 35px rgba(0,0,0,0.12)' }
-                }}
-              >
-                <Tooltip title={`${t('share.title')} — ${feature.title}`}>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => { e.stopPropagation(); setShareFeature(feature); }}
-                    sx={{
-                      position: 'absolute', top: 8, right: 8, color: 'text.disabled',
-                      '&:hover': { color: '#667eea', bgcolor: 'rgba(102,126,234,0.08)' },
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    <ShareIcon sx={{ fontSize: 16 }} />
-                  </IconButton>
-                </Tooltip>
-                <Typography sx={{ fontSize: { xs: '2rem', md: '3rem' }, mb: 1 }}>{feature.icon}</Typography>
-                <Typography variant="h6" fontWeight="bold" mb={1}>{feature.title}</Typography>
-                <Typography variant="body2" color="text.secondary" lineHeight={1.7}>{feature.desc}</Typography>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-
-        {/* CTA */}
-        <Box sx={{
-          mt: { xs: 4, md: 8 }, p: { xs: 3, md: 6 }, borderRadius: 4,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f5576c 100%)',
-          textAlign: 'center', color: 'white', position: 'relative', overflow: 'hidden'
-        }}>
-          <Box sx={{
-            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)',
-            backgroundSize: '40px 40px',
-          }} />
-          <Box sx={{ position: 'relative', zIndex: 1 }}>
-            <Typography variant="h3" fontWeight="bold" mb={1.5} sx={{ fontSize: { xs: '1.4rem', md: '3rem' } }}>
-              {t('home.cta.title')}
-            </Typography>
-            <Typography variant="h6" mb={3} sx={{ opacity: 0.9, fontSize: { xs: '0.9rem', md: '1.25rem' } }}>
-              {t('home.cta.subtitle')}
-            </Typography>
-            <Button
-              variant="contained" size="large"
-              onClick={() => navigate('/trip-planner')}
-              sx={{
-                bgcolor: 'white', color: '#667eea', px: { xs: 4, md: 6 }, py: { xs: 1.5, md: 2 },
-                fontSize: { xs: '1rem', md: '1.3rem' }, fontWeight: 700, borderRadius: 3,
-                transition: 'all 0.25s ease',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', transform: 'scale(1.08)', boxShadow: '0 12px 40px rgba(0,0,0,0.2)' }
-              }}
-            >
-              {t('home.cta.button')}
-            </Button>
-          </Box>
-        </Box>
       </Container>
 
       {/* Modals */}

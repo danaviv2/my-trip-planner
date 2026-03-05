@@ -133,30 +133,49 @@ const TripPlannerPage = () => {
 
   const handleSaveTrip = async () => {
     const dest = tripPlan?.destination || userPreferences.location;
-    const trip = await saveTripToList({
+    const tripData = {
       destination: dest,
       days: userPreferences.days,
       budget: userPreferences.budget,
       startDate: userPreferences.startDate,
       dailyItinerary: tripPlan?.dailyItinerary || [],
-    });
+    };
+    const trip = await saveTripToList(tripData, lastSavedTripId || null);
     if (trip?.id) setLastSavedTripId(String(trip.id));
-    // שמור גם ביומן הטיולים
-    saveTripLog();
+    saveTripLog(lastSavedTripId);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
 
-  const saveTripLog = () => {
-    const newLog = {
-      id: Date.now(),
-      date: new Date().toISOString(),
-      destination: tripPlan?.destination || userPreferences.location,
-      dailyItinerary: tripPlan?.dailyItinerary || [],
-    };
-    const updatedLogs = [...tripLogs, newLog];
-    setTripLogs(updatedLogs);
-    localStorage.setItem('tripLogs', JSON.stringify(updatedLogs));
+  const saveTripLog = (existingLogId = null) => {
+    const dest = tripPlan?.destination || userPreferences.location;
+    const itinerary = tripPlan?.dailyItinerary || [];
+
+    const existingIndex = existingLogId
+      ? tripLogs.findIndex(l => String(l.id) === String(existingLogId))
+      : -1;
+
+    if (existingIndex >= 0) {
+      // עדכן רשומה קיימת
+      const updated = tripLogs.map((l, i) =>
+        i === existingIndex
+          ? { ...l, destination: dest, dailyItinerary: itinerary, date: new Date().toISOString() }
+          : l
+      );
+      setTripLogs(updated);
+      localStorage.setItem('tripLogs', JSON.stringify(updated));
+    } else {
+      // צור רשומה חדשה
+      const newLog = {
+        id: existingLogId ? Number(existingLogId) : Date.now(),
+        date: new Date().toISOString(),
+        destination: dest,
+        dailyItinerary: itinerary,
+      };
+      const updated = [...tripLogs, newLog];
+      setTripLogs(updated);
+      localStorage.setItem('tripLogs', JSON.stringify(updated));
+    }
   };
 
   const deleteTripLog = (id) => {
