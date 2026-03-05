@@ -638,7 +638,10 @@
     "end": "Arrivée",
     "waypoints": "Étapes",
     "edit": "Modifier",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "noLogs": "Aucun journal de voyage sauvegardé",
+    "openTrip": "Ouvrir le voyage",
+    "days": "jours"
   },
   "airportModal": {
     "invalidCode": "Code d'aéroport invalide",

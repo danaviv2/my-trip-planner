@@ -638,7 +638,10 @@
     "end": "Fim",
     "waypoints": "Paragens",
     "edit": "Editar",
-    "delete": "Eliminar"
+    "delete": "Eliminar",
+    "noLogs": "Nenhum diário de viagem salvo",
+    "openTrip": "Abrir viagem",
+    "days": "dias"
   },
   "airportModal": {
     "invalidCode": "Código de aeroporto inválido",

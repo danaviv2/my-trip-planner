@@ -638,7 +638,10 @@
     "end": "End",
     "waypoints": "Waypoints",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "noLogs": "No saved trip logs",
+    "openTrip": "Open Trip",
+    "days": "days"
   },
   "airportModal": {
     "invalidCode": "Invalid airport code",

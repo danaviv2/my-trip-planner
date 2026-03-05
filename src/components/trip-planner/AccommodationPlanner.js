@@ -1,13 +1,8 @@
 // src/components/trip-planner/AccommodationPlanner.js
-import React, { useContext } from 'react';
+import React from 'react';
 import { Box, Typography, Button, Paper } from '@mui/material';
-import { useTripContext } from '../../contexts/TripContext';
-/**
- * AccommodationPlanner - תכנון לינה
- * מאפשר למשתמש לנהל את הלינה לאורך המסלול
- */
-const AccommodationPlanner = () => {
-  const { accommodations, setHotelModalOpen } = useTripContext();
+
+const AccommodationPlanner = ({ accommodations = [], setAccommodations, hotelModalOpen, setHotelModalOpen }) => {
   if (accommodations.length === 0) {
     return (
       <Box sx={{ mt: 3, mb: 2 }}>

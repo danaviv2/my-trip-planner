@@ -33,13 +33,21 @@ export const TripSaveProvider = ({ children }) => {
     }
 
     floadTrips(user.uid)
-      .then((trips) => {
-        setSavedTrips(trips);
-        localStorage.setItem('savedTrips', JSON.stringify(trips));
+      .then((firestoreTrips) => {
+        // מיזוג: שמור טיולים מ-localStorage שאינם ב-Firestore (למקרה שהשמירה ל-Firestore נכשלה)
+        let localTrips = [];
+        try { localTrips = JSON.parse(localStorage.getItem('savedTrips') || '[]'); } catch {}
+        const firestoreIds = new Set(firestoreTrips.map(t => String(t.id)));
+        const onlyLocal = localTrips.filter(t => !firestoreIds.has(String(t.id)));
+        const merged = [...firestoreTrips, ...onlyLocal];
+        setSavedTrips(merged);
+        localStorage.setItem('savedTrips', JSON.stringify(merged));
+        // סנכרן לחזרה טיולים שהיו רק ב-localStorage
+        onlyLocal.forEach(t => fsaveTrip(user.uid, t).catch(() => {}));
       })
       .catch((err) => {
         console.error('שגיאה בטעינת טיולים מ-Firestore:', err);
-        // fallback ל-localStorage
+        // fallback ל-localStorage — אל תמחק נתונים קיימים
         const local = localStorage.getItem('savedTrips');
         if (local) {
           try { setSavedTrips(JSON.parse(local)); } catch {}
@@ -70,7 +78,6 @@ export const TripSaveProvider = ({ children }) => {
       }
     }
 
-    alert('✅ הטיול נשמר בהצלחה!');
     return trip;
   };
 

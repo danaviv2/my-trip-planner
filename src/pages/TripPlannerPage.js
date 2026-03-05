@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Typography,
   Button,
@@ -7,12 +7,13 @@ import {
   Tabs,
   Tab,
   Grid,
+  Chip,
+  Divider,
 } from '@mui/material';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { useTripSave } from '../contexts/TripSaveContext';
 import SaveIcon from '@mui/icons-material/Save';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import PreferencesForm from '../components/trip-planner/PreferencesForm';
 import TripPlanner from '../components/trip-planner/TripPlanner';
 import AccommodationPlanner from '../components/trip-planner/AccommodationPlanner';
 import ShareTripDialog from '../components/shared/ShareTripDialog';
@@ -28,29 +29,101 @@ import { useSearchParams } from 'react-router-dom';
 import { useTripContext } from '../contexts/TripContext';
 import HotelMap from '../components/map/HotelMap';
 import TripMap from '../components/map/TripMap';
+import BookingSync from '../components/bookings/BookingSync';
+import { useAuth } from '../contexts/AuthContext';
+import { saveBooking, loadBookings, deleteBooking } from '../services/firestoreService';
+import { bookingEmoji, bookingColor, bookingLabel } from '../services/bookingParserService';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const TripPlannerPage = () => {
-  const { userPreferences, updateLocation } = useUserPreferences();
-  const { saveTripToList } = useTripSave();
+  const { userPreferences, updateLocation, updateDays, updateBudget, updateStartDate } = useUserPreferences();
+  const { saveTripToList, savedTrips } = useTripSave();
+  const { user } = useAuth();
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
-  const { tripPlan, selectedDayIndex } = useTripContext();
+  const { tripPlan, selectedDayIndex, updateTripPlan } = useTripContext();
   const [saved, setSaved] = useState(false);
+  const [lastSavedTripId, setLastSavedTripId] = useState(searchParams.get('tripId') || null);
   const [shareOpen, setShareOpen] = useState(false);
   const [mainTab, setMainTab] = useState('plan');
   const [servicesTab, setServicesTab] = useState(0);
   const [tripLogs, setTripLogs] = useState(JSON.parse(localStorage.getItem('tripLogs')) || []);
   const [accommodations, setAccommodations] = useState([]);
   const [hotelModalOpen, setHotelModalOpen] = useState(false);
-  // מיקוד המפה — שם מלון/יעד ספציפי שנבחר
   const [mapFocus, setMapFocus] = useState(null);
-  // רשימת מלונות שהוחזרה מ-AI — לציון על המפה
   const [hotelRecommendations, setHotelRecommendations] = useState([]);
+  const [syncedBookings, setSyncedBookings] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('syncedBookings') || '[]'); } catch { return []; }
+  });
+  const restoredRef = useRef(false);
+
+  // טען הזמנות מ-Firestore כשמשתמש מתחבר
+  useEffect(() => {
+    if (!user) return;
+    loadBookings(user.uid)
+      .then(fb => {
+        const local = syncedBookings;
+        const fbIds = new Set(fb.map(b => String(b.id)));
+        const merged = [...fb, ...local.filter(b => !fbIds.has(String(b.id)))];
+        setSyncedBookings(merged);
+        localStorage.setItem('syncedBookings', JSON.stringify(merged));
+      })
+      .catch(() => {});
+  }, [user]); // eslint-disable-line
+
+  const handleBookingAdded = async (booking) => {
+    const updated = [...syncedBookings.filter(b => b.id !== booking.id), booking];
+    setSyncedBookings(updated);
+    localStorage.setItem('syncedBookings', JSON.stringify(updated));
+    if (user) {
+      try { await saveBooking(user.uid, booking); } catch {}
+    }
+  };
+
+  const handleBookingDeleted = async (bookingId) => {
+    const updated = syncedBookings.filter(b => b.id !== bookingId);
+    setSyncedBookings(updated);
+    localStorage.setItem('syncedBookings', JSON.stringify(updated));
+    if (user) {
+      try { await deleteBooking(user.uid, bookingId); } catch {}
+    }
+  };
 
   useEffect(() => {
+    const tripId = searchParams.get('tripId');
     const dest = searchParams.get('destination');
-    if (dest) updateLocation(dest);
-  }, [searchParams]);
+
+    if (!tripId) {
+      if (dest) updateLocation(dest);
+      return;
+    }
+
+    if (restoredRef.current) return;
+
+    // קרא מ-localStorage ישירות — לא לחכות ל-savedTrips שיטען מ-Firestore
+    let allTrips = [];
+    try {
+      allTrips = JSON.parse(localStorage.getItem('savedTrips') || '[]');
+    } catch {}
+
+    // אם localStorage ריק — נסה מ-savedTrips מהקונטקסט
+    if (allTrips.length === 0) allTrips = savedTrips;
+
+    const trip = allTrips.find(t => String(t.id) === String(tripId));
+    console.log('🔍 restoring trip:', tripId, '| found:', !!trip, '| itinerary days:', trip?.dailyItinerary?.length || 0);
+    if (!trip) return; // עדיין לא טעון — המתן לרנדר הבא
+
+    restoredRef.current = true;
+    const dest2 = trip.destination || trip.endPoint || trip.location;
+    if (dest2) updateLocation(dest2);
+    if (trip.days) updateDays(trip.days);
+    const budgetVal = ['low', 'medium', 'high'].includes(trip.budget) ? trip.budget : 'medium';
+    updateBudget(budgetVal);
+    if (trip.startDate) updateStartDate(trip.startDate);
+    if (trip.dailyItinerary?.length > 0) {
+      updateTripPlan({ destination: dest2, dailyItinerary: trip.dailyItinerary });
+    }
+  }, [searchParams, savedTrips]);
 
   // איפוס מיקוד המפה ורשימת המלונות בעת החלפת לשונית
   useEffect(() => {
@@ -59,13 +132,17 @@ const TripPlannerPage = () => {
   }, [mainTab, servicesTab]);
 
   const handleSaveTrip = async () => {
-    await saveTripToList({
-      destination: userPreferences.location,
+    const dest = tripPlan?.destination || userPreferences.location;
+    const trip = await saveTripToList({
+      destination: dest,
       days: userPreferences.days,
       budget: userPreferences.budget,
       startDate: userPreferences.startDate,
       dailyItinerary: tripPlan?.dailyItinerary || [],
     });
+    if (trip?.id) setLastSavedTripId(String(trip.id));
+    // שמור גם ביומן הטיולים
+    saveTripLog();
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
@@ -74,7 +151,7 @@ const TripPlannerPage = () => {
     const newLog = {
       id: Date.now(),
       date: new Date().toISOString(),
-      destination: userPreferences.location,
+      destination: tripPlan?.destination || userPreferences.location,
       dailyItinerary: tripPlan?.dailyItinerary || [],
     };
     const updatedLogs = [...tripLogs, newLog];
@@ -179,8 +256,8 @@ const TripPlannerPage = () => {
           justifyContent: 'center'
         }}>
           <i className="material-icons" style={{ marginRight: '8px', fontSize: '36px' }}>explore</i>
-          {userPreferences.location
-            ? t('tripPlanner.title', { location: userPreferences.location })
+          {(tripPlan?.destination || userPreferences.location)
+            ? t('tripPlanner.title', { location: tripPlan?.destination || userPreferences.location })
             : t('tripPlanner.titleDefault')}
         </Typography>
 
@@ -221,7 +298,6 @@ const TripPlannerPage = () => {
               </Button>
             </Box>
 
-            <PreferencesForm />
             <TripPlanner />
 
             <AccommodationPlanner
@@ -230,6 +306,59 @@ const TripPlannerPage = () => {
               hotelModalOpen={hotelModalOpen}
               setHotelModalOpen={setHotelModalOpen}
             />
+
+            {/* פאנל הזמנות מסונכרנות */}
+            <Box mt={3} mb={2}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                <Typography variant="h6">
+                  ✈️ הזמנות מסונכרנות
+                  {syncedBookings.length > 0 && (
+                    <Chip label={syncedBookings.length} size="small" color="primary" sx={{ ml: 1 }} />
+                  )}
+                </Typography>
+                <BookingSync onBookingsAdded={handleBookingAdded} />
+              </Box>
+
+              {syncedBookings.length === 0 ? (
+                <Box sx={{ bgcolor: '#f8f9fa', borderRadius: 2, p: 2, textAlign: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    לחץ על "סנכרן מ-Gmail" כדי לייבא הזמנות טיסה, מלון ורכב אוטומטית
+                  </Typography>
+                </Box>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {syncedBookings.map(b => (
+                    <Paper key={b.id} elevation={1} sx={{
+                      p: 1.5, borderRadius: 2,
+                      borderLeft: `4px solid ${bookingColor(b.type)}`,
+                      display: 'flex', alignItems: 'center', gap: 1.5,
+                    }}>
+                      <Typography fontSize="1.3rem">{bookingEmoji(b.type)}</Typography>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.2 }}>
+                          <Chip label={bookingLabel(b.type)} size="small"
+                            sx={{ bgcolor: bookingColor(b.type), color: 'white', fontSize: '0.6rem', height: 18 }} />
+                          {b.status === 'confirmed' && <Chip label="מאושר ✓" size="small" color="success" sx={{ fontSize: '0.6rem', height: 18 }} />}
+                        </Box>
+                        <Typography variant="body2" fontWeight={700} noWrap>{b.name}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {b.checkIn}{b.checkOut && b.checkOut !== b.checkIn ? ` → ${b.checkOut}` : ''}
+                          {b.destination ? ` · ${b.destination}` : ''}
+                          {b.price ? ` · ${b.price}` : ''}
+                        </Typography>
+                      </Box>
+                      <DeleteIcon
+                        fontSize="small"
+                        sx={{ color: '#ccc', cursor: 'pointer', '&:hover': { color: '#f44336' } }}
+                        onClick={() => handleBookingDeleted(b.id)}
+                      />
+                    </Paper>
+                  ))}
+                </Box>
+              )}
+            </Box>
+
+            <Divider sx={{ mb: 2 }} />
 
             <Box mt={3} mb={3}>
               <Typography variant="h6" sx={{ mb: 2 }}>{t('tripPlanner.shareAndSave')}</Typography>
@@ -255,22 +384,43 @@ const TripPlannerPage = () => {
             <ShareTripDialog
               open={shareOpen}
               onClose={() => setShareOpen(false)}
-              trip={{
-                destination: userPreferences.location,
-                days: userPreferences?.days,
-                budget: userPreferences?.budget,
-                startDate: userPreferences?.startDate,
-              }}
+              trip={{ destination: userPreferences.location }}
+              shareUrl={
+                lastSavedTripId
+                  ? `${window.location.origin}/trip-planner?tripId=${lastSavedTripId}`
+                  : undefined
+              }
             />
 
             <Box mt={3} mb={3}>
               <Typography variant="h6" sx={{ mb: 2 }}>{t('tripPlanner.tripLogs')}</Typography>
+              {tripLogs.length === 0 && (
+                <Typography variant="body2" color="text.secondary">{t('tripPlanner.noLogs')}</Typography>
+              )}
               {tripLogs.map(log => (
                 <Paper key={log.id} sx={{ p: 2, m: '5px 0', bgcolor: '#f9f9f9', borderRadius: '8px', boxShadow: 1 }}>
-                  <Typography>{t('tripPlanner.date')}: {new Date(log.date).toLocaleDateString()}</Typography>
-                  <Typography>{t('tripPlanner.end')}: {log.destination}</Typography>
-                  <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                    <Button variant="outlined" color="error" onClick={() => deleteTripLog(log.id)}>
+                  <Typography fontWeight={700}>{log.destination}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('tripPlanner.date')}: {new Date(log.date).toLocaleDateString()}
+                    {log.dailyItinerary?.length > 0 && ` · ${log.dailyItinerary.length} ${t('tripPlanner.days')}`}
+                    {(log.waypoints || []).length > 0 && ` · ${(log.waypoints || []).join(', ')}`}
+                  </Typography>
+                  <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {log.dailyItinerary?.length > 0 && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+                        onClick={() => {
+                          updateTripPlan({ destination: log.destination, dailyItinerary: log.dailyItinerary });
+                          updateLocation(log.destination);
+                          setMainTab('plan');
+                        }}
+                      >
+                        {t('tripPlanner.openTrip')}
+                      </Button>
+                    )}
+                    <Button variant="outlined" color="error" size="small" onClick={() => deleteTripLog(log.id)}>
                       {t('tripPlanner.delete')}
                     </Button>
                   </Box>

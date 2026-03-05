@@ -70,6 +70,8 @@ import {
   RadioGroup,
   FormControl,
   FormLabel,
+  InputLabel,
+  Select,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -121,6 +123,7 @@ import ReactApexChart from 'react-apexcharts';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import WeatherForecast from '../../components/WeatherForecast';
+import BudgetMeter from '../budget/BudgetMeter';
 
 // רכיבים מסוגננים קיימים
 const StepperContainer = styled(Paper)(({ theme }) => ({
@@ -243,6 +246,22 @@ const CircularProgressWithLabel = (props) => {
   );
 };
 
+const travelStyles = [
+  { value: 'cultural', label: 'תרבותי - מוזיאונים, היסטוריה, אמנות' },
+  { value: 'adventure', label: 'הרפתקני - טיולים, ספורט אתגרי' },
+  { value: 'relaxation', label: 'מנוחה - ספא, חופים, הרפיה' },
+  { value: 'culinary', label: 'קולינרי - אוכל, יין, שווקים' },
+  { value: 'nature', label: 'טבע - פארקים, נופים, חיות בר' },
+  { value: 'urban', label: 'עירוני - קניות, אטרקציות עירוניות' },
+  { value: 'mixed', label: 'מעורב - שילוב של מספר סגנונות' }
+];
+
+const paceLevels = [
+  { value: 'slow', label: 'איטי - מעט פעילויות, הרבה זמן פנוי' },
+  { value: 'medium', label: 'בינוני - איזון בין פעילויות ומנוחה' },
+  { value: 'fast', label: 'מהיר - ימים עמוסים, הרבה פעילויות' }
+];
+
 // קומפוננט תכנון טיול עם התוספות החדשות
 const TripPlanner = () => {
   const theme = useTheme();
@@ -251,7 +270,7 @@ const TripPlanner = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { tripData, tripPlan, updateTripPlan, planTripWithAI, tripLoading, selectedDayIndex, setSelectedDayIndex } = useTripContext();
   const { saveTripToList: saveTrip } = useTripSave();
-  const { userPreferences } = useUserPreferences();
+  const { userPreferences, updateLocation, updateBudget: updateBudgetPref, updateThemes, updateAdvancedPreferences } = useUserPreferences();
   
   // מחלץ את פרמטר היעד מה-URL אם קיים
   const searchParams = new URLSearchParams(location.search);
@@ -321,6 +340,14 @@ const TripPlanner = () => {
     { id: 'historical', label: 'היסטוריה' }
   ];
   
+  // העדפות מתקדמות (הועברו מ-PreferencesForm)
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [foodPreferences, setFoodPreferences] = useState(userPreferences.advancedPreferences?.foodPreferences || '');
+  const [travelPace, setTravelPace] = useState(userPreferences.advancedPreferences?.travelPace || 'medium');
+  const [travelStyle, setTravelStyle] = useState(userPreferences.advancedPreferences?.travelStyle || 'mixed');
+  const [hasChildren, setHasChildren] = useState(userPreferences.advancedPreferences?.hasChildren || false);
+  const [specialNeeds, setSpecialNeeds] = useState(userPreferences.advancedPreferences?.specialNeeds || '');
+
   // מצבים חדשים
   const [showWeatherForecast, setShowWeatherForecast] = useState(false);
   const [weatherData, setWeatherData] = useState(null);
@@ -382,12 +409,13 @@ const TripPlanner = () => {
     'תכנון לוח זמנים'
   ];
 
-  // עדכון שם הטיול כאשר היעד משתנה
+  // עדכון שם הטיול וסנכרון היעד לקונטקסט כאשר היעד משתנה
   useEffect(() => {
     if (destination) {
       setTripName(`טיול ל${destination}`);
+      updateLocation(destination);
     }
-  }, [destination]);
+  }, [destination]); // eslint-disable-line
 
   // אתחול מסלול יומי כשמספר הימים משתנה
   useEffect(() => {
@@ -434,6 +462,14 @@ const TripPlanner = () => {
       setItinerary(updatedItinerary);
     }
   }, [startDate, itinerary.length, tripDays]);
+
+  // כשטיול שמור נטען מהקונטקסט — קפוץ ישר לשלב האיטינרריה
+  useEffect(() => {
+    if (tripPlan?.dailyItinerary?.length > 0 && activeStep === 0) {
+      if (tripPlan.destination) setDestination(tripPlan.destination);
+      setActiveStep(2);
+    }
+  }, [tripPlan]);
 
   // שליפת אטרקציות מומלצות כשהיעד משתנה
   useEffect(() => {
@@ -691,7 +727,6 @@ const TripPlanner = () => {
   // סיום תהליך התכנון
   const handleFinish = () => {
     setCompleted(true);
-    handleSaveTrip();
   };
 
   // פתיחת תפריט יום
@@ -775,6 +810,13 @@ const TripPlanner = () => {
         days: tripDays,
         interests,
         budget: userPreferences?.budget || 'medium',
+        advancedPreferences: {
+          hasChildren,
+          travelPace,
+          travelStyle,
+          foodPreferences,
+          specialNeeds,
+        },
       });
       if (result.success) {
         setSnackbarMessage('המסלול נוצר בהצלחה! 🎉');
@@ -1105,6 +1147,93 @@ const TripPlanner = () => {
             </WeatherWidget>
           </Grid>
         )}
+
+        {/* תקציב + יותר אפשרויות */}
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel>תקציב</InputLabel>
+            <Select
+              value={['low', 'medium', 'high'].includes(userPreferences.budget) ? userPreferences.budget : 'medium'}
+              onChange={(e) => updateBudgetPref(e.target.value)}
+              label="תקציב"
+            >
+              <MenuItem value="low">נמוך - חסכוני</MenuItem>
+              <MenuItem value="medium">בינוני</MenuItem>
+              <MenuItem value="high">גבוה - יוקרתי</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+            sx={{ height: '56px', borderRadius: '8px' }}
+          >
+            {showAdvancedOptions ? '▲ פחות אפשרויות' : '▼ יותר אפשרויות'}
+          </Button>
+        </Grid>
+
+        {/* אפשרויות מתקדמות */}
+        {showAdvancedOptions && (
+          <Grid item xs={12}>
+            <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: '8px' }}>
+              <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold' }}>העדפות מתקדמות</Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="העדפות אוכל (צמחוני, כשר, ללא גלוטן...)"
+                    value={foodPreferences}
+                    onChange={(e) => setFoodPreferences(e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>סגנון הטיול</InputLabel>
+                    <Select value={travelStyle} onChange={(e) => setTravelStyle(e.target.value)} label="סגנון הטיול">
+                      {travelStyles.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>קצב הטיול</InputLabel>
+                    <Select value={travelPace} onChange={(e) => setTravelPace(e.target.value)} label="קצב הטיול">
+                      {paceLevels.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={<Checkbox checked={hasChildren} onChange={(e) => setHasChildren(e.target.checked)} color="primary" />}
+                    label="כולל ילדים"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="צרכים מיוחדים או בקשות נוספות"
+                    value={specialNeeds}
+                    onChange={(e) => setSpecialNeeds(e.target.value)}
+                    multiline
+                    rows={2}
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+          </Grid>
+        )}
+
+        {/* נושאי עניין */}
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="נושאי עניין (טבע, יקבים, קולינריה — מפריד עם פסיק)"
+            value={(userPreferences.themes || []).join(', ')}
+            onChange={(e) => updateThemes(e.target.value.split(',').map(t => t.trim()).filter(Boolean))}
+          />
+        </Grid>
       </Grid>
     </Box>
   );
@@ -1211,207 +1340,11 @@ const TripPlanner = () => {
       </Grid>
       
       <Box sx={{ mt: 4 }}>
-        <Typography variant="subtitle1" gutterBottom>
-          תקציב מוערך
-        </Typography>
-        
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={8}>
-            <BudgetCard>
-              <Typography variant="h6" gutterBottom>
-                הערכת תקציב
-              </Typography>
-              
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="לינה"
-                    type="number"
-                    value={budgetData.categories.accommodation}
-                    onChange={(e) => updateBudget('accommodation', e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <HotelIcon />
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          {budgetCurrency}
-                        </InputAdornment>
-                      ),
-                    }}
-                    variant="outlined"
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="תחבורה"
-                    type="number"
-                    value={budgetData.categories.transportation}
-                    onChange={(e) => updateBudget('transportation', e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <FlightIcon />
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          {budgetCurrency}
-                        </InputAdornment>
-                      ),
-                    }}
-                    variant="outlined"
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="אוכל"
-                    type="number"
-                    value={budgetData.categories.food}
-                    onChange={(e) => updateBudget('food', e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <RestaurantIcon />
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          {budgetCurrency}
-                        </InputAdornment>
-                      ),
-                    }}
-                    variant="outlined"
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="אטרקציות"
-                    type="number"
-                    value={budgetData.categories.activities}
-                    onChange={(e) => updateBudget('activities', e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <AttractionsIcon />
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          {budgetCurrency}
-                        </InputAdornment>
-                      ),
-                    }}
-                    variant="outlined"
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="אחר"
-                    type="number"
-                    value={budgetData.categories.other}
-                    onChange={(e) => updateBudget('other', e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <MoreHoriz />
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          {budgetCurrency}
-                        </InputAdornment>
-                      ),
-                    }}
-                    variant="outlined"
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    select
-                    fullWidth
-                    label="מטבע"
-                    value={budgetCurrency}
-                    onChange={(e) => setBudgetCurrency(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <AttachMoneyIcon />
-                        </InputAdornment>
-                      ),
-                    }}
-                    variant="outlined"
-                  >
-                    <MenuItem value="ILS">₪ (שקל)</MenuItem>
-                    <MenuItem value="USD">$ (דולר)</MenuItem>
-                    <MenuItem value="EUR">€ (אירו)</MenuItem>
-                    <MenuItem value="GBP">£ (פאונד)</MenuItem>
-                  </TextField>
-                </Grid>
-              </Grid>
-              
-              <Box sx={{ mt: 3, borderTop: '1px solid rgba(0, 0, 0, 0.12)', pt: 2 }}>
-                <Typography variant="h6">
-                  סך הכל: {budgetData.total} {budgetCurrency}
-                </Typography>
-              </Box>
-            </BudgetCard>
-          </Grid>
-          
-          <Grid item xs={12} sm={4}>
-            <BudgetCard>
-              <Typography variant="h6" gutterBottom>
-                התפלגות תקציב
-              </Typography>
-              
-              <Box sx={{ height: 300, mt: 2 }}>
-                <ReactApexChart
-                  options={{
-                    labels: ['לינה', 'תחבורה', 'אוכל', 'אטרקציות', 'אחר'],
-                    colors: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
-                    legend: {
-                      position: 'bottom',
-                    },
-                    dataLabels: {
-                      enabled: true,
-                      formatter: function(val, opts) {
-                        return Math.round(val) + '%';
-                      },
-                    },
-                    tooltip: {
-                      y: {
-                        formatter: function(value) {
-                          return value + ' ' + budgetCurrency;
-                        }
-                      }
-                    }
-                  }}
-                  series={[
-                    budgetData.categories.accommodation,
-                    budgetData.categories.transportation,
-                    budgetData.categories.food,
-                    budgetData.categories.activities,
-                    budgetData.categories.other
-                  ]}
-                  type="pie"
-                  width="100%"
-                />
-              </Box>
-            </BudgetCard>
-          </Grid>
-        </Grid>
+        <BudgetMeter
+          destination={destination}
+          days={tripDays || userPreferences.days || 7}
+          budget={userPreferences.budget || 'medium'}
+        />
       </Box>
     </Box>
   );
@@ -1493,61 +1426,104 @@ const TripPlanner = () => {
                   )}
                 </Box>
 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                  {(currentDay.activities || []).map((activity, i) => (
-                    <Paper
-                      key={i}
-                      elevation={1}
-                      sx={{
-                        p: 2,
-                        borderRadius: 2,
-                        borderRight: '4px solid',
-                        borderRightColor:
-                          activity.type === 'food' ? '#ff9800'
-                          : activity.type === 'attraction' || activity.type === 'museum' ? '#667eea'
-                          : activity.type === 'nature' || activity.type === 'beach' ? '#43a047'
-                          : activity.type === 'nightlife' ? '#7b1fa2'
-                          : '#90a4ae',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="h6" component="span">{activity.emoji || '📍'}</Typography>
-                          <Box>
-                            <Typography variant="subtitle2" fontWeight={700}>
-                              {activity.name}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {activity.time} · {activity.duration}
-                            </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                  {(currentDay.activities || []).map((activity, i) => {
+                    const nextActivity = currentDay.activities[i + 1];
+                    const origin = encodeURIComponent(activity.address || activity.name);
+                    const dest = nextActivity ? encodeURIComponent(nextActivity.address || nextActivity.name) : null;
+                    return (
+                      <React.Fragment key={i}>
+                        <Paper
+                          elevation={1}
+                          sx={{
+                            p: 2,
+                            borderRadius: 2,
+                            borderRight: '4px solid',
+                            borderRightColor:
+                              activity.type === 'food' ? '#ff9800'
+                              : activity.type === 'attraction' || activity.type === 'museum' ? '#667eea'
+                              : activity.type === 'nature' || activity.type === 'beach' ? '#43a047'
+                              : activity.type === 'nightlife' ? '#7b1fa2'
+                              : '#90a4ae',
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography variant="h6" component="span">{activity.emoji || '📍'}</Typography>
+                              <Box>
+                                <Typography variant="subtitle2" fontWeight={700}>
+                                  {activity.name}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {activity.time} · {activity.duration}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            {activity.price && (
+                              <Typography variant="caption" sx={{ bgcolor: '#f5f5f5', px: 1, py: 0.3, borderRadius: 1, whiteSpace: 'nowrap' }}>
+                                {activity.price}
+                              </Typography>
+                            )}
                           </Box>
-                        </Box>
-                        {activity.price && (
-                          <Typography variant="caption" sx={{ bgcolor: '#f5f5f5', px: 1, py: 0.3, borderRadius: 1, whiteSpace: 'nowrap' }}>
-                            {activity.price}
-                          </Typography>
+
+                          {activity.description && (
+                            <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+                              {activity.description}
+                            </Typography>
+                          )}
+
+                          {activity.tips && (
+                            <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: '#667eea', fontStyle: 'italic' }}>
+                              💡 {activity.tips}
+                            </Typography>
+                          )}
+
+                          {activity.address && (
+                            <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: 'text.disabled' }}>
+                              📍 {activity.address}
+                            </Typography>
+                          )}
+                        </Paper>
+
+                        {/* סרגל ניווט בין פעילויות */}
+                        {nextActivity && dest && (
+                          <Box sx={{
+                            display: 'flex', alignItems: 'center', gap: 0.5,
+                            px: 1, py: 0.5,
+                          }}>
+                            <Box sx={{ flex: 1, height: '1px', bgcolor: '#e8e8e8' }} />
+                            <Typography variant="caption" color="text.disabled" sx={{ whiteSpace: 'nowrap', fontSize: '0.65rem' }}>
+                              {activity.time} → {nextActivity.time}
+                            </Typography>
+                            {[
+                              { label: '🚶 הליכה', mode: 'w', color: '#43A047' },
+                              { label: '🚌 תחבורה', mode: 'r', color: '#1976D2' },
+                              { label: '🚗 רכב',    mode: 'd', color: '#E65100' },
+                            ].map(({ label, mode, color }) => (
+                              <Button
+                                key={mode}
+                                size="small"
+                                variant="outlined"
+                                onClick={() => window.open(
+                                  `https://maps.google.com/maps?saddr=${origin}&daddr=${dest}&dirflg=${mode}`,
+                                  '_blank', 'noopener,noreferrer'
+                                )}
+                                sx={{
+                                  minWidth: 0, px: 1, py: 0.2,
+                                  fontSize: '0.65rem', fontWeight: 600,
+                                  borderColor: color, color,
+                                  '&:hover': { bgcolor: `${color}11`, borderColor: color },
+                                }}
+                              >
+                                {label}
+                              </Button>
+                            ))}
+                            <Box sx={{ flex: 1, height: '1px', bgcolor: '#e8e8e8' }} />
+                          </Box>
                         )}
-                      </Box>
-
-                      {activity.description && (
-                        <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
-                          {activity.description}
-                        </Typography>
-                      )}
-
-                      {activity.tips && (
-                        <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: '#667eea', fontStyle: 'italic' }}>
-                          💡 {activity.tips}
-                        </Typography>
-                      )}
-
-                      {activity.address && (
-                        <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: 'text.disabled' }}>
-                          📍 {activity.address}
-                        </Typography>
-                      )}
-                    </Paper>
-                  ))}
+                      </React.Fragment>
+                    );
+                  })}
                 </Box>
               </Box>
             )}
@@ -1596,17 +1572,6 @@ const TripPlanner = () => {
         </Typography>
         
         <Box>
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<SaveIcon />}
-            onClick={handleSaveTrip}
-            disabled={loading}
-            sx={{ mr: 1 }}
-          >
-            שמור טיול
-          </Button>
-          
           {!completed && activeStep === steps.length - 1 && (
             <Button
               variant="contained"

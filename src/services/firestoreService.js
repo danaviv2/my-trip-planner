@@ -23,3 +23,20 @@ export const deleteTrip = async (uid, tripId) => {
   const tripRef = doc(db, 'users', uid, 'trips', String(tripId));
   await deleteDoc(tripRef);
 };
+
+// מבנה: users/{uid}/bookings/{bookingId}
+
+export const saveBooking = async (uid, booking) => {
+  const ref = doc(db, 'users', uid, 'bookings', String(booking.id));
+  await setDoc(ref, booking);
+};
+
+export const loadBookings = async (uid) => {
+  const snapshot = await getDocs(collection(db, 'users', uid, 'bookings'));
+  return snapshot.docs.map((d) => d.data());
+};
+
+export const deleteBooking = async (uid, bookingId) => {
+  const ref = doc(db, 'users', uid, 'bookings', String(bookingId));
+  await deleteDoc(ref);
+};

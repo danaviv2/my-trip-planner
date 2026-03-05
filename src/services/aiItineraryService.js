@@ -47,13 +47,20 @@ const ACTIVITY_EMOJIS = {
  * @param {string} params.budget  low | medium | high
  * @returns {Promise<Array>} מערך ימים עם פעילויות
  */
-export const generateItinerary = async ({ destination, days = 3, interests = [], budget = 'medium' }) => {
+export const generateItinerary = async ({ destination, days = 3, interests = [], budget = 'medium', advancedPreferences = {} }) => {
   if (!GEMINI_API_KEY) throw new Error('NO_API_KEY');
 
-  const cacheKey = `${destination}_${days}_${interests.sort().join(',')}_${budget}`.toLowerCase().replace(/\s+/g, '_');
+  const { hasChildren, travelPace, travelStyle, foodPreferences, specialNeeds } = advancedPreferences;
+  const advKey = `${hasChildren ? 'kids' : ''}_${travelPace || ''}_${travelStyle || ''}_${foodPreferences || ''}_${specialNeeds || ''}`;
+  const cacheKey = `${destination}_${days}_${interests.sort().join(',')}_${budget}_${advKey}`.toLowerCase().replace(/\s+/g, '_');
   const cached = getCached(cacheKey);
-  // השתמש ב-cache רק אם הוא כולל קואורדינטות
-  if (cached && cached[0]?.activities?.[0]?.lat) {
+  // השתמש ב-cache רק אם הוא כולל קואורדינטות תקינות (לא 0,0) ומספר ימים נכון
+  const cacheIsValid = cached && cached.length === days &&
+    cached.every(day => day.activities?.some(a => {
+      const lat = Number(a.lat); const lng = Number(a.lng);
+      return a.lat != null && !isNaN(lat) && !(lat === 0 && lng === 0) && Math.abs(lat) <= 90;
+    }));
+  if (cacheIsValid) {
     console.log(`📦 מסלול נטען מהמטמון: ${destination}`);
     return cached;
   }
@@ -61,8 +68,26 @@ export const generateItinerary = async ({ destination, days = 3, interests = [],
   const interestsText = interests.length > 0 ? interests.join(', ') : 'general sightseeing, culture, food';
   const budgetLabel = budget === 'low' ? 'budget-friendly, free or cheap options' : budget === 'high' ? 'luxury, premium experiences' : 'mid-range';
 
+  const paceLabel = travelPace === 'slow' ? 'relaxed pace with few activities and lots of free time'
+    : travelPace === 'fast' ? 'packed schedule with many activities'
+    : 'balanced pace';
+  const styleLabel = travelStyle === 'cultural' ? 'cultural (museums, history, art)'
+    : travelStyle === 'adventure' ? 'adventurous (hiking, outdoor sports)'
+    : travelStyle === 'relaxation' ? 'relaxation (spas, beaches, calm)'
+    : travelStyle === 'culinary' ? 'culinary (restaurants, food markets, wine)'
+    : travelStyle === 'nature' ? 'nature (parks, landscapes, wildlife)'
+    : travelStyle === 'urban' ? 'urban (shopping, city attractions)'
+    : 'mixed';
+
+  const specialLines = [
+    hasChildren ? '- This is a FAMILY trip with children — prioritize kid-friendly attractions, avoid long walks without breaks, include parks and interactive museums.' : '',
+    foodPreferences ? `- Food restrictions/preferences: ${foodPreferences}` : '',
+    specialNeeds ? `- Special needs: ${specialNeeds}` : '',
+  ].filter(Boolean).join('\n');
+
   const prompt = `You are a travel expert for Israeli tourists. Create a detailed ${days}-day itinerary for ${destination}.
-Traveler interests: ${interestsText}. Budget level: ${budgetLabel}.
+Traveler interests: ${interestsText}. Budget level: ${budgetLabel}. Travel style: ${styleLabel}. Pace: ${paceLabel}.
+${specialLines}
 
 Return ONLY a valid JSON array (no markdown, no extra text). Use Hebrew for ALL text values (names, descriptions, tips).
 
@@ -91,7 +116,8 @@ Required format — return EXACTLY this structure:
 ]
 
 Rules:
-- 4 to 6 activities per day
+- CRITICAL: Return EXACTLY ${days} day objects in the array — no more, no less
+- 4 to 5 activities per day (keep descriptions concise to fit all days)
 - Start at 09:00, end by 22:00
 - Times must be realistic (account for travel time between places)
 - activity types: attraction, food, transport, rest, shopping, nightlife, nature, beach, museum
@@ -113,7 +139,7 @@ Rules:
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
-          maxOutputTokens: 4096,
+          maxOutputTokens: Math.min(4096 + days * 1500, 16000),
           temperature: 0.7,
           thinkingConfig: { thinkingBudget: 0 }
         }
@@ -151,13 +177,40 @@ Rules:
     }
 
     // הוסף emoji לכל פעילות
-    const result = parsed.map(day => ({
+    const withEmoji = parsed.map(day => ({
       ...day,
       activities: (day.activities || []).map(act => ({
         ...act,
         emoji: ACTIVITY_EMOJIS[act.type] || '📍',
       }))
     }));
+
+    const isGoodCoord = (a) => {
+      const lat = Number(a.lat); const lng = Number(a.lng);
+      return a.lat != null && a.lng != null && a.lat !== '' && a.lng !== '' &&
+        !isNaN(lat) && !isNaN(lng) &&
+        Math.abs(lat) <= 90 && Math.abs(lng) <= 180 &&
+        !(lat === 0 && lng === 0);
+    };
+
+    // חשב מרכז קואורדינטות מכל הפעילויות שיש להן lat/lng תקינים
+    const allValidCoords = withEmoji.flatMap(d => d.activities).filter(isGoodCoord);
+    const centerLat = allValidCoords.length > 0 ? allValidCoords.reduce((s, a) => s + Number(a.lat), 0) / allValidCoords.length : null;
+    const centerLng = allValidCoords.length > 0 ? allValidCoords.reduce((s, a) => s + Number(a.lng), 0) / allValidCoords.length : null;
+
+    // בפעילויות ללא קואורדינטות תקינות — השתמש בממוצע של שאר הפעילויות ביום
+    const result = withEmoji.map(day => {
+      const dayValid = day.activities.filter(isGoodCoord);
+      const fallbackLat = dayValid.length > 0 ? dayValid.reduce((s, a) => s + Number(a.lat), 0) / dayValid.length : centerLat;
+      const fallbackLng = dayValid.length > 0 ? dayValid.reduce((s, a) => s + Number(a.lng), 0) / dayValid.length : centerLng;
+      return {
+        ...day,
+        activities: day.activities.map(act => {
+          if (isGoodCoord(act) || fallbackLat == null) return act;
+          return { ...act, lat: fallbackLat, lng: fallbackLng };
+        })
+      };
+    });
 
     setCache(cacheKey, result);
     console.log(`✅ מסלול נוצר בהצלחה: ${result.length} ימים`);

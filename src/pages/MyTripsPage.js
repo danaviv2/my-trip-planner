@@ -98,7 +98,7 @@ const TripCard = ({ trip, onDelete, onShare }) => {
 
       <CardActions sx={{ p: 1.5 }}>
         <Button size="small" variant="contained" startIcon={<MapIcon />} fullWidth
-          onClick={() => navigate(`/trip-planner?destination=${encodeURIComponent(destination)}`)}
+          onClick={() => navigate(`/trip-planner?tripId=${trip.id}`)}
           sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
           {t('myTrips.continuePlanning')}
         </Button>

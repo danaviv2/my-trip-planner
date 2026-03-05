@@ -638,7 +638,10 @@
     "end": "סיום",
     "waypoints": "תחנות ביניים",
     "edit": "ערוך",
-    "delete": "מחק"
+    "delete": "מחק",
+    "noLogs": "אין יומני טיול שמורים",
+    "openTrip": "פתח טיול",
+    "days": "ימים"
   },
   "airportModal": {
     "invalidCode": "קוד שדה תעופה לא תקין",

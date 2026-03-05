@@ -153,15 +153,32 @@ const FitBounds = ({ positions, dayIndex }) => {
   return null;
 };
 
+const isValidCoord = (a) => {
+  const lat = Number(a.lat);
+  const lng = Number(a.lng);
+  return (
+    a.lat != null && a.lng != null &&
+    a.lat !== '' && a.lng !== '' &&
+    !isNaN(lat) && !isNaN(lng) &&
+    Math.abs(lat) <= 90 && Math.abs(lng) <= 180 &&
+    !(lat === 0 && lng === 0)  // 0,0 = אוקיינוס אטלנטי — לא תקין
+  );
+};
+
 const TripMap = ({ tripPlan, selectedDayIndex }) => {
   const day = tripPlan?.dailyItinerary?.[selectedDayIndex];
-  const activities = day?.activities || [];
+  const rawActivities = day?.activities || [];
 
-  const markers = activities.filter(a =>
-    a.lat && a.lng &&
-    !isNaN(a.lat) && !isNaN(a.lng) &&
-    Math.abs(a.lat) <= 90 && Math.abs(a.lng) <= 180
+  // fallback: פעילויות ללא קואורדינטות מקבלות ממוצע של הפעילויות התקינות ביום
+  const validInDay = rawActivities.filter(isValidCoord);
+  const fallbackLat = validInDay.length > 0 ? validInDay.reduce((s, a) => s + Number(a.lat), 0) / validInDay.length : null;
+  const fallbackLng = validInDay.length > 0 ? validInDay.reduce((s, a) => s + Number(a.lng), 0) / validInDay.length : null;
+
+  const activities = rawActivities.map(a =>
+    isValidCoord(a) || fallbackLat == null ? a : { ...a, lat: fallbackLat, lng: fallbackLng }
   );
+
+  const markers = activities.filter(isValidCoord);
 
   const positions = markers.map(a => [a.lat, a.lng]);
 
@@ -223,7 +240,7 @@ const TripMap = ({ tripPlan, selectedDayIndex }) => {
         center={center}
         zoom={13}
         style={{ height: '100%', width: '100%' }}
-        key={`${tripPlan?.destination}-${selectedDayIndex}`}
+
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -244,13 +261,17 @@ const TripMap = ({ tripPlan, selectedDayIndex }) => {
         )}
 
         {/* סיכות ממוספרות */}
-        {markers.map((activity, idx) => (
+        {markers.map((activity, idx) => {
+          const prevActivity = idx > 0 ? markers[idx - 1] : null;
+          const navOrigin = prevActivity ? encodeURIComponent(prevActivity.address || prevActivity.name) : null;
+          const navDest = encodeURIComponent(activity.address || activity.name);
+          return (
           <Marker
             key={idx}
             position={[activity.lat, activity.lng]}
             icon={createNumberedPin(idx + 1, activity.type)}
           >
-            <Popup maxWidth={260} minWidth={220}>
+            <Popup maxWidth={270} minWidth={230}>
               <Box>
                 {/* כותרת */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
@@ -304,6 +325,35 @@ const TripMap = ({ tripPlan, selectedDayIndex }) => {
                   </Button>
                 )}
 
+                {/* כפתורי ניווט מהנקודה הקודמת */}
+                {prevActivity && navOrigin && (
+                  <Box sx={{ mb: 1 }}>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.4, fontWeight: 600 }}>
+                      🧭 נווט מ-{prevActivity.name}:
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      {[
+                        { label: '🚶', title: 'הליכה',   mode: 'w', color: '#43A047' },
+                        { label: '🚌', title: 'תחבורה',  mode: 'r', color: '#1976D2' },
+                        { label: '🚗', title: 'רכב',     mode: 'd', color: '#E65100' },
+                      ].map(({ label, title, mode, color }) => (
+                        <Button
+                          key={mode}
+                          size="small" variant="outlined" fullWidth
+                          onClick={() => window.open(
+                            `https://maps.google.com/maps?saddr=${navOrigin}&daddr=${navDest}&dirflg=${mode}`,
+                            '_blank', 'noopener,noreferrer'
+                          )}
+                          sx={{ fontSize: '0.65rem', py: 0.3, borderColor: color, color, fontWeight: 700,
+                            '&:hover': { bgcolor: `${color}11`, borderColor: color } }}
+                        >
+                          {label} {title}
+                        </Button>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+
                 {/* כפתורי הזמנה */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                   {getBookingButtons(activity, tripPlan?.destination || '').map((btn, i) => (
@@ -325,7 +375,8 @@ const TripMap = ({ tripPlan, selectedDayIndex }) => {
               </Box>
             </Popup>
           </Marker>
-        ))}
+          );
+        })}
       </MapContainer>
     </Box>
   );
