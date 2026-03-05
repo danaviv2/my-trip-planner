@@ -28,9 +28,14 @@ self.addEventListener('activate', (event) => {
           .filter((k) => k !== CACHE_NAME && k !== FONTS_CACHE)
           .map((k) => caches.delete(k))
       )
-    )
+    ).then(() => {
+      self.clients.claim();
+      // הודע לכל הטאבים הפתוחים שיש גרסה חדשה
+      self.clients.matchAll({ type: 'window' }).then((clients) => {
+        clients.forEach((client) => client.postMessage({ type: 'SW_UPDATED' }));
+      });
+    })
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
