@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Container, Typography, TextField, Button, Paper, Stepper, Step, StepLabel,
@@ -29,6 +29,7 @@ import { generateItinerary } from '../services/aiItineraryService';
 import { useTripSave } from '../contexts/TripSaveContext';
 import { getPlacePhoto } from '../services/photoService';
 import { getStopWeatherSummary } from '../services/openMeteoService';
+import { analyzeItinerary, summarizeAnalysis, autoOptimize } from '../services/dayOptimizerService';
 
 // ─── קבועים ────────────────────────────────────────────────────
 
@@ -109,6 +110,7 @@ export default function RollingTripPage() {
   const [buildProgress,     setBuildProgress]     = useState(0);
   const [expandedStop,      setExpandedStop]      = useState(null);
   const [saving,            setSaving]            = useState(false);
+  const [optimizeMsg,       setOptimizeMsg]       = useState('');
   // עריכת פעילויות בשלב 4
   const [editingAct,  setEditingAct]  = useState(null);  // { si, di, ai }
   const [newActForm,  setNewActForm]  = useState(null);  // { si, di } – where to add
@@ -116,6 +118,10 @@ export default function RollingTripPage() {
 
   const photoFetched = useRef({});
   const weatherFetched = useRef({});
+
+  // ── ניתוח עומס ימים (Smart Optimizer)
+  const itineraryAnalysis = useMemo(() => analyzeItinerary(fullItinerary), [fullItinerary]);
+  const optimizeSummary   = useMemo(() => summarizeAnalysis(itineraryAnalysis), [itineraryAnalysis]);
 
   // ── נגזרות
   const totalDays   = Object.values(daysPerStop).reduce((s, d) => s + d, 0);
@@ -566,9 +572,49 @@ export default function RollingTripPage() {
         <Typography variant="body2" color="text.secondary" mb={0.5}>
           {totalDays} ימים · {activeStops.length} עצירות · {startPoint} → {endPoint}
         </Typography>
-        <Typography variant="caption" color="text.secondary" mb={3} display="block">
+        <Typography variant="caption" color="text.secondary" mb={2} display="block">
           💡 לחץ על עצירה לפתיחה · לחץ 🗑️ למחיקת פעילות · לחץ ✏️ לעריכה · הוסף פעילויות ידנית
         </Typography>
+
+        {/* ── Smart Day Optimizer Bar ── */}
+        {optimizeSummary.hasIssues && (
+          <Paper sx={{
+            mb: 2, p: 1.5, borderRadius: 3,
+            background: optimizeSummary.red > 0
+              ? 'linear-gradient(135deg, #f5576c22, #f5af1922)'
+              : 'linear-gradient(135deg, #f5af1922, #667eea11)',
+            border: `1px solid ${optimizeSummary.red > 0 ? '#f5576c44' : '#f5af1944'}`,
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <Typography variant="body2" fontWeight={700} sx={{ flexShrink: 0 }}>
+                🧠 Smart Optimizer
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                {optimizeSummary.green  > 0 && <Chip size="small" label={`🟢 ${optimizeSummary.green} מאוזן`}  sx={{ fontSize: '0.65rem', bgcolor: '#43e97b22', color: '#1a7a40' }} />}
+                {optimizeSummary.yellow > 0 && <Chip size="small" label={`🟡 ${optimizeSummary.yellow} עמוס`}  sx={{ fontSize: '0.65rem', bgcolor: '#f5af1922', color: '#a06000' }} />}
+                {optimizeSummary.red    > 0 && <Chip size="small" label={`🔴 ${optimizeSummary.red} עמוס מדי`} sx={{ fontSize: '0.65rem', bgcolor: '#f5576c22', color: '#c0001a' }} />}
+              </Box>
+              <Button size="small" variant="contained" startIcon={<AIIcon />}
+                onClick={() => {
+                  const { newItinerary, movedCount, details } = autoOptimize(fullItinerary);
+                  setFullItinerary(newItinerary);
+                  setOptimizeMsg(movedCount > 0
+                    ? `✅ הוזזו ${movedCount} פעילויות לאיזון המסלול`
+                    : 'המסלול כבר מאוזן — אין צורך בשינויים'
+                  );
+                  setTimeout(() => setOptimizeMsg(''), 5000);
+                }}
+                sx={{ ml: 'auto', background: 'linear-gradient(135deg, #667eea, #764ba2)', fontSize: '0.72rem', py: 0.4 }}>
+                אפטם אוטומטית
+              </Button>
+            </Box>
+            {optimizeMsg && (
+              <Typography variant="caption" sx={{ color: '#667eea', display: 'block', mt: 0.5, fontWeight: 600 }}>
+                {optimizeMsg}
+              </Typography>
+            )}
+          </Paper>
+        )}
 
         {fullItinerary.map(({ stop, days, itinerary }, si) => {
           const startDay = globalDay + 1;
@@ -598,30 +644,64 @@ export default function RollingTripPage() {
                     ימים {startDay}–{startDay + days - 1} · {stop.country}
                   </Typography>
                 </Box>
+                {/* badge עומס כולל לעצירה */}
+                {(() => {
+                  const analyses = itineraryAnalysis[si]?.dayAnalyses || [];
+                  const worst = analyses.find(a => a.score === 'red') || analyses.find(a => a.score === 'yellow');
+                  return worst ? (
+                    <Chip size="small" label={`${worst.emoji} ${worst.label}`}
+                      sx={{ bgcolor: 'rgba(255,255,255,0.25)', color: 'white', fontWeight: 700, fontSize: '0.65rem', flexShrink: 0 }} />
+                  ) : null;
+                })()}
                 {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               </Box>
 
               <Collapse in={expanded}>
                 <Box sx={{ p: 2 }}>
-                  {itinerary ? itinerary.map((day, di) => (
+                  {itinerary ? itinerary.map((day, di) => {
+                    const dayAnalysis = itineraryAnalysis[si]?.dayAnalyses?.[di];
+                    return (
                     <Box key={di} mb={3}>
-                      {/* כותרת יום */}
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                      {/* כותרת יום + badge עומס */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                         <Box sx={{
                           width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-                          background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                          background: dayAnalysis
+                            ? `linear-gradient(135deg, ${dayAnalysis.color}, #764ba2)`
+                            : 'linear-gradient(135deg, #667eea, #764ba2)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           color: 'white', fontSize: 11, fontWeight: 700,
                         }}>
                           {startDay + di}
                         </Box>
-                        <Typography variant="subtitle2" fontWeight={700} color="primary">
+                        <Typography variant="subtitle2" fontWeight={700} color="primary" sx={{ flex: 1 }}>
                           {day.title}
                         </Typography>
+                        {dayAnalysis && (
+                          <Tooltip title={dayAnalysis.warning || `${dayAnalysis.hours} שעות · ${dayAnalysis.label}`}>
+                            <Chip
+                              size="small"
+                              label={`${dayAnalysis.emoji} ${dayAnalysis.hours}שע'`}
+                              sx={{
+                                fontSize: '0.65rem', fontWeight: 700,
+                                bgcolor: `${dayAnalysis.color}22`,
+                                color: dayAnalysis.color,
+                                border: `1px solid ${dayAnalysis.color}55`,
+                                cursor: 'default',
+                              }}
+                            />
+                          </Tooltip>
+                        )}
                         {day.theme && (
-                          <Chip label={day.theme} size="small" sx={{ fontSize: '0.65rem', ml: 'auto' }} />
+                          <Chip label={day.theme} size="small" sx={{ fontSize: '0.63rem' }} />
                         )}
                       </Box>
+                      {/* אזהרת עומס */}
+                      {dayAnalysis?.score === 'red' && (
+                        <Alert severity="warning" icon={false} sx={{ py: 0.3, px: 1.5, mb: 1, borderRadius: 2, fontSize: '0.75rem' }}>
+                          🔴 {dayAnalysis.warning}
+                        </Alert>
+                      )}
 
                       {/* פעילויות */}
                       {(day.activities || []).map((act, ai) => {
@@ -774,7 +854,7 @@ export default function RollingTripPage() {
 
                       {di < itinerary.length - 1 && <Divider sx={{ my: 2 }} />}
                     </Box>
-                  )) : (
+                  );}) : (
                     <Alert severity="warning" sx={{ borderRadius: 2 }}>לא הצלחנו לייצר מסלול לעצירה זו</Alert>
                   )}
                 </Box>
