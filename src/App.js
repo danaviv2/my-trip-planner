@@ -3299,9 +3299,6 @@ const InviteButton = () => {
             {/* רכיב הנתיבים החדש שיטפל בניתוב לדפים השונים */}
             <AppRoutes />
 
-            {/* AI Travel Assistant - גלובלי בכל הדפים */}
-            <TravelAIChat />
-
             {/* AI Trip Chat Widget - צ'אט חכם עם ידע על הטיולים */}
             <TripChatWidget />
 

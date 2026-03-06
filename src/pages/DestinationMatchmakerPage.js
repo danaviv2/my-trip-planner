@@ -262,6 +262,7 @@ export default function DestinationMatchmakerPage() {
   const [answers, setAnswers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
+  const [error, setError] = useState(false);
   const [fadeIn, setFadeIn] = useState(true);
 
   const handleAnswer = async (label) => {
@@ -278,6 +279,7 @@ export default function DestinationMatchmakerPage() {
     } else {
       // Last question — call Gemini
       setLoading(true);
+      setError(false);
       try {
         const [q1, q2, q3, q4] = newAnswers;
         const q5 = label;
@@ -290,7 +292,7 @@ export default function DestinationMatchmakerPage() {
 - תקציב: ${q4}
 - עונה: ${q5}
 
-החזר JSON בלבד (ללא markdown):
+החזר JSON בלבד ללא markdown ובלי קוד בלוק:
 [
   {
     "name": "שם היעד בעברית",
@@ -314,9 +316,17 @@ export default function DestinationMatchmakerPage() {
           }),
         });
 
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
         const data = await response.json();
-        const rawText =
-          data?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+        console.log('Matchmaker Gemini response:', data);
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!rawText) {
+          throw new Error('Empty response from Gemini');
+        }
 
         // Strip possible markdown fences
         const cleaned = rawText
@@ -325,10 +335,12 @@ export default function DestinationMatchmakerPage() {
           .trim();
 
         const parsed = JSON.parse(cleaned);
-        setResults(Array.isArray(parsed) ? parsed.slice(0, 3) : []);
+        const destinations = Array.isArray(parsed) ? parsed.slice(0, 3) : [];
+        if (destinations.length === 0) throw new Error('No destinations returned');
+        setResults(destinations);
       } catch (err) {
-        console.error('Gemini error:', err);
-        setResults([]);
+        console.error('Matchmaker Gemini error:', err);
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -339,6 +351,7 @@ export default function DestinationMatchmakerPage() {
     setCurrentQ(0);
     setAnswers([]);
     setResults(null);
+    setError(false);
     setLoading(false);
     setFadeIn(true);
   };
@@ -419,8 +432,38 @@ export default function DestinationMatchmakerPage() {
           </Box>
         )}
 
+        {/* ERROR STATE */}
+        {!loading && error && (
+          <Fade in timeout={400}>
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <Typography fontSize={64} mb={2}>😕</Typography>
+              <Typography variant="h6" fontWeight={700} mb={1}>
+                לא הצלחנו לקבל המלצות
+              </Typography>
+              <Typography variant="body2" color="text.secondary" mb={4}>
+                בעיה בחיבור ל-AI. בדוק שיש חיבור לאינטרנט ונסה שוב.
+              </Typography>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={handleReset}
+                sx={{
+                  background: 'linear-gradient(135deg, #f7971e 0%, #e74c3c 100%)',
+                  color: '#fff',
+                  fontWeight: 700,
+                  borderRadius: 3,
+                  px: 4,
+                  py: 1.5,
+                }}
+              >
+                נסה שוב 🔄
+              </Button>
+            </Box>
+          </Fade>
+        )}
+
         {/* RESULTS STATE */}
-        {!loading && results && (
+        {!loading && !error && results && (
           <Fade in timeout={600}>
             <Box>
               <Typography
@@ -446,17 +489,11 @@ export default function DestinationMatchmakerPage() {
                 בהתבסס על ההעדפות שלך, AI בחר עבורך את ההתאמות הטובות ביותר
               </Typography>
 
-              {results.length === 0 ? (
-                <Typography textAlign="center" color="text.secondary">
-                  לא הצלחנו לקבל המלצות. נסה שוב.
-                </Typography>
-              ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
-                  {results.map((dest, i) => (
-                    <DestinationCard key={i} destination={dest} rank={i} />
-                  ))}
-                </Box>
-              )}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
+                {results.map((dest, i) => (
+                  <DestinationCard key={i} destination={dest} rank={i} />
+                ))}
+              </Box>
 
               <Box
                 sx={{
@@ -514,7 +551,7 @@ export default function DestinationMatchmakerPage() {
         )}
 
         {/* QUIZ STATE */}
-        {!loading && !results && (
+        {!loading && !results && !error && (
           <Box>
             {/* Progress */}
             <Box sx={{ mb: 3 }}>
