@@ -1,5 +1,42 @@
 const GEOCODE_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
+
+/**
+ * תחזית מסוכמת לעצירה לפי קואורדינטות — חינמי, ללא API key
+ * מחזיר null אם הטיול מחוץ לחלון התחזית (16 יום)
+ */
+export async function getStopWeatherSummary(lat, lng, startDateStr, days) {
+  if (!lat || !lng || !startDateStr) return null;
+
+  const start = new Date(startDateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const daysOut = Math.floor((start - today) / 86400000);
+  if (daysOut < 0 || daysOut > 14) return null;
+
+  const forecastDays = Math.min(days, Math.max(1, 16 - daysOut));
+  const url =
+    `${FORECAST_URL}?latitude=${lat}&longitude=${lng}` +
+    `&daily=temperature_2m_max,temperature_2m_min,weathercode` +
+    `&forecast_days=${forecastDays}&timezone=auto&start_date=${startDateStr}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const { daily } = await res.json();
+    if (!daily?.temperature_2m_max?.length) return null;
+
+    const avgMax = Math.round(daily.temperature_2m_max.reduce((s, t) => s + t, 0) / daily.temperature_2m_max.length);
+    const avgMin = Math.round(daily.temperature_2m_min.reduce((s, t) => s + t, 0) / daily.temperature_2m_min.length);
+    const codes = daily.weathercode;
+    const dominant = [...codes].sort(
+      (a, b) => codes.filter(c => c === b).length - codes.filter(c => c === a).length
+    )[0];
+    return { avgMin, avgMax, emoji: getWeatherEmoji(dominant) };
+  } catch {
+    return null;
+  }
+}
 const CACHE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
 
 function getWeatherEmoji(code) {

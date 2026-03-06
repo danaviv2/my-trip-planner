@@ -22,6 +22,7 @@ import {
   Logout as LogoutIcon,
   BookmarkBorder as TripsIcon,
   Language as LanguageIcon,
+  Route as RouteIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import NotificationCenter from '../notifications/NotificationCenter';
@@ -53,6 +54,7 @@ const Header = () => {
     { label: `📊 ${t('nav.statistics')}`, path: '/statistics', icon: <StatsIcon /> },
     { label: `🗳️ ${t('nav.groupTrip')}`, path: '/group-trip', icon: <GroupIcon /> },
     { label: `✈️ ${t('nav.myTrips')}`, path: '/my-trips', icon: <TripsIcon /> },
+    { label: `🛣️ טיול מתגלגל`, path: '/rolling-trip', icon: <RouteIcon /> },
   ];
 
   const handleAvatarClick = (e) => setAnchorEl(e.currentTarget);

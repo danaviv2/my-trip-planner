@@ -17,6 +17,7 @@ import {
   Group as GroupIcon,
   BookmarkBorder as MyTripsIcon,
   Share as ShareIcon,
+  Route as RouteIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import SurpriseTripModal from '../components/surprise/SurpriseTripModal';
@@ -78,6 +79,15 @@ const HomePage = () => {
       path: '/my-trips',
       emoji: '📋',
       delay: '0.8s'
+    },
+    {
+      title: 'טיול מתגלגל',
+      description: 'הגדר מסלול ו-AI יגלה את העצירות המושלמות לאורך הדרך',
+      icon: <RouteIcon sx={{ fontSize: 60 }} />,
+      color: 'linear-gradient(135deg, #f7971e 0%, #e74c3c 100%)',
+      path: '/rolling-trip',
+      emoji: '🛣️',
+      delay: '1s'
     }
   ];
 

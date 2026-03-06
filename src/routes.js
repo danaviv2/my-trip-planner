@@ -20,6 +20,7 @@ const StatisticsPage = React.lazy(() => import('./pages/StatisticsPage'));
 const GroupTripPage = React.lazy(() => import('./pages/GroupTripPage'));
 const LoginPage = React.lazy(() => import('./components/auth/LoginPage'));
 const MyTripsPage = React.lazy(() => import('./pages/MyTripsPage'));
+const RollingTripPage = React.lazy(() => import('./pages/RollingTripPage'));
 
 /**
  * רכיב ניתוב ראשי של האפליקציה
@@ -71,6 +72,9 @@ const AppRoutes = () => {
 
       {/* הטיולים שלי */}
       <Route path="/my-trips" element={<ProtectedRoute><MyTripsPage /></ProtectedRoute>} />
+
+      {/* טיול מתגלגל 🛣️ */}
+      <Route path="/rolling-trip" element={<RollingTripPage />} />
 
       {/* התחברות */}
       <Route path="/login" element={<LoginPage />} />

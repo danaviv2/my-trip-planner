@@ -36,6 +36,8 @@ const ACTIVITY_EMOJIS = {
   nature: '🌿',
   beach: '🏖️',
   museum: '🖼️',
+  winery: '🍷',
+  castle: '🏰',
 };
 
 /**
@@ -111,7 +113,17 @@ Required format — return EXACTLY this structure:
         "price": "חינם / ₪50 / כניסה חופשית",
         "website": "https://official-website.com or empty string if unknown"
       }
-    ]
+    ],
+    "hotel": {
+      "name": "שם המלון באנגלית",
+      "stars": 3,
+      "description": "תיאור קצר של המלון בעברית",
+      "priceRange": "€€",
+      "address": "כתובת מלאה באנגלית",
+      "lat": 48.8566,
+      "lng": 2.3522,
+      "bookingTip": "טיפ הזמנה קצר בעברית"
+    }
   }
 ]
 
@@ -120,11 +132,13 @@ Rules:
 - 4 to 5 activities per day (keep descriptions concise to fit all days)
 - Start at 09:00, end by 22:00
 - Times must be realistic (account for travel time between places)
-- activity types: attraction, food, transport, rest, shopping, nightlife, nature, beach, museum
+- activity types: attraction, food, transport, rest, shopping, nightlife, nature, beach, museum, winery, castle
+- When relevant to the destination/region, include wineries (type: winery) or castles/palaces (type: castle) as one of the day's activities
 - addresses must be in English (for Google Maps search)
 - CRITICAL: include accurate lat/lng coordinates for each activity's real location
 - Include at least one meal (type: food) per day
-- Day ${days} should end with something special (sunset, night view, etc.)`;
+- Day ${days} should end with something special (sunset, night view, etc.)
+- hotel: recommend a real, well-known hotel near the last activity of the day. priceRange: €=budget, €€=mid, €€€=luxury`;
 
   console.log(`🗺️ מייצר מסלול AI ל: ${destination} (${days} ימים)`);
 
