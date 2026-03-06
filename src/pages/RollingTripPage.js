@@ -4,6 +4,7 @@ import {
   Box, Container, Typography, TextField, Button, Paper, Stepper, Step, StepLabel,
   Chip, IconButton, Card, CardContent, LinearProgress, Divider, Tooltip,
   Alert, Collapse, Select, MenuItem, FormControl, InputLabel,
+  Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -116,6 +117,12 @@ export default function RollingTripPage() {
   const [newActForm,  setNewActForm]  = useState(null);  // { si, di } – where to add
   const [newActData,  setNewActData]  = useState({ time: '10:00', name: '', type: 'attraction', description: '' });
 
+  // ביטויים מקומיים
+  const [phrasesStop,    setPhraseStop]    = useState(null);   // { name, country }
+  const [phrasesData,    setPhrasesData]   = useState([]);     // [{ phrase, translation, pronunciation }]
+  const [phrasesLoading, setPhrasesLoading] = useState(false);
+  const [phrasesOpen,    setPhrasesOpen]   = useState(false);
+
   const photoFetched = useRef({});
   const weatherFetched = useRef({});
 
@@ -225,24 +232,26 @@ export default function RollingTripPage() {
       .filter(({ days }) => days > 0);
 
     const results = [];
-    for (let idx = 0; idx < stopsWithDays.length; idx++) {
-      const { stop, days } = stopsWithDays[idx];
-      try {
-        const itinerary = await generateItinerary({
-          destination: `${stop.name}, ${stop.country}`,
-          days, interests, budget: 'medium',
-        });
-        results.push({ stop, days, itinerary });
-      } catch {
-        results.push({ stop, days, itinerary: null });
+    try {
+      for (let idx = 0; idx < stopsWithDays.length; idx++) {
+        const { stop, days } = stopsWithDays[idx];
+        try {
+          const itinerary = await generateItinerary({
+            destination: `${stop.name}, ${stop.country}`,
+            days, interests, budget: 'medium',
+          });
+          results.push({ stop, days, itinerary });
+        } catch {
+          results.push({ stop, days, itinerary: null });
+        }
+        setBuildProgress(Math.round(((idx + 1) / stopsWithDays.length) * 100));
       }
-      setBuildProgress(Math.round(((idx + 1) / stopsWithDays.length) * 100));
+      setFullItinerary(results);
+      setActiveStep(3);
+      setExpandedStop(0);
+    } finally {
+      setBuildingItinerary(false);
     }
-
-    setFullItinerary(results);
-    setBuildingItinerary(false);
-    setActiveStep(3);
-    setExpandedStop(0); // פתח את הראשון אוטומטית
   }, [stops, daysPerStop, interests]);
 
   // ── עריכת פעילויות (שלב 4)
@@ -280,6 +289,37 @@ export default function RollingTripPage() {
     });
     setNewActForm(null);
     setNewActData({ time: '10:00', name: '', type: 'attraction', description: '' });
+  };
+
+  // ── ביטויים מקומיים ──
+  const fetchLocalPhrases = async (stop) => {
+    const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY;
+    const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+    if (!GEMINI_API_KEY) return;
+    setPhraseStop(stop);
+    setPhrasesData([]);
+    setPhrasesLoading(true);
+    setPhrasesOpen(true);
+
+    const prompt = `תן לי 10 ביטויים שימושיים לתייר ישראלי ב${stop.name}, ${stop.country}.
+החזר JSON בלבד (ללא markdown):
+[
+  { "category": "ברכות", "phrase": "Bonjour", "translation": "שלום", "pronunciation": "בון-ז'ור" },
+  ...
+]
+קטגוריות: ברכות, הזמנת אוכל, כיוונים, קניות, חירום, תחבורה, מחמאות, בילוי. השתמש בשפה המקומית של ${stop.country}.`;
+
+    try {
+      const res = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+      });
+      const data = await res.json();
+      let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+      text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      setPhrasesData(JSON.parse(text));
+    } catch { setPhrasesData([]); }
+    finally { setPhrasesLoading(false); }
   };
 
   const getMapUrl = () => {
@@ -417,10 +457,37 @@ export default function RollingTripPage() {
           sx={{ background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', fontWeight: 700 }} />
       </Box>
 
-      {/* מפה */}
-      <Paper sx={{ borderRadius: 3, overflow: 'hidden', mb: 3, height: 220 }}>
-        <iframe title="מפת מסלול" src={getMapUrl()} width="100%" height="220"
-          style={{ border: 'none' }} referrerPolicy="no-referrer-when-downgrade" loading="lazy" />
+      {/* מסלול ויזואלי */}
+      <Paper sx={{ borderRadius: 3, overflow: 'hidden', mb: 3, background: 'linear-gradient(135deg,#667eea11,#764ba211)', border: '1px solid #667eea33' }}>
+        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee' }}>
+          <Typography fontWeight={700} color="#667eea">🗺️ מסלול הטיול</Typography>
+          <Button size="small" variant="outlined" href={getMapUrl()} target="_blank" rel="noopener noreferrer"
+            sx={{ borderColor: '#667eea', color: '#667eea', fontSize: '0.75rem' }}>
+            פתח ב-Google Maps ↗
+          </Button>
+        </Box>
+        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 0, overflowX: 'auto', flexWrap: 'nowrap' }}>
+          {[startPoint, ...stops.map(s => s.name), endPoint].filter(Boolean).map((pt, i, arr) => (
+            <React.Fragment key={i}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, minWidth: 70 }}>
+                <Box sx={{
+                  width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                  background: i === 0 || i === arr.length - 1 ? 'linear-gradient(135deg,#667eea,#764ba2)' : 'white',
+                  border: '2px solid #667eea', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 14, fontWeight: 700, color: i === 0 || i === arr.length - 1 ? 'white' : '#667eea',
+                }}>
+                  {i === 0 ? '✈' : i === arr.length - 1 ? '🏁' : stops[i - 1]?.emoji || '📍'}
+                </Box>
+                <Typography variant="caption" fontWeight={600} textAlign="center" sx={{ mt: 0.5, maxWidth: 64, lineHeight: 1.2, wordBreak: 'break-word' }}>
+                  {pt}
+                </Typography>
+              </Box>
+              {i < arr.length - 1 && (
+                <Box sx={{ height: 2, flex: 1, minWidth: 20, background: 'linear-gradient(90deg,#667eea,#764ba2)', borderRadius: 1, mb: 2.5 }} />
+              )}
+            </React.Fragment>
+          ))}
+        </Box>
       </Paper>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
@@ -644,6 +711,12 @@ export default function RollingTripPage() {
                     ימים {startDay}–{startDay + days - 1} · {stop.country}
                   </Typography>
                 </Box>
+                <Button size="small" variant="outlined"
+                  onClick={(e) => { e.stopPropagation(); fetchLocalPhrases(stop); }}
+                  sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.6)', fontSize: '0.7rem',
+                    whiteSpace: 'nowrap', flexShrink: 0, '&:hover': { bgcolor: 'rgba(255,255,255,0.15)' } }}>
+                  🌍 ביטויים
+                </Button>
                 {/* badge עומס כולל לעצירה */}
                 {(() => {
                   const analyses = itineraryAnalysis[si]?.dayAnalyses || [];
@@ -933,6 +1006,51 @@ export default function RollingTripPage() {
           {activeStep === 3 && !buildingItinerary && renderStep4()}
         </Paper>
       </Container>
+
+      {/* Local Phrases Dialog */}
+      <Dialog open={phrasesOpen} onClose={() => setPhrasesOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ background: 'linear-gradient(135deg,#43e97b,#38f9d7)', color: 'white', pb: 1 }}>
+          🌍 ביטויים שימושיים — {phrasesStop?.name}
+          <IconButton onClick={() => setPhrasesOpen(false)} sx={{ position: 'absolute', right: 8, top: 8, color: 'white' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          {phrasesLoading ? (
+            <Box textAlign="center" py={5}>
+              <CircularProgress sx={{ color: '#43e97b' }} />
+              <Typography mt={2} color="text.secondary">AI מכין ביטויים מקומיים...</Typography>
+            </Box>
+          ) : phrasesData.length === 0 ? (
+            <Typography color="text.secondary" textAlign="center" py={3}>אין ביטויים זמינים</Typography>
+          ) : (
+            phrasesData.map((p, i) => (
+              <Paper key={i} elevation={1} sx={{ p: 1.5, mb: 1, borderRadius: 2, borderRight: '4px solid #43e97b' }}>
+                <Typography variant="caption" color="#38a169" fontWeight={700} textTransform="uppercase">{p.category}</Typography>
+                <Typography variant="h6" fontWeight={800} lineHeight={1.2}>{p.phrase}</Typography>
+                <Typography variant="body2" color="text.secondary">{p.translation}</Typography>
+                {p.pronunciation && (
+                  <Typography variant="caption" sx={{ color: '#667eea', fontStyle: 'italic' }}>
+                    🔊 {p.pronunciation}
+                  </Typography>
+                )}
+              </Paper>
+            ))
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setPhrasesOpen(false)} variant="outlined">סגור</Button>
+          {phrasesData.length > 0 && (
+            <Button variant="contained" onClick={() => {
+              const text = `🌍 ביטויים ב${phrasesStop?.name}:\n\n` +
+                phrasesData.map(p => `${p.phrase} — ${p.translation} (${p.pronunciation || ''})`).join('\n');
+              window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+            }} sx={{ bgcolor: '#25d366', '&:hover': { bgcolor: '#1da851' } }}>
+              📤 שלח בוואטסאפ
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

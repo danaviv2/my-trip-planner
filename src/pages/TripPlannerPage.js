@@ -346,8 +346,8 @@ const TripPlannerPage = () => {
                 </Box>
               ) : (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  {syncedBookings.map(b => (
-                    <Paper key={b.id} elevation={1} sx={{
+                  {syncedBookings.map((b, bi) => (
+                    <Paper key={b.id ?? bi} elevation={1} sx={{
                       p: 1.5, borderRadius: 2,
                       borderLeft: `4px solid ${bookingColor(b.type)}`,
                       display: 'flex', alignItems: 'center', gap: 1.5,
@@ -416,8 +416,8 @@ const TripPlannerPage = () => {
               {tripLogs.length === 0 && (
                 <Typography variant="body2" color="text.secondary">{t('tripPlanner.noLogs')}</Typography>
               )}
-              {tripLogs.map(log => (
-                <Paper key={log.id} sx={{ p: 2, m: '5px 0', bgcolor: '#f9f9f9', borderRadius: '8px', boxShadow: 1 }}>
+              {tripLogs.map((log, li) => (
+                <Paper key={log.id ?? li} sx={{ p: 2, m: '5px 0', bgcolor: '#f9f9f9', borderRadius: '8px', boxShadow: 1 }}>
                   <Typography fontWeight={700}>{log.destination}</Typography>
                   <Typography variant="body2" color="text.secondary">
                     {t('tripPlanner.date')}: {new Date(log.date).toLocaleDateString()}

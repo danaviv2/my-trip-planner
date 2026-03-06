@@ -55,6 +55,7 @@ const Header = () => {
     { label: `🗳️ ${t('nav.groupTrip')}`, path: '/group-trip', icon: <GroupIcon /> },
     { label: `✈️ ${t('nav.myTrips')}`, path: '/my-trips', icon: <TripsIcon /> },
     { label: `🛣️ טיול מתגלגל`, path: '/rolling-trip', icon: <RouteIcon /> },
+    { label: `📓 יומן מסע`, path: '/journal', icon: <RouteIcon /> },
   ];
 
   const handleAvatarClick = (e) => setAnchorEl(e.currentTarget);

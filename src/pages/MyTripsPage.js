@@ -190,8 +190,8 @@ const MyTripsPage = () => {
                 </Button>
               </Box>
               <Grid container spacing={3}>
-                {allTrips.map((trip) => (
-                  <Grid item xs={12} sm={6} md={4} key={trip.id}>
+                {allTrips.map((trip, idx) => (
+                  <Grid item xs={12} sm={6} md={4} key={trip.id ?? idx}>
                     <TripCard trip={trip} onDelete={setDeleteTarget} onShare={setShareTarget} />
                   </Grid>
                 ))}

@@ -72,7 +72,7 @@ export const TripSaveProvider = ({ children }) => {
       localStorage.setItem('savedTrips', JSON.stringify(updated));
       const updatedTrip = updated.find(t => String(t.id) === String(existingId));
       if (user && updatedTrip) {
-        try { await fsaveTrip(user.uid, updatedTrip); } catch {}
+        fsaveTrip(user.uid, updatedTrip).catch(() => {});
       }
       return updatedTrip;
     }
@@ -86,12 +86,11 @@ export const TripSaveProvider = ({ children }) => {
     setSavedTrips(updated);
     localStorage.setItem('savedTrips', JSON.stringify(updated));
 
+    // Firestore sync runs in background — don't block the caller
     if (user) {
-      try {
-        await fsaveTrip(user.uid, trip);
-      } catch (err) {
-        console.error('שגיאה בשמירה ל-Firestore:', err);
-      }
+      fsaveTrip(user.uid, trip).catch(err =>
+        console.error('שגיאה בשמירה ל-Firestore:', err)
+      );
     }
 
     return trip;

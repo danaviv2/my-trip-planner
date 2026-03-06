@@ -5,7 +5,7 @@ import {
   Route as RollingIcon,
   Search as SearchIcon,
   BookmarkBorder as MyTripsIcon,
-  FlightTakeoff as FlightTakeoffIcon
+  AutoStories as JournalIcon,
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMediaQuery, useTheme } from '@mui/material';
@@ -23,7 +23,7 @@ const BottomNav = () => {
     { label: '🛣️ מתגלגל', path: '/rolling-trip', icon: <RollingIcon /> },
     { labelKey: 'bottomNav.search', path: '/advanced-search', icon: <SearchIcon /> },
     { labelKey: 'bottomNav.myTrips', path: '/my-trips', icon: <MyTripsIcon /> },
-    { labelKey: 'bottomNav.plan', path: '/trip-planner', icon: <FlightTakeoffIcon /> },
+    { label: '📓 יומן', path: '/journal', icon: <JournalIcon /> },
   ];
 
   if (!isMobile) return null;
