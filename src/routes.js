@@ -22,6 +22,7 @@ const LoginPage = React.lazy(() => import('./components/auth/LoginPage'));
 const MyTripsPage = React.lazy(() => import('./pages/MyTripsPage'));
 const RollingTripPage = React.lazy(() => import('./pages/RollingTripPage'));
 const TravelJournalPage = React.lazy(() => import('./pages/TravelJournalPage'));
+const DestinationMatchmakerPage = React.lazy(() => import('./pages/DestinationMatchmakerPage'));
 
 /**
  * רכיב ניתוב ראשי של האפליקציה
@@ -79,6 +80,9 @@ const AppRoutes = () => {
 
       {/* יומן מסע 📓 */}
       <Route path="/journal" element={<TravelJournalPage />} />
+
+      {/* מצ'קמייקר יעדים 🎯 */}
+      <Route path="/matchmaker" element={<DestinationMatchmakerPage />} />
 
       {/* התחברות */}
       <Route path="/login" element={<LoginPage />} />

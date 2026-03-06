@@ -64,6 +64,7 @@ import PackingListModal from './components/packing/PackingListModal';
 import { AIChatProvider } from './contexts/AIChatContext';
 import TravelAIChat from './components/ai/TravelAIChat';
 import AIItineraryGenerator from './components/ai/AIItineraryGenerator';
+import TripChatWidget from './components/chat/TripChatWidget';
 
 
 
@@ -3300,6 +3301,9 @@ const InviteButton = () => {
 
             {/* AI Travel Assistant - גלובלי בכל הדפים */}
             <TravelAIChat />
+
+            {/* AI Trip Chat Widget - צ'אט חכם עם ידע על הטיולים */}
+            <TripChatWidget />
 
             {/* באנר עדכון גרסה */}
             <Snackbar

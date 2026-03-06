@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import L from 'leaflet';
 import {
   Box, Typography, Paper, Button, IconButton, Chip, Dialog,
   DialogTitle, DialogContent, DialogActions, TextField, Rating,
@@ -24,6 +26,7 @@ import {
   Videocam as ReelIcon,
   AttachMoney as MoneyIcon,
   Add as AddIcon,
+  Map as MapTabIcon,
 } from '@mui/icons-material';
 import { useTripSave } from '../contexts/TripSaveContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -965,6 +968,105 @@ ${summary}
     );
   };
 
+  // ─── Map tab ──────────────────────────────────────────────────────────────────
+  const renderMapTab = () => {
+    if (!selectedTrip) return renderTripsEmpty();
+
+    // Collect all activities with coordinates from the trip days
+    const allDays = tripDays(selectedTrip);
+    const allActivities = [];
+    allDays.forEach((day, di) => {
+      (day.activities || []).forEach((act, ai) => {
+        if (act.lat && act.lng && act.lat !== 0 && act.lng !== 0) {
+          const entryKey = `${di}-${ai}-${act.name}`;
+          const entry = tripEntries.find(e => e.activityKey === entryKey);
+          allActivities.push({ ...act, dayLabel: day.label, entryKey, entry });
+        }
+      });
+    });
+
+    const checkedActivities  = allActivities.filter(a => a.entry);
+    const pendingActivities  = allActivities.filter(a => !a.entry);
+    const allCoords = allActivities.map(a => [a.lat, a.lng]);
+    const center = allCoords.length > 0
+      ? [allCoords.reduce((s, c) => s + c[0], 0) / allCoords.length,
+         allCoords.reduce((s, c) => s + c[1], 0) / allCoords.length]
+      : [31.7683, 35.2137]; // Jerusalem default
+
+    const makeIcon = (color, emoji) => L.divIcon({
+      className: '',
+      html: `<div style="background:${color};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:3px solid white">${emoji}</div>`,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+    });
+
+    if (allActivities.length === 0) {
+      return (
+        <Box textAlign="center" py={8}>
+          <MapTabIcon sx={{ fontSize: 64, color: '#ccc', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary">אין פעילויות עם קואורדינטות</Typography>
+          <Typography variant="body2" color="text.secondary" mt={1}>
+            הפעילויות שנוצרו ע"י AI כוללות קואורדינטות — צור מסלול חדש כדי לראות את המפה
+          </Typography>
+        </Box>
+      );
+    }
+
+    return (
+      <Box>
+        {/* Stats */}
+        <Box display="flex" gap={1} mb={2} flexWrap="wrap">
+          <Chip label={`📍 ${allActivities.length} מקומות`} sx={{ bgcolor: '#667eea22', color: '#667eea', fontWeight: 700 }} />
+          <Chip label={`✅ ${checkedActivities.length} בוצעו`} sx={{ bgcolor: '#43e97b22', color: '#2d8a52', fontWeight: 700 }} />
+          <Chip label={`⏳ ${pendingActivities.length} ממתינים`} sx={{ bgcolor: '#f5af1922', color: '#b7791f', fontWeight: 700 }} />
+        </Box>
+
+        {/* Map */}
+        <Paper elevation={2} sx={{ borderRadius: 3, overflow: 'hidden', mb: 2 }}>
+          <MapContainer center={center} zoom={12} style={{ height: 380, width: '100%' }} scrollWheelZoom>
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            />
+            {/* Route line */}
+            {allCoords.length > 1 && (
+              <Polyline positions={allCoords} color="#667eea" weight={2} opacity={0.5} dashArray="6,6" />
+            )}
+            {/* Markers */}
+            {allActivities.map((act, i) => (
+              <Marker key={i} position={[act.lat, act.lng]}
+                icon={makeIcon(act.entry ? '#43e97b' : '#667eea', act.entry ? '✓' : (act.emoji || '📍'))}>
+                <Popup>
+                  <Box sx={{ minWidth: 180 }}>
+                    <Typography fontWeight={700}>{act.emoji} {act.name}</Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">{act.dayLabel}</Typography>
+                    {act.entry ? (
+                      <>
+                        <Box>{'⭐'.repeat(act.entry.rating)}</Box>
+                        {act.entry.note && <Typography variant="body2" sx={{ fontStyle: 'italic' }}>"{act.entry.note}"</Typography>}
+                        {act.entry.photoBase64 && (
+                          <img src={act.entry.photoBase64} alt="" style={{ width: '100%', borderRadius: 6, marginTop: 4 }} />
+                        )}
+                      </>
+                    ) : (
+                      <Chip label="טרם בוצע" size="small" sx={{ mt: 0.5, bgcolor: '#f5af1922' }} />
+                    )}
+                  </Box>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        </Paper>
+
+        <Box display="flex" gap={1} fontSize="0.8rem" color="text.secondary" justifyContent="center">
+          <span>🟢 בוצע</span>
+          <span>🔵 ממתין</span>
+          <span>--- קו מסלול</span>
+        </Box>
+      </Box>
+    );
+  };
+
   // ─── main render ─────────────────────────────────────────────────────────────
 
   return (
@@ -1026,6 +1128,7 @@ ${summary}
             <Tab icon={<ReelIcon />} label="רילס" iconPosition="start" />
             <Tab icon={<MoneyIcon />} label="הוצאות" iconPosition="start" />
             <Tab icon={<span style={{fontSize:'1.1rem'}}>🏆</span>} label="הישגים" iconPosition="start" />
+            <Tab icon={<MapTabIcon />} label="מפה" iconPosition="start" />
           </Tabs>
         </Paper>
 
@@ -1038,6 +1141,7 @@ ${summary}
             {activeTab === 2 && renderReelTab()}
             {activeTab === 3 && renderBudgetTab()}
             {activeTab === 4 && renderAchievementsTab()}
+            {activeTab === 5 && renderMapTab()}
           </>
         )}
       </Box>

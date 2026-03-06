@@ -88,6 +88,15 @@ const HomePage = () => {
       path: '/rolling-trip',
       emoji: '🛣️',
       delay: '1s'
+    },
+    {
+      title: "מצ'קמייקר יעדים",
+      description: 'ענה על 5 שאלות ו-AI ימצא את היעד המושלם עבורך',
+      icon: <CasinoIcon sx={{ fontSize: 60 }} />,
+      color: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+      path: '/matchmaker',
+      emoji: '🎯',
+      delay: '1.2s'
     }
   ];
 

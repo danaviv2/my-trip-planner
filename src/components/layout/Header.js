@@ -30,6 +30,7 @@ import { useUserPreferences } from '../../contexts/UserPreferencesContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import BottomNav from './BottomNav';
+import InstallPWAButton from '../pwa/InstallPWAButton';
 
 const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -56,6 +57,7 @@ const Header = () => {
     { label: `✈️ ${t('nav.myTrips')}`, path: '/my-trips', icon: <TripsIcon /> },
     { label: `🛣️ טיול מתגלגל`, path: '/rolling-trip', icon: <RouteIcon /> },
     { label: `📓 יומן מסע`, path: '/journal', icon: <RouteIcon /> },
+    { label: `🎯 מצ'קמייקר`, path: '/matchmaker', icon: <RouteIcon /> },
   ];
 
   const handleAvatarClick = (e) => setAnchorEl(e.currentTarget);
@@ -135,6 +137,7 @@ const Header = () => {
           {/* דסקטופ */}
           {!isMobile && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <InstallPWAButton />
               {LanguageSwitcher()}
               <Tooltip title={userPreferences.darkMode ? t('nav.lightMode') : t('nav.darkMode')}>
                 <IconButton color="inherit" onClick={toggleDarkMode} size="small">
