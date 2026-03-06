@@ -2,7 +2,7 @@ import React from 'react';
 import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
 import {
   Home as HomeIcon,
-  AltRoute as RouteIcon,
+  Route as RollingIcon,
   Search as SearchIcon,
   BookmarkBorder as MyTripsIcon,
   FlightTakeoff as FlightTakeoffIcon
@@ -20,7 +20,7 @@ const BottomNav = () => {
 
   const navItems = [
     { labelKey: 'bottomNav.home', path: '/', icon: <HomeIcon /> },
-    { labelKey: 'bottomNav.routes', path: '/route-map', icon: <RouteIcon /> },
+    { label: '🛣️ מתגלגל', path: '/rolling-trip', icon: <RollingIcon /> },
     { labelKey: 'bottomNav.search', path: '/advanced-search', icon: <SearchIcon /> },
     { labelKey: 'bottomNav.myTrips', path: '/my-trips', icon: <MyTripsIcon /> },
     { labelKey: 'bottomNav.plan', path: '/trip-planner', icon: <FlightTakeoffIcon /> },
@@ -48,7 +48,7 @@ const BottomNav = () => {
         {navItems.map((item) => (
           <BottomNavigationAction
             key={item.path}
-            label={t(item.labelKey)}
+            label={item.label ?? t(item.labelKey)}
             value={item.path}
             icon={item.icon}
             sx={{
