@@ -262,7 +262,7 @@ export default function DestinationMatchmakerPage() {
   const [answers, setAnswers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState(null);
   const [fadeIn, setFadeIn] = useState(true);
 
   const handleAnswer = async (label) => {
@@ -279,7 +279,7 @@ export default function DestinationMatchmakerPage() {
     } else {
       // Last question — call Gemini
       setLoading(true);
-      setError(false);
+      setError(null);
       try {
         const [q1, q2, q3, q4] = newAnswers;
         const q5 = label;
@@ -321,26 +321,24 @@ export default function DestinationMatchmakerPage() {
         }
 
         const data = await response.json();
-        console.log('Matchmaker Gemini response:', data);
+        console.log('Matchmaker Gemini response:', JSON.stringify(data).slice(0, 500));
         const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!rawText) {
           throw new Error('Empty response from Gemini');
         }
 
-        // Strip possible markdown fences
-        const cleaned = rawText
-          .replace(/```json\s*/gi, '')
-          .replace(/```\s*/gi, '')
-          .trim();
+        // Extract JSON array — handles markdown fences AND extra surrounding text
+        const arrayMatch = rawText.match(/\[[\s\S]*\]/);
+        if (!arrayMatch) throw new Error('No JSON array found in response');
 
-        const parsed = JSON.parse(cleaned);
+        const parsed = JSON.parse(arrayMatch[0]);
         const destinations = Array.isArray(parsed) ? parsed.slice(0, 3) : [];
         if (destinations.length === 0) throw new Error('No destinations returned');
         setResults(destinations);
       } catch (err) {
         console.error('Matchmaker Gemini error:', err);
-        setError(true);
+        setError(err.message || 'שגיאה לא ידועה');
       } finally {
         setLoading(false);
       }
@@ -351,7 +349,7 @@ export default function DestinationMatchmakerPage() {
     setCurrentQ(0);
     setAnswers([]);
     setResults(null);
-    setError(false);
+    setError(null);
     setLoading(false);
     setFadeIn(true);
   };
@@ -433,15 +431,18 @@ export default function DestinationMatchmakerPage() {
         )}
 
         {/* ERROR STATE */}
-        {!loading && error && (
+        {!loading && !!error && (
           <Fade in timeout={400}>
             <Box sx={{ textAlign: 'center', py: 6 }}>
               <Typography fontSize={64} mb={2}>😕</Typography>
               <Typography variant="h6" fontWeight={700} mb={1}>
                 לא הצלחנו לקבל המלצות
               </Typography>
-              <Typography variant="body2" color="text.secondary" mb={4}>
+              <Typography variant="body2" color="text.secondary" mb={1}>
                 בעיה בחיבור ל-AI. בדוק שיש חיבור לאינטרנט ונסה שוב.
+              </Typography>
+              <Typography variant="caption" color="error" sx={{ fontFamily: 'monospace', mb: 3, display: 'block' }}>
+                {error}
               </Typography>
               <Button
                 variant="contained"
@@ -551,7 +552,7 @@ export default function DestinationMatchmakerPage() {
         )}
 
         {/* QUIZ STATE */}
-        {!loading && !results && !error && (
+        {!loading && !results && !error && currentQ < 5 && (
           <Box>
             {/* Progress */}
             <Box sx={{ mb: 3 }}>
