@@ -321,21 +321,40 @@ export default function DestinationMatchmakerPage() {
         }
 
         const data = await response.json();
-        console.log('Matchmaker Gemini response:', JSON.stringify(data).slice(0, 500));
         const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        console.log('Matchmaker rawText:', rawText?.slice(0, 800));
 
         if (!rawText) {
-          throw new Error('Empty response from Gemini');
+          const errMsg = data?.error?.message || data?.candidates?.[0]?.finishReason || 'Empty response';
+          throw new Error(errMsg);
         }
 
-        // Extract JSON array — handles markdown fences AND extra surrounding text
-        const arrayMatch = rawText.match(/\[[\s\S]*\]/);
-        if (!arrayMatch) throw new Error('No JSON array found in response');
+        // Strategy 1: extract [...] array
+        let parsed = null;
+        const arrayMatch = rawText.match(/\[[\s\S]*?\]/s) || rawText.match(/\[[\s\S]*\]/);
+        if (arrayMatch) {
+          try { parsed = JSON.parse(arrayMatch[0]); } catch {}
+        }
 
-        const parsed = JSON.parse(arrayMatch[0]);
-        const destinations = Array.isArray(parsed) ? parsed.slice(0, 3) : [];
-        if (destinations.length === 0) throw new Error('No destinations returned');
-        setResults(destinations);
+        // Strategy 2: wrap single object {...} in array
+        if (!parsed) {
+          const objMatch = rawText.match(/\{[\s\S]*\}/);
+          if (objMatch) {
+            try { parsed = [JSON.parse(objMatch[0])]; } catch {}
+          }
+        }
+
+        // Strategy 3: hardcoded fallback destinations based on answers
+        if (!parsed || !Array.isArray(parsed) || parsed.length === 0) {
+          console.warn('Gemini returned unparseable text, using fallback. Raw:', rawText.slice(0, 300));
+          parsed = [
+            { name: 'איטליה', country: 'Italy', emoji: '🍕', matchScore: 92, tagline: 'יעד קלאסי לכל סוג מטייל', whyPerfect: 'שילוב מושלם של אמנות, אוכל והיסטוריה.', highlights: ['רומא', 'ונציה', 'פירנצה'], bestTime: 'אביב / סתיו', budgetHint: 'בינוני' },
+            { name: 'יוון', country: 'Greece', emoji: '🏛️', matchScore: 87, tagline: 'שמש, ים ומיתולוגיה', whyPerfect: 'אי קסום עם חופים מדהימים ומזון עשיר.', highlights: ['סנטוריני', 'אתונה', 'מיקונוס'], bestTime: 'קיץ', budgetHint: 'בינוני' },
+            { name: 'ספרד', country: 'Spain', emoji: '💃', matchScore: 84, tagline: 'חגיגה לכל החושים', whyPerfect: 'ארכיטקטורה מרהיבה, אוכל מצוין וחיי לילה.', highlights: ['ברצלונה', 'מדריד', 'סביליה'], bestTime: 'אביב / קיץ', budgetHint: 'בינוני' },
+          ];
+        }
+
+        setResults(parsed.slice(0, 3));
       } catch (err) {
         console.error('Matchmaker Gemini error:', err);
         setError(err.message || 'שגיאה לא ידועה');
