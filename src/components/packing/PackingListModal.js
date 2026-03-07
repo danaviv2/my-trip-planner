@@ -14,87 +14,118 @@ import { useTranslation } from 'react-i18next';
 
 const PACKING_DATA = {
   documents: {
-    label: '📄 Documents',
-    always: ['Passport', 'ID card', 'Travel insurance', 'Flight tickets (print/PDF)', 'Hotel bookings'],
+    label: '📄 מסמכים',
+    always: ['דרכון', 'תעודת זהות', 'ביטוח נסיעות', 'כרטיסי טיסה (הדפסה/PDF)', 'אישורי מלון'],
     conditional: {
-      long: ['Visa (if required)', 'Extra credit cards', 'Document copies'],
-      international: ['Entry form', 'Currency declaration'],
+      long: ['ויזה (אם נדרשת)', 'כרטיסי אשראי נוספים', 'צילומי מסמכים לגיבוי'],
+      international: ['טופס כניסה למדינה', 'הצהרת מטבע'],
     }
   },
   clothes: {
-    label: '👗 Clothes',
-    always: ['Underwear (x days)', 'Socks (x days)', 'Pajamas'],
+    label: '👗 ביגוד',
+    always: ['תחתונים (לפי מספר ימים)', 'גרביים (לפי מספר ימים)', 'פיג׳מה'],
     conditional: {
-      beach: ['Swimwear (x2)', 'Light shirts', 'Shorts', 'Dress/beach cover-up'],
-      mountains: ['Hiking pants', 'Layered shirts', 'Warm hat', 'Gloves', 'Warm jacket'],
-      cold: ['Winter coat', 'Sweater', 'Long pants (x3)', 'Thermal shirts'],
-      hot: ['Light shirts', 'Shorts/dresses', 'Sun hat', 'Breathable clothing'],
-      formal: ['Suit/formal dress', 'Heels/dress shoes', 'Tie'],
+      beach: ['בגד ים (x2)', 'חולצות קלות', 'מכנסיים קצרים', 'שמלת חוף/כיסוי ים'],
+      mountains: ['מכנסי הליכה', 'חולצות שכבות', 'כובע חם', 'כפפות', 'מעיל חם'],
+      hot: ['חולצות קלות (x5)', 'מכנסיים קצרים/שמלות', 'כובע שמש', 'ביגוד נושם'],
+      formal: ['חליפה/שמלת ערב', 'נעלי עניבה/עקבים', 'עניבה'],
+      winter: ['מעיל חורף', 'סוודר עבה', 'כפפות', 'כובע צמר', 'צעיף'],
+      summer: ['חולצות קלות נוספות', 'מכנסיים קצרים', 'כובע קיץ'],
+      spring: ['שכבות קלות', 'מעיל דק', 'מטריה קטנה'],
+      autumn: ['מעיל בינוני', 'שכבות ביניים', 'מטריה'],
     }
   },
   shoes: {
-    label: '👟 Shoes',
-    always: ['Comfortable everyday shoes'],
+    label: '👟 נעליים',
+    always: ['נעלי יומיום נוחות'],
     conditional: {
-      beach: ['Flip flops', 'Water shoes'],
-      mountains: ['Hiking/trekking boots'],
-      formal: ['Dress shoes/heels'],
-      cold: ['Warm boots'],
+      beach: ['כפכפים', 'נעלי מים'],
+      mountains: ['נעלי טיולים/טרקים'],
+      formal: ['נעלי ערב/עקבים'],
+      winter: ['מגפיים אטומים למים'],
+      hot: ['נעלי קיץ פתוחות'],
     }
   },
   toiletries: {
-    label: '🪥 Toiletries',
-    always: ['Shampoo & conditioner', 'Soap', 'Toothbrush + toothpaste', 'Razor', 'Deodorant', 'Nail file/towel'],
+    label: '🪥 טואלטיקה',
+    always: ['שמפו ומרכך', 'סבון', 'מברשת שיניים + משחת שיניים', 'סכין גילוח', 'דאודורנט', 'פצירה/מספריים'],
     conditional: {
-      beach: ['SPF 50+ sunscreen', 'After-sun lotion', 'Sunglasses'],
-      long: ['Regular medications', 'Ibuprofen/painkiller', 'Insect repellent'],
+      beach: ['קרם הגנה SPF 50+', 'קרם אחרי שמש', 'משקפי שמש'],
+      hot: ['קרם הגנה SPF 50+', 'ספריי לחות לגוף', 'משקפי שמש'],
+      winter: ['קרם לחות לפנים ולגוף', 'שפתון מגן', 'קרם ידיים'],
+      long: ['תרופות קבועות', 'איבופרופן', 'קרם נגד חרקים'],
+      tropical: ['קרם נגד חרקים חזק (DEET)', 'קרם הגנה גבוה'],
     }
   },
   electronics: {
-    label: '💻 Electronics',
-    always: ['Phone + charger', 'Earphones', 'Power bank'],
+    label: '💻 אלקטרוניקה',
+    always: ['טלפון + מטען', 'אוזניות', 'סוללת גיבוי (Power Bank)'],
     conditional: {
-      long: ['Laptop/tablet', 'Power adapter', 'Camera + memory card'],
-      adventure: ['Action camera (GoPro)', 'Small drone', 'GPS device'],
+      long: ['לפטופ/טאבלט', 'מתאם חשמל בינלאומי', 'מצלמה + כרטיס זיכרון'],
+      international: ['מתאם חשמל בינלאומי'],
+      adventure: ['מצלמת אקשן (GoPro)', 'רחפן קטן', 'GPS נייד'],
     }
   },
   health: {
-    label: '💊 Health',
-    always: ['Regular medications', 'Ibuprofen', 'Bandages', 'Hand sanitizer'],
+    label: '💊 בריאות',
+    always: ['תרופות קבועות', 'איבופרופן/אקמול', 'פלסטרים ותחבושות', 'ג׳ל חיטוי ידיים'],
     conditional: {
-      tropical: ['Malaria pills', 'Relevant vaccines', 'DEET insect repellent'],
-      adventure: ['First aid kit', 'Tick repellent', 'Knee guards'],
-      long: ['Vitamins', 'Anti-diarrhea medication'],
+      tropical: ['כדורי מלריה', 'חיסונים רלוונטיים', 'קרם חרקים DEET חזק'],
+      adventure: ['ערכת עזרה ראשונה', 'קרם חרקים', 'מגן ברכיים/קרסוליים'],
+      long: ['ויטמינים', 'תרופה לשלשול', 'תרופה להקאות'],
+      winter: ['תרסיס לגרון', 'מדחום', 'ויטמין C'],
     }
   },
   misc: {
-    label: '🎒 Miscellaneous',
-    always: ['Wallet', 'Some local currency', 'Book/Kindle', 'Eye mask for flight'],
+    label: '🎒 שונות',
+    always: ['ארנק', 'מטבע מקומי', 'ספר/קינדל', 'מסיכת עיניים לטיסה'],
     conditional: {
-      long: ['Neck pillow for flight', 'Ear plugs', 'Small blanket'],
-      adventure: ['Luggage lock', 'Bag security strap', 'Hiking hat'],
-      beach: ['Small sand bag', 'Beach towel'],
+      long: ['כרית צוואר לטיסה', 'אטמי אוזניים', 'שמיכה קטנה לטיסה'],
+      adventure: ['מנעול מזוודה', 'רצועת אבטחה לתיק', 'כובע טיולים'],
+      beach: ['תיק חוף', 'מגבת חוף', 'ספריי לשיער ים'],
+      winter: ['תרמוס לשתייה חמה', 'חימם ידיים חד-פעמי'],
+      spring: ['מטריה מתקפלת'],
+      autumn: ['מטריה מתקפלת'],
     }
   }
 };
 
-function getConditions({ destination = '', tripType = 'general', days = 7 }) {
+function getCurrentSeason() {
+  const m = new Date().getMonth();
+  if (m >= 2 && m <= 4) return 'spring';
+  if (m >= 5 && m <= 7) return 'summer';
+  if (m >= 8 && m <= 10) return 'autumn';
+  return 'winter';
+}
+
+const SEASON_LABELS = { spring: '🌸 אביב', summer: '☀️ קיץ', autumn: '🍂 סתיו', winter: '❄️ חורף' };
+
+function getConditions({ destination = '', tripType = 'general', days = 7, season }) {
   const conditions = new Set();
   if (days >= 7) conditions.add('long');
-  if (days < 7) conditions.add('short');
 
-  const isInternational = !['Tel Aviv', 'Jerusalem', 'Haifa', 'Eilat', 'Dead Sea', 'תל אביב', 'ירושלים', 'חיפה', 'אילת', 'ים המלח'].some(c => destination.includes(c));
+  const dest = destination.toLowerCase();
+  const isInternational = !['תל אביב', 'ירושלים', 'חיפה', 'אילת', 'ים המלח', 'tel aviv', 'jerusalem', 'haifa', 'eilat'].some(c => dest.includes(c.toLowerCase()));
   if (isInternational) conditions.add('international');
 
-  if (['Thailand', 'Bali', 'Maldives', 'Cape Town', 'Rio', 'Caribbean', 'Singapore', 'Hanoi', 'תאילנד', 'בלי', 'מלדיביים'].some(k => destination.toLowerCase().includes(k.toLowerCase())))
-    conditions.add('tropical');
-  if (['beach', 'coast', 'Santorini', 'Barcelona', 'Riviera', 'Mykonos', 'חוף', 'סנטוריני', 'ברצלונה'].some(k => destination.toLowerCase().includes(k.toLowerCase()) || tripType === 'beach'))
-    conditions.add('beach');
-  if (['mountains', 'Nepal', 'Alps', 'Kilimanjaro', 'Patagonia', 'Iceland', 'New Zealand', 'הרים', 'נפאל', 'אלפים', 'איסלנד'].some(k => destination.toLowerCase().includes(k.toLowerCase()) || tripType === 'mountains'))
-    conditions.add('mountains');
-  if (['France', 'Italy', 'Spain', 'theater', 'opera', 'gala', 'צרפת', 'איטליה', 'ספרד'].some(k => destination.toLowerCase().includes(k.toLowerCase()) || tripType === 'formal'))
-    conditions.add('formal');
+  const tropicalKeys = ['thailand', 'bali', 'maldives', 'cape town', 'rio', 'caribbean', 'singapore', 'vietnam', 'cambodia', 'indonesia', 'תאילנד', 'באלי', 'מלדיביים', 'קמבודיה', 'וייטנאם'];
+  if (tropicalKeys.some(k => dest.includes(k))) conditions.add('tropical');
+
+  const beachKeys = ['santorini', 'mykonos', 'barcelona', 'riviera', 'miami', 'hawaii', 'cancun', 'ibiza', 'סנטוריני', 'מיקונוס', 'ברצלונה', 'מיאמי', 'קנקון', 'חוף'];
+  if (beachKeys.some(k => dest.includes(k)) || tripType === 'beach') conditions.add('beach');
+
+  const mountainKeys = ['alps', 'nepal', 'kilimanjaro', 'patagonia', 'iceland', 'new zealand', 'swiss', 'norway', 'אלפים', 'נפאל', 'איסלנד', 'נורווגיה', 'הרים'];
+  if (mountainKeys.some(k => dest.includes(k)) || tripType === 'mountains') conditions.add('mountains');
+
+  const formalKeys = ['paris', 'france', 'italy', 'spain', 'london', 'פריז', 'צרפת', 'איטליה', 'ספרד', 'לונדון'];
+  if (formalKeys.some(k => dest.includes(k)) || tripType === 'formal') conditions.add('formal');
+
   if (tripType === 'adventure') conditions.add('adventure');
+
+  // Season
+  const effectiveSeason = season || getCurrentSeason();
+  conditions.add(effectiveSeason);
+  if (effectiveSeason === 'summer' || (conditions.has('tropical') && effectiveSeason !== 'winter')) conditions.add('hot');
 
   return conditions;
 }
@@ -106,6 +137,7 @@ export default function PackingListModal({ open, onClose, initialDestination = '
   const [destination, setDestination] = useState(initialDestination);
   const [days, setDays] = useState(initialDays);
   const [tripType, setTripType] = useState('general');
+  const [season, setSeason] = useState(getCurrentSeason);
   const [checked, setChecked] = useState(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
   });
@@ -119,7 +151,7 @@ export default function PackingListModal({ open, onClose, initialDestination = '
     localStorage.setItem(STORAGE_KEY, JSON.stringify(checked));
   }, [checked]);
 
-  const conditions = useMemo(() => getConditions({ destination, tripType, days }), [destination, tripType, days]);
+  const conditions = useMemo(() => getConditions({ destination, tripType, days, season }), [destination, tripType, days, season]);
 
   const toggleCheck = (item) => {
     setChecked(prev => ({ ...prev, [item]: !prev[item] }));
@@ -179,34 +211,46 @@ export default function PackingListModal({ open, onClose, initialDestination = '
           <IconButton onClick={onClose}><CloseIcon /></IconButton>
         </Box>
 
-        <Paper sx={{ p: 2, borderRadius: 3, bgcolor: '#f8f9ff', mb: 3 }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <TextField
-              label={t('packing.destination')}
-              value={destination}
-              onChange={e => setDestination(e.target.value)}
-              fullWidth
-              size="small"
-              placeholder={t('packing.dest_placeholder')}
-            />
-            <TextField
-              label={t('packing.days_label')}
-              type="number"
-              value={days}
-              onChange={e => setDays(Math.max(1, parseInt(e.target.value) || 1))}
-              size="small"
-              sx={{ minWidth: 100 }}
-            />
-            <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>{t('packing.trip_type')}</InputLabel>
-              <Select value={tripType} label={t('packing.trip_type')} onChange={e => setTripType(e.target.value)}>
-                <MenuItem value="general">{t('packing.type_general')}</MenuItem>
-                <MenuItem value="beach">{t('packing.type_beach')}</MenuItem>
-                <MenuItem value="mountains">{t('packing.type_mountains')}</MenuItem>
-                <MenuItem value="adventure">{t('packing.type_adventure')}</MenuItem>
-                <MenuItem value="formal">{t('packing.type_formal')}</MenuItem>
-              </Select>
-            </FormControl>
+        <Paper sx={{ p: 2, borderRadius: 3, bgcolor: '#f8f9ff', mb: 2 }}>
+          <Stack spacing={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <TextField
+                label={t('packing.destination')}
+                value={destination}
+                onChange={e => setDestination(e.target.value)}
+                fullWidth
+                size="small"
+                placeholder={t('packing.dest_placeholder')}
+              />
+              <TextField
+                label={t('packing.days_label')}
+                type="number"
+                value={days}
+                onChange={e => setDays(Math.max(1, parseInt(e.target.value) || 1))}
+                size="small"
+                sx={{ minWidth: 100 }}
+              />
+            </Stack>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <FormControl size="small" fullWidth>
+                <InputLabel>{t('packing.trip_type')}</InputLabel>
+                <Select value={tripType} label={t('packing.trip_type')} onChange={e => setTripType(e.target.value)}>
+                  <MenuItem value="general">{t('packing.type_general')}</MenuItem>
+                  <MenuItem value="beach">{t('packing.type_beach')}</MenuItem>
+                  <MenuItem value="mountains">{t('packing.type_mountains')}</MenuItem>
+                  <MenuItem value="adventure">{t('packing.type_adventure')}</MenuItem>
+                  <MenuItem value="formal">{t('packing.type_formal')}</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" fullWidth>
+                <InputLabel>עונה</InputLabel>
+                <Select value={season} label="עונה" onChange={e => setSeason(e.target.value)}>
+                  {Object.entries(SEASON_LABELS).map(([val, label]) => (
+                    <MenuItem key={val} value={val}>{label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
           </Stack>
         </Paper>
 

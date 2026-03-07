@@ -27,7 +27,11 @@ import {
   AttachMoney as MoneyIcon,
   Add as AddIcon,
   Map as MapTabIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  Collections as GalleryIcon,
 } from '@mui/icons-material';
+import WeatherMiniCard from '../components/weather/WeatherMiniCard';
 import { useTripSave } from '../contexts/TripSaveContext';
 import { useAuth } from '../contexts/AuthContext';
 import ShareTripDialog from '../components/shared/ShareTripDialog';
@@ -128,8 +132,13 @@ const TravelJournalPage = () => {
   const [checkinAct, setCheckinAct] = useState(null);   // activity being checked-in
   const [checkinRating, setCheckinRating] = useState(4);
   const [checkinNote, setCheckinNote] = useState('');
-  const [checkinPhoto, setCheckinPhoto] = useState(null); // base64
+  const [checkinPhotos, setCheckinPhotos] = useState([]); // base64[]
   const [saving, setSaving] = useState(false);
+
+  // gallery / lightbox
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxPhotos, setLightboxPhotos] = useState([]);
+  const [lightboxIdx, setLightboxIdx] = useState(0);
 
   // share dialog
   const [shareOpen, setShareOpen] = useState(false);
@@ -215,14 +224,14 @@ const TravelJournalPage = () => {
     setCheckinAct({ ...act, _key: key });
     setCheckinRating(4);
     setCheckinNote('');
-    setCheckinPhoto(null);
+    setCheckinPhotos([]);
   };
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const b64 = await resizeBase64(file);
-    setCheckinPhoto(b64);
+    setCheckinPhotos(prev => prev.length < 5 ? [...prev, b64] : prev);
   };
 
   const handleSaveCheckin = async () => {
@@ -239,7 +248,8 @@ const TravelJournalPage = () => {
       activityEmoji: actEmoji(checkinAct),
       rating: checkinRating,
       note: checkinNote.trim(),
-      photoBase64: checkinPhoto,
+      photos: checkinPhotos,
+      photoBase64: checkinPhotos[0] || null,
       timestamp: new Date().toISOString(),
     };
     const updated = [...entries, entry];
@@ -1067,6 +1077,63 @@ ${summary}
     );
   };
 
+  // ─── Gallery tab ─────────────────────────────────────────────────────────────
+  const renderGalleryTab = () => {
+    if (!selectedTrip) return renderTripsEmpty();
+
+    const allPhotos = tripEntries.flatMap(entry => {
+      const photos = entry.photos?.length ? entry.photos : (entry.photoBase64 ? [entry.photoBase64] : []);
+      return photos.map(src => ({ src, entry }));
+    });
+
+    const openLightbox = (idx) => {
+      setLightboxPhotos(allPhotos);
+      setLightboxIdx(idx);
+      setLightboxOpen(true);
+    };
+
+    if (allPhotos.length === 0) {
+      return (
+        <Box textAlign="center" py={8}>
+          <GalleryIcon sx={{ fontSize: 64, color: '#ccc', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary">אין תמונות עדיין</Typography>
+          <Typography variant="body2" color="text.secondary" mt={1}>
+            העלה תמונות בעת צ׳ק-אין לפעילויות
+          </Typography>
+        </Box>
+      );
+    }
+
+    return (
+      <Box>
+        <Typography variant="subtitle2" color="text.secondary" mb={2}>
+          {allPhotos.length} תמונות
+        </Typography>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,1fr)', sm: 'repeat(3,1fr)' }, gap: 1 }}>
+          {allPhotos.map((item, idx) => (
+            <Box key={idx} sx={{ position: 'relative', borderRadius: 2, overflow: 'hidden', cursor: 'pointer', aspectRatio: '1', '&:hover .overlay': { opacity: 1 } }}
+              onClick={() => openLightbox(idx)}>
+              <Box component="img" src={item.src} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <Box className="overlay" sx={{
+                position: 'absolute', inset: 0, bgcolor: 'rgba(0,0,0,0.5)',
+                opacity: 0, transition: 'opacity 0.2s',
+                display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', p: 1,
+              }}>
+                <Typography variant="caption" color="white" fontWeight={700} noWrap>{item.entry.activityName}</Typography>
+                <Box display="flex" alignItems="center" gap={0.5}>
+                  <Typography variant="caption" color="rgba(255,255,255,0.8)" fontSize="0.6rem">
+                    {new Date(item.entry.timestamp).toLocaleDateString('he-IL')}
+                  </Typography>
+                  <Rating value={item.entry.rating} readOnly size="small" sx={{ '& .MuiSvgIcon-root': { fontSize: '0.7rem', color: '#ffd700' } }} />
+                </Box>
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    );
+  };
+
   // ─── main render ─────────────────────────────────────────────────────────────
 
   return (
@@ -1111,6 +1178,16 @@ ${summary}
                 ))}
               </Select>
             </FormControl>
+            {selectedTrip?.destination && (
+              <Box display="flex" alignItems="center" gap={1} mt={1}>
+                <Typography variant="caption" color="text.secondary">מזג אוויר:</Typography>
+                <WeatherMiniCard
+                  cityName={selectedTrip.destination}
+                  startDate={selectedTrip.startDate}
+                  days={selectedTrip.days || 3}
+                />
+              </Box>
+            )}
           </Paper>
         )}
 
@@ -1129,6 +1206,7 @@ ${summary}
             <Tab icon={<MoneyIcon />} label="הוצאות" iconPosition="start" />
             <Tab icon={<span style={{fontSize:'1.1rem'}}>🏆</span>} label="הישגים" iconPosition="start" />
             <Tab icon={<MapTabIcon />} label="מפה" iconPosition="start" />
+            <Tab icon={<GalleryIcon />} label="גלריה" iconPosition="start" />
           </Tabs>
         </Paper>
 
@@ -1142,6 +1220,7 @@ ${summary}
             {activeTab === 3 && renderBudgetTab()}
             {activeTab === 4 && renderAchievementsTab()}
             {activeTab === 5 && renderMapTab()}
+            {activeTab === 6 && renderGalleryTab()}
           </>
         )}
       </Box>
@@ -1176,23 +1255,32 @@ ${summary}
               fullWidth
             />
             <Box>
-              <Typography fontWeight={600} mb={1}>תמונה (אופציונלי)</Typography>
+              <Typography fontWeight={600} mb={1}>תמונות (עד 5, אופציונלי)</Typography>
               <Button
                 variant="outlined"
                 component="label"
                 startIcon={<PhotoIcon />}
+                disabled={checkinPhotos.length >= 5}
                 sx={{ borderColor: '#667eea', color: '#667eea' }}
               >
-                העלה תמונה
+                {checkinPhotos.length >= 5 ? 'הגעת למקסימום' : 'הוסף תמונה'}
                 <input type="file" accept="image/*" hidden onChange={handlePhotoUpload} />
               </Button>
-              {checkinPhoto && (
-                <Box
-                  component="img"
-                  src={checkinPhoto}
-                  alt="preview"
-                  sx={{ display: 'block', mt: 1.5, maxHeight: 180, borderRadius: 2, objectFit: 'cover', maxWidth: '100%' }}
-                />
+              {checkinPhotos.length > 0 && (
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1.5 }}>
+                  {checkinPhotos.map((src, i) => (
+                    <Box key={i} sx={{ position: 'relative' }}>
+                      <Box component="img" src={src} alt={`תמונה ${i + 1}`}
+                        sx={{ width: 80, height: 80, borderRadius: 1.5, objectFit: 'cover', display: 'block' }} />
+                      <Box onClick={() => setCheckinPhotos(prev => prev.filter((_, j) => j !== i))}
+                        sx={{ position: 'absolute', top: -6, right: -6, width: 20, height: 20,
+                          bgcolor: 'error.main', borderRadius: '50%', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Typography fontSize="0.6rem" color="white" fontWeight={700} lineHeight={1}>✕</Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
               )}
             </Box>
           </Stack>
@@ -1326,6 +1414,44 @@ ${summary}
             הוסף
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Lightbox */}
+      <Dialog open={lightboxOpen} onClose={() => setLightboxOpen(false)} maxWidth={false}
+        PaperProps={{ sx: { bgcolor: 'black', m: 0, borderRadius: 0, maxWidth: '100vw', maxHeight: '100vh' } }}>
+        <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: '100vw', height: '100vh' }}>
+          <IconButton onClick={() => setLightboxOpen(false)}
+            sx={{ position: 'absolute', top: 12, right: 12, color: 'white', bgcolor: 'rgba(0,0,0,0.5)', zIndex: 10 }}>
+            <CloseIcon />
+          </IconButton>
+          {lightboxPhotos[lightboxIdx] && (
+            <Box component="img" src={lightboxPhotos[lightboxIdx].src} alt=""
+              sx={{ maxWidth: '90vw', maxHeight: '85vh', objectFit: 'contain', borderRadius: 1 }} />
+          )}
+          {lightboxPhotos.length > 1 && (
+            <>
+              <IconButton onClick={() => setLightboxIdx(i => (i - 1 + lightboxPhotos.length) % lightboxPhotos.length)}
+                sx={{ position: 'absolute', left: 8, color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}>
+                <ChevronRightIcon />
+              </IconButton>
+              <IconButton onClick={() => setLightboxIdx(i => (i + 1) % lightboxPhotos.length)}
+                sx={{ position: 'absolute', right: 8, color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}>
+                <ChevronLeftIcon />
+              </IconButton>
+            </>
+          )}
+          {lightboxPhotos[lightboxIdx] && (
+            <Box sx={{ position: 'absolute', bottom: 16, left: 0, right: 0, textAlign: 'center' }}>
+              <Typography color="white" fontWeight={700} fontSize="0.9rem">
+                {lightboxPhotos[lightboxIdx].entry?.activityName}
+              </Typography>
+              <Typography color="rgba(255,255,255,0.7)" fontSize="0.75rem">
+                {lightboxIdx + 1} / {lightboxPhotos.length}
+              </Typography>
+            </Box>
+          )}
+        </Box>
       </Dialog>
 
       {/* Share Dialog — all platforms */}

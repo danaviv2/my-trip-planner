@@ -222,10 +222,14 @@ const HomePage = () => {
                 startIcon={<FlightIcon />}
                 onClick={() => navigate(`/trip-planner${searchQuery.trim() ? `?destination=${encodeURIComponent(searchQuery.trim())}` : ''}`)}
                 sx={{
-                  bgcolor: 'white', color: '#667eea', px: { xs: 4, md: 5 }, py: 1.5,
-                  fontSize: '1.1rem', fontWeight: 700, borderRadius: 2,
+                  background: 'rgba(255,255,255,0.25)',
+                  backdropFilter: 'blur(8px)',
+                  border: '2px solid rgba(255,255,255,0.8)',
+                  color: 'white',
+                  px: { xs: 4, md: 5 }, py: 1.5,
+                  fontSize: '1.1rem', fontWeight: 800, borderRadius: 2,
                   whiteSpace: 'nowrap', transition: 'all 0.25s ease',
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', transform: 'scale(1.05)', boxShadow: '0 12px 40px rgba(0,0,0,0.2)' }
+                  '&:hover': { background: 'rgba(255,255,255,0.35)', transform: 'scale(1.05)', boxShadow: '0 12px 40px rgba(0,0,0,0.2)' },
                 }}
               >
                 {t('home.cta.button')}

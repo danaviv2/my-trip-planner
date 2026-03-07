@@ -2472,15 +2472,18 @@ const DestinationInfoPage = () => {
               startIcon={<PlayArrowIcon />}
               onClick={() => navigate(`/trip-planner?destination=${destinationData.name}`)}
               sx={{
-                backgroundColor: 'white',
-                color: theme.palette.primary.main,
+                background: 'rgba(255,255,255,0.25)',
+                backdropFilter: 'blur(8px)',
+                border: '2px solid rgba(255,255,255,0.8)',
+                color: 'white',
                 borderRadius: '12px',
                 px: 4,
                 py: 1.5,
                 fontWeight: 'bold',
                 textTransform: 'none',
                 '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)'
+                  background: 'rgba(255,255,255,0.35)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
                 }
               }}
             >
