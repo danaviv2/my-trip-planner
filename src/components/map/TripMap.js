@@ -180,12 +180,12 @@ const TripMap = ({ tripPlan, selectedDayIndex }) => {
 
   const markers = activities.filter(isValidCoord);
 
-  const positions = markers.map(a => [a.lat, a.lng]);
+  const positions = markers.map(a => [Number(a.lat), Number(a.lng)]);
 
   const center = markers.length > 0
     ? [
-        markers.reduce((s, a) => s + a.lat, 0) / markers.length,
-        markers.reduce((s, a) => s + a.lng, 0) / markers.length,
+        markers.reduce((s, a) => s + Number(a.lat), 0) / markers.length,
+        markers.reduce((s, a) => s + Number(a.lng), 0) / markers.length,
       ]
     : [32.0853, 34.7818];
 
@@ -268,7 +268,7 @@ const TripMap = ({ tripPlan, selectedDayIndex }) => {
           return (
           <Marker
             key={idx}
-            position={[activity.lat, activity.lng]}
+            position={[Number(activity.lat), Number(activity.lng)]}
             icon={createNumberedPin(idx + 1, activity.type)}
           >
             <Popup maxWidth={270} minWidth={230}>

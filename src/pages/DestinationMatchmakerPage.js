@@ -329,29 +329,69 @@ export default function DestinationMatchmakerPage() {
           throw new Error(errMsg);
         }
 
-        // Strategy 1: extract [...] array
+        // Strip markdown code fences if Gemini wraps response
+        const cleanText = rawText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+
+        // Strategy 1: greedy match of outermost [...] array
         let parsed = null;
-        const arrayMatch = rawText.match(/\[[\s\S]*?\]/s) || rawText.match(/\[[\s\S]*\]/);
+        const arrayMatch = cleanText.match(/\[[\s\S]*\]/);
         if (arrayMatch) {
           try { parsed = JSON.parse(arrayMatch[0]); } catch {}
         }
 
         // Strategy 2: wrap single object {...} in array
         if (!parsed) {
-          const objMatch = rawText.match(/\{[\s\S]*\}/);
+          const objMatch = cleanText.match(/\{[\s\S]*\}/);
           if (objMatch) {
             try { parsed = [JSON.parse(objMatch[0])]; } catch {}
           }
         }
 
-        // Strategy 3: hardcoded fallback destinations based on answers
-        if (!parsed || !Array.isArray(parsed) || parsed.length === 0) {
-          console.warn('Gemini returned unparseable text, using fallback. Raw:', rawText.slice(0, 300));
-          parsed = [
-            { name: 'איטליה', country: 'Italy', emoji: '🍕', matchScore: 92, tagline: 'יעד קלאסי לכל סוג מטייל', whyPerfect: 'שילוב מושלם של אמנות, אוכל והיסטוריה.', highlights: ['רומא', 'ונציה', 'פירנצה'], bestTime: 'אביב / סתיו', budgetHint: 'בינוני' },
-            { name: 'יוון', country: 'Greece', emoji: '🏛️', matchScore: 87, tagline: 'שמש, ים ומיתולוגיה', whyPerfect: 'אי קסום עם חופים מדהימים ומזון עשיר.', highlights: ['סנטוריני', 'אתונה', 'מיקונוס'], bestTime: 'קיץ', budgetHint: 'בינוני' },
-            { name: 'ספרד', country: 'Spain', emoji: '💃', matchScore: 84, tagline: 'חגיגה לכל החושים', whyPerfect: 'ארכיטקטורה מרהיבה, אוכל מצוין וחיי לילה.', highlights: ['ברצלונה', 'מדריד', 'סביליה'], bestTime: 'אביב / קיץ', budgetHint: 'בינוני' },
-          ];
+        // Validate items look like destinations (have a name field)
+        if (Array.isArray(parsed)) {
+          parsed = parsed.filter(d => d && typeof d === 'object' && d.name);
+        }
+
+        // Strategy 3: answer-aware fallback
+        if (!parsed || parsed.length === 0) {
+          console.warn('Gemini parse failed, using answer-aware fallback. Raw:', rawText.slice(0, 300));
+          const vibe = newAnswers[0] || '';
+          const budget = newAnswers[3] || '';
+          const isAdventure = vibe.includes('הרפתקה');
+          const isCulture = vibe.includes('תרבות');
+          const isRelax = vibe.includes('מנוחה');
+          const isCheap = budget.includes('חסכני');
+          if (isAdventure) {
+            parsed = [
+              { name: 'ניו זילנד', country: 'New Zealand', emoji: '🏔️', matchScore: 95, tagline: 'גן עדן של הרפתקאות', whyPerfect: 'טבע עוצר נשימה, טיולי ג\'ינגל ומגוון אינסופי של פעילויות אתגריות.', highlights: ['קווינסטאון', 'מילפורד סאונד', 'ראסורן'], bestTime: 'דצמבר–מרץ', budgetHint: 'גבוה' },
+              { name: 'פטגוניה', country: 'ארגנטינה / צ\'ילה', emoji: '🦅', matchScore: 90, tagline: 'קצה העולם', whyPerfect: 'נוף פראי ועוצמתי עם קרחונים, פיורדים והרים ייחודיים.', highlights: ['טורס דל פאינה', 'פיצ\'רוי', 'אל קלפאטה'], bestTime: 'נובמבר–מרץ', budgetHint: 'גבוה' },
+              { name: 'איסלנד', country: 'Iceland', emoji: '🌋', matchScore: 87, tagline: 'כוכב לכת אחר', whyPerfect: 'גייזרים, אורות צפוניים, מפלים וטרקים וולקניים - הרפתקה בכל פינה.', highlights: ['ריקיאוויק', 'Ring Road', 'ג\'קולסארלון'], bestTime: 'יוני–אוגוסט', budgetHint: 'גבוה' },
+            ];
+          } else if (isCulture) {
+            parsed = [
+              { name: 'יפן', country: 'Japan', emoji: '⛩️', matchScore: 96, tagline: 'מסורת ועתיד יחד', whyPerfect: 'תרבות עשירה, מקדשים, אמנות, מטבח ייחודי וטכנולוגיה מתקדמת.', highlights: ['קיוטו', 'טוקיו', 'נארה'], bestTime: 'מרץ–מאי', budgetHint: 'בינוני–גבוה' },
+              { name: 'פרו', country: 'Peru', emoji: '🏛️', matchScore: 91, tagline: 'ציביליזציה עתיקה', whyPerfect: 'מאצ\'ו פיצ\'ו, האינקה ותרבות עשירה מרתקת שלא נגמרת.', highlights: ['מאצ\'ו פיצ\'ו', 'קוסקו', 'לימה'], bestTime: 'יוני–אוגוסט', budgetHint: 'בינוני' },
+              { name: 'מרוקו', country: 'Morocco', emoji: '🕌', matchScore: 88, tagline: 'הקסם המזרחי', whyPerfect: 'שווקים צבעוניים, ריח של תבלינים, ארכיטקטורה מרהיבה ומדבר הסהרה.', highlights: ['מרקש', 'פס', 'מדבר סהרה'], bestTime: 'מרץ–מאי', budgetHint: 'נמוך–בינוני' },
+            ];
+          } else if (isRelax) {
+            parsed = [
+              { name: 'מלדיביים', country: 'Maldives', emoji: '🏝️', matchScore: 97, tagline: 'גן עדן על הים', whyPerfect: 'בקתות מעל המים, שנורקלינג עם צבי ים ושלווה מוחלטת.', highlights: ['Male Atoll', 'בקתות מים', 'שנורקלינג'], bestTime: 'נובמבר–אפריל', budgetHint: 'גבוה' },
+              { name: 'באלי', country: 'Indonesia', emoji: '🌺', matchScore: 92, tagline: 'האי של האלים', whyPerfect: 'שדות אורז, מקדשים, ספא אינסופי וחופים שקטים.', highlights: ['אובוד', 'סמינייאק', 'אולוואטו'], bestTime: 'אפריל–אוקטובר', budgetHint: 'נמוך–בינוני' },
+              { name: 'סנטוריני', country: 'Greece', emoji: '🌅', matchScore: 88, tagline: 'שקיעות שלא נשכחות', whyPerfect: 'בתים לבנים, ים כחול מדהים ואווירה רומנטית בלתי ניתנת לשכחה.', highlights: ['אויה', 'פירה', 'חוף Red Beach'], bestTime: 'יוני–ספטמבר', budgetHint: 'בינוני–גבוה' },
+            ];
+          } else if (isCheap) {
+            parsed = [
+              { name: 'ויטנאם', country: 'Vietnam', emoji: '🛵', matchScore: 94, tagline: 'אינסוף תמורת מעט', whyPerfect: 'אוכל מדהים, נופים עוצרי נשימה ותרבות עשירה במחיר נגיש.', highlights: ['האנוי', 'הוי אן', 'הלונג ביי'], bestTime: 'ינואר–מרץ', budgetHint: 'נמוך' },
+              { name: 'פורטוגל', country: 'Portugal', emoji: '🐟', matchScore: 91, tagline: 'אירופה במחיר שפוי', whyPerfect: 'ליסבון הקסומה, פורטו, חופים מדהימים ואוכל מצוין - הכי שווה באירופה.', highlights: ['ליסבון', 'פורטו', 'אלגרב'], bestTime: 'אפריל–יוני', budgetHint: 'נמוך–בינוני' },
+              { name: 'בולגריה', country: 'Bulgaria', emoji: '⛪', matchScore: 85, tagline: 'אירופה הסודית', whyPerfect: 'סופיה המפתיעה, חופי הים השחור וסקי בחורף - הכל ביותר זול.', highlights: ['סופיה', 'פלובדיב', 'חוף הים השחור'], bestTime: 'מאי–ספטמבר', budgetHint: 'נמוך' },
+            ];
+          } else {
+            parsed = [
+              { name: 'איטליה', country: 'Italy', emoji: '🍕', matchScore: 92, tagline: 'יעד קלאסי לכל סוג מטייל', whyPerfect: 'שילוב מושלם של אמנות, אוכל והיסטוריה שלא נגמרת.', highlights: ['רומא', 'ונציה', 'פירנצה'], bestTime: 'אביב / סתיו', budgetHint: 'בינוני' },
+              { name: 'יפן', country: 'Japan', emoji: '🗾', matchScore: 90, tagline: 'חוויה שתשנה אותך', whyPerfect: 'תרבות ייחודית, מזון מדהים ונוף בלתי נשכח בכל עונה.', highlights: ['טוקיו', 'קיוטו', 'אוסקה'], bestTime: 'מרץ–מאי', budgetHint: 'בינוני–גבוה' },
+              { name: 'ספרד', country: 'Spain', emoji: '💃', matchScore: 87, tagline: 'חגיגה לכל החושים', whyPerfect: 'ארכיטקטורה מרהיבה, אוכל מצוין וחיי לילה אגדיים.', highlights: ['ברצלונה', 'מדריד', 'סביליה'], bestTime: 'אביב / קיץ', budgetHint: 'בינוני' },
+            ];
+          }
         }
 
         setResults(parsed.slice(0, 3));

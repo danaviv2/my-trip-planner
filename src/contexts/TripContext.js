@@ -31,10 +31,13 @@ export const TripProvider = ({ children }) => {
       setSelectedDayIndex(0);
       return { success: true };
     } catch (err) {
+      console.error('❌ planTripWithAI error:', err.message, err);
       const msg = err.message === 'RATE_LIMIT'
         ? 'יותר מדי בקשות — נסה שוב בעוד דקה'
         : err.message === 'NO_API_KEY'
         ? 'מפתח API חסר'
+        : err.message?.startsWith('API_ERROR')
+        ? `שגיאת API: ${err.message}`
         : 'שגיאה ביצירת המסלול';
       setTripError(msg);
       return { success: false, error: msg };

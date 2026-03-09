@@ -87,152 +87,138 @@ export const generateItinerary = async ({ destination, days = 3, interests = [],
     specialNeeds ? `- Special needs: ${specialNeeds}` : '',
   ].filter(Boolean).join('\n');
 
-  const prompt = `You are a travel expert for Israeli tourists. Create a detailed ${days}-day itinerary for ${destination}.
-Traveler interests: ${interestsText}. Budget level: ${budgetLabel}. Travel style: ${styleLabel}. Pace: ${paceLabel}.
-${specialLines}
+  const CHUNK_SIZE = 3;
 
-Return ONLY a valid JSON array (no markdown, no extra text). Use Hebrew for ALL text values (names, descriptions, tips).
+  const buildPrompt = (startDay, chunkDays, totalDays) => `Travel expert. Days ${startDay}–${startDay + chunkDays - 1} of ${totalDays}-day trip to ${destination}.
+Budget: ${budgetLabel}. Style: ${styleLabel}. Pace: ${paceLabel}.${specialLines ? '\n' + specialLines : ''}
+Output JSON array of EXACTLY ${chunkDays} objects. Hebrew for title/theme/description/tips/bookingTip. description ≤20 Hebrew words, tips ≤10 Hebrew words.
 
-Required format — return EXACTLY this structure:
-[
-  {
-    "day": 1,
-    "title": "כותרת היום בעברית",
-    "theme": "נושא היום",
-    "activities": [
-      {
-        "time": "09:00",
-        "name": "שם המקום",
-        "type": "attraction",
-        "description": "תיאור קצר ומעניין בעברית",
-        "address": "כתובת מלאה באנגלית לצורך חיפוש במפה",
-        "lat": 48.8584,
-        "lng": 2.2945,
-        "duration": "2 שעות",
-        "tips": "טיפ מעשי אחד בעברית",
-        "price": "חינם / ₪50 / כניסה חופשית",
-        "website": "https://official-website.com or empty string if unknown"
-      }
-    ],
-    "hotel": {
-      "name": "שם המלון באנגלית",
-      "stars": 3,
-      "description": "תיאור קצר של המלון בעברית",
-      "priceRange": "€€",
-      "address": "כתובת מלאה באנגלית",
-      "lat": 48.8566,
-      "lng": 2.3522,
-      "bookingTip": "טיפ הזמנה קצר בעברית"
-    }
-  }
-]
+[{"day":${startDay},"title":"כותרת","theme":"נושא","activities":[{"time":"09:00","name":"Eiffel Tower","type":"attraction","description":"תיאור קצר","address":"Champ de Mars, Paris, France","lat":48.8584,"lng":2.2945,"duration":"2h","tips":"טיפ","price":"free"}],"hotel":{"name":"Hotel du Louvre","stars":4,"description":"תיאור","priceRange":"€€","address":"Place André Malraux, Paris","lat":48.8638,"lng":2.3363,"bookingTip":"טיפ"}}]
 
-Rules:
-- CRITICAL: Return EXACTLY ${days} day objects in the array — no more, no less
-- 4 to 5 activities per day (keep descriptions concise to fit all days)
-- Start at 09:00, end by 22:00
-- Times must be realistic (account for travel time between places)
-- activity types: attraction, food, transport, rest, shopping, nightlife, nature, beach, museum, winery, castle
-- When relevant to the destination/region, include wineries (type: winery) or castles/palaces (type: castle) as one of the day's activities
-- addresses must be in English (for Google Maps search)
-- CRITICAL: include accurate lat/lng coordinates for each activity's real location
-- Include at least one meal (type: food) per day
-- Day ${days} should end with something special (sunset, night view, etc.)
-- hotel: recommend a real, well-known hotel near the last activity of the day. priceRange: €=budget, €€=mid, €€€=luxury`;
+CRITICAL RULES:
+- EXACTLY ${chunkDays} day objects, day numbers ${startDay} to ${startDay + chunkDays - 1}
+- EXACTLY 5 activities per day (morning, mid-morning, lunch, afternoon, evening)
+- CRITICAL: provide REAL precise lat/lng for every activity and hotel — never use 0.0 or placeholder values
+- English addresses only
+- 1+ food activity per day${startDay + chunkDays - 1 === totalDays ? '\n- Last activity: sunset/night view' : ''}`;
 
-  console.log(`🗺️ מייצר מסלול AI ל: ${destination} (${days} ימים)`);
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60000);
-
-  try {
-    const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: {
-          maxOutputTokens: Math.min(4096 + days * 1500, 16000),
-          temperature: 0.7,
-          thinkingConfig: { thinkingBudget: 0 }
-        }
-      })
-    });
-
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      if (response.status === 429) throw new Error('RATE_LIMIT');
-      throw new Error(`API_ERROR_${response.status}`);
-    }
-
-    const data = await response.json();
-    const parts = data.candidates?.[0]?.content?.parts || [];
-    const content = (parts.find(p => !p.thought && p.text) || parts[0])?.text || '';
-
-    let cleaned = content
-      .replace(/```json\s*/gi, '')
-      .replace(/```\s*/g, '')
-      .replace(/[\uFEFF\u200B\u200C\u200D\u00AD\u2060\u00A0]/g, '')
-      .trim();
-
-    const firstBracket = cleaned.indexOf('[');
-    const lastBracket = cleaned.lastIndexOf(']');
-    if (firstBracket !== -1 && lastBracket !== -1) {
-      cleaned = cleaned.slice(firstBracket, lastBracket + 1);
-    }
-
-    let parsed;
+  const callGemini = async (prompt, chunkDays) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 90000);
     try {
-      parsed = JSON.parse(cleaned);
-    } catch {
-      parsed = JSON.parse(jsonrepair(cleaned));
-    }
-
-    // הוסף emoji לכל פעילות
-    const withEmoji = parsed.map(day => ({
-      ...day,
-      activities: (day.activities || []).map(act => ({
-        ...act,
-        emoji: ACTIVITY_EMOJIS[act.type] || '📍',
-      }))
-    }));
-
-    const isGoodCoord = (a) => {
-      const lat = Number(a.lat); const lng = Number(a.lng);
-      return a.lat != null && a.lng != null && a.lat !== '' && a.lng !== '' &&
-        !isNaN(lat) && !isNaN(lng) &&
-        Math.abs(lat) <= 90 && Math.abs(lng) <= 180 &&
-        !(lat === 0 && lng === 0);
-    };
-
-    // חשב מרכז קואורדינטות מכל הפעילויות שיש להן lat/lng תקינים
-    const allValidCoords = withEmoji.flatMap(d => d.activities).filter(isGoodCoord);
-    const centerLat = allValidCoords.length > 0 ? allValidCoords.reduce((s, a) => s + Number(a.lat), 0) / allValidCoords.length : null;
-    const centerLng = allValidCoords.length > 0 ? allValidCoords.reduce((s, a) => s + Number(a.lng), 0) / allValidCoords.length : null;
-
-    // בפעילויות ללא קואורדינטות תקינות — השתמש בממוצע של שאר הפעילויות ביום
-    const result = withEmoji.map(day => {
-      const dayValid = day.activities.filter(isGoodCoord);
-      const fallbackLat = dayValid.length > 0 ? dayValid.reduce((s, a) => s + Number(a.lat), 0) / dayValid.length : centerLat;
-      const fallbackLng = dayValid.length > 0 ? dayValid.reduce((s, a) => s + Number(a.lng), 0) / dayValid.length : centerLng;
-      return {
-        ...day,
-        activities: day.activities.map(act => {
-          if (isGoodCoord(act) || fallbackLat == null) return act;
-          return { ...act, lat: fallbackLat, lng: fallbackLng };
+      const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 10000, temperature: 0.7, responseMimeType: 'application/json' }
         })
-      };
+      });
+      clearTimeout(timeout);
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}));
+        console.error(`❌ Gemini API error ${response.status}:`, errBody);
+        if (response.status === 429) throw new Error('RATE_LIMIT');
+        throw new Error(`API_ERROR_${response.status}: ${errBody?.error?.message || ''}`);
+      }
+      const data = await response.json();
+      const parts = data.candidates?.[0]?.content?.parts || [];
+      const content = (parts.find(p => !p.thought && p.text) || parts[0])?.text || '';
+      const finishReason = data.candidates?.[0]?.finishReason;
+      console.log(`📊 chunk finishReason: ${finishReason}, length: ${content.length}`);
+      if (!content) throw new Error('EMPTY_RESPONSE');
+
+      let cleaned = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '')
+        .replace(/[\uFEFF\u200B\u200C\u200D\u00AD\u2060\u00A0]/g, '').trim();
+      const fb = cleaned.indexOf('['), lb = cleaned.lastIndexOf(']');
+      if (fb !== -1 && lb !== -1) cleaned = cleaned.slice(fb, lb + 1);
+
+      let parsed;
+      try { parsed = JSON.parse(cleaned); }
+      catch { parsed = JSON.parse(jsonrepair(cleaned)); }
+
+      console.log(`  📅 chunk: ${parsed.length}/${chunkDays} ימים`);
+      return parsed;
+    } catch (err) {
+      clearTimeout(timeout);
+      if (err.name === 'AbortError') throw new Error('TIMEOUT');
+      throw err;
+    }
+  };
+
+  const isGoodCoord = (a) => {
+    const lat = Number(a.lat), lng = Number(a.lng);
+    return a.lat != null && a.lng != null && a.lat !== '' && a.lng !== '' &&
+      !isNaN(lat) && !isNaN(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && !(lat === 0 && lng === 0);
+  };
+
+  // geocoding דרך Nominatim לפעילויות שחסרות קואורדינטות
+  const geocodeAddress = async (address, name) => {
+    const query = encodeURIComponent(`${name} ${address} ${destination}`);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`, {
+        headers: { 'Accept-Language': 'en', 'User-Agent': 'MyTripPlanner/1.0' }
+      });
+      const data = await res.json();
+      if (data?.[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    } catch {}
+    return null;
+  };
+
+  const geocodeMissing = async (daysList) => {
+    const tasks = [];
+    daysList.forEach(day => {
+      (day.activities || []).forEach(act => {
+        if (!isGoodCoord(act)) tasks.push({ act, day });
+      });
+      if (day.hotel && !isGoodCoord(day.hotel)) tasks.push({ act: day.hotel, day, isHotel: true });
     });
+    if (tasks.length === 0) return daysList;
+    console.log(`🌍 Geocoding ${tasks.length} חסרי קואורדינטות...`);
+    await Promise.all(tasks.map(async ({ act }) => {
+      const coords = await geocodeAddress(act.address || '', act.name || '');
+      if (coords) { act.lat = coords.lat; act.lng = coords.lng; }
+    }));
+    return daysList;
+  };
 
-    setCache(cacheKey, result);
-    console.log(`✅ מסלול נוצר בהצלחה: ${result.length} ימים`);
-    return result;
+  const fixCoords = (daysList) => {
+    const allValid = daysList.flatMap(d => d.activities).filter(isGoodCoord);
+    const cLat = allValid.length ? allValid.reduce((s, a) => s + Number(a.lat), 0) / allValid.length : null;
+    const cLng = allValid.length ? allValid.reduce((s, a) => s + Number(a.lng), 0) / allValid.length : null;
+    return daysList.map(day => {
+      const dValid = day.activities.filter(isGoodCoord);
+      const fLat = dValid.length ? dValid.reduce((s, a) => s + Number(a.lat), 0) / dValid.length : cLat;
+      const fLng = dValid.length ? dValid.reduce((s, a) => s + Number(a.lng), 0) / dValid.length : cLng;
+      return { ...day, activities: day.activities.map(act => isGoodCoord(act) || fLat == null ? act : { ...act, lat: fLat, lng: fLng }) };
+    });
+  };
 
-  } catch (err) {
-    clearTimeout(timeout);
-    if (err.name === 'AbortError') throw new Error('TIMEOUT');
-    throw err;
+  // --- חלוקה ל-chunks של CHUNK_SIZE ימים ---
+  console.log(`🗺️ מייצר מסלול AI ל: ${destination} (${days} ימים)`);
+  const chunks = [];
+  let startDay = 1;
+  while (startDay <= days) {
+    const chunkDays = Math.min(CHUNK_SIZE, days - startDay + 1);
+    console.log(`  🔄 מייצר ימים ${startDay}–${startDay + chunkDays - 1}...`);
+    const chunkResult = await callGemini(buildPrompt(startDay, chunkDays, days), chunkDays);
+    // תקן מספור ימים
+    chunkResult.forEach((d, i) => { d.day = startDay + i; });
+    chunks.push(...chunkResult);
+    startDay += chunkDays;
   }
+
+  // הוסף emoji
+  const withEmoji = chunks.map(day => ({
+    ...day,
+    activities: (day.activities || []).map(act => ({ ...act, emoji: ACTIVITY_EMOJIS[act.type] || '📍' }))
+  }));
+
+  // geocode פעילויות ומלונות שחסרות קואורדינטות תקינות
+  const geocoded = await geocodeMissing(withEmoji);
+  const result = fixCoords(geocoded);
+  setCache(cacheKey, result);
+  console.log(`✅ מסלול נוצר בהצלחה: ${result.length} ימים`);
+  return result;
 };
