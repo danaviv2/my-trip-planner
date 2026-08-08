@@ -36,7 +36,14 @@ class AIRecommendationsService {
       }
     }
 
-    const body: any = { contents, generationConfig: { maxOutputTokens: 1500, temperature } };
+    const body: any = {
+      contents,
+      generationConfig: {
+        maxOutputTokens: 1500,
+        temperature,
+        thinkingConfig: { thinkingBudget: 0 },
+      },
+    };
     if (systemInstruction) body.systemInstruction = systemInstruction;
 
     try {

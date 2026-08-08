@@ -260,6 +260,9 @@ export default function DestinationMatchmakerPage() {
   const [answers, setAnswers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
+  // מסמן שהתוצאה הגיעה מרשימת גיבוי ולא מ-AI, כדי לא להציג המלצה
+  // גנרית כאילו הותאמה אישית
+  const [usedFallback, setUsedFallback] = useState(false);
   const [error, setError] = useState(null);
   const [fadeIn, setFadeIn] = useState(true);
 
@@ -310,7 +313,15 @@ export default function DestinationMatchmakerPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.9, maxOutputTokens: 1500 },
+            // בלי thinkingConfig, Gemini 2.5 Flash מוציא חלק ניכר מתקציב
+            // הטוקנים על חשיבה, ה-JSON נקטע באמצע, הפרסור נכשל והמסך נפל
+            // בשקט לרשימת יעדים קבועה — תוך שהוא מציג אותה כהמלצת AI.
+            generationConfig: {
+              temperature: 0.9,
+              maxOutputTokens: 2500,
+              responseMimeType: 'application/json',
+              thinkingConfig: { thinkingBudget: 0 },
+            },
           }),
         });
 
@@ -353,6 +364,7 @@ export default function DestinationMatchmakerPage() {
         // Strategy 3: answer-aware fallback
         if (!parsed || parsed.length === 0) {
           console.warn('Gemini parse failed, using answer-aware fallback. Raw:', rawText.slice(0, 300));
+          setUsedFallback(true);
           const vibe = newAnswers[0] || '';
           const budget = newAnswers[3] || '';
           const isAdventure = vibe.includes('הרפתקה');
@@ -406,6 +418,7 @@ export default function DestinationMatchmakerPage() {
     setCurrentQ(0);
     setAnswers([]);
     setResults(null);
+    setUsedFallback(false);
     setError(null);
     setLoading(false);
     setFadeIn(true);
@@ -544,7 +557,9 @@ export default function DestinationMatchmakerPage() {
                 textAlign="center"
                 mb={4}
               >
-                בהתבסס על ההעדפות שלך, AI בחר עבורך את ההתאמות הטובות ביותר
+                {usedFallback
+                  ? 'לא הצלחנו להגיע ל-AI כרגע, אלה יעדים פופולריים לפי סגנון הטיול שבחרת. נסה שוב לקבלת התאמה אישית.'
+                  : 'בהתבסס על ההעדפות שלך, AI בחר עבורך את ההתאמות הטובות ביותר'}
               </Typography>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>

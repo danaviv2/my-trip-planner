@@ -111,7 +111,14 @@ CRITICAL RULES:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 10000, temperature, responseMimeType: 'application/json' }
+          // ראה ההסבר ב-DestinationMatchmakerPage: בלי איפוס תקציב החשיבה
+          // התשובה נקטעת ומגיעה שבורה, וכאן מדובר במסלול הטיול עצמו.
+          generationConfig: {
+            maxOutputTokens: 10000,
+            temperature,
+            responseMimeType: 'application/json',
+            thinkingConfig: { thinkingBudget: 0 }
+          }
         })
       });
       clearTimeout(timeout);
