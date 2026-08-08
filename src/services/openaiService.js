@@ -1,6 +1,6 @@
-const API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY;
+import { geminiEndpoint, geminiStreamEndpoint } from './geminiClient';
+
 const MODEL = 'gemini-2.5-flash';
-const BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}`;
 
 /**
  * Convert OpenAI-style messages to Gemini format.
@@ -28,8 +28,6 @@ function convertMessages(messages) {
  * Non-streaming call — returns full text string.
  */
 export async function callOpenAI(messages, { maxTokens = 4096, temperature = 0.7 } = {}) {
-  if (!API_KEY) throw new Error('NO_API_KEY');
-
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30000);
 
@@ -41,7 +39,7 @@ export async function callOpenAI(messages, { maxTokens = 4096, temperature = 0.7
   if (systemInstruction) body.systemInstruction = systemInstruction;
 
   try {
-    const res = await fetch(`${BASE_URL}:generateContent?key=${API_KEY}`, {
+    const res = await fetch(geminiEndpoint(MODEL), {
       method: 'POST',
       signal: controller.signal,
       headers: { 'Content-Type': 'application/json' },
@@ -69,11 +67,6 @@ export async function callOpenAI(messages, { maxTokens = 4096, temperature = 0.7
  * Returns an abort function.
  */
 export function streamOpenAI(messages, onChunk, onDone, onError, { maxTokens = 4096, temperature = 0.7 } = {}) {
-  if (!API_KEY) {
-    onError(new Error('NO_API_KEY'));
-    return () => {};
-  }
-
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 60000);
   let isCancelled = false;
@@ -85,7 +78,7 @@ export function streamOpenAI(messages, onChunk, onDone, onError, { maxTokens = 4
   };
   if (systemInstruction) body.systemInstruction = systemInstruction;
 
-  fetch(`${BASE_URL}:streamGenerateContent?key=${API_KEY}&alt=sse`, {
+  fetch(geminiStreamEndpoint(MODEL), {
     method: 'POST',
     signal: controller.signal,
     headers: { 'Content-Type': 'application/json' },

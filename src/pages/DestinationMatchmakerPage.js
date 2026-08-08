@@ -14,11 +14,9 @@ import {
   CircularProgress,
   Grid,
 } from '@mui/material';
+import { geminiEndpoint } from '../services/geminiClient';
 
-const GEMINI_API_KEY =
-  process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY;
-const GEMINI_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
 
 const QUESTIONS = [
   {
@@ -307,7 +305,7 @@ export default function DestinationMatchmakerPage() {
   }
 ]`;
 
-        const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+        const response = await fetch(GEMINI_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

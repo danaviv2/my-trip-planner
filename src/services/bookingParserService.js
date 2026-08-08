@@ -1,12 +1,11 @@
-const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY;
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+import { geminiEndpoint } from './geminiClient';
+const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
 
 /**
  * מפענח מייל הזמנה ומחלץ פרטים מובנים
  * @returns {object|null} booking object or null if not a booking
  */
 export const parseBookingEmail = async ({ subject, from, date, body }) => {
-  if (!GEMINI_API_KEY) throw new Error('NO_API_KEY');
 
   const prompt = `You are a travel booking email parser. Extract booking details from this email.
 Return ONLY a valid JSON object (no markdown, no explanation). If this is NOT a travel booking confirmation, return the exact string: null
@@ -35,7 +34,7 @@ Return this exact JSON structure if it IS a booking:
   "notes": "any important notes like breakfast included, free cancellation etc"
 }`;
 
-  const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+  const response = await fetch(GEMINI_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

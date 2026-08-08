@@ -4,7 +4,8 @@ import type { APIKeys, APIEndpoints, ApiResponse, APIError } from '../types/inde
 export const API_KEYS: APIKeys = {
   googleMaps: process.env.REACT_APP_GOOGLE_API_KEY || '',
   weather: process.env.REACT_APP_WEATHER_API_KEY || '',
-  openai: process.env.REACT_APP_GEMINI_API_KEY || '',
+  // Gemini עובר דרך /api/gemini — אין מפתח בצד הלקוח
+  openai: '',
   rapidapi: process.env.REACT_APP_RAPIDAPI_KEY || ''
 };
 

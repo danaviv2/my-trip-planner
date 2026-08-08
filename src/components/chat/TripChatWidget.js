@@ -21,12 +21,10 @@ import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTripSave } from '../../contexts/TripSaveContext';
+import { geminiEndpoint } from '../../services/geminiClient';
 
-const GEMINI_API_KEY =
-  process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY;
 
-const GEMINI_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
 
 const MAX_MESSAGES = 20;
 
@@ -69,10 +67,6 @@ ${currentInfo}
 }
 
 async function callGemini(messages, systemPrompt) {
-  if (!GEMINI_API_KEY) {
-    throw new Error('מפתח Gemini API חסר. אנא הגדר REACT_APP_GEMINI_API_KEY.');
-  }
-
   const contents = messages.map((m) => ({
     role: m.role === 'user' ? 'user' : 'model',
     parts: [{ text: m.text }],
@@ -89,7 +83,7 @@ async function callGemini(messages, systemPrompt) {
     },
   };
 
-  const res = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+  const res = await fetch(GEMINI_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

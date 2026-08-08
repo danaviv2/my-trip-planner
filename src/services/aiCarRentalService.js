@@ -1,4 +1,4 @@
-const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
+import { callGemini } from './geminiClient';
 const CACHE_HOURS = 24;
 
 const getCacheKey = (location) => `carrental_ai_${location.toLowerCase().trim()}`;
@@ -26,7 +26,6 @@ export const generateCarRentalTips = async (location) => {
   const cached = getCached(key);
   if (cached) return cached;
 
-  if (!GEMINI_API_KEY) throw new Error('NO_API_KEY');
 
   const prompt = `You are a travel expert on car rentals. For the destination: ${location}, provide:
 1. 6 car recommendations across 3 categories (2 per category): economy, family, premium
@@ -63,14 +62,7 @@ Return ONLY valid JSON (no markdown):
   }
 }`;
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-    }
-  );
+  const res = await callGemini({ contents: [{ parts: [{ text: prompt }] }] });
 
   if (res.status === 429) throw new Error('RATE_LIMIT');
   if (!res.ok) throw new Error('API_ERROR');

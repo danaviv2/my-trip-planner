@@ -39,6 +39,7 @@ import {
   loadEntriesLocal, saveEntriesLocal,
   saveEntry, loadEntries, deleteEntryFirestore,
 } from '../services/journalService';
+import { geminiEndpoint } from '../services/geminiClient';
 
 // ─── Resize photo via canvas ──────────────────────────────────────────────────
 
@@ -569,9 +570,7 @@ const TravelJournalPage = () => {
 
   // ─── AI Report Card ───────────────────────────────────────────────────────────
   const generateReportCard = async () => {
-    const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY;
-    const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-    if (!GEMINI_API_KEY) { showSnack('מפתח Gemini API חסר', 'error'); return; }
+    const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
     setLoadingReport(true);
     setReportOpen(true);
     setReportCard(null);
@@ -602,7 +601,7 @@ ${summary}
 }`;
 
     try {
-      const res = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+      const res = await fetch(GEMINI_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
@@ -735,9 +734,7 @@ ${summary}
 
   // ── AI expense summary ──
   const generateExpenseSummary = async (tripExpenses) => {
-    const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY;
-    const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-    if (!GEMINI_API_KEY) { showSnack('מפתח Gemini API חסר', 'error'); return; }
+    const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
 
     setLoadingAiSummary(true);
     setAiSummary('');
@@ -762,7 +759,7 @@ ${summary}
 כתוב סיכום בעברית של 3-4 משפטים בלבד. ידידותי ומעניין.`;
 
     try {
-      const res = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+      const res = await fetch(GEMINI_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),

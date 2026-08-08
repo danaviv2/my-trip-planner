@@ -1,8 +1,8 @@
 import { jsonrepair } from 'jsonrepair';
+import { geminiEndpoint } from './geminiClient';
 
-const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY;
 const GEMINI_MODEL = 'gemini-2.5-flash';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GEMINI_URL = geminiEndpoint(GEMINI_MODEL);
 
 const CACHE_PREFIX = 'dest_ai_';
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -27,10 +27,6 @@ function setCache(name, data) {
 }
 
 export const fetchDestinationFromAI = async (destinationName) => {
-  if (!GEMINI_API_KEY) {
-    throw new Error('NO_API_KEY');
-  }
-
   const cached = getCached(destinationName);
   if (cached) {
     console.log(`📦 נטען מהמטמון: ${destinationName}`);
@@ -118,7 +114,7 @@ Required JSON structure:
   try {
     console.log(`🌍 מחפש מידע AI על: ${destinationName}`);
 
-    const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(GEMINI_URL, {
       method: 'POST',
       signal: controller.signal,
       headers: { 'Content-Type': 'application/json' },
