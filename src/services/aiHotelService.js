@@ -1,4 +1,4 @@
-const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
+import { callGemini } from './geminiClient';
 const CACHE_HOURS = 24;
 
 const getCacheKey = (destination) => `hotels_ai_${destination.toLowerCase().trim()}`;
@@ -27,7 +27,6 @@ export const generateHotelRecommendations = async (destination) => {
   // השתמש ב-cache רק אם הוא כולל קואורדינטות
   if (cached && cached[0]?.lat) return cached;
 
-  if (!GEMINI_API_KEY) throw new Error('NO_API_KEY');
 
   const prompt = `You are a travel expert with precise geographic knowledge. Recommend 9 real, well-known hotels in ${destination} — 3 budget, 3 boutique/unique, 3 luxury.
 Return ONLY a valid JSON array (no markdown, no explanation):
@@ -48,14 +47,7 @@ Return ONLY a valid JSON array (no markdown, no explanation):
 ]
 CRITICAL: Include accurate lat/lng coordinates for each hotel's real location. Use real hotels that actually exist. Vary the neighborhoods. Be specific.`;
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-    }
-  );
+  const res = await callGemini({ contents: [{ parts: [{ text: prompt }] }] });
 
   if (res.status === 429) throw new Error('RATE_LIMIT');
   if (!res.ok) throw new Error('API_ERROR');

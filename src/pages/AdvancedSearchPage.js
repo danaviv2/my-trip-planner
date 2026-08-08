@@ -191,7 +191,7 @@ const AdvancedSearchPage = () => {
   const getCategoryColor = (category) => categories.find(cat => cat.value === category)?.color || '#667eea';
 
   return (
-    <Box sx={{ bgcolor: '#f8f9fa', minHeight: '100vh', pb: 8 }}>
+    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', pb: 8 }}>
       <Box sx={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         color: 'white',
@@ -210,7 +210,7 @@ const AdvancedSearchPage = () => {
 
       <Container maxWidth="lg">
         {/* Search Bar */}
-        <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 4, background: 'white' }}>
+        <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 4 }}>
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
             <TextField
               fullWidth
@@ -290,7 +290,7 @@ const AdvancedSearchPage = () => {
 
         {/* Filters Panel */}
         <Collapse in={showFilters}>
-          <Paper elevation={2} sx={{ p: 4, mb: 4, borderRadius: 4, background: 'white' }}>
+          <Paper elevation={2} sx={{ p: 4, mb: 4, borderRadius: 4 }}>
             <Grid container spacing={4}>
               <Grid item xs={12} md={4}>
                 <Typography variant="h6" gutterBottom fontWeight="bold">
@@ -551,7 +551,7 @@ const AdvancedSearchPage = () => {
             ))}
           </Grid>
         ) : (
-          <Paper elevation={0} sx={{ p: 8, textAlign: 'center', borderRadius: 4, bgcolor: 'white' }}>
+          <Paper elevation={0} sx={{ p: 8, textAlign: 'center', borderRadius: 4, bgcolor: 'background.paper' }}>
             <SearchIcon sx={{ fontSize: 80, color: '#e0e0e0', mb: 2 }} />
             <Typography variant="h5" fontWeight="bold" gutterBottom>
               {t('advancedSearch.no_results_title')}

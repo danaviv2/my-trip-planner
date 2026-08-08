@@ -1,27 +1,33 @@
-// src/components/trip-planner/EditAttractionModal.js
-import React, { useState, useEffect, useContext } from 'react';
-import { 
-  Box, Modal, Typography, TextField, Button, 
-  FormControl, InputLabel, Select, MenuItem, 
-  Checkbox, FormControlLabel, Grid
+import React, { useState, useEffect } from 'react';
+import {
+  Modal,
+  Box,
+  Typography,
+  Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+  FormControlLabel,
+  Checkbox,
+  Button
 } from '@mui/material';
-import { TripContext } from '../../contexts/TripContext';
-import { UserPreferencesContext } from '../../contexts/UserPreferencesContext';
 
 /**
- * EditAttractionModal - חלון עריכת פעילות
+ * חלון עריכת פעילות במסלול.
+ *
+ * הרכיב היה מוגדר בתוך הפונקציה App. בקוד המקורי נוסה לתקן את "בעיית ההקלדה"
+ * על ידי פיצול ה-state ל-10 משתנים נפרדים, אבל זה טיפל בסימפטום: הסיבה
+ * האמיתית היא שרכיב שמוגדר בתוך רכיב אחר מקבל זהות חדשה בכל render, ולכן
+ * React מפרק ובונה אותו מחדש — יחד עם כל ה-state והפוקוס. ההוצאה לקובץ
+ * נפרד מתקנת את השורש.
+ *
+ * לוגיקת עדכון המסלול נשארה ב-App ומועברת דרך onSave, כדי לשמור התנהגות זהה.
  */
-const EditAttractionModal = () => {
-  const { 
-    editModalOpen, setEditModalOpen,
-    editedAttraction, selectedDay, selectedActivityIndex,
-    tripPlan, setTripPlan
-  } = useContext(TripContext);
-  const { userPreferences } = useContext(UserPreferencesContext);
-  
+const EditAttractionModal = ({ open, onClose, attraction, defaultLocation, onSave }) => {
   // שימוש במצבים נפרדים לכל שדה במקום אובייקט אחד
   const [activityTime, setActivityTime] = useState('');
-  const [activityTimeEnd, setActivityTimeEnd] = useState('');
   const [activityName, setActivityName] = useState('');
   const [activityCategory, setActivityCategory] = useState('');
   const [activityAddress, setActivityAddress] = useState('');
@@ -31,8 +37,8 @@ const EditAttractionModal = () => {
   const [activityDuration, setActivityDuration] = useState('');
   const [activityPrice, setActivityPrice] = useState('');
   const [activityReservation, setActivityReservation] = useState(false);
-  
-  // הגדרת סוגי הפעילויות
+
+  // הגדרת שדות הקלט המצויים בטופס
   const activityTypes = [
     { value: 'breakfast', label: 'ארוחת בוקר' },
     { value: 'lunch', label: 'ארוחת צהריים' },
@@ -45,79 +51,53 @@ const EditAttractionModal = () => {
     { value: 'accommodation', label: 'לינה' },
     { value: 'transport', label: 'תחבורה' },
   ];
-  
+
   // עדכון הערכים בפתיחת החלון
   useEffect(() => {
-    if (editModalOpen && editedAttraction) {
-      setActivityTime(editedAttraction.timeStart || editedAttraction.time || '');
-      setActivityTimeEnd(editedAttraction.timeEnd || '');
-      setActivityName(editedAttraction.name || '');
-      setActivityCategory(editedAttraction.type || editedAttraction.category || '');
-      setActivityAddress(editedAttraction.address || '');
-      setActivityDescription(editedAttraction.description || '');
-      setActivityOpeningHours(editedAttraction.openingHours || '');
-      setActivityTips(editedAttraction.tips || '');
-      setActivityDuration(editedAttraction.recommendedDuration || '');
-      setActivityPrice(editedAttraction.entranceFee || editedAttraction.priceRange || '');
-      setActivityReservation(editedAttraction.reservationNeeded || false);
+    if (open && attraction) {
+      setActivityTime(attraction.timeStart || attraction.time || '');
+      setActivityName(attraction.name || '');
+      setActivityCategory(attraction.category || '');
+      setActivityAddress(attraction.address || '');
+      setActivityDescription(attraction.description || '');
+      setActivityOpeningHours(attraction.openingHours || '');
+      setActivityTips(attraction.tips || '');
+      setActivityDuration(attraction.recommendedDuration || '');
+      setActivityPrice(attraction.entranceFee || attraction.priceRange || '');
+      setActivityReservation(attraction.reservationNeeded || false);
     }
-  }, [editModalOpen, editedAttraction]);
-  
+  }, [open, attraction]);
+
   // שמירה - מאחדת את כל השדות חזרה לאובייקט אחד
   const handleSave = () => {
     const updatedAttraction = {
-      ...editedAttraction,
-      timeStart: activityTime,
-      timeEnd: activityTimeEnd,
+      ...attraction,
       time: activityTime,
+      timeStart: activityTime,
       name: activityName,
-      type: activityCategory,
       category: activityCategory,
       address: activityAddress,
       description: activityDescription,
       openingHours: activityOpeningHours,
       tips: activityTips,
       recommendedDuration: activityDuration,
+      entranceFee: activityPrice,
       reservationNeeded: activityReservation
     };
-    
+
     // האם זו פעילות מזון? אם כן, נעדכן את ה-priceRange במקום ה-entranceFee
     if (['breakfast', 'lunch', 'dinner'].includes(activityCategory)) {
       updatedAttraction.priceRange = activityPrice;
       delete updatedAttraction.entranceFee;
-    } else {
-      updatedAttraction.entranceFee = activityPrice;
-      delete updatedAttraction.priceRange;
     }
-    
-    // קוראים לפונקציית השמירה המקורית
-    if (selectedDay && selectedActivityIndex !== null) {
-      const updatedItinerary = [...tripPlan.dailyItinerary];
-      const dayIndex = selectedDay - 1;
-      
-      if (dayIndex >= 0 && dayIndex < updatedItinerary.length) {
-        updatedItinerary[dayIndex] = {
-          ...updatedItinerary[dayIndex],
-          schedule: updatedItinerary[dayIndex].schedule.map((activity, index) =>
-            index === selectedActivityIndex ? updatedAttraction : activity
-          ),
-        };
-        
-        setTripPlan(prev => ({ ...prev, dailyItinerary: updatedItinerary }));
-        setEditModalOpen(false);
-      }
-    }
+
+    onSave(updatedAttraction);
   };
-  
-  // איפוס שדות בעת סגירת החלון
-  const handleClose = () => {
-    setEditModalOpen(false);
-  };
-  
+
   return (
     <Modal
-      open={editModalOpen}
-      onClose={handleClose}
+      open={open}
+      onClose={onClose}
       aria-labelledby="edit-attraction-modal-title"
       aria-describedby="edit-attraction-modal-description"
     >
@@ -135,8 +115,8 @@ const EditAttractionModal = () => {
         maxHeight: '80vh',
         overflow: 'auto'
       }} role="dialog" aria-label="עריכת פעילות">
-        <Typography id="edit-attraction-modal-title" variant="h6" sx={{ 
-          color: '#2c3e50', 
+        <Typography id="edit-attraction-modal-title" variant="h6" sx={{
+          color: '#2c3e50',
           fontWeight: 'bold',
           display: 'flex',
           alignItems: 'center',
@@ -147,12 +127,12 @@ const EditAttractionModal = () => {
           <i className="material-icons" style={{ marginRight: '8px' }}>edit</i>
           עריכת פעילות
         </Typography>
-        
+
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" sx={{ mb: 1, color: '#666' }}>
             הכנס את פרטי הפעילות:
           </Typography>
-          
+
           <Grid container spacing={2}>
             {/* שורה ראשונה - סוג פעילות וזמן */}
             <Grid item xs={12} sm={6}>
@@ -170,29 +150,16 @@ const EditAttractionModal = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="שעת התחלה"
-                type="time"
+                label="זמן (למשל, 10:00-12:00)"
                 value={activityTime}
                 onChange={(e) => setActivityTime(e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                aria-label="שעת התחלת הפעילות"
+                aria-label="זמן הפעילות"
               />
             </Grid>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                fullWidth
-                label="שעת סיום"
-                type="time"
-                value={activityTimeEnd}
-                onChange={(e) => setActivityTimeEnd(e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                aria-label="שעת סיום הפעילות"
-              />
-            </Grid>
-            
+
             {/* שם ומיקום */}
             <Grid item xs={12}>
               <TextField
@@ -212,7 +179,7 @@ const EditAttractionModal = () => {
                 aria-label="כתובת הפעילות"
               />
             </Grid>
-            
+
             {/* פרטים נוספים */}
             <Grid item xs={12} sm={6}>
               <TextField
@@ -226,8 +193,8 @@ const EditAttractionModal = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label={activityCategory && ['breakfast', 'lunch', 'dinner'].includes(activityCategory) ? 
-                  "טווח מחירים (€, €€, €€€)" : 
+                label={activityCategory && ['breakfast', 'lunch', 'dinner'].includes(activityCategory) ?
+                  "טווח מחירים (€, €€, €€€)" :
                   "מחיר כניסה"}
                 value={activityPrice}
                 onChange={(e) => setActivityPrice(e.target.value)}
@@ -255,7 +222,7 @@ const EditAttractionModal = () => {
                 label="נדרשת הזמנה מראש"
               />
             </Grid>
-            
+
             {/* תיאור וטיפים */}
             <Grid item xs={12}>
               <TextField
@@ -281,7 +248,7 @@ const EditAttractionModal = () => {
             </Grid>
           </Grid>
         </Box>
-        
+
         {/* כפתורי מידע נוסף */}
         <Box sx={{ mt: 2, mb: 1 }}>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
@@ -291,7 +258,7 @@ const EditAttractionModal = () => {
             <Button
               variant="outlined"
               size="small"
-              onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(activityName + ' ' + userPreferences.location)}`)}
+              onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(activityName + ' ' + defaultLocation)}`)}
               startIcon={<i className="material-icons">search</i>}
               sx={{ borderRadius: '8px' }}
             >
@@ -300,7 +267,7 @@ const EditAttractionModal = () => {
             <Button
               variant="outlined"
               size="small"
-              onClick={() => window.open(`https://www.tripadvisor.com/Search?q=${encodeURIComponent(activityName + ' ' + userPreferences.location)}`)}
+              onClick={() => window.open(`https://www.tripadvisor.com/Search?q=${encodeURIComponent(activityName + ' ' + defaultLocation)}`)}
               startIcon={<i className="material-icons">star</i>}
               sx={{ borderRadius: '8px' }}
             >
@@ -309,7 +276,7 @@ const EditAttractionModal = () => {
             <Button
               variant="outlined"
               size="small"
-              onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activityAddress || activityName + ' ' + userPreferences.location)}`)}
+              onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activityAddress || activityName + ' ' + defaultLocation)}`)}
               startIcon={<i className="material-icons">place</i>}
               sx={{ borderRadius: '8px' }}
             >
@@ -317,36 +284,36 @@ const EditAttractionModal = () => {
             </Button>
           </Box>
         </Box>
-        
+
         {/* כפתורי שמירה וביטול */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end', 
-          gap: 2, 
-          mt: 3, 
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 2,
+          mt: 3,
           pt: 2,
           borderTop: '1px solid #e0e0e0'
         }} role="group" aria-label="פעולות שמירה וביטול">
-          <Button 
-            variant="contained" 
-            onClick={handleSave} 
+          <Button
+            variant="contained"
+            onClick={handleSave}
             startIcon={<i className="material-icons">save</i>}
-            sx={{ 
-              background: '#4CAF50', 
-              color: '#fff', 
-              borderRadius: '8px', 
+            sx={{
+              background: '#4CAF50',
+              color: '#fff',
+              borderRadius: '8px',
               '&:hover': { background: '#388E3C' }
-            }} 
+            }}
             aria-label="שמור פעילות"
           >
             שמור
           </Button>
-          <Button 
-            variant="outlined" 
-            color="secondary" 
-            onClick={handleClose} 
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={onClose}
             startIcon={<i className="material-icons">cancel</i>}
-            sx={{ borderRadius: '8px' }} 
+            sx={{ borderRadius: '8px' }}
             aria-label="בטל עריכת פעילות"
           >
             בטל

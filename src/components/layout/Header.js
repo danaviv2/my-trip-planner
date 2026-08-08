@@ -128,7 +128,9 @@ const Header = () => {
               textDecoration: 'none',
               color: 'white',
               fontWeight: 700,
-              fontSize: { xs: '1rem', md: '1.25rem' }
+              fontSize: { xs: '1rem', md: '1.25rem' },
+              whiteSpace: 'nowrap',
+              flexShrink: 0
             }}
           >
             ✈️ My Trip Planner
@@ -188,8 +190,11 @@ const Header = () => {
                   to={link.path}
                   sx={{
                     fontSize: '0.85rem',
-                    background: location.pathname === link.path ? 'rgba(255,255,255,0.2)' : 'transparent',
-                    '&:hover': { background: 'rgba(255,255,255,0.15)' }
+                    // הפריט הפעיל מוכהה ולא מובהר — הבהרה מקרבת את הרקע לצבע
+                    // הטקסט הלבן ומאבדת את הניגודיות
+                    background: location.pathname === link.path ? 'rgba(0,0,0,0.28)' : 'transparent',
+                    fontWeight: location.pathname === link.path ? 700 : 400,
+                    '&:hover': { background: 'rgba(0,0,0,0.18)' }
                   }}
                 >
                   {link.label}

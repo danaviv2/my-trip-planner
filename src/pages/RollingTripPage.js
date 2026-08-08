@@ -31,6 +31,7 @@ import { useTripSave } from '../contexts/TripSaveContext';
 import { getPlacePhoto } from '../services/photoService';
 import { getStopWeatherSummary } from '../services/openMeteoService';
 import { analyzeItinerary, summarizeAnalysis, autoOptimize } from '../services/dayOptimizerService';
+import { geminiEndpoint } from '../services/geminiClient';
 
 // ─── קבועים ────────────────────────────────────────────────────
 
@@ -293,9 +294,7 @@ export default function RollingTripPage() {
 
   // ── ביטויים מקומיים ──
   const fetchLocalPhrases = async (stop) => {
-    const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY;
-    const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-    if (!GEMINI_API_KEY) return;
+    const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
     setPhraseStop(stop);
     setPhrasesData([]);
     setPhrasesLoading(true);
@@ -310,7 +309,7 @@ export default function RollingTripPage() {
 קטגוריות: ברכות, הזמנת אוכל, כיוונים, קניות, חירום, תחבורה, מחמאות, בילוי. השתמש בשפה המקומית של ${stop.country}.`;
 
     try {
-      const res = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+      const res = await fetch(GEMINI_URL, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
       });

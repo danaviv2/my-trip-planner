@@ -1,7 +1,7 @@
 import { jsonrepair } from 'jsonrepair';
+import { geminiEndpoint } from './geminiClient';
 
-const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY;
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
 
 const CACHE_PREFIX = 'rolling_trip_';
 const CACHE_TTL = 24 * 60 * 60 * 1000;
@@ -29,7 +29,6 @@ function setCache(key, data) {
  * @returns {Promise<Array>} עצירות מוסמכות
  */
 export const discoverRouteStops = async (start, end, waypoints = [], preferences = {}) => {
-  if (!GEMINI_API_KEY) throw new Error('NO_API_KEY');
 
   const { pace = 'medium', interests = [] } = preferences;
   const waypointsStr = waypoints.filter(Boolean).join(', ');
@@ -86,7 +85,7 @@ Rules:
   const timeout = setTimeout(() => controller.abort(), 60000);
 
   try {
-    const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(GEMINI_URL, {
       method: 'POST',
       signal: controller.signal,
       headers: { 'Content-Type': 'application/json' },

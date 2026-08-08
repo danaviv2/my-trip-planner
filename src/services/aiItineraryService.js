@@ -1,8 +1,8 @@
 import { jsonrepair } from 'jsonrepair';
+import { geminiEndpoint } from './geminiClient';
 
-const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || window.env?.REACT_APP_GEMINI_API_KEY;
 const GEMINI_MODEL = 'gemini-2.5-flash';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GEMINI_URL = geminiEndpoint(GEMINI_MODEL);
 
 const CACHE_PREFIX = 'itinerary_ai_';
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 שעות
@@ -50,7 +50,6 @@ const ACTIVITY_EMOJIS = {
  * @returns {Promise<Array>} מערך ימים עם פעילויות
  */
 export const generateItinerary = async ({ destination, days = 3, interests = [], budget = 'medium', advancedPreferences = {} }) => {
-  if (!GEMINI_API_KEY) throw new Error('NO_API_KEY');
 
   const { hasChildren, travelPace, travelStyle, foodPreferences, specialNeeds } = advancedPreferences;
   const advKey = `${hasChildren ? 'kids' : ''}_${travelPace || ''}_${travelStyle || ''}_${foodPreferences || ''}_${specialNeeds || ''}`;
@@ -102,17 +101,17 @@ CRITICAL RULES:
 - English addresses only
 - 1+ food activity per day${startDay + chunkDays - 1 === totalDays ? '\n- Last activity: sunset/night view' : ''}`;
 
-  const callGemini = async (prompt, chunkDays) => {
+  const callGeminiOnce = async (prompt, chunkDays, temperature = 0.7) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 90000);
     try {
-      const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+      const response = await fetch(GEMINI_URL, {
         method: 'POST',
         signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 10000, temperature: 0.7, responseMimeType: 'application/json' }
+          generationConfig: { maxOutputTokens: 10000, temperature, responseMimeType: 'application/json' }
         })
       });
       clearTimeout(timeout);
@@ -145,6 +144,21 @@ CRITICAL RULES:
       if (err.name === 'AbortError') throw new Error('TIMEOUT');
       throw err;
     }
+  };
+
+  const callGemini = async (prompt, chunkDays) => {
+    const temperatures = [0.7, 0.4, 0.2];
+    let lastErr;
+    for (let i = 0; i < temperatures.length; i++) {
+      try {
+        if (i > 0) console.log(`  🔁 retry ${i} (temperature=${temperatures[i]})...`);
+        return await callGeminiOnce(prompt, chunkDays, temperatures[i]);
+      } catch (err) {
+        if (err.message === 'RATE_LIMIT' || err.message === 'TIMEOUT') throw err;
+        lastErr = err;
+      }
+    }
+    throw lastErr;
   };
 
   const isGoodCoord = (a) => {

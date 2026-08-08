@@ -1,14 +1,14 @@
-// src/components/trip-planner/HotelModal.js
-import React, { useState, useContext } from 'react';
-import { Box, Typography, TextField, Button, Modal, Paper } from '@mui/material';
-import { TripContext } from '../../contexts/TripContext';
+import React, { useState } from 'react';
+import { Modal, Box, Typography, TextField, Button } from '@mui/material';
 
 /**
- * HotelModal - חלון דו-שיח להוספת מלון
+ * חלון הוספת מלון למסלול.
+ *
+ * הוצא מתוך הפונקציה App: כשהיה מוגדר שם, כל render של App בנה אותו מחדש
+ * ואיפס את 5 שדות הטופס תוך כדי מילוי. ה-JSX זהה למקור; התלויות שהגיעו
+ * מהסקופ של App עברו ל-props.
  */
-const HotelModal = () => {
-  const { hotelModalOpen, setHotelModalOpen, accommodations, setAccommodations } = useContext(TripContext);
-  
+const HotelModal = ({ open, onClose, onSave, defaultLocation }) => {
   const [hotel, setHotel] = useState({
     name: '',
     address: '',
@@ -16,39 +16,39 @@ const HotelModal = () => {
     checkOut: '',
     notes: ''
   });
-  
+
   const handleSave = () => {
-    setAccommodations([...accommodations, hotel]);
-    setHotelModalOpen(false);
+    onSave(hotel);
+    onClose();
     setHotel({ name: '', address: '', checkIn: '', checkOut: '', notes: '' });
   };
-  
+
   const searchHotel = (site) => {
-    const query = encodeURIComponent(`${hotel.name || ''} ${hotel.address || ''}`);
+    const query = encodeURIComponent(`${hotel.name || ''} ${hotel.address || defaultLocation}`);
     let url = '';
-    
-    switch(site) {
+
+    switch (site) {
       case 'booking':
         url = `https://www.booking.com/search.he.html?ss=${query}`;
         break;
       case 'hotels':
-        url = `https://he.hotels.com/search.do?q-destination=${query}`;
+        url = `https://he.hotels.com/search.do?q-location=${query}`;
         break;
       case 'airbnb':
         url = `https://www.airbnb.com/s/${query}/homes`;
         break;
       case 'expedia':
-        url = `https://www.expedia.com/Hotel-Search?destination=${query}`;
+        url = `https://www.expedia.com/Hotel-Search?location=${query}`;
         break;
       default:
         url = `https://www.booking.com/search.he.html?ss=${query}`;
     }
-    
+
     window.open(url, '_blank');
   };
-  
+
   return (
-    <Modal open={hotelModalOpen} onClose={() => setHotelModalOpen(false)}>
+    <Modal open={open} onClose={onClose}>
       <Box sx={{
         position: 'absolute',
         top: '50%',
@@ -64,7 +64,7 @@ const HotelModal = () => {
         <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
           הוספת מלון למסלול
         </Typography>
-        
+
         <TextField
           fullWidth
           label="שם המלון"
@@ -72,7 +72,7 @@ const HotelModal = () => {
           onChange={(e) => setHotel({ ...hotel, name: e.target.value })}
           sx={{ mb: 2 }}
         />
-        
+
         <TextField
           fullWidth
           label="כתובת"
@@ -80,7 +80,7 @@ const HotelModal = () => {
           onChange={(e) => setHotel({ ...hotel, address: e.target.value })}
           sx={{ mb: 2 }}
         />
-        
+
         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
           <TextField
             label="תאריך צ׳ק-אין"
@@ -90,7 +90,7 @@ const HotelModal = () => {
             InputLabelProps={{ shrink: true }}
             sx={{ flex: 1 }}
           />
-          
+
           <TextField
             label="תאריך צ׳ק-אאוט"
             type="date"
@@ -100,7 +100,7 @@ const HotelModal = () => {
             sx={{ flex: 1 }}
           />
         </Box>
-        
+
         <TextField
           fullWidth
           multiline
@@ -110,34 +110,34 @@ const HotelModal = () => {
           onChange={(e) => setHotel({ ...hotel, notes: e.target.value })}
           sx={{ mb: 3 }}
         />
-        
+
         <Box sx={{ mb: 3 }}>
           <Typography variant="subtitle1" sx={{ mb: 1 }}>
             חפש מלון באתרי הזמנות:
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            <Button 
+            <Button
               variant="outlined"
               onClick={() => searchHotel('booking')}
               startIcon={<i className="material-icons">hotel</i>}
             >
               Booking.com
             </Button>
-            <Button 
+            <Button
               variant="outlined"
               onClick={() => searchHotel('hotels')}
               startIcon={<i className="material-icons">business</i>}
             >
               Hotels.com
             </Button>
-            <Button 
+            <Button
               variant="outlined"
               onClick={() => searchHotel('airbnb')}
               startIcon={<i className="material-icons">home</i>}
             >
               Airbnb
             </Button>
-            <Button 
+            <Button
               variant="outlined"
               onClick={() => searchHotel('expedia')}
               startIcon={<i className="material-icons">flight_takeoff</i>}
@@ -146,11 +146,11 @@ const HotelModal = () => {
             </Button>
           </Box>
         </Box>
-        
+
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-          <Button variant="outlined" onClick={() => setHotelModalOpen(false)}>בטל</Button>
-          <Button 
-            variant="contained" 
+          <Button variant="outlined" onClick={onClose}>בטל</Button>
+          <Button
+            variant="contained"
             onClick={handleSave}
             disabled={!hotel.name || !hotel.address}
           >
