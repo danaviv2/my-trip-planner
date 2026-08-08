@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTripSave } from '../../contexts/TripSaveContext';
 import {
   Box,
   Paper,
@@ -52,85 +53,87 @@ ChartJS.register(
 );
 
 const StatisticsPanel = () => {
+  const { savedTrips } = useTripSave();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     console.log('📊 טוען סטטיסטיקות...');
     loadStatistics();
-  }, []);
+  }, [savedTrips]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const loadStatistics = async () => {
+  const loadStatistics = () => {
     setLoading(true);
-    
+
     try {
-      // נתונים ריאליסטיים לדוגמה
-      const trips = [
-        { name: 'פריז', days: 5, cost: 4500, distance: 3400, type: 'פנאי', date: '2024-01' },
-        { name: 'ברצלונה', days: 4, cost: 3200, distance: 3100, type: 'פנאי', date: '2024-02' },
-        { name: 'רומא', days: 6, cost: 5100, distance: 2800, type: 'משפחה', date: '2024-03' },
-        { name: 'לונדון', days: 3, cost: 3800, distance: 3600, type: 'עבודה', date: '2024-04' },
-        { name: 'אמסטרדם', days: 4, cost: 3500, distance: 3300, type: 'פנאי', date: '2024-05' },
-        { name: 'פראג', days: 5, cost: 2800, distance: 3000, type: 'משפחה', date: '2024-06' }
-      ];
+      // עד כה הוצגו כאן שישה טיולים קבועים בקוד (פריז, ברצלונה, רומא...)
+      // שהמשתמש מעולם לא ביצע, יחד עם "תובנות" שחושבו מהם. עכשיו נטענים
+      // הטיולים השמורים האמיתיים בלבד.
+      const trips = (savedTrips || [])
+        .map((t) => ({
+          name: t.endPoint || t.destination || t.location || 'טיול ללא שם',
+          days: Number(t.days || t.duration || t.userPreferences?.days || t.dailyItinerary?.length) || 0,
+          cost: Number(t.cost || t.budget || t.userPreferences?.budget) || 0,
+          type: t.type || 'פנאי',
+          savedAt: t.savedAt || null,
+        }))
+        .filter((t) => t.days > 0 || t.cost > 0);
+
+      if (!trips.length) {
+        setStats(null);
+        setLoading(false);
+        return;
+      }
 
       const totalTrips = trips.length;
       const totalCost = trips.reduce((sum, t) => sum + t.cost, 0);
-      const totalDistance = trips.reduce((sum, t) => sum + t.distance, 0);
-      const avgDuration = Math.round(trips.reduce((sum, t) => sum + t.days, 0) / trips.length);
-      const avgCostPerDay = Math.round(totalCost / trips.reduce((sum, t) => sum + t.days, 0));
+      const totalDays = trips.reduce((sum, t) => sum + t.days, 0);
+      const avgDuration = totalDays ? Math.round(totalDays / totalTrips) : 0;
+      const avgCostPerDay = totalDays ? Math.round(totalCost / totalDays) : 0;
       const avgCostPerTrip = Math.round(totalCost / totalTrips);
 
-      // ניתוח חיסכון אפשרי
-      const potentialSavings = Math.round(totalCost * 0.15); // 15% חיסכון אפשרי
+      // פילוח לפי חודש — מחושב מתאריכי השמירה בפועל
+      const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
+        'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+      const perMonth = new Array(12).fill(0);
+      trips.forEach((t) => {
+        if (!t.savedAt) return;
+        const d = new Date(t.savedAt);
+        if (!Number.isNaN(d.getTime())) perMonth[d.getMonth()] += 1;
+      });
+      const activeMonths = MONTHS.map((m, i) => ({ m, n: perMonth[i] })).filter((x) => x.n > 0);
 
-      const mockStats = {
+      const types = [...new Set(trips.map((t) => t.type))];
+
+      setStats({
         totalTrips,
-        totalDistance,
         totalCost,
+        totalDays,
         avgDuration,
         avgCostPerDay,
         avgCostPerTrip,
-        potentialSavings,
         trips,
+        hasCosts: totalCost > 0,
         monthlyTrips: {
-          labels: ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני'],
-          data: [1, 1, 1, 1, 1, 1]
+          labels: activeMonths.map((x) => x.m),
+          data: activeMonths.map((x) => x.n),
         },
         tripsByType: {
-          labels: ['עבודה', 'פנאי', 'משפחה'],
-          data: [
-            trips.filter(t => t.type === 'עבודה').length,
-            trips.filter(t => t.type === 'פנאי').length,
-            trips.filter(t => t.type === 'משפחה').length
-          ]
+          labels: types,
+          data: types.map((ty) => trips.filter((t) => t.type === ty).length),
         },
         costTrend: {
-          labels: trips.map(t => t.name),
-          data: trips.map(t => t.cost)
-        },
-        costBreakdown: {
-          labels: ['טיסות', 'לינה', 'אוכל', 'אטרקציות', 'תחבורה'],
-          data: [
-            Math.round(totalCost * 0.35),
-            Math.round(totalCost * 0.30),
-            Math.round(totalCost * 0.20),
-            Math.round(totalCost * 0.10),
-            Math.round(totalCost * 0.05)
-          ]
+          labels: trips.map((t) => t.name),
+          data: trips.map((t) => t.cost),
         },
         costPerDayByTrip: {
-          labels: trips.map(t => t.name),
-          data: trips.map(t => Math.round(t.cost / t.days))
-        }
-      };
-
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setStats(mockStats);
-      console.log('✅ סטטיסטיקות נטענו!');
+          labels: trips.map((t) => t.name),
+          data: trips.map((t) => (t.days ? Math.round(t.cost / t.days) : 0)),
+        },
+      });
     } catch (error) {
-      console.error('❌ שגיאה בטעינת סטטיסטיקות:', error);
+      console.error('שגיאה בטעינת סטטיסטיקות:', error);
+      setStats(null);
     } finally {
       setLoading(false);
     }
@@ -146,7 +149,16 @@ const StatisticsPanel = () => {
   }
 
   if (!stats) {
-    return <Typography>אין נתונים להצגה</Typography>;
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>
+          אין עדיין נתונים להצגה
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          הסטטיסטיקה מחושבת מהטיולים השמורים שלך. שמור טיול ראשון והוא יופיע כאן.
+        </Typography>
+      </Box>
+    );
   }
 
   const costTrendChart = {
@@ -174,20 +186,6 @@ const StatisticsPanel = () => {
     }]
   };
 
-  const costBreakdownChart = {
-    labels: stats.costBreakdown.labels,
-    datasets: [{
-      data: stats.costBreakdown.data,
-      backgroundColor: [
-        'rgba(255, 99, 132, 0.8)',
-        'rgba(54, 162, 235, 0.8)',
-        'rgba(255, 206, 86, 0.8)',
-        'rgba(75, 192, 192, 0.8)',
-        'rgba(153, 102, 255, 0.8)'
-      ],
-      borderWidth: 2
-    }]
-  };
 
   const costPerDayChart = {
     labels: stats.costPerDayByTrip.labels,
@@ -206,10 +204,13 @@ const StatisticsPanel = () => {
         📊 ניתוח טיולים ותובנות פיננסיות
       </Typography>
 
-      {/* תובנה ראשית */}
-      <Alert severity="success" icon={<SaveIcon />} sx={{ mb: 3 }}>
+      {/* סיכום מבוסס נתונים בפועל. קודם הוצגה כאן "תובנה" על חיסכון אפשרי
+          שחושבה כ-15% מסך העלות — מספר שרירותי שהוצג כניתוח. */}
+      <Alert severity="info" icon={<SaveIcon />} sx={{ mb: 3 }}>
         <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-          💡 תובנה: ניתן לחסוך עד ₪{stats.potentialSavings.toLocaleString()} בהזמנה מוקדמת ובחירת תאריכים גמישים!
+          {stats.hasCosts
+            ? `סיכום: ${stats.totalTrips} טיולים, ${stats.totalDays} ימים, עלות ממוצעת ₪${stats.avgCostPerDay.toLocaleString()} ליום`
+            : `סיכום: ${stats.totalTrips} טיולים, ${stats.totalDays} ימים. הוסף תקציב לטיולים כדי לראות ניתוח עלויות.`}
         </Typography>
       </Alert>
 
@@ -235,14 +236,16 @@ const StatisticsPanel = () => {
           <Card sx={{ bgcolor: 'success.main', color: 'white', height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <DistanceIcon sx={{ fontSize: 50 }} />
+                {/* קודם הוצג כאן סך ק״מ, אבל טיול שמור אינו מכיל נתוני מרחק
+                    ולכן המספר היה מומצא. מוצג במקומו נתון שקיים בפועל. */}
+                <DaysIcon sx={{ fontSize: 50 }} />
                 <Box>
                   <Typography variant="h3" sx={{ fontWeight: 'bold' }}>
-                    {stats.totalDistance.toLocaleString()}
+                    {stats.totalDays.toLocaleString()}
                   </Typography>
-                  <Typography variant="body1">ק״מ</Typography>
+                  <Typography variant="body1">ימי טיול</Typography>
                   <Typography variant="caption">
-                    {Math.round(stats.totalDistance / stats.totalTrips)} ק״מ בממוצע
+                    {stats.avgDuration} ימים בממוצע לטיול
                   </Typography>
                 </Box>
               </Box>
@@ -302,7 +305,6 @@ const StatisticsPanel = () => {
                 <TableCell><strong>ימים</strong></TableCell>
                 <TableCell><strong>עלות</strong></TableCell>
                 <TableCell><strong>עלות/יום</strong></TableCell>
-                <TableCell><strong>מרחק</strong></TableCell>
                 <TableCell><strong>סוג</strong></TableCell>
               </TableRow>
             </TableHead>
@@ -313,7 +315,6 @@ const StatisticsPanel = () => {
                   <TableCell>{trip.days}</TableCell>
                   <TableCell>₪{trip.cost.toLocaleString()}</TableCell>
                   <TableCell>₪{Math.round(trip.cost / trip.days)}</TableCell>
-                  <TableCell>{trip.distance} ק״מ</TableCell>
                   <TableCell>
                     <Chip 
                       label={trip.type} 
@@ -384,25 +385,6 @@ const StatisticsPanel = () => {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: 400 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
-              �� פירוט הוצאות
-            </Typography>
-            <Box sx={{ height: 300, display: 'flex', justifyContent: 'center' }}>
-              <Pie 
-                data={costBreakdownChart} 
-                options={{ 
-                  responsive: true, 
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { position: 'bottom' }
-                  }
-                }} 
-              />
-            </Box>
-          </Paper>
-        </Grid>
       </Grid>
 
       {/* תובנות */}
@@ -425,9 +407,6 @@ const StatisticsPanel = () => {
             <Typography variant="body1" sx={{ mb: 1 }}>
               • <strong>הטיול הארוך ביותר:</strong> {stats.trips.reduce((max, t) => t.days > max.days ? t : max).name} 
               ({stats.trips.reduce((max, t) => t.days > max.days ? t : max).days} ימים)
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 1 }}>
-              • <strong>המרחק הממוצע:</strong> {Math.round(stats.totalDistance / stats.totalTrips).toLocaleString()} ק״מ
             </Typography>
           </Grid>
         </Grid>

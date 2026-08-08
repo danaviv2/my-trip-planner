@@ -124,6 +124,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import WeatherForecast from '../../components/WeatherForecast';
 import BudgetMeter from '../budget/BudgetMeter';
+import { generateAttractions } from '../../services/aiAttractionsService';
 
 // רכיבים מסוגננים קיימים
 const StepperContainer = styled(Paper)(({ theme }) => ({
@@ -295,6 +296,7 @@ const TripPlanner = () => {
   
   // אטרקציות מומלצות
   const [recommendedAttractions, setRecommendedAttractions] = useState([]);
+  const [attractionsError, setAttractionsError] = useState('');
   const [selectedAttraction, setSelectedAttraction] = useState(null);
   const [dayToAddActivity, setDayToAddActivity] = useState(null);
   
@@ -486,67 +488,31 @@ const TripPlanner = () => {
 
   // פונקציה להבאת אטרקציות מומלצות
   const fetchRecommendedAttractions = async (dest) => {
+    if (!dest) return;
     setLoading(true);
-    
+    setAttractionsError('');
+
     try {
-      setTimeout(() => {
-        const mockAttractions = getMockAttractions(dest);
-        setRecommendedAttractions(mockAttractions);
-        setLoading(false);
-      }, 1000);
+      // קודם הוחזרו כאן אטרקציות קבועות בפריז לכל יעד בעולם.
+      // עכשיו נשלפות אטרקציות אמיתיות ליעד שנבחר.
+      const attractions = await generateAttractions(dest);
+      setRecommendedAttractions(attractions);
+      if (!attractions.length) {
+        setAttractionsError(`לא נמצאו אטרקציות עבור "${dest}". נסה לנסח את שם היעד אחרת.`);
+      }
     } catch (error) {
       console.error('שגיאה בהבאת אטרקציות מומלצות:', error);
+      setRecommendedAttractions([]);
+      setAttractionsError(
+        error.message === 'RATE_LIMIT'
+          ? 'יותר מדי בקשות כרגע. נסה שוב בעוד רגע.'
+          : 'לא הצלחנו לטעון אטרקציות ליעד הזה. נסה שוב.'
+      );
+    } finally {
       setLoading(false);
     }
   };
 
-  // נתונים לדוגמה עבור אטרקציות מומלצות
-  const getMockAttractions = (dest) => {
-    return [
-      {
-        id: 1,
-        name: 'מגדל אייפל',
-        category: 'attractions',
-        location: 'פריז, צרפת',
-        address: 'Champ de Mars, 5 Avenue Anatole France, 75007 Paris',
-        description: 'סמלה המפורסם של פריז, המגדל מציע נוף פנורמי מרהיב של העיר.',
-        image: 'https://images.unsplash.com/photo-1543349689-9a4d426bee8e?w=500',
-        rating: 4.7,
-        duration: 120,
-        price: '€18-28',
-        openingHours: '9:00-23:45',
-        coordinates: { lat: 48.8584, lng: 2.2945 }
-      },
-      {
-        id: 2,
-        name: 'מוזיאום הלובר',
-        category: 'museums',
-        location: 'פריז, צרפת',
-        address: 'Rue de Rivoli, 75001 Paris',
-        description: 'אחד המוזיאונים המפורסמים בעולם, בו מוצגות יצירות אמנות כמו המונה ליזה.',
-        image: 'https://images.unsplash.com/photo-1527410-90b930c0a42b?w=500',
-        rating: 4.8,
-        duration: 180,
-        price: '€17',
-        openingHours: '9:00-18:00, סגור בימי שלישי',
-        coordinates: { lat: 48.8606, lng: 2.3376 }
-      },
-      {
-        id: 3,
-        name: 'קתדרלת נוטרדאם',
-        category: 'historical',
-        location: 'פריז, צרפת',
-        address: '6 Parvis Notre-Dame - Pl. Jean-Paul II, 75004 Paris',
-        description: 'קתדרלה גותית מפורסמת הממוקמת בלב פריז, בעלת היסטוריה עשירה.',
-        image: 'https://images.unsplash.com/photo-1584707824245-087f3505cfe4?w=500',
-        rating: 4.7,
-        duration: 90,
-        price: 'חינם (תשלום לעלייה למגדל)',
-        openingHours: '8:00-18:45',
-        coordinates: { lat: 48.8530, lng: 2.3499 }
-      }
-    ];
-  };
 
   // נתונים לדוגמה עבור מזג אוויר
   const getMockWeatherData = () => {
@@ -1645,9 +1611,17 @@ const TripPlanner = () => {
               <Typography variant="subtitle1" gutterBottom>
                 בחר פעילות
               </Typography>
-              
+
+              {attractionsError && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  {attractionsError}
+                </Alert>
+              )}
+
               <Autocomplete
                 options={recommendedAttractions}
+                loading={loading}
+                noOptionsText={loading ? 'טוען אטרקציות...' : 'אין אטרקציות זמינות ליעד זה'}
                 getOptionLabel={(option) => option.name}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 value={selectedAttraction}
