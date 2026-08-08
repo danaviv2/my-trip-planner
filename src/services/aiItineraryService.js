@@ -99,7 +99,15 @@ CRITICAL RULES:
 - EXACTLY 5 activities per day (morning, mid-morning, lunch, afternoon, evening)
 - CRITICAL: provide REAL precise lat/lng for every activity and hotel — never use 0.0 or placeholder values
 - English addresses only
-- 1+ food activity per day${startDay + chunkDays - 1 === totalDays ? '\n- Last activity: sunset/night view' : ''}`;
+- 1+ food activity per day
+- "price" MUST be an actual amount with a currency symbol (e.g. "£25", "€12-18", "₪90")
+  or the Hebrew word "חינם" when there is no entry fee. NEVER put a budget tier
+  word such as "premium", "luxury", "mid-range" or "budget" in the price field.
+- Opening hours matter: do not schedule a site at a time it is normally closed,
+  and do not place a museum visit on its weekly closing day.${startDay === 1 ? `
+- Day 1 realism: travellers arrive by air. Hotel check-in in most cities is not
+  before 15:00, so day 1 should start with arrival logistics and nearby, flexible
+  activities — not a timed ticketed attraction first thing in the morning.` : ''}${startDay + chunkDays - 1 === totalDays ? '\n- Last activity: sunset/night view' : ''}`;
 
   const callGeminiOnce = async (prompt, chunkDays, temperature = 0.7) => {
     const controller = new AbortController();
