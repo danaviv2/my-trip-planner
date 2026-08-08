@@ -3,8 +3,9 @@ html, body, #root {
   max-width: 100%;
 }
 
+/* הרקע מנוהל על ידי ערכת הנושא של MUI (theme.palette.background.default)
+   כדי שמצב כהה יעבוד. אין לקבע כאן צבע. */
 .app {
-    background: #f5f5f5;
     font-family: Arial, sans-serif;
   }
   

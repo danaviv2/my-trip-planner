@@ -84,6 +84,16 @@ export const lightTheme = createTheme({
     borderRadius: 12,
   },
   components: {
+    // ההדר מעט כהה יותר מ-primary.main (#667eea) כדי שטקסט לבן בגודל 0.85rem
+    // יעמוד בתקן הנגישות WCAG AA. #667eea נותן יחס 3.69:1 (נכשל), #5568d3 נותן 4.84:1.
+    // שינוי ממוקד להדר בלבד — צבע המותג הגלובלי נשאר כפי שהוא.
+    MuiAppBar: {
+      styleOverrides: {
+        colorPrimary: {
+          backgroundColor: '#5568d3',
+        },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: {

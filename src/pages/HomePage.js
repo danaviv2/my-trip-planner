@@ -325,7 +325,7 @@ const HomePage = () => {
         </Box>
 
         {/* VibeMatcher */}
-        <Paper elevation={3} sx={{ p: { xs: 2.5, md: 5 }, borderRadius: 4, background: 'white', mb: { xs: 4, md: 6 } }}>
+        <Paper elevation={3} sx={{ p: { xs: 2.5, md: 5 }, borderRadius: 4, mb: { xs: 4, md: 6 } }}>
           <VibeMatcher />
         </Paper>
 
