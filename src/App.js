@@ -65,14 +65,14 @@ import { AIChatProvider } from './contexts/AIChatContext';
 import TravelAIChat from './components/ai/TravelAIChat';
 import AIItineraryGenerator from './components/ai/AIItineraryGenerator';
 import TripChatWidget from './components/chat/TripChatWidget';
-import PreferencesForm from './components/trip-planner/PreferencesForm_fromApp';
+import PreferencesForm from './components/trip-planner/PreferencesForm';
 import InviteButton from './components/trip-planner/InviteButton';
-import HotelModal from './components/trip-planner/HotelModal_fromApp';
-import EditAttractionModal from './components/trip-planner/EditAttractionModal_fromApp';
+import HotelModal from './components/trip-planner/HotelModal';
+import EditAttractionModal from './components/trip-planner/EditAttractionModal';
 import AccommodationList from './components/trip-planner/AccommodationList';
 import ShareButtons from './components/trip-planner/ShareButtons';
 import TripItineraryView from './components/trip-planner/TripItineraryView';
-import RouteNavigationButtons from './components/trip-planner/RouteNavigationButtons_fromApp';
+import RouteNavigationButtons from './components/trip-planner/RouteNavigationButtons';
 
 
 

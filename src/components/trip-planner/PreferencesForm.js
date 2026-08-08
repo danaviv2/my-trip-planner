@@ -1,67 +1,62 @@
-// src/components/trip-planner/PreferencesForm.js
-import React, { useState, useContext } from 'react';
-import { 
-  Box, Typography, TextField, Button, 
-  FormControl, InputLabel, Select, MenuItem, 
-  Checkbox, FormControlLabel 
+import React, { useState } from 'react';
+import {
+  Box,
+  Typography,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
-import { useTripContext } from '../../contexts/TripContext';
-import { useUserPreferences } from '../../contexts/UserPreferencesContext';
-// הגדרת סגנונות טיול לשימוש בטופס העדפות
-const travelStyles = [
-  { value: 'cultural', label: 'תרבותי - מוזיאונים, היסטוריה, אמנות' },
-  { value: 'adventure', label: 'הרפתקני - טיולים, ספורט אתגרי' },
-  { value: 'relaxation', label: 'מנוחה - ספא, חופים, הרפיה' },
-  { value: 'culinary', label: 'קולינרי - אוכל, יין, שווקים' },
-  { value: 'nature', label: 'טבע - פארקים, נופים, חיות בר' },
-  { value: 'urban', label: 'עירוני - קניות, אטרקציות עירוניות' },
-  { value: 'mixed', label: 'מעורב - שילוב של מספר סגנונות' }
-];
-
-// הגדרת רמות קצב לשימוש בטופס העדפות
-const paceLevels = [
-  { value: 'slow', label: 'איטי - מעט פעילויות, הרבה זמן פנוי' },
-  { value: 'medium', label: 'בינוני - איזון בין פעילויות ומנוחה' },
-  { value: 'fast', label: 'מהיר - ימים עמוסים, הרבה פעילויות' }
-];
+import { travelStyles, paceLevels } from '../../constants/tripOptions';
+import RoadTripButton from './RoadTripButton';
 
 /**
- * PreferencesForm - טופס העדפות טיול
- * מאפשר למשתמש להגדיר העדפות מפורטות לתכנון הטיול
+ * טופס העדפות הטיול.
+ *
+ * הרכיב הזה היה מוגדר בתוך הפונקציה App, ולכן React יצר ממנו טיפוס חדש
+ * בכל render של App. התוצאה: הטופס התפרק ונבנה מחדש בכל הקלדה — הפוקוס
+ * קפץ מהשדה ו-6 משתני ה-state הפנימיים אופסו. הוצאתו לקובץ נפרד מתקנת זאת.
+ *
+ * ה-JSX זהה למקור; רק התלויות שהגיעו מהסקופ של App עברו ל-props.
  */
-const PreferencesForm = () => {
-  const { planTripWithAI, planRoadTrip } = useTripContext();
-const { userPreferences, updateLocation, updateBudget, updateDays, updateStartDate, updateThemes, updateAdvancedPreferences } = useUserPreferences();
-  // הוספת משתני מצב מקומיים
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+const PreferencesForm = ({ userPreferences, setUserPreferences, onPlanTrip, onPlanRoadTrip }) => {
+  // הוספת משתני מצב חדשים למידע מפורט יותר
   const [foodPreferences, setFoodPreferences] = useState(userPreferences.advancedPreferences?.foodPreferences || '');
   const [travelPace, setTravelPace] = useState(userPreferences.advancedPreferences?.travelPace || 'medium');
   const [travelStyle, setTravelStyle] = useState(userPreferences.advancedPreferences?.travelStyle || 'mixed');
   const [hasChildren, setHasChildren] = useState(userPreferences.advancedPreferences?.hasChildren || false);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [specialNeeds, setSpecialNeeds] = useState(userPreferences.advancedPreferences?.specialNeeds || '');
-  
-  // פונקציה לתכנון טיול עם עדכון מפורש של ההעדפות המתקדמות
-  const handlePlanTrip = () => {
-    updateAdvancedPreferences({
-      foodPreferences,
-      travelPace,
-      travelStyle,
-      hasChildren,
-      specialNeeds
-    });
-    planTripWithAI({
-      destination: userPreferences.location,
-      days: Number(userPreferences.days) || 5,
-      interests: userPreferences.themes || [],
-      budget: userPreferences.budget || 'medium',
-    });
+
+  // פונקציה לעדכון כל ההעדפות הנוספות בתוך userPreferences
+  const updateAdvancedPreferences = () => {
+    setUserPreferences(prev => ({
+      ...prev,
+      advancedPreferences: {
+        foodPreferences,
+        travelPace,
+        travelStyle,
+        hasChildren,
+        specialNeeds
+      }
+    }));
   };
-  
+
+  const handlePlanTrip = () => {
+    // עדכון מפורש של ההעדפות המתקדמות לפני תכנון הטיול
+    updateAdvancedPreferences();
+    onPlanTrip();
+  };
+
   return (
     <Box mt={2} sx={{ backgroundColor: '#f0f0f0', p: 2, borderRadius: '8px' }} role="form" aria-label="טופס העדפות טיול">
-      <Typography variant="h6" sx={{ 
-        color: '#2c3e50', 
-        fontWeight: 'bold', 
+      <Typography variant="h6" sx={{
+        color: '#2c3e50',
+        fontWeight: 'bold',
         mb: 1,
         display: 'flex',
         alignItems: 'center'
@@ -69,7 +64,7 @@ const { userPreferences, updateLocation, updateBudget, updateDays, updateStartDa
         <i className="material-icons" style={{ marginRight: '8px' }}>tune</i>
         הגדר את העדפות הטיול שלך
       </Typography>
-      
+
       {/* שדות בסיסיים */}
       <Box sx={{ mb: 2 }}>
         <TextField
@@ -78,7 +73,7 @@ const { userPreferences, updateLocation, updateBudget, updateDays, updateStartDa
           name="location"
           label="יעד הטיול"
           value={userPreferences.location}
-          onChange={(e) => updateLocation(e.target.value)}
+          onChange={(e) => setUserPreferences(prev => ({ ...prev, location: e.target.value }))}
           sx={{ mt: 1 }}
           aria-label="יעד הטיול"
         />
@@ -89,7 +84,7 @@ const { userPreferences, updateLocation, updateBudget, updateDays, updateStartDa
             label="מספר ימים"
             type="number"
             value={userPreferences.days}
-            onChange={(e) => updateDays(e.target.value)}
+            onChange={(e) => setUserPreferences(prev => ({ ...prev, days: parseInt(e.target.value) || 1 }))}
             sx={{ flex: 1 }}
             aria-label="מספר ימי הטיול"
           />
@@ -99,7 +94,7 @@ const { userPreferences, updateLocation, updateBudget, updateDays, updateStartDa
             label="תאריך התחלה"
             type="date"
             value={userPreferences.startDate}
-            onChange={(e) => updateStartDate(e.target.value)}
+            onChange={(e) => setUserPreferences(prev => ({ ...prev, startDate: e.target.value }))}
             InputLabelProps={{ shrink: true }}
             sx={{ flex: 1 }}
             aria-label="תאריך התחלת הטיול"
@@ -111,7 +106,7 @@ const { userPreferences, updateLocation, updateBudget, updateDays, updateStartDa
             <Select
               id="budget"
               value={userPreferences.budget}
-              onChange={(e) => updateBudget(e.target.value)}
+              onChange={(e) => setUserPreferences(prev => ({ ...prev, budget: e.target.value }))}
               label="תקציב"
             >
               <MenuItem value="low">נמוך - חסכוני</MenuItem>
@@ -119,15 +114,15 @@ const { userPreferences, updateLocation, updateBudget, updateDays, updateStartDa
               <MenuItem value="high">גבוה - יוקרתי</MenuItem>
             </Select>
           </FormControl>
-          <Button 
-            variant="outlined" 
+          <Button
+            variant="outlined"
             color="primary"
             onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-            sx={{ 
-              flex: 1, 
-              borderRadius: '8px', 
-              display: 'flex', 
-              alignItems: 'center', 
+            sx={{
+              flex: 1,
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
               gap: 1
             }}
@@ -146,14 +141,14 @@ const { userPreferences, updateLocation, updateBudget, updateDays, updateStartDa
           </Button>
         </Box>
       </Box>
-      
+
       {/* הגדרות מתקדמות */}
       {showAdvancedOptions && (
         <Box sx={{ mt: 2, p: 2, bgcolor: '#e0e0e0', borderRadius: '8px' }}>
           <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold' }}>
             העדפות מתקדמות
           </Typography>
-          
+
           <TextField
             fullWidth
             id="foodPreferences"
@@ -164,7 +159,7 @@ const { userPreferences, updateLocation, updateBudget, updateDays, updateStartDa
             sx={{ mt: 1 }}
             aria-label="העדפות אוכל"
           />
-          
+
           <FormControl fullWidth sx={{ mt: 1 }}>
             <InputLabel>סגנון הטיול</InputLabel>
             <Select
@@ -177,7 +172,7 @@ const { userPreferences, updateLocation, updateBudget, updateDays, updateStartDa
               ))}
             </Select>
           </FormControl>
-          
+
           <FormControl fullWidth sx={{ mt: 1 }}>
             <InputLabel>קצב הטיול</InputLabel>
             <Select
@@ -190,7 +185,7 @@ const { userPreferences, updateLocation, updateBudget, updateDays, updateStartDa
               ))}
             </Select>
           </FormControl>
-          
+
           <FormControlLabel
             control={
               <Checkbox
@@ -203,7 +198,7 @@ const { userPreferences, updateLocation, updateBudget, updateDays, updateStartDa
             label="כולל ילדים"
             sx={{ mt: 1, display: 'block' }}
           />
-          
+
           <TextField
             fullWidth
             id="specialNeeds"
@@ -216,60 +211,42 @@ const { userPreferences, updateLocation, updateBudget, updateDays, updateStartDa
             sx={{ mt: 1 }}
             aria-label="צרכים מיוחדים"
           />
-          
+
           <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic', color: '#666' }}>
             הגדרות אלו יעזרו לתכנן את הטיול בצורה מותאמת יותר לצרכים שלך
           </Typography>
         </Box>
       )}
-      
+
       <TextField
         fullWidth
         id="themes"
         name="themes"
         label="נושאי עניין (למשל, טבע, יקבים, קולינריה - מפריד עם פסיק)"
-        value={(userPreferences.themes || []).join(', ')}
-        onChange={(e) => updateThemes(e.target.value.split(', ').map(t => t.trim()))}
+        value={userPreferences.themes.join(', ')}
+        onChange={(e) => setUserPreferences(prev => ({ ...prev, themes: e.target.value.split(', ').map(t => t.trim()) }))}
         sx={{ mt: 2 }}
         aria-label="נושאי הטיול"
       />
-      
-      <Button 
-        variant="contained" 
-        color="primary" 
+
+      <Button
+        variant="contained"
+        color="primary"
         onClick={handlePlanTrip}
         startIcon={<i className="material-icons">travel_explore</i>}
-        sx={{ 
-          mt: 2, 
-          background: '#4CAF50', 
-          color: '#fff', 
-          borderRadius: '8px', 
+        sx={{
+          mt: 2,
+          background: '#4CAF50',
+          color: '#fff',
+          borderRadius: '8px',
           padding: '10px 20px',
-          '&:hover': { background: '#388E3C' } 
-        }} 
+          '&:hover': { background: '#388E3C' }
+        }}
         aria-label="תכנן טיול עם AI"
       >
         תכנן טיול מפורט עם AI
       </Button>
-      
-      <Button 
-        variant="contained" 
-        color="secondary" 
-        onClick={planRoadTrip}
-        startIcon={<i className="material-icons">explore</i>}
-        sx={{ 
-          mt: 2, 
-          ml: 2,
-          background: '#9C27B0', 
-          color: '#fff', 
-          borderRadius: '8px', 
-          padding: '10px 20px',
-          '&:hover': { background: '#7B1FA2' } 
-        }} 
-        aria-label="תכנן טיול מתגלגל לאורך המסלול"
-      >
-        תכנן טיול מתגלגל לאורך המסלול
-      </Button>
+      <RoadTripButton onClick={onPlanRoadTrip} />
     </Box>
   );
 };

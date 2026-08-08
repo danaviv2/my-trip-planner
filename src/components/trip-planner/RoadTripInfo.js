@@ -1,22 +1,20 @@
-// src/components/trip-planner/RoadTripInfo.js
-import React, { useContext } from 'react';
-import { Box, Paper, Typography, Button } from '@mui/material';
-import { TripContext } from '../../contexts/TripContext';
+import React from 'react';
+import { Box, Typography, Paper, Button } from '@mui/material';
 
 /**
- * RoadTripInfo - מציג מידע על טיול מתגלגל (road trip)
+ * תצוגת פרטי הטיול המתגלגל.
+ * הוצא מתוך הפונקציה App כדי שלא ייבנה מחדש בכל render. ה-JSX זהה למקור;
+ * tripPlan, startPoint ו-endPoint עברו ל-props. getStopColor הועבר לכאן
+ * כי זה הרכיב היחיד שהשתמש בו.
  */
-const RoadTripInfo = () => {
-  const { tripPlan } = useContext(TripContext);
+const getStopColor = (index) => {
+  const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#008000'];
+  return colors[index % colors.length];
+};
 
+const RoadTripInfo = ({ tripPlan, startPoint, endPoint }) => {
   // אם אין מידע על טיול מתגלגל, לא מציגים כלום
   if (!tripPlan.isRoadTrip) return null;
-  
-  // פונקציה לקבלת צבע התחנה
-  const getStopColor = (index) => {
-    const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#008000'];
-    return colors[index % colors.length];
-  };
   
   return (
     <Paper sx={{ mt: 2, p: 2, bgcolor: '#e8f5fe', borderRadius: '8px', boxShadow: 1 }}>
@@ -32,7 +30,7 @@ const RoadTripInfo = () => {
       </Typography>
       
       <Typography variant="body1" sx={{ mb: 1 }}>
-        טיול מתגלגל מ-<strong>{tripPlan.routeStops?.[0] || ''}</strong> ל-<strong>{tripPlan.routeStops?.slice(-1)[0] || ''}</strong>
+        טיול מתגלגל מ-<strong>{startPoint}</strong> ל-<strong>{endPoint}</strong>
       </Typography>
       
       <Typography variant="subtitle2" sx={{ mt: 1, mb: 1, fontWeight: 'bold' }}>

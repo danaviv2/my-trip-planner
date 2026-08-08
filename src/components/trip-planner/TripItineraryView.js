@@ -13,9 +13,9 @@ import {
   TableRow
 } from '@mui/material';
 import WeatherWidget from '../maps/WeatherWidget';
-import DailyTimeline from './DailyTimeline_fromApp';
+import DailyTimeline from './DailyTimeline';
 import RouteInfo from './RouteInfo';
-import RoadTripInfo from './RoadTripInfo_fromApp';
+import RoadTripInfo from './RoadTripInfo';
 
 /**
  * מסך תכנון הטיול — תצוגת הימים והמסלול.

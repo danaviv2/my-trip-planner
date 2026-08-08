@@ -1,19 +1,13 @@
-// src/components/trip-planner/DailyTimeline.js
-import React, { useContext } from 'react';
-import { 
-  Box, Typography, Paper, Button
-} from '@mui/material';
-import { TripContext } from '../../contexts/TripContext';
-import { UserPreferencesContext } from '../../contexts/UserPreferencesContext';
+import React from 'react';
+import { Box, Typography, Paper, Button } from '@mui/material';
 
 /**
- * DailyTimeline - קומפוננט להצגת לוח זמנים יומי
- * מציג את כל הפעילויות המתוכננות ליום מסוים
+ * תצוגת לוח הזמנים היומי.
+ * הוצא מתוך הפונקציה App כדי שלא ייבנה מחדש בכל render. ה-JSX זהה למקור;
+ * userPreferences.location הפך ל-prop בשם defaultLocation, וארבעת קריאות
+ * ה-setState שפתחו את חלון העריכה אוחדו ל-prop אחד בשם onEditActivity.
  */
-const DailyTimeline = ({ dayData }) => {
-  const { handleEditAttraction } = useContext(TripContext);
-  const { userPreferences } = useContext(UserPreferencesContext);
-
+const DailyTimeline = ({ dayData, defaultLocation, onEditActivity }) => {
   // ניתוח תצוגת פעילות לפי סוג - כדי להציג אייקון ועיצוב מתאים
   const getActivityIcon = (type) => {
     switch (type) {
@@ -97,7 +91,7 @@ const DailyTimeline = ({ dayData }) => {
         {dayData.date} - {dayData.summary}
       </Typography>
       
-      {/* הוספת מיקום יומי */}
+      {/* הוספת מיקום יומי - חדש! */}
       <Paper elevation={1} sx={{ p: 1.5, mb: 2, bgcolor: '#e8f5e9', borderRadius: '8px', border: '1px solid #c8e6c9' }}>
         <Typography variant="subtitle1" sx={{ 
           fontWeight: 'bold', 
@@ -106,29 +100,27 @@ const DailyTimeline = ({ dayData }) => {
           color: '#2e7d32'
         }}>
           <i className="material-icons" style={{ marginRight: '8px', fontSize: '20px' }}>location_on</i>
-          מיקום: {dayData.location || userPreferences.location}
+          מיקום: {dayData.location || defaultLocation}
         </Typography>
       </Paper>
       
       {/* רכיב ניווט להמלצות תחבורה יומיות */}
-      {dayData.transportation && (
-        <Paper elevation={0} sx={{ p: 1.5, mb: 2, bgcolor: '#f5f5f5', borderRadius: '8px', border: '1px dashed #ccc' }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-            <i className="material-icons" style={{ marginRight: '4px', fontSize: '18px' }}>directions</i>
-            המלצות תחבורה להיום:
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
-            {Object.entries(dayData.transportation).map(([time, recommendation]) => (
-              <Typography key={time} variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
-                <Box component="span" sx={{ fontWeight: 'bold', minWidth: '60px' }}>{time}:</Box>
-                {recommendation}
-              </Typography>
-            ))}
-          </Box>
-        </Paper>
-      )}
+      <Paper elevation={0} sx={{ p: 1.5, mb: 2, bgcolor: '#f5f5f5', borderRadius: '8px', border: '1px dashed #ccc' }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+          <i className="material-icons" style={{ marginRight: '4px', fontSize: '18px' }}>directions</i>
+          המלצות תחבורה להיום:
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
+          {dayData.transportation && Object.entries(dayData.transportation).map(([time, recommendation]) => (
+            <Typography key={time} variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box component="span" sx={{ fontWeight: 'bold', minWidth: '60px' }}>{time}:</Box>
+              {recommendation}
+            </Typography>
+          ))}
+        </Box>
+      </Paper>
       
-      {/* לוח זמנים - פעילויות */}
+      {/* לוח זמנים */}
       <Box sx={{ display: 'flex', flexDirection: 'column' }}>
         {dayData.schedule && dayData.schedule.map((activity, idx) => (
           <Box 
@@ -264,7 +256,7 @@ const DailyTimeline = ({ dayData }) => {
                 )}
               </Box>
               
-              {/* כפתורי פעולה */}
+              {/* כפתורי פעולה - משודרגים */}
               <Box sx={{ display: 'flex', mt: 1.5, pt: 1, borderTop: '1px dashed #e0e0e0', gap: 1, flexWrap: 'wrap' }}>
                 <Button
                   variant="outlined"
@@ -321,7 +313,7 @@ const DailyTimeline = ({ dayData }) => {
                   </Button>
                 )}
                 
-                {/* כפתור להצגת תמונות */}
+                {/* כפתור להצגת תמונות - חדש */}
                 <Button
                   variant="outlined"
                   size="small"
@@ -335,7 +327,9 @@ const DailyTimeline = ({ dayData }) => {
                 <Button
                   variant="outlined"
                   size="small"
-                  onClick={() => handleEditAttraction(dayData.day, idx)}
+                  onClick={() => {
+                    onEditActivity(activity, dayData.day, idx);
+                  }}
                   startIcon={<i className="material-icons">edit</i>}
                   sx={{ 
                     borderRadius: '20px', 
@@ -351,7 +345,7 @@ const DailyTimeline = ({ dayData }) => {
         ))}
       </Box>
       
-      {/* תצוגת מידע על המלון/לינה אם קיים */}
+      {/* תצוגת מידע על המלון/לינה אם קיים - חדש! */}
       {dayData.accommodation && (
         <Paper sx={{ p: 2, mt: 3, bgcolor: '#f3e5f5', borderRadius: '8px', border: '1px solid #e1bee7' }}>
           <Typography variant="subtitle1" sx={{ 
