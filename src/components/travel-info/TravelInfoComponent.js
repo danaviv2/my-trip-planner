@@ -1,12 +1,13 @@
 // src/components/travel-info/TravelInfoComponent.js
 import React, { useState, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  Box, Paper, Typography, Button, IconButton 
+import {
+  Box, Paper, Typography, Button, IconButton, Alert, AlertTitle
 } from '@mui/material';
 import FlightInfo from './FlightInfo';
 import CarRentalInfo from './CarRentalInfo';
 import EmailImportModal from './EmailImportModal';
+import { findConflicts } from '../../services/itineraryConflictService';
 
 /**
  * TravelInfoComponent - רכיב לניהול פרטי נסיעה
@@ -39,6 +40,9 @@ const TravelInfoComponent = () => {
   // מצבים לניהול תצוגה
   const [showFlights, setShowFlights] = useState(true);
   const [showCarRental, setShowCarRental] = useState(true);
+
+  // מחושב מחדש בכל שינוי בהזמנות
+  const conflicts = findConflicts(flights, carRental, []);
   
   return (
     <Paper elevation={3} sx={{ p: 3, borderRadius: '10px', mb: 3 }}>
@@ -66,10 +70,27 @@ const TravelInfoComponent = () => {
         </Button>
       </Box>
       
+      {/* התנגשויות בין ההזמנות. הצלבה של פרטים שנראים תקינים בנפרד —
+          למשל נחיתה ב-09:55 מול איסוף רכב ב-11:30. */}
+      {conflicts.length > 0 && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+            <i className="material-icons" style={{ marginRight: '8px' }}>rule</i>
+            בדיקת התאמה בין ההזמנות
+          </Typography>
+          {conflicts.map((c, i) => (
+            <Alert key={i} severity={c.severity} sx={{ mb: 1 }}>
+              <AlertTitle sx={{ mb: 0.25, fontWeight: 700 }}>{c.title}</AlertTitle>
+              {c.detail}
+            </Alert>
+          ))}
+        </Box>
+      )}
+
       {/* אזור טיסות */}
-      <FlightInfo 
-        flights={flights} 
-        setFlights={setFlights} 
+      <FlightInfo
+        flights={flights}
+        setFlights={setFlights}
         showFlights={showFlights}
         setShowFlights={setShowFlights}
       />
