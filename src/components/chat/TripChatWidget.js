@@ -79,7 +79,11 @@ async function callGemini(messages, systemPrompt) {
     contents,
     generationConfig: {
       temperature: 0.8,
-      maxOutputTokens: 512,
+      maxOutputTokens: 2048,
+      // Gemini 2.5 Flash "חושב" לפני שהוא עונה, וטוקני החשיבה נספרים בתוך
+      // maxOutputTokens. בלי השורה הזו הוא שרף 487 מתוך 512 טוקנים על חשיבה
+      // והחזיר תשובות באורך משפט אחד. שאר השירותים בפרויקט כבר מאפסים אותה.
+      thinkingConfig: { thinkingBudget: 0 },
     },
   };
 

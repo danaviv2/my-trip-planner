@@ -1,6 +1,7 @@
 // components/travel-info/EmailImportModal.js
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { parseTravelDocument } from '../../services/bookingParserService';
 import { 
   Modal, 
   Box, 
@@ -26,89 +27,55 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
     setActiveTab(newValue);
   };
   
-  // פונקציה לחיבור Gmail עם OAuth
+  // חיבור Gmail דורש זרימת OAuth שטרם מומשה. עד אז מציגים הודעה כנה
+  // ומפנים ללשונית ההדבקה, במקום להזריק נתוני דמה ולהצהיר על הצלחה.
   const connectToGmail = async () => {
+    setError('חיבור אוטומטי ל-Gmail עדיין לא זמין. בינתיים העתק את גוף המייל והדבק אותו בלשונית "העתק/הדבק מייל".');
+  };
+  
+  // פונקציה לחילוץ פרטים מטקסט מייל
+  const extractDataFromEmail = async () => {
     setIsLoading(true);
     setError('');
+    setSuccess('');
+
+    if (!emailContent.trim()) {
+      setError('הדבק תחילה את תוכן המייל.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      // הערה: כאן יהיה צורך להוסיף את קוד OAuth אמיתי
-      // לצורך הדוגמה, נדמה הצלחה
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setSuccess(t('travelInfoPage.gmail_success'));
-      
-      // כאן באמת תשלוף הודעות email ותחלץ מהן מידע
-      // לצורך הדגמה, נשתמש בנתונים לדוגמה
-      simulateEmailImport();
-    } catch (error) {
-      setError('שגיאה בחיבור ל-Gmail: ' + error.message);
+      const result = await parseTravelDocument(emailContent);
+
+      if (!result.isBooking) {
+        setError('לא זוהו פרטי הזמנה בטקסט שהודבק. ודא שהעתקת את גוף המייל המלא של אישור ההזמנה.');
+        setIsLoading(false);
+        return;
+      }
+
+      const parts = [];
+      if (result.flights.length) {
+        setFlights(result.flights);
+        parts.push(`${result.flights.length} טיסות`);
+      }
+      if (result.carRental) {
+        setCarRental(result.carRental);
+        parts.push('השכרת רכב');
+      }
+
+      setSuccess(`נמצאו ויובאו: ${parts.join(' ו-')}. בדוק את הפרטים לפני שמירה.`);
+    } catch (err) {
+      setError(
+        err.message === 'PARSE_FAILED'
+          ? 'לא הצלחנו לפענח את התשובה. נסה שוב, או הדבק קטע קצר יותר.'
+          : 'שגיאה בחילוץ הפרטים: ' + err.message
+      );
     } finally {
       setIsLoading(false);
     }
   };
-  
-  // פונקציה לחילוץ פרטים מטקסט מייל
-  const extractDataFromEmail = () => {
-    setIsLoading(true);
-    setError('');
-    
-    try {
-      // כאן יהיה אלגוריתם אמיתי לחילוץ נתונים
-      // לצורך הדגמה, נדמה עיבוד
-      setTimeout(() => {
-        simulateEmailImport();
-        setIsLoading(false);
-        setSuccess(t('travelInfoPage.extract_success'));
-      }, 1500);
-    } catch (error) {
-      setError('שגיאה בעיבוד תוכן האימייל: ' + error.message);
-      setIsLoading(false);
-    }
-  };
-  
-  // סימולציה של ייבוא מוצלח
-  const simulateEmailImport = () => {
-    // דוגמה לטיסות שחולצו
-    setFlights([
-      { 
-        id: 1, 
-        type: 'departure', 
-        flightNumber: 'LY315', 
-        airline: 'El Al',
-        date: '2025-04-15',
-        departureTime: '12:30',
-        departureAirport: 'TLV',
-        arrivalTime: '16:45',
-        arrivalAirport: 'CDG',
-        terminal: 'T3'
-      },
-      {
-        id: 2,
-        type: 'return',
-        flightNumber: 'LY318',
-        airline: 'El Al', 
-        date: '2025-04-22', 
-        departureTime: '09:15', 
-        departureAirport: 'CDG', 
-        arrivalTime: '14:30', 
-        arrivalAirport: 'TLV', 
-        terminal: 'T2E' 
-      }
-    ]);
-    
-    // דוגמה לפרטי השכרת רכב שחולצו
-    setCarRental({
-      company: 'Hertz',
-      pickupDate: '2025-04-15',
-      pickupTime: '17:30',
-      pickupLocation: 'Charles de Gaulle Airport, Paris',
-      returnDate: '2025-04-22',
-      returnTime: '06:30',
-      returnLocation: 'Charles de Gaulle Airport, Paris',
-      carType: 'Peugeot 208 or similar',
-      confirmationNumber: 'HR123456789'
-    });
-  };
+
   
   return (
     <Modal
@@ -258,12 +225,25 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
                 type="file"
                 id="fileUpload"
                 style={{ display: 'none' }}
-                accept=".pdf,.eml,.txt"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    // כאן יהיה קוד אמיתי לקריאת הקובץ
-                    simulateEmailImport();
-                    setSuccess(t('travelInfoPage.file_success'));
+                accept=".eml,.txt"
+                onChange={async (e) => {
+                  const file = e.target.files && e.target.files[0];
+                  if (!file) return;
+                  setError('');
+                  setSuccess('');
+                  // PDF דורש ספריית פענוח ולכן אינו נתמך כרגע — עדיף לומר זאת
+                  // מאשר להעמיד פנים שהקובץ נקרא.
+                  if (/\.pdf$/i.test(file.name)) {
+                    setError('קבצי PDF עדיין לא נתמכים. פתח את המייל, העתק את גוף ההודעה והדבק בלשונית "העתק/הדבק מייל".');
+                    return;
+                  }
+                  try {
+                    const text = await file.text();
+                    setEmailContent(text);
+                    setActiveTab(0);
+                    setSuccess('הקובץ נטען. לחץ "חלץ פרטים" כדי לעבד אותו.');
+                  } catch (err) {
+                    setError('לא הצלחנו לקרוא את הקובץ: ' + err.message);
                   }
                 }}
               />

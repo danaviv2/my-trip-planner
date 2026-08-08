@@ -70,6 +70,112 @@ Return this exact JSON structure if it IS a booking:
   }
 };
 
+/**
+ * מחלץ מסמך נסיעה שלם — מייל אישור מכיל לרוב טיסת הלוך, טיסת חזור
+ * ולעיתים גם השכרת רכב. מחזיר את המבנה שמסך "פרטי נסיעה" צורך.
+ *
+ * @param {string} text תוכן המייל כפי שהודבק
+ * @returns {Promise<{flights: Array, carRental: object|null, isBooking: boolean}>}
+ */
+export const parseTravelDocument = async (text) => {
+  const prompt = `You are a travel booking parser. Extract ALL bookings from this text.
+Return ONLY valid JSON (no markdown). Use null for anything you cannot find — never invent values.
+If the text is NOT a travel booking confirmation, return exactly: {"isBooking": false, "flights": [], "carRental": null}
+
+Text:
+${String(text).slice(0, 6000)}
+
+Return this exact structure:
+{
+  "isBooking": true,
+  "flights": [
+    {
+      "type": "departure" or "return",
+      "airline": "airline name",
+      "flightNumber": "e.g. LY381",
+      "date": "YYYY-MM-DD",
+      "departureAirport": "IATA code e.g. TLV",
+      "departureTime": "HH:MM",
+      "arrivalAirport": "IATA code",
+      "arrivalTime": "HH:MM",
+      "terminal": "terminal of departure or null"
+    }
+  ],
+  "carRental": {
+    "company": "rental company",
+    "confirmationNumber": "reference",
+    "pickupDate": "YYYY-MM-DD",
+    "pickupTime": "HH:MM",
+    "pickupLocation": "full location",
+    "returnDate": "YYYY-MM-DD",
+    "returnTime": "HH:MM",
+    "returnLocation": "full location",
+    "carType": "car model or class"
+  }
+}
+Rules:
+- Convert DD/MM/YYYY to YYYY-MM-DD.
+- If there is no car rental in the text, set "carRental" to null. Do NOT invent one.
+- If there are no flights, return an empty array. Do NOT invent flights.`;
+
+  const response = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        maxOutputTokens: 1500,
+        temperature: 0.1,
+        thinkingConfig: { thinkingBudget: 0 },
+      },
+    }),
+  });
+
+  if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
+
+  const data = await response.json();
+  const raw = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
+  const cleaned = raw.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
+
+  let parsed;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('PARSE_FAILED');
+  }
+
+  const flights = Array.isArray(parsed.flights) ? parsed.flights : [];
+
+  return {
+    isBooking: parsed.isBooking !== false && (flights.length > 0 || !!parsed.carRental),
+    flights: flights.map((f, i) => ({
+      id: Date.now() + i,
+      type: f.type === 'return' ? 'return' : 'departure',
+      airline: f.airline || '',
+      flightNumber: f.flightNumber || '',
+      date: f.date || '',
+      departureAirport: f.departureAirport || '',
+      departureTime: f.departureTime || '',
+      arrivalAirport: f.arrivalAirport || '',
+      arrivalTime: f.arrivalTime || '',
+      terminal: f.terminal || '',
+    })),
+    carRental: parsed.carRental
+      ? {
+          company: parsed.carRental.company || '',
+          confirmationNumber: parsed.carRental.confirmationNumber || '',
+          pickupDate: parsed.carRental.pickupDate || '',
+          pickupTime: parsed.carRental.pickupTime || '',
+          pickupLocation: parsed.carRental.pickupLocation || '',
+          returnDate: parsed.carRental.returnDate || '',
+          returnTime: parsed.carRental.returnTime || '',
+          returnLocation: parsed.carRental.returnLocation || '',
+          carType: parsed.carRental.carType || '',
+        }
+      : null,
+  };
+};
+
 /** אמוג'י לפי סוג הזמנה */
 export const bookingEmoji = (type) => {
   const map = { hotel: '🏨', flight: '✈️', car_rental: '🚗', activity: '🎫' };

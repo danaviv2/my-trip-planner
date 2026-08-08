@@ -23,6 +23,7 @@ import {
   BookmarkBorder as TripsIcon,
   Language as LanguageIcon,
   Route as RouteIcon,
+  ExpandMore as MoreIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import NotificationCenter from '../notifications/NotificationCenter';
@@ -36,6 +37,7 @@ const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [langAnchorEl, setLangAnchorEl] = useState(null);
+  const [moreAnchorEl, setMoreAnchorEl] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
@@ -59,6 +61,13 @@ const Header = () => {
     { label: `📓 יומן מסע`, path: '/journal', icon: <RouteIcon /> },
     { label: `🎯 מצ'קמייקר`, path: '/matchmaker', icon: <RouteIcon /> },
   ];
+
+  // 12 הקישורים דרשו 1562px ברוחב אחד — כלומר בכל מסך צר מזה נחתכו
+  // פריטים מחוץ למסך (המצ'קמייקר ויומן המסע נעלמו לגמרי בלפטופ 1440).
+  // מציגים 6 ראשיים בשורה והשאר בתפריט "עוד", כך שכל היעדים נשארים נגישים.
+  const INLINE_LINKS = 6;
+  const primaryLinks = navLinks.slice(0, INLINE_LINKS);
+  const overflowLinks = navLinks.slice(INLINE_LINKS);
 
   const handleAvatarClick = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -182,7 +191,7 @@ const Header = () => {
                 </Button>
               )}
 
-              {navLinks.map((link) => (
+              {primaryLinks.map((link) => (
                 <Button
                   key={link.path}
                   color="inherit"
@@ -190,6 +199,7 @@ const Header = () => {
                   to={link.path}
                   sx={{
                     fontSize: '0.85rem',
+                    whiteSpace: 'nowrap',
                     // הפריט הפעיל מוכהה ולא מובהר — הבהרה מקרבת את הרקע לצבע
                     // הטקסט הלבן ומאבדת את הניגודיות
                     background: location.pathname === link.path ? 'rgba(0,0,0,0.28)' : 'transparent',
@@ -200,6 +210,46 @@ const Header = () => {
                   {link.label}
                 </Button>
               ))}
+
+              {overflowLinks.length > 0 && (
+                <>
+                  <Button
+                    color="inherit"
+                    onClick={(e) => setMoreAnchorEl(e.currentTarget)}
+                    endIcon={<MoreIcon />}
+                    aria-label="עוד יעדים"
+                    aria-haspopup="true"
+                    sx={{
+                      fontSize: '0.85rem',
+                      whiteSpace: 'nowrap',
+                      background: overflowLinks.some((l) => l.path === location.pathname)
+                        ? 'rgba(0,0,0,0.28)'
+                        : 'transparent',
+                      fontWeight: overflowLinks.some((l) => l.path === location.pathname) ? 700 : 400,
+                      '&:hover': { background: 'rgba(0,0,0,0.18)' }
+                    }}
+                  >
+                    עוד
+                  </Button>
+                  <Menu
+                    anchorEl={moreAnchorEl}
+                    open={Boolean(moreAnchorEl)}
+                    onClose={() => setMoreAnchorEl(null)}
+                  >
+                    {overflowLinks.map((link) => (
+                      <MenuItem
+                        key={link.path}
+                        component={Link}
+                        to={link.path}
+                        selected={location.pathname === link.path}
+                        onClick={() => setMoreAnchorEl(null)}
+                      >
+                        {link.label}
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                </>
+              )}
             </Box>
           )}
 
