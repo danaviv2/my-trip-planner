@@ -48,6 +48,7 @@ import Header from './components/layout/Header';
 import ThemeWrapper from './components/layout/ThemeWrapper';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { TripSaveProvider } from './contexts/TripSaveContext';
+import { BookingsProvider } from './contexts/BookingsContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 
@@ -1556,6 +1557,7 @@ const shareUrl = `https://yourtripplandomain.com/trip?id=${Date.now()}`;
     <ErrorBoundary>
       <AuthProvider>
         <TripSaveProvider>
+        <BookingsProvider>
         <UserPreferencesProvider>
         <LanguageProvider>
           <ThemeWrapper>
@@ -2001,6 +2003,7 @@ const shareUrl = `https://yourtripplandomain.com/trip?id=${Date.now()}`;
           </ThemeWrapper>
         </LanguageProvider>
       </UserPreferencesProvider>
+        </BookingsProvider>
         </TripSaveProvider>
       </AuthProvider>
   </ErrorBoundary>

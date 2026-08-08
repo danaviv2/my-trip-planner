@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseTravelDocument } from '../../services/bookingParserService';
+import { useBookings } from '../../contexts/BookingsContext';
 import { 
   Modal, 
   Box, 
@@ -16,6 +17,7 @@ import {
 
 const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
   const { t } = useTranslation();
+  const { addBookings } = useBookings();
   const [activeTab, setActiveTab] = useState(0);
   const [emailContent, setEmailContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +66,17 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
         parts.push('השכרת רכב');
       }
 
-      setSuccess(`נמצאו ויובאו: ${parts.join(' ו-')}. בדוק את הפרטים לפני שמירה.`);
+      // שמירה למאגר ההזמנות. משם הן מקובצות אוטומטית לטיולים, כך
+      // שאישורים שמגיעים בנפרד מתאחדים לנסיעה אחת.
+      const toStore = [
+        ...result.flights.map((f) => ({ ...f, type: 'flight', direction: f.type })),
+        ...(result.carRental ? [{ ...result.carRental, type: 'car_rental' }] : []),
+      ];
+      const { added, skipped } = await addBookings(toStore);
+
+      const dupNote = skipped > 0 ? ` ${skipped} כבר היו קיימות.` : '';
+      const tripNote = added > 0 ? ' ההזמנות שויכו לטיול אוטומטית.' : '';
+      setSuccess(`נמצאו ויובאו: ${parts.join(' ו-')}.${dupNote}${tripNote} בדוק את הפרטים לפני שמירה.`);
     } catch (err) {
       setError(
         err.message === 'PARSE_FAILED'

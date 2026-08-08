@@ -2,12 +2,13 @@
 import React, { useState, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Box, Paper, Typography, Button, IconButton, Alert, AlertTitle
+  Box, Paper, Typography, Button, IconButton, Alert, AlertTitle, Chip
 } from '@mui/material';
 import FlightInfo from './FlightInfo';
 import CarRentalInfo from './CarRentalInfo';
 import EmailImportModal from './EmailImportModal';
 import { findConflicts } from '../../services/itineraryConflictService';
+import { useBookings } from '../../contexts/BookingsContext';
 
 /**
  * TravelInfoComponent - רכיב לניהול פרטי נסיעה
@@ -40,6 +41,7 @@ const TravelInfoComponent = () => {
   // מצבים לניהול תצוגה
   const [showFlights, setShowFlights] = useState(true);
   const [showCarRental, setShowCarRental] = useState(true);
+  const { trips } = useBookings();
 
   // מחושב מחדש בכל שינוי בהזמנות
   const conflicts = findConflicts(flights, carRental, []);
@@ -70,6 +72,33 @@ const TravelInfoComponent = () => {
         </Button>
       </Box>
       
+      {/* טיולים שנגזרו מההזמנות שיובאו. אישורים שהגיעו בנפרד —
+          טיסה, מלון ורכב — מתאחדים כאן לנסיעה אחת. */}
+      {trips.length > 0 && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+            <i className="material-icons" style={{ marginRight: '8px' }}>luggage</i>
+            הנסיעות שלך ({trips.length})
+          </Typography>
+          {trips.map((trip) => (
+            <Paper key={trip.id} variant="outlined" sx={{ p: 2, mb: 1, borderRadius: '8px' }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                {trip.destination}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                {trip.startDate} — {trip.endDate}
+                {trip.nights ? ` · ${trip.nights} לילות` : ''}
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {trip.summary.flights > 0 && <Chip size="small" label={`✈️ ${trip.summary.flights} טיסות`} />}
+                {trip.summary.hotels > 0 && <Chip size="small" label={`🏨 ${trip.summary.hotels} מלונות`} />}
+                {trip.summary.cars > 0 && <Chip size="small" label={`🚗 ${trip.summary.cars} רכב`} />}
+              </Box>
+            </Paper>
+          ))}
+        </Box>
+      )}
+
       {/* התנגשויות בין ההזמנות. הצלבה של פרטים שנראים תקינים בנפרד —
           למשל נחיתה ב-09:55 מול איסוף רכב ב-11:30. */}
       {conflicts.length > 0 && (
