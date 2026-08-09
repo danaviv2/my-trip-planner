@@ -159,22 +159,52 @@ export const groupBookingsIntoTrips = (bookings = []) => {
     const car = group.find((x) => x.type === 'car_rental');
     const isAirportCode = (s) => /^[A-Z]{3}$/.test((s || '').trim());
 
-    // כתובת מלאה של נקודת איסוף אינה שם יעד. "Naples Train Station,
-    // P.Zza Giuseppe Garibaldi - C/O Stazione Centrale..." צריך להפוך
-    // ל"Naples". לוקחים את המקטע המשמעותי ומקצרים.
+    // כתובת מלאה אינה שם יעד. שתי צורות נפוצות דורשות טיפול שונה:
+    //
+    // שדה תעופה — "Capodichino - Naples International Airport (NAP), ..."
+    // שם העיר צמוד למילה Airport, ולכן מנקים ממנה את מילות השדה והקוד.
+    // המקטע הראשון הוא לרוב שם הטרמינל, ואיש אינו אומר "אני טס לקפודיקינו".
+    //
+    // כתובת רגילה — "Palazzo Berio, Via Toledo, 256, 80132 Napoli NA, Italy"
+    // כאן העיר נמצאת בסוף ולא בהתחלה: המקטע הראשון הוא שם הבניין. לכן
+    // מסירים את המדינה, לוקחים את המקטע האחרון ומנקים מיקוד וקוד מחוז.
+    const COUNTRIES = /^(italy|italia|france|spain|españa|greece|germany|deutschland|portugal|israel|usa|united states|united kingdom|uk|netherlands|austria|switzerland|belgium|croatia|cyprus)$/i;
+    const AIRPORT_WORDS = /\b(international|intl|airport|aeroporto|aeropuerto|aéroport|flughafen|terminal)\b/gi;
+
     const cityOf = (raw) => {
       if (!raw) return '';
       const cleaned = String(raw).replace(/\s+/g, ' ').trim();
-      if (cleaned.length <= 28) return cleaned;
       const parts = cleaned.split(/[,\-–]/).map((p) => p.trim()).filter(Boolean);
-      // מעדיפים מקטע קצר שאינו מספר בית ואינו קוד שדה תעופה
-      const named = parts.find(
+
+      const airportPart = parts.find((p) => /\bairport|aeroporto|aeropuerto|aéroport|flughafen\b/i.test(p));
+      if (airportPart) {
+        const city = airportPart
+          .replace(/\([A-Z]{3}\)/g, '')
+          .replace(AIRPORT_WORDS, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (city.length >= 3) return city;
+      }
+
+      if (cleaned.length <= 28) return cleaned;
+
+      const withoutCountry = parts.filter((p) => !COUNTRIES.test(p));
+      const tail = withoutCountry[withoutCountry.length - 1] || '';
+      const city = tail
+        .replace(/^\d{4,6}\s*/, '') // מיקוד מוביל
+        .replace(/\s+[A-Z]{2}$/, '') // קוד מחוז נגרר (Napoli NA)
+        .trim();
+      if (city.length >= 3 && city.length <= 24 && !/^\d/.test(city)) return city;
+
+      const named = withoutCountry.find(
         (p) => p.length >= 3 && p.length <= 24 && !/^\d/.test(p) && !isAirportCode(p)
       );
       return named || parts[0] || cleaned.slice(0, 28);
     };
 
-    const candidates = [stay?.location, car?.location, outbound?.location, group[0].location];
+    // יעד הטיסה הוא הסימן האמין ביותר ליעד הנסיעה — כשהוא כתוב בשם
+    // ולא בקוד. אחריו כתובת הלינה, ורק לבסוף נקודת איסוף הרכב.
+    const candidates = [outbound?.location, stay?.location, car?.location, group[0].location];
     const readable = candidates.find((c) => c && !isAirportCode(c));
     const destination = readable
       ? cityOf(readable)

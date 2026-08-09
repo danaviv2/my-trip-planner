@@ -37,6 +37,17 @@ const fmtGap = (minutes) => {
 };
 
 /**
+ * מקצר כתובת לשם מקום קריא. ספקי השכרה מחזירים כתובת מלאה עם מיקוד
+ * ומדינה, ובתוך התראה זה נקרא כמו שורת משלוח ולא כמו מקום.
+ */
+const shortPlace = (raw) => {
+  const cleaned = String(raw || '').replace(/\s+/g, ' ').trim();
+  if (cleaned.length <= 40) return cleaned;
+  const head = cleaned.split(/[,–]/)[0].trim();
+  return head.length >= 3 ? head : `${cleaned.slice(0, 40)}…`;
+};
+
+/**
  * @param {Array} flights רשימת טיסות ({type,date,arrivalTime,departureTime,...})
  * @param {object|null} carRental פרטי השכרת רכב
  * @param {Array} accommodations רשימת מלונות (אופציונלי)
@@ -120,8 +131,8 @@ export const findConflicts = (flights = [], carRental = null, accommodations = [
     }
 
     // איסוף והחזרה במקומות שונים גוררים לרוב תוספת תשלום
-    const p = (carRental.pickupLocation || '').trim();
-    const r = (carRental.returnLocation || '').trim();
+    const p = shortPlace(carRental.pickupLocation);
+    const r = shortPlace(carRental.returnLocation);
     if (p && r && p !== r) {
       issues.push({
         severity: 'info',

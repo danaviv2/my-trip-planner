@@ -42,49 +42,85 @@ const writeLocal = (list) => {
  * לפי הספק ותאריך האיסוף. אלה מזהים את הדבר עצמו, ללא תלות בערוץ שדרכו
  * הגיע האישור.
  */
-const bookingKey = (b) => {
-  const norm = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
-  const type = b.type || '';
+const norm = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
 
-  if (type === 'flight') {
-    // אותה טיסה מגיעה פעמיים: פעם מגוף המייל ופעם מהקובץ המצורף,
-    // ולעיתים רק לאחת מהן יש מספר טיסה או שקוד השדה נכתב אחרת
-    // (NAP מול NAPLES). תאריך ושעות ההמראה והנחיתה משותפים לשתיהן,
-    // ואדם אינו יכול להיות בשתי טיסות באותה שעה באותו יום.
-    if (b.date && b.departureTime && b.arrivalTime) {
-      return ['flight', norm(b.date), norm(b.departureTime), norm(b.arrivalTime)].join('|');
-    }
-    return ['flight', norm(b.flightNumber), norm(b.date)].join('|');
-  }
-  if (type === 'car_rental') {
-    return ['car', norm(b.company), norm(b.pickupDate)].join('|');
-  }
-  if (type === 'hotel') {
-    return ['hotel', norm(b.name), norm(b.checkIn)].join('|');
-  }
+/** סתירה קיימת רק כששני הערכים מלאים ושונים. שדה חסר אינו סותר דבר. */
+const contradicts = (a, b) => !!norm(a) && !!norm(b) && norm(a) !== norm(b);
+/** הסכמה חיובית: שני הערכים מלאים וזהים. */
+const agrees = (a, b) => !!norm(a) && !!norm(b) && norm(a) === norm(b);
+
+/**
+ * האם שתי רשומות מתארות את אותה טיסה.
+ *
+ * מפתח־גיבוב לא מתאים כאן: אותו אישור מגיע במספר גרסאות חלקיות — גוף
+ * המייל, ה-PDF המצורף, ולעיתים מייל נוסף מאתר ההזמנות — ולכל גרסה חסר
+ * שדה אחר. גרסה עם שעת המראה בלבד וגרסה עם שעת נחיתה בלבד היו מקבלות
+ * מפתחות שונים ונשארות כשתי טיסות.
+ *
+ * לכן ההשוואה היא לפי סימנים: אותו תאריך, אף שדה מזהה אינו סותר, ולפחות
+ * אחד מהם מסכים בפועל. כך גרסאות חלקיות מתאחדות, אבל שתי טיסות אמיתיות
+ * באותו יום — מספרים או שעות שונות — נשארות נפרדות.
+ */
+const sameFlight = (a, b) => {
+  if (!agrees(a.date, b.date)) return false;
+  if (contradicts(a.flightNumber, b.flightNumber)) return false;
+  if (contradicts(a.departureTime, b.departureTime)) return false;
+  if (contradicts(a.arrivalTime, b.arrivalTime)) return false;
+  return (
+    agrees(a.flightNumber, b.flightNumber) ||
+    agrees(a.departureTime, b.departureTime) ||
+    agrees(a.arrivalTime, b.arrivalTime)
+  );
+};
+
+/**
+ * מזהה יציב לפי מהות ההזמנה, לא לפי הניירת שלה. גרסה קודמת כללה את מספר
+ * האישור, ולכן אותה הזמנה שהגיעה גם מהספק וגם מאתר ההזמנות נספרה פעמיים.
+ */
+const bookingKey = (b) => {
+  const type = b.type || '';
+  if (type === 'car_rental') return ['car', norm(b.company), norm(b.pickupDate)].join('|');
+  if (type === 'hotel') return ['hotel', norm(b.name), norm(b.checkIn)].join('|');
   return [type, norm(b.confirmationNumber), norm(b.date || b.checkIn)].join('|');
+};
+
+/** האם שתי רשומות הן אותה הזמנה. טיסות לפי סימנים, השאר לפי מפתח. */
+const sameBooking = (a, b) => {
+  if ((a.type || '') !== (b.type || '')) return false;
+  return a.type === 'flight' ? sameFlight(a, b) : bookingKey(a) === bookingKey(b);
+};
+
+/**
+ * מאחד שתי גרסאות של אותה הזמנה לרשומה אחת מלאה.
+ *
+ * לא בוחרים גרסה "מנצחת": לגרסה מה-PDF יש שעת נחיתה וטרמינל, ולגרסה
+ * מהמייל שעת המראה — רק האיחוד נותן תמונה שלמה. כששתיהן מילאו שדה טקסט,
+ * נשמר הערך המפורט יותר ("EL AL ISRAEL AIRLINES" ולא "LY").
+ */
+const mergeBookings = (a, b) => {
+  const out = { ...a };
+  Object.entries(b).forEach(([k, v]) => {
+    if (k === 'id' || k === 'importedAt') return;
+    const cur = out[k];
+    if (cur === '' || cur == null) out[k] = v;
+    else if (typeof cur === 'string' && typeof v === 'string' && v.length > cur.length) out[k] = v;
+  });
+  return out;
 };
 
 /**
  * מסיר כפילויות מרשימה קיימת. נדרש כי רשומות שנשמרו לפני תיקון המפתח
  * עדיין במאגר, ובלעדיו אותה נסיעה מוצגת פעמיים.
  */
-/** כמה שדות בעלי ערך מולאו — משמש להעדפת הרשומה המפורטת יותר. */
-const richness = (b) =>
-  Object.entries(b || {}).filter(
-    ([k, v]) => !['id', 'importedAt', 'type', 'direction'].includes(k) && v !== '' && v != null
-  ).length;
-
 const dedupe = (list = []) => {
-  const best = new Map();
-  list.forEach((b) => {
-    const k = bookingKey(b);
-    const current = best.get(k);
-    // אותה טיסה מגיעה גם מגוף המייל וגם מהקובץ המצורף. שומרים את
-    // הגרסה עם יותר פרטים, אחרת מוצגת טיסה בלי מספר וללא חברת תעופה.
-    if (!current || richness(b) > richness(current)) best.set(k, b);
+  const out = [];
+  (list || []).forEach((b) => {
+    if (!b) return;
+    const i = out.findIndex((o) => sameBooking(o, b));
+    if (i === -1) out.push({ ...b });
+    else out[i] = mergeBookings(out[i], b);
   });
-  return [...best.values()];
+  return out;
 };
 
 export const BookingsProvider = ({ children }) => {
@@ -142,28 +178,38 @@ export const BookingsProvider = ({ children }) => {
    */
   const addBookings = useCallback(
     async (incoming = []) => {
-      const list = Array.isArray(incoming) ? incoming : [incoming];
-      const existing = new Set(bookings.map(bookingKey));
+      const list = (Array.isArray(incoming) ? incoming : [incoming]).filter(Boolean);
+      const stamped = list.map((b) => ({
+        ...b,
+        id: b.id || `bk_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        importedAt: new Date().toISOString(),
+      }));
 
-      const fresh = list
-        .filter((b) => b && !existing.has(bookingKey(b)))
-        .map((b) => ({
-          ...b,
-          id: b.id || `bk_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-          importedAt: new Date().toISOString(),
-        }));
+      // האצווה הנכנסת עצמה מכילה כפילויות: סריקה אחת מחזירה את אותה טיסה
+      // מגוף המייל, מה-PDF המצורף ולעיתים ממייל נוסף. בדיקה מול המאגר
+      // בלבד לא תופסת אותן, ולכן האיחוד רץ על הכל יחד.
+      const before = new Map(bookings.map((b) => [String(b.id), JSON.stringify(b)]));
+      const merged = dedupe([...bookings, ...stamped]);
 
-      if (!fresh.length) return { added: 0, skipped: list.length };
+      // נשמר גם מה שנוסף וגם רשומה קיימת שהתעשרה בפרטים מהאצווה
+      const changed = merged.filter((b) => before.get(String(b.id)) !== JSON.stringify(b));
+      const kept = new Set(merged.map((b) => String(b.id)));
+      const stale = bookings.filter((b) => !kept.has(String(b.id)));
 
-      const next = [...bookings, ...fresh];
-      setBookings(next);
-      writeLocal(next);
+      if (!changed.length && !stale.length) return { added: 0, skipped: list.length };
+
+      setBookings(merged);
+      writeLocal(merged);
 
       if (user) {
-        await Promise.all(fresh.map((b) => saveBooking(user.uid, b).catch(() => {})));
+        await Promise.all([
+          ...changed.map((b) => saveBooking(user.uid, b).catch(() => {})),
+          ...stale.map((b) => deleteBooking(user.uid, b.id).catch(() => {})),
+        ]);
       }
 
-      return { added: fresh.length, skipped: list.length - fresh.length };
+      const added = merged.length - bookings.length;
+      return { added: Math.max(added, 0), skipped: list.length - Math.max(added, 0) };
     },
     [bookings, user]
   );
