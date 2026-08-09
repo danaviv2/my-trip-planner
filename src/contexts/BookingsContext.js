@@ -62,11 +62,23 @@ const agrees = (a, b) => !!norm(a) && !!norm(b) && norm(a) === norm(b);
  * אחד מהם מסכים בפועל. כך גרסאות חלקיות מתאחדות, אבל שתי טיסות אמיתיות
  * באותו יום — מספרים או שעות שונות — נשארות נפרדות.
  */
+// רשומה שאין בה מספר טיסה ואף לא שעה אחת אינה מתארת טיסה מסוימת, אלא
+// רק "הייתה טיסה ביום הזה". צירוף כזה נוצר כשמייל מזכיר טיסה בלי פרטים.
+const isFlightFragment = (f) =>
+  !norm(f.flightNumber) && !norm(f.departureTime) && !norm(f.arrivalTime);
+
 const sameFlight = (a, b) => {
   if (!agrees(a.date, b.date)) return false;
   if (contradicts(a.flightNumber, b.flightNumber)) return false;
   if (contradicts(a.departureTime, b.departureTime)) return false;
   if (contradicts(a.arrivalTime, b.arrivalTime)) return false;
+
+  // שבר מידע נבלע לתוך טיסה מלאה באותו יום ובאותו מסלול. בלי זה הוא
+  // אינו מוצא שום סימן להסכים עליו, נשאר בנפרד, ופותח נסיעה משלו.
+  if (isFlightFragment(a) || isFlightFragment(b)) {
+    return !contradicts(a.departureAirport, b.departureAirport);
+  }
+
   return (
     agrees(a.flightNumber, b.flightNumber) ||
     agrees(a.departureTime, b.departureTime) ||
@@ -246,7 +258,17 @@ export const BookingsProvider = ({ children }) => {
     async (cancelled = []) => {
       if (!cancelled.length) return 0;
 
-      const doomed = bookings.filter((b) => cancelled.some((c) => sameBooking(b, c)));
+      // הודעת ביטול נושאת לרוב מספר אישור בלבד, בלי סוג הזמנה ובלי
+      // תאריכים, ולכן השוואה מלאה אינה מספיקה. מספר אישור הוא מזהה
+      // ייחודי אצל הספק ודי בו כדי לאתר את ההזמנה.
+      const refs = new Set(
+        cancelled.map((c) => norm(c.confirmationNumber)).filter(Boolean)
+      );
+      const doomed = bookings.filter(
+        (b) =>
+          (norm(b.confirmationNumber) && refs.has(norm(b.confirmationNumber))) ||
+          cancelled.some((c) => sameBooking(b, c))
+      );
       if (!doomed.length) return 0;
 
       const ids = new Set(doomed.map((b) => String(b.id)));

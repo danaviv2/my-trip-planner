@@ -55,7 +55,16 @@ export const scanMailbox = async (
       if (email.text) {
         const result = await parseTravelDocument(email.text);
         if (result.isBooking) {
-          (result.cancelled ? cancellations : bookings).push(...toBookings(result));
+          if (result.cancelled) {
+            // ביטול ללא פרטים מיוצג במספר האישור בלבד — זו כל האחיזה
+            // שיש כדי לאתר את ההזמנה המקורית במאגר.
+            cancellations.push(
+              ...toBookings(result),
+              ...(result.cancelledReferences || []).map((ref) => ({ confirmationNumber: ref }))
+            );
+          } else {
+            bookings.push(...toBookings(result));
+          }
           gotSomething = true;
         }
       }
@@ -73,7 +82,14 @@ export const scanMailbox = async (
           if (!base64) continue;
           const result = await parseTravelDocumentFromPdf(base64);
           if (result.isBooking) {
-            (result.cancelled ? cancellations : bookings).push(...toBookings(result));
+            if (result.cancelled) {
+              cancellations.push(
+                ...toBookings(result),
+                ...(result.cancelledReferences || []).map((ref) => ({ confirmationNumber: ref }))
+              );
+            } else {
+              bookings.push(...toBookings(result));
+            }
             gotSomething = true;
             fromPdf++;
             break;

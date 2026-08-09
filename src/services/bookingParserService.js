@@ -91,6 +91,7 @@ Return this exact structure:
 {
   "isBooking": true,
   "status": "confirmed" or "cancelled",
+  "cancelledReferences": ["booking numbers being cancelled, if any"],
   "flights": [
     {
       "type": "departure" or "return",
@@ -134,6 +135,11 @@ Rules:
   (e.g. "cancelled", "cancellation", "בוטלה", "ביטול הזמנה", "הזמנתך בוטלה").
   Still extract every detail you can find: the cancellation must be matched
   against the original booking, so flight numbers, dates and references matter.
+  A cancellation notice often carries NO travel details at all — only a
+  sentence and a booking number. In that case still return "isBooking": true,
+  set "status" to "cancelled", and put every booking or confirmation number
+  you can see into "cancelledReferences". Leave flights, carRental and hotel
+  empty. Without the reference there is nothing to match the cancellation to.
   A message that merely allows cancelling ("free cancellation until...",
   "ביטול חינם עד") is NOT a cancellation — keep "confirmed".
 - If there is no car rental in the text, set "carRental" to null. Do NOT invent one.
@@ -161,13 +167,23 @@ const normalizeParsed = (raw) => {
 
   const flights = Array.isArray(parsed.flights) ? parsed.flights : [];
 
+  const cancelled = parsed.status === 'cancelled';
+  const cancelledReferences = Array.isArray(parsed.cancelledReferences)
+    ? parsed.cancelledReferences.map((r) => String(r).trim()).filter(Boolean)
+    : [];
+
   return {
+    // הודעת ביטול אינה נושאת פרטי טיסה או לינה, ולכן התנאי הקודם — שדרש
+    // טיסה, רכב או מלון — סינן אותה החוצה לפני שמישהו הסתכל על השדה
+    // status. הביטול לא היה יכול להיקלט מלכתחילה. מספר אישור לבדו מספיק.
     isBooking:
       parsed.isBooking !== false &&
-      (flights.length > 0 || !!parsed.carRental || !!parsed.hotel),
+      (flights.length > 0 || !!parsed.carRental || !!parsed.hotel ||
+       (cancelled && cancelledReferences.length > 0)),
+    cancelledReferences,
     // מייל ביטול נראה כמו אישור לכל דבר ומכיל את אותם פרטים. בלי השדה
     // הזה הזמנה שבוטלה נכנסת למאגר כפעילה, והמסלול מציג רכב שאין.
-    cancelled: parsed.status === 'cancelled',
+    cancelled,
     flights: flights.map((f, i) => ({
       id: Date.now() + i,
       type: f.type === 'return' ? 'return' : 'departure',
