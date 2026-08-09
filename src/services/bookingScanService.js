@@ -35,6 +35,7 @@ export const scanMailbox = async (
   const emails = await fetchBookingEmails(token, { maxResults, monthsBack });
 
   const bookings = [];
+  const unrecognized = [];
   let parsed = 0;
   let fromPdf = 0;
 
@@ -79,7 +80,20 @@ export const scanMailbox = async (
     }
 
     if (gotSomething) parsed++;
+    else unrecognized.push(email);
   }
 
-  return { emails, bookings, parsed, fromPdf };
+  // מיילים שגוגל החזירה ולא הניבו הזמנה — בין אם סוננו לפני הפענוח ובין
+  // אם הפענוח לא זיהה בהם דבר. זו הרשימה שמסבירה אישור חסר.
+  return {
+    emails,
+    bookings,
+    parsed,
+    fromPdf,
+    matched: emails.matched ?? emails.length,
+    unrecognized: [
+      ...(emails.skipped || []),
+      ...unrecognized.map((e) => ({ subject: e.subject, from: e.from, reason: 'נסרק אך לא זוהו פרטי הזמנה' })),
+    ],
+  };
 };

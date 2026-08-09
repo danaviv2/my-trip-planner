@@ -48,31 +48,36 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
     try {
       const token = gmailToken || (await connectGmail());
 
-      const { emails, bookings: collected, parsed, fromPdf } = await scanMailbox(token, {
-        maxResults: 60,
-        monthsBack: 12,
-        onProgress: (msg) => setScanProgress(msg),
-      });
+      const { bookings: collected, parsed, fromPdf, matched, unrecognized } =
+        await scanMailbox(token, {
+          maxResults: 60,
+          monthsBack: 12,
+          onProgress: (msg) => setScanProgress(msg),
+        });
 
-      if (!emails.length) {
+      // מוצג תמיד ולא רק בכישלון: סריקה יכולה להצליח ועדיין להחמיץ את
+      // אישור המלון, ובלי הרשימה אין דרך לדעת שהוא הוחמץ.
+      setScannedSubjects(unrecognized || []);
+
+      if (!matched) {
         setError('לא נמצאו אישורי הזמנה בשנה האחרונה. אפשר להדביק מייל ידנית בלשונית הראשונה.');
         return;
       }
 
       if (!collected.length) {
-        // מציגים מה נסרק בפועל. בלי זה אי אפשר לדעת אם השאילתה שולפת
-        // את המיילים הלא נכונים או שהפענוח נכשל עליהם.
-        setScannedSubjects(emails.map((e) => ({ subject: e.subject, from: e.from })));
         setError(
-          `נסרקו ${emails.length} מיילים אך לא זוהו בהם אישורי הזמנה. ייתכן שהחיפוש תפס מיילים שיווקיים. ראה את הרשימה למטה.`
+          `נסרקו ${matched} מיילים אך לא זוהו בהם אישורי הזמנה. ייתכן שהחיפוש תפס מיילים שיווקיים. ראה את הרשימה למטה.`
         );
         return;
       }
 
       const { added, skipped } = await addBookings(collected);
       const dup = skipped > 0 ? ` ${skipped} כבר היו במערכת.` : '';
+      const missed = unrecognized?.length
+        ? ` ${unrecognized.length} מיילים לא זוהו — ראה את הרשימה למטה.`
+        : '';
       setSuccess(
-        `נסרקו ${emails.length} מיילים, זוהו ${parsed} אישורים${fromPdf ? ` (${fromPdf} מתוך קבצים מצורפים)` : ''}, ויובאו ${added} הזמנות חדשות.${dup} ההזמנות שויכו לנסיעות אוטומטית.`
+        `נסרקו ${matched} מיילים, זוהו ${parsed} אישורים${fromPdf ? ` (${fromPdf} מתוך קבצים מצורפים)` : ''}, ויובאו ${added} הזמנות חדשות.${dup}${missed}`
       );
     } catch (err) {
       if (err.message === 'GMAIL_TOKEN_EXPIRED') {
@@ -203,11 +208,12 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
         {scannedSubjects.length > 0 && (
           <Box sx={{ mb: 2, maxHeight: 220, overflow: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
             <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', mb: 0.5 }}>
-              המיילים שנסרקו:
+              מיילים שלא זוהו כהזמנה ({scannedSubjects.length}):
             </Typography>
             {scannedSubjects.map((e, i) => (
-              <Typography key={i} variant="caption" sx={{ display: 'block', color: 'text.secondary', mb: 0.25 }}>
-                • {e.subject || '(ללא נושא)'} — <span dir="ltr">{(e.from || '').replace(/.*<|>.*/g, '')}</span>
+              <Typography key={i} variant="caption" sx={{ display: 'block', color: 'text.secondary', mb: 0.5 }}>
+                • {e.subject || '(ללא נושא)'}
+                {e.reason && <span style={{ opacity: 0.75 }}> — {e.reason}</span>}
               </Typography>
             ))}
           </Box>

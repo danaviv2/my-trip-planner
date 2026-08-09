@@ -56,10 +56,15 @@ const buildQuery = (monthsBack = 12) => {
 const looksLikeBooking = (text) => {
   if (!text || text.length < 120) return false;
 
+  // אישורים בעברית כותבים את התאריך במילים — "מצפים לכם ביום ד', 24 ביוני" —
+  // ובלי זיהוי שמות החודשים בעברית הם נזרקו לפני שהגיעו לפענוח כלל.
+  // זו הייתה נקודה עיוורת מול כל ספק שכותב בעברית ולא רק מול אחד.
   const hasDate =
     /\b\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}\b/.test(text) ||
     /\b\d{4}-\d{2}-\d{2}\b/.test(text) ||
-    /\b\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(text);
+    /\b\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(text) ||
+    /\d{1,2}\s+ב?(ינואר|פברואר|מרץ|מרס|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר|נובמבר|דצמבר)/.test(text) ||
+    /(ינואר|פברואר|מרץ|מרס|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר|נובמבר|דצמבר)\s+\d{4}/.test(text);
 
   const hasReference =
     /\b[A-Z0-9]{6,}\b/.test(text) ||                      // PNR או מספר אישור ארוך
@@ -188,10 +193,18 @@ export const fetchBookingEmails = async (token, { maxResults = 60, monthsBack = 
   const list = await request(`${API}/messages?q=${q}&maxResults=${maxResults}`, token);
 
   const ids = (list.messages || []).map((m) => m.id);
-  if (!ids.length) return [];
+  if (!ids.length) {
+    const empty = [];
+    empty.skipped = [];
+    return empty;
+  }
 
   // שליפה מקבילה אך מוגבלת, כדי לא להיחסם על קצב בקשות
   const results = [];
+  // מיילים שגוגל החזירה ואנחנו סיננו. בלי רישום שלהם, אישור שלא נקלט
+  // נראה כאילו מעולם לא הגיע, ואי אפשר להבחין בין שאילתה שהחמיצה
+  // אותו לבין מסנן שדחה אותו.
+  const skipped = [];
   const BATCH = 5;
   for (let i = 0; i < ids.length; i += BATCH) {
     const batch = ids.slice(i, i + BATCH);
@@ -207,8 +220,15 @@ export const fetchBookingEmails = async (token, { maxResults = 60, monthsBack = 
 
       // מייל שכל פרטיו בקובץ מצורף עשוי להיות דל בגוף. אם יש PDF —
       // נותנים לו לעבור גם אם הסינון על הטקסט לא השתכנע.
-      if (!text && !pdfs.length) return;
-      if (!pdfs.length && !looksLikeBooking(text)) return;
+      const note = (reason) =>
+        skipped.push({
+          subject: headerValue(headers, 'Subject'),
+          from: headerValue(headers, 'From'),
+          reason,
+        });
+
+      if (!text && !pdfs.length) return note('אין טקסט ואין קובץ מצורף');
+      if (!pdfs.length && !looksLikeBooking(text)) return note('לא זוהו תאריך ומספר אישור בגוף המייל');
 
       results.push({
         id: msg.id,
@@ -222,6 +242,9 @@ export const fetchBookingEmails = async (token, { maxResults = 60, monthsBack = 
     });
   }
 
+  // מוצמד למערך ולא מוחזר כאובייקט עוטף, כדי לא לשבור קוראים קיימים
+  results.skipped = skipped;
+  results.matched = ids.length;
   return results;
 };
 
