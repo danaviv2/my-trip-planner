@@ -31,16 +31,45 @@ const writeLocal = (list) => {
   } catch {}
 };
 
-/** מזהה יציב לפי תוכן ההזמנה, כדי שייבוא כפול של אותו מייל לא ייצור כפילות. */
+/**
+ * מזהה יציב לפי מהות ההזמנה, לא לפי הניירת שלה.
+ *
+ * גרסה קודמת כללה את מספר האישור, ולכן אותה טיסה שהגיעה גם ממייל של
+ * חברת התעופה וגם ממייל של אתר ההזמנות נספרה פעמיים — כל אחד עם מספר
+ * אישור אחר — ונוצרו שתי נסיעות זהות.
+ *
+ * טיסה מזוהה לפי מספר הטיסה והתאריך; לינה לפי שם ותאריך כניסה; רכב
+ * לפי הספק ותאריך האיסוף. אלה מזהים את הדבר עצמו, ללא תלות בערוץ שדרכו
+ * הגיע האישור.
+ */
 const bookingKey = (b) => {
-  const parts = [
-    b.type || '',
-    b.confirmationNumber || '',
-    b.flightNumber || '',
-    b.date || b.pickupDate || b.checkIn || '',
-    b.name || b.company || b.airline || '',
-  ];
-  return parts.join('|').toLowerCase();
+  const norm = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
+  const type = b.type || '';
+
+  if (type === 'flight') {
+    return ['flight', norm(b.flightNumber), norm(b.date), norm(b.departureAirport)].join('|');
+  }
+  if (type === 'car_rental') {
+    return ['car', norm(b.company), norm(b.pickupDate)].join('|');
+  }
+  if (type === 'hotel') {
+    return ['hotel', norm(b.name), norm(b.checkIn)].join('|');
+  }
+  return [type, norm(b.confirmationNumber), norm(b.date || b.checkIn)].join('|');
+};
+
+/**
+ * מסיר כפילויות מרשימה קיימת. נדרש כי רשומות שנשמרו לפני תיקון המפתח
+ * עדיין במאגר, ובלעדיו אותה נסיעה מוצגת פעמיים.
+ */
+const dedupe = (list = []) => {
+  const seen = new Set();
+  return list.filter((b) => {
+    const k = bookingKey(b);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 };
 
 export const BookingsProvider = ({ children }) => {
@@ -61,12 +90,12 @@ export const BookingsProvider = ({ children }) => {
           const seen = new Set(remote.map(bookingKey));
           const toUpload = local.filter((b) => !seen.has(bookingKey(b)));
           await Promise.all(toUpload.map((b) => saveBooking(user.uid, b).catch(() => {})));
-          if (!cancelled) setBookings([...remote, ...toUpload]);
+          if (!cancelled) setBookings(dedupe([...remote, ...toUpload]));
         } catch {
-          if (!cancelled) setBookings(readLocal());
+          if (!cancelled) setBookings(dedupe(readLocal()));
         }
       } else if (!cancelled) {
-        setBookings(readLocal());
+        setBookings(dedupe(readLocal()));
       }
       if (!cancelled) setLoading(false);
     };
