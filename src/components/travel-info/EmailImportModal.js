@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseTravelDocument } from '../../services/bookingParserService';
 import { useBookings } from '../../contexts/BookingsContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { fetchBookingEmails } from '../../services/gmailService';
 import { 
   Modal, 
   Box, 
@@ -18,6 +20,8 @@ import {
 const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
   const { t } = useTranslation();
   const { addBookings } = useBookings();
+  const { gmailToken, connectGmail, disconnectGmail } = useAuth();
+  const [scanProgress, setScanProgress] = useState('');
   const [activeTab, setActiveTab] = useState(0);
   const [emailContent, setEmailContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,10 +33,70 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
     setActiveTab(newValue);
   };
   
-  // חיבור Gmail דורש זרימת OAuth שטרם מומשה. עד אז מציגים הודעה כנה
-  // ומפנים ללשונית ההדבקה, במקום להזריק נתוני דמה ולהצהיר על הצלחה.
+  /**
+   * סורק את תיבת ה-Gmail, מפענח כל אישור שנמצא ומייבא אותו.
+   * ההרשאה היא קריאה בלבד, ותוכן המיילים אינו נשמר — רק פרטי ההזמנה.
+   */
   const connectToGmail = async () => {
-    setError('חיבור אוטומטי ל-Gmail עדיין לא זמין. בינתיים העתק את גוף המייל והדבק אותו בלשונית "העתק/הדבק מייל".');
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
+    setScanProgress('');
+
+    try {
+      const token = gmailToken || (await connectGmail());
+
+      setScanProgress('מחפש אישורי הזמנה בתיבה...');
+      const emails = await fetchBookingEmails(token, { maxResults: 25, monthsBack: 12 });
+
+      if (!emails.length) {
+        setError('לא נמצאו אישורי הזמנה בשנה האחרונה. אפשר להדביק מייל ידנית בלשונית הראשונה.');
+        return;
+      }
+
+      const collected = [];
+      let parsed = 0;
+
+      for (let i = 0; i < emails.length; i++) {
+        setScanProgress(`מפענח ${i + 1} מתוך ${emails.length}...`);
+        try {
+          const result = await parseTravelDocument(emails[i].text);
+          if (!result.isBooking) continue;
+          parsed++;
+          collected.push(
+            ...result.flights.map((f) => ({ ...f, type: 'flight', direction: f.type })),
+            ...(result.carRental ? [{ ...result.carRental, type: 'car_rental' }] : [])
+          );
+        } catch {
+          // מייל בודד שנכשל אינו מפיל את הסריקה כולה
+        }
+      }
+
+      if (!collected.length) {
+        setError(`נסרקו ${emails.length} מיילים אך לא חולצו מהם פרטי הזמנה.`);
+        return;
+      }
+
+      const { added, skipped } = await addBookings(collected);
+      const dup = skipped > 0 ? ` ${skipped} כבר היו במערכת.` : '';
+      setSuccess(
+        `נסרקו ${emails.length} מיילים, זוהו ${parsed} אישורים, ויובאו ${added} הזמנות חדשות.${dup} ההזמנות שויכו לנסיעות אוטומטית.`
+      );
+    } catch (err) {
+      if (err.message === 'GMAIL_TOKEN_EXPIRED') {
+        disconnectGmail();
+        setError('ההרשאה פגה. לחץ שוב כדי להתחבר מחדש.');
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setError('חלון ההרשאה נסגר לפני האישור.');
+      } else if (err.message === 'GMAIL_FORBIDDEN') {
+        setError('הגישה ל-Gmail נדחתה. ודא שאישרת את ההרשאה במסך של גוגל.');
+      } else {
+        setError('שגיאה בסריקת התיבה: ' + err.message);
+      }
+    } finally {
+      setIsLoading(false);
+      setScanProgress('');
+    }
   };
   
   // פונקציה לחילוץ פרטים מטקסט מייל
@@ -128,6 +192,13 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
         {success && (
           <Alert severity="success" sx={{ mb: 2 }}>
             {success}
+          </Alert>
+        )}
+
+        {/* סריקת תיבה עשויה להימשך דקה — חיווי שקוף עדיף על ספינר אילם */}
+        {scanProgress && (
+          <Alert severity="info" icon={<CircularProgress size={18} />} sx={{ mb: 2 }}>
+            {scanProgress}
           </Alert>
         )}
         
