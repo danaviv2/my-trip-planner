@@ -47,7 +47,14 @@ const bookingKey = (b) => {
   const type = b.type || '';
 
   if (type === 'flight') {
-    return ['flight', norm(b.flightNumber), norm(b.date), norm(b.departureAirport)].join('|');
+    // אותה טיסה מגיעה פעמיים: פעם מגוף המייל ופעם מהקובץ המצורף,
+    // ולעיתים רק לאחת מהן יש מספר טיסה או שקוד השדה נכתב אחרת
+    // (NAP מול NAPLES). תאריך ושעות ההמראה והנחיתה משותפים לשתיהן,
+    // ואדם אינו יכול להיות בשתי טיסות באותה שעה באותו יום.
+    if (b.date && b.departureTime && b.arrivalTime) {
+      return ['flight', norm(b.date), norm(b.departureTime), norm(b.arrivalTime)].join('|');
+    }
+    return ['flight', norm(b.flightNumber), norm(b.date)].join('|');
   }
   if (type === 'car_rental') {
     return ['car', norm(b.company), norm(b.pickupDate)].join('|');
@@ -62,14 +69,22 @@ const bookingKey = (b) => {
  * מסיר כפילויות מרשימה קיימת. נדרש כי רשומות שנשמרו לפני תיקון המפתח
  * עדיין במאגר, ובלעדיו אותה נסיעה מוצגת פעמיים.
  */
+/** כמה שדות בעלי ערך מולאו — משמש להעדפת הרשומה המפורטת יותר. */
+const richness = (b) =>
+  Object.entries(b || {}).filter(
+    ([k, v]) => !['id', 'importedAt', 'type', 'direction'].includes(k) && v !== '' && v != null
+  ).length;
+
 const dedupe = (list = []) => {
-  const seen = new Set();
-  return list.filter((b) => {
+  const best = new Map();
+  list.forEach((b) => {
     const k = bookingKey(b);
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
+    const current = best.get(k);
+    // אותה טיסה מגיעה גם מגוף המייל וגם מהקובץ המצורף. שומרים את
+    // הגרסה עם יותר פרטים, אחרת מוצגת טיסה בלי מספר וללא חברת תעופה.
+    if (!current || richness(b) > richness(current)) best.set(k, b);
   });
+  return [...best.values()];
 };
 
 export const BookingsProvider = ({ children }) => {

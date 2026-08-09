@@ -13,6 +13,37 @@ import { useBookings } from '../../contexts/BookingsContext';
 import BookingDetails from './BookingDetails';
 
 /**
+ * מריץ את בדיקת ההתנגשויות על ההזמנות של נסיעה שיובאה.
+ *
+ * ההזמנות שמורות עם type='flight' והכיוון בשדה direction, בעוד
+ * findConflicts מצפה ל-type='departure'/'return' — לכן הממיר כאן.
+ * נסיעה יכולה לכלול יותר מרכב אחד (למשל איסוף בנאפולי והחזרה ברומא),
+ * ולכן הבדיקה רצה לכל רכב בנפרד והתוצאות מאוחדות ללא כפילויות.
+ */
+const tripConflicts = (trip) => {
+  const bookings = trip?.bookings || [];
+  const flights = bookings
+    .filter((b) => b.type === 'flight')
+    .map((b) => ({ ...b, type: b.direction === 'return' ? 'return' : 'departure' }));
+  const cars = bookings.filter((b) => b.type === 'car_rental');
+  const hotels = bookings.filter((b) => b.type === 'hotel');
+
+  if (!flights.length && !cars.length && !hotels.length) return [];
+
+  const all = cars.length
+    ? cars.flatMap((car) => findConflicts(flights, car, hotels))
+    : findConflicts(flights, null, hotels);
+
+  const seen = new Set();
+  return all.filter((c) => {
+    const k = `${c.severity}|${c.title}|${c.detail}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+};
+
+/**
  * TravelInfoComponent - רכיב לניהול פרטי נסיעה
  * מציג ומנהל מידע על טיסות והשכרת רכב
  */
@@ -106,6 +137,15 @@ const TravelInfoComponent = () => {
                 </Box>
               </AccordionSummary>
               <AccordionDetails sx={{ pt: 0 }}>
+                {/* ההתנגשויות נבדקות על ההזמנות של הנסיעה עצמה. קודם הן
+                    חושבו על הטופס בלבד, ולכן פער של אפס דקות בין נחיתה
+                    לאיסוף רכב שיובאו מהמייל לא נתפס. */}
+                {tripConflicts(trip).map((c, i) => (
+                  <Alert key={i} severity={c.severity} sx={{ mb: 1 }}>
+                    <AlertTitle sx={{ mb: 0.25, fontWeight: 700 }}>{c.title}</AlertTitle>
+                    {c.detail}
+                  </Alert>
+                ))}
                 {(trip.bookings || []).map((b, i) => (
                   <BookingDetails key={b.id || i} booking={b} />
                 ))}

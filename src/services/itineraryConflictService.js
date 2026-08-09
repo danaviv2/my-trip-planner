@@ -85,6 +85,14 @@ export const findConflicts = (flights = [], carRental = null, accommodations = [
           title: 'הרכב נאסף לפני שהטיסה נוחתת',
           detail: `הנחיתה ב-${outbound.date} ${outbound.arrivalTime} והאיסוף ${fmtGap(gap)} לפניה.`,
         });
+      } else if (gap === 0) {
+        // שעת איסוף זהה לשעת הנחיתה אינה "צפופה" אלא בלתי אפשרית:
+        // עוד לא ירדת מהמטוס. לרוב זו שעת ברירת מחדל שנקבעה בהזמנה.
+        issues.push({
+          severity: 'error',
+          title: 'איסוף הרכב באותה שעה בדיוק של הנחיתה',
+          detail: `הנחיתה והאיסוף שניהם ב-${outbound.arrivalTime}. בפועל תגיע לדלפק לפחות שעה מאוחר יותר — עדכן את שעת האיסוף כדי שההשכרה לא תבוטל כ"אי-הגעה".`,
+        });
       } else if (gap < MIN_LANDING_TO_PICKUP_MIN) {
         issues.push({
           severity: 'warning',
