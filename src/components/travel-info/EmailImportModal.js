@@ -22,6 +22,7 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
   const { addBookings } = useBookings();
   const { gmailToken, connectGmail, disconnectGmail } = useAuth();
   const [scanProgress, setScanProgress] = useState('');
+  const [scannedSubjects, setScannedSubjects] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
   const [emailContent, setEmailContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +43,7 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
     setError('');
     setSuccess('');
     setScanProgress('');
+    setScannedSubjects([]);
 
     try {
       const token = gmailToken || (await connectGmail());
@@ -73,7 +75,12 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
       }
 
       if (!collected.length) {
-        setError(`נסרקו ${emails.length} מיילים אך לא חולצו מהם פרטי הזמנה.`);
+        // מציגים מה נסרק בפועל. בלי זה אי אפשר לדעת אם השאילתה שולפת
+        // את המיילים הלא נכונים או שהפענוח נכשל עליהם.
+        setScannedSubjects(emails.map((e) => ({ subject: e.subject, from: e.from })));
+        setError(
+          `נסרקו ${emails.length} מיילים אך לא זוהו בהם אישורי הזמנה. ייתכן שהחיפוש תפס מיילים שיווקיים. ראה את הרשימה למטה.`
+        );
         return;
       }
 
@@ -200,6 +207,21 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
           <Alert severity="info" icon={<CircularProgress size={18} />} sx={{ mb: 2 }}>
             {scanProgress}
           </Alert>
+        )}
+
+        {/* כשלא נמצאו הזמנות — מציגים מה כן נסרק, כדי שאפשר יהיה לכוונן
+            את שאילתת החיפוש במקום לנחש */}
+        {scannedSubjects.length > 0 && (
+          <Box sx={{ mb: 2, maxHeight: 220, overflow: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
+            <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', mb: 0.5 }}>
+              המיילים שנסרקו:
+            </Typography>
+            {scannedSubjects.map((e, i) => (
+              <Typography key={i} variant="caption" sx={{ display: 'block', color: 'text.secondary', mb: 0.25 }}>
+                • {e.subject || '(ללא נושא)'} — <span dir="ltr">{(e.from || '').replace(/.*<|>.*/g, '')}</span>
+              </Typography>
+            ))}
+          </Box>
         )}
         
         {activeTab === 0 && (
