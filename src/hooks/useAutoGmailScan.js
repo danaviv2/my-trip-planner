@@ -43,7 +43,7 @@ const writeLastScan = (ts) => {
  * @param {boolean} opts.ready האם המאגר סיים להיטען
  * @returns {{scanning:boolean, lastResult:{added:number, scanned:number}|null}}
  */
-export const useAutoGmailScan = ({ user, addBookings, ready }) => {
+export const useAutoGmailScan = ({ user, addBookings, applyCancellations, ready }) => {
   const [scanning, setScanning] = useState(false);
   const [lastResult, setLastResult] = useState(null);
   // מונע סריקה כפולה כשהרכיב נטען מחדש או ש-user מתעדכן
@@ -66,13 +66,15 @@ export const useAutoGmailScan = ({ user, addBookings, ready }) => {
 
         setScanning(true);
         // טווח קצר: הסריקה השוטפת מחפשת מה שהגיע לאחרונה, לא היסטוריה
-        const { emails, bookings } = await scanMailbox(token, {
+        const { emails, bookings, cancellations } = await scanMailbox(token, {
           maxResults: 25,
           monthsBack: 2,
         });
         if (cancelled) return;
 
         const { added } = bookings.length ? await addBookings(bookings) : { added: 0 };
+        // ביטול שהגיע בזמן שהמשתמש לא הסתכל חשוב לא פחות מהזמנה חדשה
+        if (cancellations?.length) await applyCancellations(cancellations);
         writeLastScan(Date.now());
         if (!cancelled) setLastResult({ added, scanned: emails.length });
       } catch {
@@ -87,7 +89,7 @@ export const useAutoGmailScan = ({ user, addBookings, ready }) => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [user, ready, addBookings]);
+  }, [user, ready, addBookings, applyCancellations]);
 
   return { scanning, lastResult };
 };

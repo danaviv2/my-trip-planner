@@ -90,6 +90,7 @@ ${sourceBlock}
 Return this exact structure:
 {
   "isBooking": true,
+  "status": "confirmed" or "cancelled",
   "flights": [
     {
       "type": "departure" or "return",
@@ -127,6 +128,13 @@ Return this exact structure:
 }
 Rules:
 - Convert DD/MM/YYYY to YYYY-MM-DD.
+- Set "status" to "cancelled" when the message announces that a booking was
+  cancelled, refunded, voided, or is no longer valid — in any language
+  (e.g. "cancelled", "cancellation", "בוטלה", "ביטול הזמנה", "הזמנתך בוטלה").
+  Still extract every detail you can find: the cancellation must be matched
+  against the original booking, so flight numbers, dates and references matter.
+  A message that merely allows cancelling ("free cancellation until...",
+  "ביטול חינם עד") is NOT a cancellation — keep "confirmed".
 - If there is no car rental in the text, set "carRental" to null. Do NOT invent one.
 - If there is no accommodation in the text, set "hotel" to null. Do NOT invent one.
 - If there are no flights, return an empty array. Do NOT invent flights.
@@ -149,6 +157,9 @@ const normalizeParsed = (raw) => {
     isBooking:
       parsed.isBooking !== false &&
       (flights.length > 0 || !!parsed.carRental || !!parsed.hotel),
+    // מייל ביטול נראה כמו אישור לכל דבר ומכיל את אותם פרטים. בלי השדה
+    // הזה הזמנה שבוטלה נכנסת למאגר כפעילה, והמסלול מציג רכב שאין.
+    cancelled: parsed.status === 'cancelled',
     flights: flights.map((f, i) => ({
       id: Date.now() + i,
       type: f.type === 'return' ? 'return' : 'departure',

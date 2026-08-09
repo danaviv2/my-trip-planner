@@ -35,6 +35,9 @@ export const scanMailbox = async (
   const emails = await fetchBookingEmails(token, { maxResults, monthsBack });
 
   const bookings = [];
+  // ביטולים אינם הזמנות ואסור שייכנסו למאגר. הם נאספים בנפרד כדי לשמש
+  // להסרת ההזמנה המקורית שכן נמצאת שם.
+  const cancellations = [];
   const unrecognized = [];
   let parsed = 0;
   let fromPdf = 0;
@@ -50,7 +53,7 @@ export const scanMailbox = async (
       if (email.text) {
         const result = await parseTravelDocument(email.text);
         if (result.isBooking) {
-          bookings.push(...toBookings(result));
+          (result.cancelled ? cancellations : bookings).push(...toBookings(result));
           gotSomething = true;
         }
       }
@@ -68,7 +71,7 @@ export const scanMailbox = async (
           if (!base64) continue;
           const result = await parseTravelDocumentFromPdf(base64);
           if (result.isBooking) {
-            bookings.push(...toBookings(result));
+            (result.cancelled ? cancellations : bookings).push(...toBookings(result));
             gotSomething = true;
             fromPdf++;
             break;
@@ -88,6 +91,7 @@ export const scanMailbox = async (
   return {
     emails,
     bookings,
+    cancellations,
     parsed,
     fromPdf,
     matched: emails.matched ?? emails.length,

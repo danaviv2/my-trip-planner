@@ -234,6 +234,39 @@ export const BookingsProvider = ({ children }) => {
     [bookings, user]
   );
 
+  /**
+   * מסיר הזמנות שבוטלו, לפי אישורי ביטול שנקלטו מהמייל.
+   *
+   * מייל ביטול מתאר את אותה הזמנה בדיוק, ולכן ההתאמה נעשית באותם כללים
+   * שמזהים כפילות. הזמנה שלא נמצאת במאגר פשוט אין מה לבטל.
+   *
+   * @returns {Promise<number>} כמה הזמנות הוסרו
+   */
+  const applyCancellations = useCallback(
+    async (cancelled = []) => {
+      if (!cancelled.length) return 0;
+
+      const doomed = bookings.filter((b) => cancelled.some((c) => sameBooking(b, c)));
+      if (!doomed.length) return 0;
+
+      const ids = new Set(doomed.map((b) => String(b.id)));
+      const next = bookings.filter((b) => !ids.has(String(b.id)));
+      setBookings(next);
+      writeLocal(next);
+
+      if (user) {
+        try {
+          await Promise.all(doomed.map((b) => deleteBooking(user.uid, b.id)));
+        } catch {
+          setCloudError(true);
+        }
+      }
+
+      return doomed.length;
+    },
+    [bookings, user]
+  );
+
   const removeBooking = useCallback(
     async (id) => {
       const next = bookings.filter((b) => String(b.id) !== String(id));
@@ -249,6 +282,7 @@ export const BookingsProvider = ({ children }) => {
   const { scanning: autoScanning, lastResult: autoScanResult } = useAutoGmailScan({
     user,
     addBookings,
+    applyCancellations,
     ready: !loading,
   });
 
@@ -257,10 +291,11 @@ export const BookingsProvider = ({ children }) => {
 
   const value = useMemo(
     () => ({
-      bookings, trips, loading, addBookings, removeBooking,
+      bookings, trips, loading, addBookings, removeBooking, applyCancellations,
       autoScanning, autoScanResult, cloudError,
     }),
-    [bookings, trips, loading, addBookings, removeBooking, autoScanning, autoScanResult, cloudError]
+    [bookings, trips, loading, addBookings, removeBooking, applyCancellations,
+     autoScanning, autoScanResult, cloudError]
   );
 
   return <BookingsContext.Provider value={value}>{children}</BookingsContext.Provider>;

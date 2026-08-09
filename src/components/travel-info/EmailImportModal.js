@@ -19,7 +19,7 @@ import {
 
 const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
   const { t } = useTranslation();
-  const { addBookings } = useBookings();
+  const { addBookings, applyCancellations } = useBookings();
   const { gmailToken, connectGmail, disconnectGmail } = useAuth();
   const [scanProgress, setScanProgress] = useState('');
   const [scannedSubjects, setScannedSubjects] = useState([]);
@@ -48,7 +48,7 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
     try {
       const token = gmailToken || (await connectGmail());
 
-      const { bookings: collected, parsed, fromPdf, matched, unrecognized } =
+      const { bookings: collected, cancellations, parsed, fromPdf, matched, unrecognized } =
         await scanMailbox(token, {
           maxResults: 60,
           monthsBack: 12,
@@ -72,12 +72,16 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
       }
 
       const { added, skipped } = await addBookings(collected);
+      // מבוצע אחרי ההוספה: אישור וביטול עשויים להגיע באותה סריקה, וסדר
+      // הפוך היה מוסיף חזרה הזמנה שזה עתה בוטלה.
+      const removed = await applyCancellations(cancellations || []);
       const dup = skipped > 0 ? ` ${skipped} כבר היו במערכת.` : '';
+      const canc = removed > 0 ? ` ${removed} הזמנות שבוטלו הוסרו.` : '';
       const missed = unrecognized?.length
         ? ` ${unrecognized.length} מיילים לא זוהו — ראה את הרשימה למטה.`
         : '';
       setSuccess(
-        `נסרקו ${matched} מיילים, זוהו ${parsed} אישורים${fromPdf ? ` (${fromPdf} מתוך קבצים מצורפים)` : ''}, ויובאו ${added} הזמנות חדשות.${dup}${missed}`
+        `נסרקו ${matched} מיילים, זוהו ${parsed} אישורים${fromPdf ? ` (${fromPdf} מתוך קבצים מצורפים)` : ''}, ויובאו ${added} הזמנות חדשות.${dup}${canc}${missed}`
       );
     } catch (err) {
       if (err.message === 'GMAIL_TOKEN_EXPIRED') {
