@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Typography,
   Button,
@@ -33,6 +33,7 @@ import BookingSync from '../components/bookings/BookingSync';
 import { useAuth } from '../contexts/AuthContext';
 import { saveBooking, loadBookings, deleteBooking } from '../services/firestoreService';
 import { bookingEmoji, bookingColor, bookingLabel } from '../services/bookingParserService';
+import { groupBookingsIntoTrips } from '../services/tripGroupingService';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 const TripPlannerPage = () => {
@@ -55,6 +56,58 @@ const TripPlannerPage = () => {
   const [syncedBookings, setSyncedBookings] = useState(() => {
     try { return JSON.parse(localStorage.getItem('syncedBookings') || '[]'); } catch { return []; }
   });
+
+  const plannerDestination = tripPlan?.destination || userPreferences.location || '';
+
+  /**
+   * ההזמנות ששייכות לטיול הפתוח בלבד.
+   *
+   * הפאנל הציג את כל ההזמנות של המשתמש בכל טיול שנפתח, ולכן מלונות
+   * מנאפולי הופיעו בתוך תכנון לניו יורק. הוא נראה תקין רק משום שהיה
+   * ריק: הטעינה מ-Firestore נכשלה בשקט כל עוד לא היה מסד נתונים.
+   *
+   * השיוך נעשה באותו קיבוץ שמשמש את מסך פרטי הנסיעה, ולפי שם היעד.
+   * כשאין התאמה מוצג "אין הזמנות ליעד הזה" ולא הכול.
+   */
+  const tripBookings = useMemo(() => {
+    const dest = plannerDestination.trim().toLowerCase();
+    if (!dest || !syncedBookings.length) return [];
+    const match = groupBookingsIntoTrips(syncedBookings).find((t) => {
+      const d = String(t.destination || '').toLowerCase();
+      return d && (d.includes(dest) || dest.includes(d));
+    });
+    return match ? match.bookings : [];
+  }, [syncedBookings, plannerDestination]);
+
+  /**
+   * כותרת קריאה להזמנה, לפי סוגה.
+   *
+   * הפאנל הציג `b.name` בלבד — שדה שקיים במלונות בלבד — ולכן טיסות
+   * והשכרות רכב צוירו כשורות ריקות לחלוטין.
+   */
+  const bookingHeadline = (b) => {
+    if (b.type === 'flight') {
+      return [b.airline, b.flightNumber].filter(Boolean).join(' · ') || 'טיסה';
+    }
+    if (b.type === 'car_rental') return b.company || 'השכרת רכב';
+    if (b.type === 'transfer') return `הסעה${b.company ? ` · ${b.company}` : ''}`;
+    return b.name || 'הזמנה';
+  };
+
+  /** שורת המשנה: תאריכים ומסלול, לפי סוג ההזמנה. */
+  const bookingSubline = (b) => {
+    if (b.type === 'flight') {
+      const route = [b.departureAirport, b.arrivalAirport].filter(Boolean).join(' → ');
+      return [b.date, route, [b.departureTime, b.arrivalTime].filter(Boolean).join('–')]
+        .filter(Boolean).join(' · ');
+    }
+    if (b.type === 'car_rental' || b.type === 'transfer') {
+      const span = [b.pickupDate, b.returnDate].filter(Boolean).join(' → ');
+      return [span, b.pickupTime].filter(Boolean).join(' · ');
+    }
+    const span = [b.checkIn, b.checkOut].filter(Boolean).join(' → ');
+    return [span, b.price].filter(Boolean).join(' · ');
+  };
   const restoredRef = useRef(false);
 
   // טען הזמנות מ-Firestore כשמשתמש מתחבר
@@ -338,15 +391,17 @@ const TripPlannerPage = () => {
                 <BookingSync onBookingsAdded={handleBookingAdded} />
               </Box>
 
-              {syncedBookings.length === 0 ? (
+              {tripBookings.length === 0 ? (
                 <Box sx={{ bgcolor: '#f8f9fa', borderRadius: 2, p: 2, textAlign: 'center' }}>
                   <Typography variant="body2" color="text.secondary">
-                    לחץ על "סנכרן מ-Gmail" כדי לייבא הזמנות טיסה, מלון ורכב אוטומטית
+                    {syncedBookings.length > 0
+                      ? `יש לך ${syncedBookings.length} הזמנות מיובאות, אך אף אחת מהן אינה משויכת ל${plannerDestination || 'יעד הזה'}.`
+                      : 'לחץ על "סנכרן מ-Gmail" כדי לייבא הזמנות טיסה, מלון ורכב אוטומטית'}
                   </Typography>
                 </Box>
               ) : (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  {syncedBookings.map((b, bi) => (
+                  {tripBookings.map((b, bi) => (
                     <Paper key={b.id ?? bi} elevation={1} sx={{
                       p: 1.5, borderRadius: 2,
                       borderLeft: `4px solid ${bookingColor(b.type)}`,
@@ -359,11 +414,11 @@ const TripPlannerPage = () => {
                             sx={{ bgcolor: bookingColor(b.type), color: 'white', fontSize: '0.6rem', height: 18 }} />
                           {b.status === 'confirmed' && <Chip label="מאושר ✓" size="small" color="success" sx={{ fontSize: '0.6rem', height: 18 }} />}
                         </Box>
-                        <Typography variant="body2" fontWeight={700} noWrap>{b.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {b.checkIn}{b.checkOut && b.checkOut !== b.checkIn ? ` → ${b.checkOut}` : ''}
-                          {b.destination ? ` · ${b.destination}` : ''}
-                          {b.price ? ` · ${b.price}` : ''}
+                        <Typography variant="body2" fontWeight={700} noWrap>{bookingHeadline(b)}</Typography>
+                        {/* dir="ltr" נדרש: טווח תאריכים לטיני בתוך פסקה בעברית
+                            סודר מימין לשמאל, והוצג כאילו היציאה קודמת לכניסה. */}
+                        <Typography variant="caption" color="text.secondary" component="div" dir="ltr" sx={{ textAlign: 'right' }}>
+                          {bookingSubline(b)}
                         </Typography>
                       </Box>
                       <DeleteIcon
