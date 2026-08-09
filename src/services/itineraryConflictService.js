@@ -171,15 +171,24 @@ export const findConflicts = (flights = [], carRental = null, accommodations = [
   });
 
   // --- פערי כיסוי ---
-  if (landing && homeFlight && accommodations.length) {
+  // הבדיקה הותנתה קודם בקיום לפחות מלון אחד, ולכן דווקא המקרה החמור
+  // ביותר — נסיעה שלמה בלי שום לינה — היה היחיד שלא דווח עליו.
+  if (landing && homeFlight) {
+    const tripNights = Math.round((homeFlight - landing) / 86400000);
     const nights = accommodations.reduce((sum, h) => {
       const a = toDate(h.checkIn, '15:00');
       const b = toDate(h.checkOut, '11:00');
       if (!a || !b || b <= a) return sum;
       return sum + Math.round((b - a) / 86400000);
     }, 0);
-    const tripNights = Math.round((homeFlight - landing) / 86400000);
-    if (tripNights > 0 && nights > 0 && nights < tripNights) {
+
+    if (tripNights > 0 && nights === 0) {
+      issues.push({
+        severity: 'warning',
+        title: 'לא נמצאה לינה לנסיעה',
+        detail: `הנסיעה נמשכת ${tripNights} לילות ואין אף הזמנת לינה. ייתכן שאישור המלון לא הגיע למייל, שהוא נשלח מכתובת אחרת, או שהלינה טרם הוזמנה.`,
+      });
+    } else if (tripNights > 0 && nights < tripNights) {
       issues.push({
         severity: 'warning',
         title: 'חסרים לילות לינה',
