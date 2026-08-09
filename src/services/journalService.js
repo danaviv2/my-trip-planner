@@ -1,5 +1,6 @@
 import { collection, doc, setDoc, getDocs, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { markDeleted, loadDeletedIds } from './firestoreService';
 
 const LS_KEY = 'journal_entries';
 
@@ -29,4 +30,10 @@ export async function loadEntries(uid) {
 export async function deleteEntryFirestore(uid, entryId) {
   const ref = doc(db, 'users', uid, 'journal', String(entryId));
   await deleteDoc(ref);
+  // בלי סימון, רשומה שנמחקה כאן תיראה במכשיר אחר כרשומה מקומית שטרם
+  // סונכרנה, ותוצג שוב בכניסה הבאה.
+  await markDeleted(uid, 'deletedJournal', entryId);
 }
+
+/** מזהי רשומות היומן שנמחקו. */
+export const loadDeletedEntryIds = (uid) => loadDeletedIds(uid, 'deletedJournal');

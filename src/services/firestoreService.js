@@ -19,23 +19,34 @@ export const loadTrips = async (uid) => {
   return snapshot.docs.map((d) => d.data());
 };
 
-export const deleteTrip = async (uid, tripId) => {
-  const tripRef = doc(db, 'users', uid, 'trips', String(tripId));
-  await deleteDoc(tripRef);
-  // סימון מחיקה. בלעדיו אין דרך להבחין בין טיול חדש שטרם סונכרן לבין
-  // טיול שנמחק במכשיר אחר, ומכשיר שעדיין מחזיק עותק מקומי מעלה אותו
-  // חזרה לענן — כך שהמחיקה מתבטלת מעצמה.
-  await setDoc(doc(db, 'users', uid, 'deletedTrips', String(tripId)), {
-    id: String(tripId),
+/**
+ * סימון מחיקה.
+ *
+ * כל מסך שממזג ענן ומטמון מקומי מתייחס לרשומה שקיימת רק מקומית כרשומה
+ * חדשה שטרם סונכרנה — וזה נראה זהה לרשומה שנמחקה במכשיר אחר. בלי סימון
+ * אי אפשר להבחין ביניהן, והמחיקה מתבטלת מעצמה בכניסה הבאה.
+ *
+ * @param {string} kind שם אוסף הסימונים, למשל 'deletedTrips'
+ */
+export const markDeleted = async (uid, kind, id) => {
+  await setDoc(doc(db, 'users', uid, kind, String(id)), {
+    id: String(id),
     deletedAt: new Date().toISOString(),
   });
 };
 
-/** מזהי הטיולים שנמחקו, כדי שלא ישוחזרו ממטמון מקומי של מכשיר אחר. */
-export const loadDeletedTripIds = async (uid) => {
-  const snapshot = await getDocs(collection(db, 'users', uid, 'deletedTrips'));
+/** מזהי הרשומות שנמחקו, כדי שלא ישוחזרו ממטמון מקומי של מכשיר אחר. */
+export const loadDeletedIds = async (uid, kind) => {
+  const snapshot = await getDocs(collection(db, 'users', uid, kind));
   return new Set(snapshot.docs.map((d) => String(d.id)));
 };
+
+export const deleteTrip = async (uid, tripId) => {
+  await deleteDoc(doc(db, 'users', uid, 'trips', String(tripId)));
+  await markDeleted(uid, 'deletedTrips', tripId);
+};
+
+export const loadDeletedTripIds = (uid) => loadDeletedIds(uid, 'deletedTrips');
 
 // מבנה: users/{uid}/bookings/{bookingId}
 

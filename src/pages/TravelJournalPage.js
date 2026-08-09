@@ -37,7 +37,7 @@ import { useAuth } from '../contexts/AuthContext';
 import ShareTripDialog from '../components/shared/ShareTripDialog';
 import {
   loadEntriesLocal, saveEntriesLocal,
-  saveEntry, loadEntries, deleteEntryFirestore,
+  saveEntry, loadEntries, deleteEntryFirestore, loadDeletedEntryIds,
 } from '../services/journalService';
 import { geminiEndpoint } from '../services/geminiClient';
 
@@ -177,10 +177,17 @@ const TravelJournalPage = () => {
     setLoadingEntries(true);
     try {
       if (user) {
-        const remote = await loadEntries(user.uid);
+        const [remote, deletedIds] = await Promise.all([
+          loadEntries(user.uid),
+          loadDeletedEntryIds(user.uid).catch(() => new Set()),
+        ]);
         const local = loadEntriesLocal();
         const remoteIds = new Set(remote.map(e => String(e.id)));
-        const merged = [...remote, ...local.filter(e => !remoteIds.has(String(e.id)))];
+        // רשומה שנמחקה במכשיר אחר עדיין קיימת במטמון כאן. בלי הסינון
+        // היא נחשבת "טרם סונכרנה" וחוזרת למסך.
+        const merged = [...remote, ...local.filter(
+          e => !remoteIds.has(String(e.id)) && !deletedIds.has(String(e.id))
+        )];
         setEntries(merged);
         saveEntriesLocal(merged);
       } else {
@@ -267,11 +274,20 @@ const TravelJournalPage = () => {
 
   // ── delete entry ──
   const handleDelete = async (entryId) => {
-    const updated = entries.filter(e => e.id !== entryId);
+    // השוואה כמחרוזות: מזהים מגיעים גם מפרמטרים וגם מהענן, ולא תמיד
+    // באותו טיפוס.
+    const updated = entries.filter(e => String(e.id) !== String(entryId));
     setEntries(updated);
     saveEntriesLocal(updated);
     if (user) {
-      try { await deleteEntryFirestore(user.uid, entryId); } catch {}
+      try {
+        await deleteEntryFirestore(user.uid, entryId);
+      } catch {
+        // המחיקה המקומית הצליחה אך הענן לא עודכן. הודעת "נמחק" גורפת
+        // הייתה מסתירה שהרשומה תחזור במכשיר אחר.
+        showSnack('נמחק במכשיר זה. הסנכרון לענן נכשל — ייתכן שהרשומה תופיע במכשיר אחר.', 'warning');
+        return;
+      }
     }
     showSnack('נמחק', 'info');
   };
