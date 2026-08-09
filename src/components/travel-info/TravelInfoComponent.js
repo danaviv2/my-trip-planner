@@ -2,13 +2,15 @@
 import React, { useState, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Box, Paper, Typography, Button, IconButton, Alert, AlertTitle, Chip
+  Box, Paper, Typography, Button, IconButton, Alert, AlertTitle, Chip,
+  Accordion, AccordionSummary, AccordionDetails
 } from '@mui/material';
 import FlightInfo from './FlightInfo';
 import CarRentalInfo from './CarRentalInfo';
 import EmailImportModal from './EmailImportModal';
 import { findConflicts } from '../../services/itineraryConflictService';
 import { useBookings } from '../../contexts/BookingsContext';
+import BookingDetails from './BookingDetails';
 
 /**
  * TravelInfoComponent - רכיב לניהול פרטי נסיעה
@@ -81,20 +83,34 @@ const TravelInfoComponent = () => {
             הנסיעות שלך ({trips.length})
           </Typography>
           {trips.map((trip) => (
-            <Paper key={trip.id} variant="outlined" sx={{ p: 2, mb: 1, borderRadius: '8px' }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                {trip.destination}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                {trip.startDate} — {trip.endDate}
-                {trip.nights ? ` · ${trip.nights} לילות` : ''}
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {trip.summary.flights > 0 && <Chip size="small" label={`✈️ ${trip.summary.flights} טיסות`} />}
-                {trip.summary.hotels > 0 && <Chip size="small" label={`🏨 ${trip.summary.hotels} מלונות`} />}
-                {trip.summary.cars > 0 && <Chip size="small" label={`🚗 ${trip.summary.cars} רכב`} />}
-              </Box>
-            </Paper>
+            <Accordion
+              key={trip.id}
+              disableGutters
+              sx={{ mb: 1, borderRadius: '8px !important', '&:before': { display: 'none' } }}
+              variant="outlined"
+            >
+              <AccordionSummary expandIcon={<i className="material-icons">expand_more</i>}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }} noWrap>
+                    {trip.destination}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    {trip.startDate} — {trip.endDate}
+                    {trip.nights ? ` · ${trip.nights} לילות` : ''}
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {trip.summary.flights > 0 && <Chip size="small" label={`✈️ ${trip.summary.flights} טיסות`} />}
+                    {trip.summary.hotels > 0 && <Chip size="small" label={`🏨 ${trip.summary.hotels} מלונות`} />}
+                    {trip.summary.cars > 0 && <Chip size="small" label={`🚗 ${trip.summary.cars} רכב`} />}
+                  </Box>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails sx={{ pt: 0 }}>
+                {(trip.bookings || []).map((b, i) => (
+                  <BookingDetails key={b.id || i} booking={b} />
+                ))}
+              </AccordionDetails>
+            </Accordion>
           ))}
         </Box>
       )}

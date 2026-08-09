@@ -159,11 +159,26 @@ export const groupBookingsIntoTrips = (bookings = []) => {
     const car = group.find((x) => x.type === 'car_rental');
     const isAirportCode = (s) => /^[A-Z]{3}$/.test((s || '').trim());
 
+    // כתובת מלאה של נקודת איסוף אינה שם יעד. "Naples Train Station,
+    // P.Zza Giuseppe Garibaldi - C/O Stazione Centrale..." צריך להפוך
+    // ל"Naples". לוקחים את המקטע המשמעותי ומקצרים.
+    const cityOf = (raw) => {
+      if (!raw) return '';
+      const cleaned = String(raw).replace(/\s+/g, ' ').trim();
+      if (cleaned.length <= 28) return cleaned;
+      const parts = cleaned.split(/[,\-–]/).map((p) => p.trim()).filter(Boolean);
+      // מעדיפים מקטע קצר שאינו מספר בית ואינו קוד שדה תעופה
+      const named = parts.find(
+        (p) => p.length >= 3 && p.length <= 24 && !/^\d/.test(p) && !isAirportCode(p)
+      );
+      return named || parts[0] || cleaned.slice(0, 28);
+    };
+
     const candidates = [stay?.location, car?.location, outbound?.location, group[0].location];
-    const destination =
-      candidates.find((c) => c && !isAirportCode(c)) ||
-      candidates.find(Boolean) ||
-      'יעד לא ידוע';
+    const readable = candidates.find((c) => c && !isAirportCode(c));
+    const destination = readable
+      ? cityOf(readable)
+      : candidates.find(Boolean) || 'יעד לא ידוע';
 
     const nights = Math.max(0, daysBetween(start, end));
 

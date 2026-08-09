@@ -90,12 +90,27 @@ export const BookingsProvider = ({ children }) => {
           const seen = new Set(remote.map(bookingKey));
           const toUpload = local.filter((b) => !seen.has(bookingKey(b)));
           await Promise.all(toUpload.map((b) => saveBooking(user.uid, b).catch(() => {})));
-          if (!cancelled) setBookings(dedupe([...remote, ...toUpload]));
+          const merged = [...remote, ...toUpload];
+          const clean = dedupe(merged);
+          // הניקוי חייב להישמר, אחרת הכפילויות חוזרות בכל טעינה
+          if (clean.length < merged.length) {
+            const keep = new Set(clean.map((b) => String(b.id)));
+            const stale = merged.filter((b) => !keep.has(String(b.id)));
+            await Promise.all(stale.map((b) => deleteBooking(user.uid, b.id).catch(() => {})));
+          }
+          writeLocal(clean);
+          if (!cancelled) setBookings(clean);
         } catch {
-          if (!cancelled) setBookings(dedupe(readLocal()));
+          if (!cancelled) {
+            const clean = dedupe(readLocal());
+            writeLocal(clean);
+            setBookings(clean);
+          }
         }
       } else if (!cancelled) {
-        setBookings(dedupe(readLocal()));
+        const clean = dedupe(readLocal());
+        writeLocal(clean);
+        setBookings(clean);
       }
       if (!cancelled) setLoading(false);
     };
