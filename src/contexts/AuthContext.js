@@ -10,10 +10,16 @@ import {
   GoogleAuthProvider,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
+import {
+  requestGmailToken,
+  setGmailConsent,
+  getClientId,
+  GMAIL_SCOPE,
+} from '../services/googleTokenClient';
 
 const AuthContext = createContext();
 
-const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+export { GMAIL_SCOPE };
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -44,18 +50,28 @@ export const AuthProvider = ({ children }) => {
    * מופרד מההתחברות הרגילה בכוונה: משתמש שרק רוצה להיכנס לא צריך
    * לאשר גישה למיילים. ההרשאה נדרשת רק כשהוא בוחר לסרוק אישורי הזמנה.
    *
-   * הטוקן תקף לכשעה ואינו כולל refresh token, ולכן הוא נשמר ב-sessionStorage
-   * בלבד — נמחק בסגירת הכרטיסייה ואינו נשאר על הדיסק.
+   * הטוקן תקף לכשעה, ולכן הוא נשמר ב-sessionStorage בלבד — נמחק בסגירת
+   * הכרטיסייה ואינו נשאר על הדיסק.
+   *
+   * ההנפקה עוברת דרך Google Identity Services ולא דרך חלון ההתחברות של
+   * Firebase. הסיבה מעשית: GIS זוכר את האישור, ולכן אחרי הפעם הראשונה
+   * אפשר לקבל טוקן חדש בשקט וסריקה יכולה לרוץ מעצמה. חלון Firebase
+   * דורש לחיצה בכל פעם מחדש, ואיתו הייבוא לעולם לא יהיה אוטומטי.
    */
   const connectGmail = async () => {
-    const provider = new GoogleAuthProvider();
-    provider.addScope(GMAIL_SCOPE);
-    // מאלץ מסך בחירת חשבון, כדי שאפשר יהיה לסרוק תיבה אחרת מזו שמחוברת
-    provider.setCustomParameters({ prompt: 'consent' });
+    let token;
 
-    const result = await signInWithPopup(auth, provider);
-    const credential = GoogleAuthProvider.credentialFromResult(result);
-    const token = credential?.accessToken || null;
+    if (getClientId()) {
+      token = await requestGmailToken({ silent: false, loginHint: user?.email || '' });
+    } else {
+      // עוד לא הוגדר Client ID לסריקה האוטומטית. נופלים חזרה לחלון של
+      // Firebase כדי שהייבוא הידני ימשיך לעבוד — פחות נוח, אך תקין.
+      const provider = new GoogleAuthProvider();
+      provider.addScope(GMAIL_SCOPE);
+      provider.setCustomParameters({ prompt: 'consent' });
+      const result = await signInWithPopup(auth, provider);
+      token = GoogleAuthProvider.credentialFromResult(result)?.accessToken || null;
+    }
 
     if (!token) throw new Error('NO_GMAIL_TOKEN');
 
@@ -68,6 +84,7 @@ export const AuthProvider = ({ children }) => {
 
   const disconnectGmail = () => {
     setGmailToken(null);
+    setGmailConsent(false);
     try {
       sessionStorage.removeItem('gmailAccessToken');
     } catch {}

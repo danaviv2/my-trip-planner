@@ -74,7 +74,7 @@ const TravelInfoComponent = () => {
   // מצבים לניהול תצוגה
   const [showFlights, setShowFlights] = useState(true);
   const [showCarRental, setShowCarRental] = useState(true);
-  const { trips } = useBookings();
+  const { trips, autoScanning, autoScanResult } = useBookings();
 
   // מחושב מחדש בכל שינוי בהזמנות
   const conflicts = findConflicts(flights, carRental, []);
@@ -105,6 +105,19 @@ const TravelInfoComponent = () => {
         </Button>
       </Box>
       
+      {/* הסריקה השקטה רצה בלי שהמשתמש ביקש. בלי חיווי, נסיעה חדשה
+          שמופיעה לבדה נראית כמו תקלה ולא כמו שירות. */}
+      {autoScanning && (
+        <Alert severity="info" icon={<i className="material-icons">sync</i>} sx={{ mb: 2 }}>
+          מחפש אישורי הזמנה חדשים בתיבת המייל שלך...
+        </Alert>
+      )}
+      {!autoScanning && autoScanResult?.added > 0 && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          נמצאו {autoScanResult.added} הזמנות חדשות במייל ושויכו לנסיעות אוטומטית.
+        </Alert>
+      )}
+
       {/* טיולים שנגזרו מההזמנות שיובאו. אישורים שהגיעו בנפרד —
           טיסה, מלון ורכב — מתאחדים כאן לנסיעה אחת. */}
       {trips.length > 0 && (

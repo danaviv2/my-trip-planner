@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import { useAuth } from './AuthContext';
 import { saveBooking, loadBookings, deleteBooking } from '../services/firestoreService';
 import { groupBookingsIntoTrips } from '../services/tripGroupingService';
+import { useAutoGmailScan } from '../hooks/useAutoGmailScan';
 
 /**
  * מאגר ההזמנות של המשתמש והטיולים שנגזרים מהן.
@@ -224,12 +225,20 @@ export const BookingsProvider = ({ children }) => {
     [bookings, user]
   );
 
+  // סריקה שקטה בפתיחת האפליקציה — אישור שהגיע למייל הופך לנסיעה בלי
+  // שהמשתמש לחץ דבר. רצה רק לאחר שההרשאה אושרה פעם אחת.
+  const { scanning: autoScanning, lastResult: autoScanResult } = useAutoGmailScan({
+    user,
+    addBookings,
+    ready: !loading,
+  });
+
   // הטיולים נגזרים מההזמנות ומתעדכנים אוטומטית עם כל אישור חדש
   const trips = useMemo(() => groupBookingsIntoTrips(bookings), [bookings]);
 
   const value = useMemo(
-    () => ({ bookings, trips, loading, addBookings, removeBooking }),
-    [bookings, trips, loading, addBookings, removeBooking]
+    () => ({ bookings, trips, loading, addBookings, removeBooking, autoScanning, autoScanResult }),
+    [bookings, trips, loading, addBookings, removeBooking, autoScanning, autoScanResult]
   );
 
   return <BookingsContext.Provider value={value}>{children}</BookingsContext.Provider>;
