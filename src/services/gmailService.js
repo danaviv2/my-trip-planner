@@ -16,12 +16,21 @@ const buildQuery = (monthsBack = 12) => {
   // נסיעות שולחים פרסומות מתת-דומיינים ייעודיים (e.avis.com,
   // ma.elalmatmid.com) ואלה דחקו את האישורים האמיתיים.
   // לכן: דורשים מילת אישור בנושא, ומסננים את קטגוריית הפרסומות של Gmail.
+  // הרשימה נגזרה מאישורים אמיתיים בתיבה. ניסוח צר מדי החמיץ שלושה
+  // מתוך ארבעה: "Electronic ticket receipt" (ולא e-ticket),
+  // "ההזמנה שלך באתר..." ו"ההזמנה שלכם ב..." (ולא "הזמנתך").
   const subjects = [
+    // אנגלית
     'confirmation', 'confirmed', 'reservation', 'itinerary',
-    'e-ticket', 'eticket', 'boarding pass', 'booking reference',
+    'e-ticket', 'eticket', 'ticket receipt', 'electronic ticket',
+    'boarding pass', 'booking reference', 'booking is',
     'your booking', 'your trip', 'your flight', 'your reservation',
-    'אישור הזמנה', 'אישור טיסה', 'אישור הזמנת', 'כרטיס טיסה',
-    'הזמנתך', 'אישור רכישה', 'פרטי הטיסה', 'זימון טיסה',
+    'your stay', 'your car rental', 'your hotel',
+    // עברית — כולל צורות רבים וגוף שני שנפוצות בפועל
+    'אישור הזמנה', 'אישור הזמנת', 'אישור טיסה', 'אישור רכישה',
+    'ההזמנה שלך', 'ההזמנה שלכם', 'הזמנה שלך', 'הזמנתך', 'הזמנתכם',
+    'מספר אישור', 'מספר הזמנה', 'כרטיס טיסה', 'פרטי הטיסה',
+    'קבלה על', 'שוברי הזמנה',
   ];
 
   const subj = subjects.map((s) => `subject:"${s}"`).join(' OR ');
