@@ -1,10 +1,10 @@
 // components/travel-info/EmailImportModal.js
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { parseTravelDocument } from '../../services/bookingParserService';
+import { parseTravelDocument, parseTravelDocumentFromPdf } from '../../services/bookingParserService';
 import { useBookings } from '../../contexts/BookingsContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { fetchBookingEmails } from '../../services/gmailService';
+import { fetchBookingEmails, fetchAttachment } from '../../services/gmailService';
 import { 
   Modal, 
   Box, 
@@ -59,20 +59,57 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
       const collected = [];
       let parsed = 0;
 
+      let fromPdf = 0;
+
       for (let i = 0; i < emails.length; i++) {
+        const email = emails[i];
         setScanProgress(`מפענח ${i + 1} מתוך ${emails.length}...`);
-        try {
-          const result = await parseTravelDocument(emails[i].text);
-          if (!result.isBooking) continue;
-          parsed++;
+
+        const take = (result) => {
           collected.push(
             ...result.flights.map((f) => ({ ...f, type: 'flight', direction: f.type })),
             ...(result.carRental ? [{ ...result.carRental, type: 'car_rental' }] : []),
             ...(result.hotel ? [{ ...result.hotel, type: 'hotel' }] : [])
           );
+        };
+
+        let gotSomething = false;
+
+        // קודם גוף המייל — זול ומהיר יותר
+        try {
+          if (email.text) {
+            const result = await parseTravelDocument(email.text);
+            if (result.isBooking) {
+              take(result);
+              gotSomething = true;
+            }
+          }
         } catch {
           // מייל בודד שנכשל אינו מפיל את הסריקה כולה
         }
+
+        // ספקים רבים שמים את הפרטים רק בקובץ המצורף. ניגשים אליו כשגוף
+        // המייל לא הניב דבר, כדי לא לשלם על פענוח כפול.
+        if (!gotSomething && email.pdfs?.length) {
+          for (const pdf of email.pdfs.slice(0, 2)) {
+            try {
+              setScanProgress(`קורא קובץ מצורף (${i + 1}/${emails.length})...`);
+              const base64 = await fetchAttachment(token, email.id, pdf.attachmentId);
+              if (!base64) continue;
+              const result = await parseTravelDocumentFromPdf(base64);
+              if (result.isBooking) {
+                take(result);
+                gotSomething = true;
+                fromPdf++;
+                break;
+              }
+            } catch {
+              // קובץ פגום או חסום אינו מפיל את הסריקה
+            }
+          }
+        }
+
+        if (gotSomething) parsed++;
       }
 
       if (!collected.length) {
@@ -88,7 +125,7 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
       const { added, skipped } = await addBookings(collected);
       const dup = skipped > 0 ? ` ${skipped} כבר היו במערכת.` : '';
       setSuccess(
-        `נסרקו ${emails.length} מיילים, זוהו ${parsed} אישורים, ויובאו ${added} הזמנות חדשות.${dup} ההזמנות שויכו לנסיעות אוטומטית.`
+        `נסרקו ${emails.length} מיילים, זוהו ${parsed} אישורים${fromPdf ? ` (${fromPdf} מתוך קבצים מצורפים)` : ''}, ויובאו ${added} הזמנות חדשות.${dup} ההזמנות שויכו לנסיעות אוטומטית.`
       );
     } catch (err) {
       if (err.message === 'GMAIL_TOKEN_EXPIRED') {

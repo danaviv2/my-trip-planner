@@ -134,6 +134,44 @@ const extractText = (payload) => {
 const headerValue = (headers, name) =>
   (headers || []).find((h) => h.name.toLowerCase() === name.toLowerCase())?.value || '';
 
+// מעל זה לא שולחים למודל: אישור הזמנה שוקל עשרות קילובייטים, קובץ כבד
+// יותר הוא כמעט תמיד חוברת שיווקית או קטלוג.
+const MAX_PDF_BYTES = 5 * 1024 * 1024;
+
+/** אוסף קבצי PDF מצורפים מעץ ה-MIME. */
+const collectPdfAttachments = (payload) => {
+  const found = [];
+  const walk = (part) => {
+    if (!part) return;
+    const isPdf =
+      part.mimeType === 'application/pdf' ||
+      /\.pdf$/i.test(part.filename || '');
+    if (isPdf && part.body?.attachmentId && (part.body.size || 0) <= MAX_PDF_BYTES) {
+      found.push({
+        filename: part.filename || 'attachment.pdf',
+        attachmentId: part.body.attachmentId,
+        size: part.body.size || 0,
+      });
+    }
+    (part.parts || []).forEach(walk);
+  };
+  walk(payload);
+  return found;
+};
+
+/**
+ * שולף קובץ מצורף ומחזיר אותו כ-base64 תקני.
+ * Gmail מחזיר base64url; Gemini מצפה ל-base64 רגיל.
+ */
+export const fetchAttachment = async (token, messageId, attachmentId) => {
+  const data = await request(
+    `${API}/messages/${messageId}/attachments/${attachmentId}`,
+    token
+  );
+  if (!data?.data) return null;
+  return data.data.replace(/-/g, '+').replace(/_/g, '/');
+};
+
 /**
  * מאתר אישורי הזמנה ומחזיר את תוכנם כטקסט, מוכן לפענוח.
  *
@@ -165,16 +203,21 @@ export const fetchBookingEmails = async (token, { maxResults = 60, monthsBack = 
     msgs.filter(Boolean).forEach((msg) => {
       const headers = msg.payload?.headers;
       const text = extractText(msg.payload);
-      if (!text) return;
-      // סינון זול לפני ה-AI: חוסך קריאות על מיילים שאינם אישורים
-      if (!looksLikeBooking(text)) return;
+      const pdfs = collectPdfAttachments(msg.payload);
+
+      // מייל שכל פרטיו בקובץ מצורף עשוי להיות דל בגוף. אם יש PDF —
+      // נותנים לו לעבור גם אם הסינון על הטקסט לא השתכנע.
+      if (!text && !pdfs.length) return;
+      if (!pdfs.length && !looksLikeBooking(text)) return;
+
       results.push({
         id: msg.id,
         subject: headerValue(headers, 'Subject'),
         from: headerValue(headers, 'From'),
         date: headerValue(headers, 'Date'),
         // חיתוך: הפרסר ממילא קורא רק את ההתחלה, ומייל שיווקי ארוך מבזבז טוקנים
-        text: text.slice(0, 6000),
+        text: (text || '').slice(0, 6000),
+        pdfs,
       });
     });
   }

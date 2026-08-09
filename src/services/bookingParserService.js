@@ -1,4 +1,4 @@
-import { geminiEndpoint } from './geminiClient';
+import { callGemini, geminiEndpoint } from './geminiClient';
 const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
 
 /**
@@ -77,13 +77,15 @@ Return this exact JSON structure if it IS a booking:
  * @param {string} text תוכן המייל כפי שהודבק
  * @returns {Promise<{flights: Array, carRental: object|null, isBooking: boolean}>}
  */
-export const parseTravelDocument = async (text) => {
-  const prompt = `You are a travel booking parser. Extract ALL bookings from this text.
+/**
+ * הפרומפט המשותף לשני מסלולי הפענוח — טקסט שהודבק וקובץ PDF מצורף.
+ * מוגדר פעם אחת כדי ששניהם יחזירו בדיוק אותו מבנה.
+ */
+const buildExtractionPrompt = (sourceBlock) => `You are a travel booking parser. Extract ALL bookings from this text.
 Return ONLY valid JSON (no markdown). Use null for anything you cannot find — never invent values.
 If the text is NOT a travel booking confirmation, return exactly: {"isBooking": false, "flights": [], "carRental": null}
 
-Text:
-${String(text).slice(0, 6000)}
+${sourceBlock}
 
 Return this exact structure:
 {
@@ -131,25 +133,9 @@ Rules:
 - Restaurant reservations are NOT accommodation. If the booking is for a
   restaurant table, set "isBooking" to false.`;
 
-  const response = await fetch(GEMINI_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        maxOutputTokens: 1500,
-        temperature: 0.1,
-        thinkingConfig: { thinkingBudget: 0 },
-      },
-    }),
-  });
-
-  if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
-
-  const data = await response.json();
-  const raw = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
-  const cleaned = raw.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
-
+/** ממיר את תשובת המודל למבנה שהמסכים צורכים. משותף לשני המסלולים. */
+const normalizeParsed = (raw) => {
+  const cleaned = String(raw).replace(/```json\s*/gi, '').replace(/```/g, '').trim();
   let parsed;
   try {
     parsed = JSON.parse(cleaned);
@@ -201,6 +187,62 @@ Rules:
         }
       : null,
   };
+};
+
+export const parseTravelDocument = async (text) => {
+  const prompt = buildExtractionPrompt(`Text:\n${String(text).slice(0, 6000)}`);
+
+  const response = await callGemini({
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: {
+      maxOutputTokens: 1500,
+      temperature: 0.1,
+      thinkingConfig: { thinkingBudget: 0 },
+    },
+  });
+
+  if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
+
+  const data = await response.json();
+  const raw = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
+  return normalizeParsed(raw);
+};
+
+/**
+ * מפענח אישור הזמנה שנמצא בקובץ PDF מצורף.
+ *
+ * ספקים רבים שמים את הפרטים רק בקובץ, וגוף המייל אומר "מצורף האישור".
+ * Gemini קורא PDF ישירות, כך שאין צורך בספריית פענוח בצד הלקוח — מה
+ * שחוסך כמגה־בייט מהבאנדל ומשמר את פריסת הטבלאות שבמסמך.
+ *
+ * @param {string} base64Pdf תוכן הקובץ בקידוד base64
+ * @returns {Promise<object>} אותו מבנה שמחזירה parseTravelDocument
+ */
+export const parseTravelDocumentFromPdf = async (base64Pdf) => {
+  if (!base64Pdf) throw new Error('NO_PDF');
+
+  const response = await callGemini({
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          { inline_data: { mime_type: 'application/pdf', data: base64Pdf } },
+          { text: buildExtractionPrompt('the attached PDF document') },
+        ],
+      },
+    ],
+    generationConfig: {
+      maxOutputTokens: 1500,
+      temperature: 0.1,
+      thinkingConfig: { thinkingBudget: 0 },
+    },
+  });
+
+  if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
+
+  const data = await response.json();
+  const raw = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
+  return normalizeParsed(raw);
 };
 
 /** אמוג'י לפי סוג הזמנה */
