@@ -30,6 +30,66 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // ── חדרי הצבעה קבוצתיים ──
+    //
+    // חדר משותף אינו יכול לחיות תחת users/{uid}, שכן כמה אנשים ניגשים
+    // אליו. הגישה נשענת על ידיעת הקוד, ולכן כאן נאכף מה שמונע שימוש לרעה:
+    //
+    // • list חסום — אי אפשר למנות חדרים או לגלות קוד בסריקה.
+    // • ההצבעות ממופתחות לפי מזהה המצביע, וכל משתמש רשאי לשנות אך ורק
+    //   את המפתח של עצמו. משתתף אינו יכול למחוק הצבעה של אחר, לשנות
+    //   אותה, או להצביע פעמיים.
+    // • הקוד והבעלות אינם ניתנים לשינוי לאחר היצירה.
+    // • הספירה נגזרת מההצבעות בצד הלקוח ואינה שדה שאפשר לנפח.
+    //
+    // ולידציה בצד הלקוח אינה נחשבת הגנה: מי שקורא ל-API ישירות עוקף
+    // אותה. לכן המבנה והגדלים מאומתים כאן.
+    match /groupTrips/{code} {
+
+      function signedIn() {
+        return request.auth != null;
+      }
+
+      // רשומת ההצבעה של הכותב עצמו — מבנה וגדלים
+      function ownVoteValid() {
+        return !(request.auth.uid in request.resource.data.votes) || (
+          request.resource.data.votes[request.auth.uid].keys().hasOnly(['name', 'choices'])
+          && request.resource.data.votes[request.auth.uid].name is string
+          && request.resource.data.votes[request.auth.uid].name.size() > 0
+          && request.resource.data.votes[request.auth.uid].name.size() <= 40
+          && request.resource.data.votes[request.auth.uid].choices is list
+          && request.resource.data.votes[request.auth.uid].choices.size() <= 3
+        );
+      }
+
+      function shapeValid() {
+        return request.resource.data.keys().hasOnly(
+                 ['code', 'createdBy', 'createdAt', 'expiresAt', 'votes'])
+          && request.resource.data.code == code
+          && request.resource.data.votes is map
+          && request.resource.data.votes.keys().size() <= 50
+          && ownVoteValid();
+      }
+
+      allow get: if signedIn();
+      allow list: if false;
+
+      allow create: if signedIn()
+        && shapeValid()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.votes.keys().hasOnly([request.auth.uid]);
+
+      allow update: if signedIn()
+        && shapeValid()
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        // הלב של ההגנה: מותר לגעת אך ורק במפתח שלך
+        && request.resource.data.votes.diff(resource.data.votes)
+             .affectedKeys().hasOnly([request.auth.uid]);
+
+      allow delete: if signedIn() && resource.data.createdBy == request.auth.uid;
+    }
+
     // כל השאר חסום. כלל מפורש עדיף על הסתמכות על ברירת המחדל.
     match /{document=**} {
       allow read, write: if false;

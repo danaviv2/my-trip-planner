@@ -11,8 +11,13 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import GroupIcon from '@mui/icons-material/Group';
 import AddIcon from '@mui/icons-material/Add';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../contexts/AuthContext';
+import {
+  createRoom, joinRoom, submitVote, subscribeRoom,
+  tallyVotes, participantsOf,
+} from '../services/groupTripService';
 
 const DESTINATION_OPTIONS = [
   { name: 'Paris', emoji: '🗼', country: 'France' },
@@ -32,21 +37,9 @@ const DESTINATION_OPTIONS = [
   { name: 'Kyoto', emoji: '⛩️', country: 'Japan' },
 ];
 
-const STORAGE_KEY = 'groupTrip_v1';
-
-function loadSession() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null;
-  } catch { return null; }
-}
-
-function saveSession(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-function generateRoomCode() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
+// הקוד של החדר האחרון בלבד. תוכן החדר מגיע מהשרת, שכן חדר שנשמר
+// מקומית אינו נגיש לחברים שמצטרפים ממכשיר אחר — וזה היה שורש התקלה.
+const LAST_ROOM_KEY = 'groupTrip_lastRoom';
 
 export default function GroupTripPage() {
   const navigate = useNavigate();
@@ -58,57 +51,76 @@ export default function GroupTripPage() {
   const [hasVoted, setHasVoted] = useState(false);
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMsg, setSnackMsg] = useState('');
+  const [joinCode, setJoinCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
 
+  const notify = (msg) => { setSnackMsg(msg); setSnackOpen(true); };
+
+  // קוד מהקישור המשותף. עד כה הפרמטר נוצר בשיתוף אך לא נקרא בשום מקום,
+  // ולכן חבר שפתח את הקישור לא הגיע לחדר.
   useEffect(() => {
-    const saved = loadSession();
-    if (saved) {
-      setSession(saved);
-      setStep(2);
+    const fromLink = searchParams.get('room');
+    if (fromLink) setJoinCode(fromLink.toUpperCase());
+    else {
+      try {
+        const last = localStorage.getItem(LAST_ROOM_KEY);
+        if (last) setJoinCode(last);
+      } catch {}
     }
-  }, []);
+  }, [searchParams]);
 
-  const handleCreateSession = () => {
-    if (!name.trim()) {
-      setSnackMsg(t('groupTrip.err_name'));
-      setSnackOpen(true);
-      return;
+  // מנוי חי: הצבעה של חבר מופיעה מיד, בלי רענון
+  useEffect(() => {
+    if (!session?.code) return;
+    const stop = subscribeRoom(
+      session.code,
+      (room) => { if (room) setSession(room); },
+      () => notify('החיבור לחדר נותק. רענן כדי לנסות שוב.')
+    );
+    return stop;
+  }, [session?.code]);
+
+  const handleCreateSession = async () => {
+    if (!name.trim()) return notify(t('groupTrip.err_name'));
+    if (!user) return notify('יש להתחבר כדי לפתוח חדר משותף.');
+
+    setBusy(true);
+    try {
+      const room = await createRoom(user.uid, name.trim());
+      try { localStorage.setItem(LAST_ROOM_KEY, room.code); } catch {}
+      setSession(room);
+      setStep(2);
+    } catch {
+      notify('לא הצלחנו ליצור את החדר. בדוק את החיבור ונסה שוב.');
+    } finally {
+      setBusy(false);
     }
-    const newSession = {
-      code: generateRoomCode(),
-      creator: name.trim(),
-      participants: [{ name: name.trim(), votes: [] }],
-      votes: {},
-      createdAt: Date.now()
-    };
-    saveSession(newSession);
-    setSession(newSession);
-    setStep(2);
   };
 
-  const handleJoinOrLoad = () => {
-    if (!name.trim()) {
-      setSnackMsg(t('groupTrip.err_name'));
-      setSnackOpen(true);
-      return;
+  const handleJoinOrLoad = async () => {
+    if (!name.trim()) return notify(t('groupTrip.err_name'));
+    if (!joinCode.trim()) return notify('הזן את קוד החדר שקיבלת.');
+    if (!user) return notify('יש להתחבר כדי להצטרף לחדר.');
+
+    setBusy(true);
+    try {
+      // ההצטרפות נעשית לפי הקוד שהוקלד. הגרסה הקודמת קראה מפתח קבוע
+      // ב-localStorage והתעלמה מהקוד לחלוטין.
+      const room = await joinRoom(joinCode.trim().toUpperCase(), user.uid, name.trim());
+      if (!room) return notify(t('groupTrip.err_no_room'));
+
+      try { localStorage.setItem(LAST_ROOM_KEY, room.code); } catch {}
+      const mine = room.votes?.[user.uid]?.choices || [];
+      if (mine.length) { setHasVoted(true); setSelectedVotes(mine); }
+      setSession(room);
+      setStep(2);
+    } catch {
+      notify('לא הצלחנו להצטרף לחדר. ודא שהקוד נכון ונסה שוב.');
+    } finally {
+      setBusy(false);
     }
-    const existing = loadSession();
-    if (!existing) {
-      setSnackMsg(t('groupTrip.err_no_room'));
-      setSnackOpen(true);
-      return;
-    }
-    const alreadyIn = existing.participants.find(p => p.name === name.trim());
-    if (!alreadyIn) {
-      existing.participants.push({ name: name.trim(), votes: [] });
-    } else {
-      if (alreadyIn.votes.length > 0) {
-        setHasVoted(true);
-        setSelectedVotes(alreadyIn.votes);
-      }
-    }
-    saveSession(existing);
-    setSession(existing);
-    setStep(2);
   };
 
   const toggleVote = (destName) => {
@@ -120,25 +132,23 @@ export default function GroupTripPage() {
     });
   };
 
-  const handleSubmitVotes = () => {
-    if (selectedVotes.length === 0) {
-      setSnackMsg(t('groupTrip.err_select'));
-      setSnackOpen(true);
-      return;
-    }
-    const updated = { ...session };
-    selectedVotes.forEach(dest => {
-      updated.votes[dest] = (updated.votes[dest] || 0) + 1;
-    });
-    const participant = updated.participants.find(p => p.name === name);
-    if (participant) participant.votes = selectedVotes;
-    else updated.participants.push({ name, votes: selectedVotes });
+  const handleSubmitVotes = async () => {
+    if (selectedVotes.length === 0) return notify(t('groupTrip.err_select'));
+    if (!user || !session?.code) return;
 
-    saveSession(updated);
-    setSession(updated);
-    setHasVoted(true);
-    setSnackMsg(t('groupTrip.vote_saved'));
-    setSnackOpen(true);
+    setBusy(true);
+    try {
+      // נכתבת רשומת ההצבעה של המשתמש בלבד. אין מונה מצטבר שאפשר לנפח:
+      // הספירה נגזרת מההצבעות עצמן.
+      await submitVote(session.code, user.uid, name.trim() || 'משתתף', selectedVotes);
+      setHasVoted(true);
+      notify(t('groupTrip.vote_saved'));
+    } catch {
+      // בלי זה המשתמש היה רואה "ההצבעה נשמרה" גם כשלא נשמרה דבר
+      notify('ההצבעה לא נשמרה. בדוק את החיבור ונסה שוב.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleShowResults = () => {
@@ -146,7 +156,7 @@ export default function GroupTripPage() {
   };
 
   const handleReset = () => {
-    localStorage.removeItem(STORAGE_KEY);
+    try { localStorage.removeItem(LAST_ROOM_KEY); } catch {}
     setSession(null);
     setStep(1);
     setName('');
@@ -154,16 +164,20 @@ export default function GroupTripPage() {
     setHasVoted(false);
   };
 
-  const copyLink = () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url + `?room=${session?.code}`);
-    setSnackMsg(t('groupTrip.link_copied'));
-    setSnackOpen(true);
+  const copyLink = async () => {
+    // הקישור נבנה מהמקור והנתיב בלבד. הגרסה הקודמת שרשרה ?room אל
+    // window.location.href, וייצרה כתובת שבורה כשכבר היה בה פרמטר.
+    const url = `${window.location.origin}/group-trip?room=${session?.code}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      notify(t('groupTrip.link_copied'));
+    } catch {
+      notify('ההעתקה נחסמה על ידי הדפדפן. הקוד הוא ' + session?.code);
+    }
   };
 
-  const sortedResults = session
-    ? Object.entries(session.votes || {}).sort(([, a], [, b]) => b - a)
-    : [];
+  const sortedResults = tallyVotes(session);
+  const participants = participantsOf(session);
   const maxVotes = sortedResults.length > 0 ? sortedResults[0][1] : 1;
   const winner = sortedResults.length > 0 ? sortedResults[0] : null;
 
@@ -219,6 +233,7 @@ export default function GroupTripPage() {
                 size="large"
                 startIcon={<AddIcon />}
                 onClick={handleCreateSession}
+                disabled={busy}
                 sx={{
                   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   py: 1.5,
@@ -228,11 +243,22 @@ export default function GroupTripPage() {
               >
                 {t('groupTrip.create_room')}
               </Button>
+              {/* בלי שדה זה אי אפשר היה להצטרף לחדר של מישהו אחר:
+                  הקוד נשלח בקישור אך מעולם לא נקלט חזרה. */}
+              <TextField
+                fullWidth
+                label="קוד חדר (להצטרפות לחדר קיים)"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                inputProps={{ maxLength: 12, style: { letterSpacing: '0.15em', textAlign: 'center' } }}
+                placeholder="למשל ABCD234XYZ"
+              />
               <Button
                 variant="outlined"
                 fullWidth
                 size="large"
                 onClick={handleJoinOrLoad}
+                disabled={busy || !joinCode.trim()}
                 sx={{ py: 1.5, borderRadius: 3, fontWeight: 700 }}
               >
                 {t('groupTrip.join_room')}
@@ -241,7 +267,8 @@ export default function GroupTripPage() {
 
             <Box mt={3} p={2} bgcolor="#f8f9ff" borderRadius={2}>
               <Typography variant="body2" color="text.secondary" textAlign="center">
-                {t('groupTrip.local_tip')}
+                החדר נשמר בענן — כל מי שמקבל את הקוד יכול להצביע מהמכשיר שלו,
+                וההצבעות מתעדכנות אצל כולם מיד.
               </Typography>
             </Box>
           </Paper>
@@ -257,7 +284,7 @@ export default function GroupTripPage() {
                     🎯 {t('groupTrip.room_code')}: <Chip label={session.code} sx={{ fontWeight: 700, fontSize: '1rem', bgcolor: '#667eea22', color: '#667eea' }} />
                   </Typography>
                   <Typography variant="body2" color="text.secondary" mt={0.5}>
-                    {t('groupTrip.participants_count', { count: session.participants.length })}
+                    {t('groupTrip.participants_count', { count: participants.length })}
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={1}>
@@ -282,11 +309,11 @@ export default function GroupTripPage() {
                 </Stack>
               </Box>
 
-              {session.participants.length > 0 && (
+              {participants.length > 0 && (
                 <Box mt={2}>
                   <Typography variant="body2" color="text.secondary" mb={1}>{t('groupTrip.participants_label')}</Typography>
                   <Stack direction="row" flexWrap="wrap" gap={1}>
-                    {session.participants.map((p, i) => (
+                    {participants.map((p, i) => (
                       <Chip
                         key={i}
                         label={p.name}
@@ -346,7 +373,7 @@ export default function GroupTripPage() {
                   size="large"
                   startIcon={<HowToVoteIcon />}
                   onClick={handleSubmitVotes}
-                  disabled={selectedVotes.length === 0}
+                  disabled={busy || selectedVotes.length === 0}
                   sx={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     px: 6,
