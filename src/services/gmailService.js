@@ -139,11 +139,11 @@ const headerValue = (headers, name) =>
  *
  * @param {string} token טוקן גישה מ-connectGmail
  * @param {object} opts
- * @param {number} opts.maxResults מספר מיילים מרבי (ברירת מחדל 25)
+ * @param {number} opts.maxResults מספר מיילים מרבי (ברירת מחדל 60)
  * @param {number} opts.monthsBack כמה חודשים אחורה (ברירת מחדל 12)
  * @returns {Promise<Array<{id,subject,from,date,text}>>}
  */
-export const fetchBookingEmails = async (token, { maxResults = 25, monthsBack = 12 } = {}) => {
+export const fetchBookingEmails = async (token, { maxResults = 60, monthsBack = 12 } = {}) => {
   if (!token) throw new Error('NO_GMAIL_TOKEN');
 
   const q = encodeURIComponent(buildQuery(monthsBack));

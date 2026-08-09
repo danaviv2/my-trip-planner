@@ -49,7 +49,7 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
       const token = gmailToken || (await connectGmail());
 
       setScanProgress('מחפש אישורי הזמנה בתיבה...');
-      const emails = await fetchBookingEmails(token, { maxResults: 25, monthsBack: 12 });
+      const emails = await fetchBookingEmails(token, { maxResults: 60, monthsBack: 12 });
 
       if (!emails.length) {
         setError('לא נמצאו אישורי הזמנה בשנה האחרונה. אפשר להדביק מייל ידנית בלשונית הראשונה.');
