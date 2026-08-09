@@ -53,9 +53,11 @@ const looksLikeBooking = (text) => {
     /\b\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(text);
 
   const hasReference =
-    /\b[A-Z0-9]{6}\b/.test(text) ||                       // PNR
+    /\b[A-Z0-9]{6,}\b/.test(text) ||                      // PNR או מספר אישור ארוך
+    /\b\d{6,}\b/.test(text) ||                            // מספר הזמנה מספרי
     /\b[A-Z]{2}\s?\d{2,4}\b/.test(text) ||                // מספר טיסה
-    /(confirmation|booking|reference|pnr|קוד הזמנה|מספר אישור)/i.test(text);
+    /(confirmation|confirmed|booking|reservation|reference|pnr)/i.test(text) ||
+    /(אישור הזמנה|מספר הזמנה|הזמנה מספר|קוד הזמנה|מספר אישור|אישור טיסה|מספר כרטיס)/.test(text);
 
   return hasDate && hasReference;
 };

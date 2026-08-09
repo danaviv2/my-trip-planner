@@ -67,7 +67,8 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
           parsed++;
           collected.push(
             ...result.flights.map((f) => ({ ...f, type: 'flight', direction: f.type })),
-            ...(result.carRental ? [{ ...result.carRental, type: 'car_rental' }] : [])
+            ...(result.carRental ? [{ ...result.carRental, type: 'car_rental' }] : []),
+            ...(result.hotel ? [{ ...result.hotel, type: 'hotel' }] : [])
           );
         } catch {
           // מייל בודד שנכשל אינו מפיל את הסריקה כולה
@@ -136,12 +137,16 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
         setCarRental(result.carRental);
         parts.push('השכרת רכב');
       }
+      if (result.hotel) {
+        parts.push(`לינה ב${result.hotel.name || 'מלון'}`);
+      }
 
       // שמירה למאגר ההזמנות. משם הן מקובצות אוטומטית לטיולים, כך
       // שאישורים שמגיעים בנפרד מתאחדים לנסיעה אחת.
       const toStore = [
         ...result.flights.map((f) => ({ ...f, type: 'flight', direction: f.type })),
         ...(result.carRental ? [{ ...result.carRental, type: 'car_rental' }] : []),
+        ...(result.hotel ? [{ ...result.hotel, type: 'hotel' }] : []),
       ];
       const { added, skipped } = await addBookings(toStore);
 

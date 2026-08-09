@@ -111,12 +111,25 @@ Return this exact structure:
     "returnTime": "HH:MM",
     "returnLocation": "full location",
     "carType": "car model or class"
+  },
+  "hotel": {
+    "name": "hotel or accommodation name",
+    "confirmationNumber": "reference",
+    "checkIn": "YYYY-MM-DD",
+    "checkOut": "YYYY-MM-DD",
+    "address": "full address or city",
+    "guests": 2,
+    "roomType": "room description",
+    "price": "total price with currency"
   }
 }
 Rules:
 - Convert DD/MM/YYYY to YYYY-MM-DD.
 - If there is no car rental in the text, set "carRental" to null. Do NOT invent one.
-- If there are no flights, return an empty array. Do NOT invent flights.`;
+- If there is no accommodation in the text, set "hotel" to null. Do NOT invent one.
+- If there are no flights, return an empty array. Do NOT invent flights.
+- Restaurant reservations are NOT accommodation. If the booking is for a
+  restaurant table, set "isBooking" to false.`;
 
   const response = await fetch(GEMINI_URL, {
     method: 'POST',
@@ -147,7 +160,9 @@ Rules:
   const flights = Array.isArray(parsed.flights) ? parsed.flights : [];
 
   return {
-    isBooking: parsed.isBooking !== false && (flights.length > 0 || !!parsed.carRental),
+    isBooking:
+      parsed.isBooking !== false &&
+      (flights.length > 0 || !!parsed.carRental || !!parsed.hotel),
     flights: flights.map((f, i) => ({
       id: Date.now() + i,
       type: f.type === 'return' ? 'return' : 'departure',
@@ -171,6 +186,18 @@ Rules:
           returnTime: parsed.carRental.returnTime || '',
           returnLocation: parsed.carRental.returnLocation || '',
           carType: parsed.carRental.carType || '',
+        }
+      : null,
+    hotel: parsed.hotel
+      ? {
+          name: parsed.hotel.name || '',
+          confirmationNumber: parsed.hotel.confirmationNumber || '',
+          checkIn: parsed.hotel.checkIn || '',
+          checkOut: parsed.hotel.checkOut || '',
+          address: parsed.hotel.address || '',
+          guests: Number(parsed.hotel.guests) || null,
+          roomType: parsed.hotel.roomType || '',
+          price: parsed.hotel.price || '',
         }
       : null,
   };
