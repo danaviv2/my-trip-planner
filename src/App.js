@@ -1810,7 +1810,7 @@ const shareUrl = `https://yourtripplandomain.com/trip?id=${Date.now()}`;
                     startPoint={startPoint}
                     endPoint={endPoint}
                   />
-                  <InviteButton />
+                  <InviteButton destination={endPoint} />
                   <Button variant="contained" color="primary" onClick={saveTripLog} sx={{ mt: 2, background: '#4CAF50', color: '#fff', borderRadius: '8px', padding: '10px 20px', '&:hover': { background: '#388E3C' } }} aria-label="שמור מסלול">
                     שמור מסלול
                   </Button>
