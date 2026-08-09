@@ -127,6 +127,9 @@ const dedupe = (list = []) => {
 export const BookingsProvider = ({ children }) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  // כשל בשמירה לענן היה נבלע בשקט, והמשתמש האמין שהנתונים מגובים בעוד
+  // הם קיימים רק בדפדפן. עדיף לומר זאת מאשר להסתיר.
+  const [cloudError, setCloudError] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -137,26 +140,36 @@ export const BookingsProvider = ({ children }) => {
       if (user) {
         try {
           const remote = await loadBookings(user.uid);
-          const local = readLocal();
-          // מיזוג: מה שנשמר מקומית לפני ההתחברות עולה לענן
-          const seen = new Set(remote.map(bookingKey));
-          const toUpload = local.filter((b) => !seen.has(bookingKey(b)));
-          await Promise.all(toUpload.map((b) => saveBooking(user.uid, b).catch(() => {})));
-          const merged = [...remote, ...toUpload];
+          const merged = [...remote, ...readLocal()];
+          // איחוד לפי מהות ההזמנה, ולא לפי מזהה: אותה טיסה עשויה להיות
+          // שמורה בענן ובדפדפן תחת מזהים שונים.
           const clean = dedupe(merged);
-          // הניקוי חייב להישמר, אחרת הכפילויות חוזרות בכל טעינה
-          if (clean.length < merged.length) {
-            const keep = new Set(clean.map((b) => String(b.id)));
-            const stale = merged.filter((b) => !keep.has(String(b.id)));
-            await Promise.all(stale.map((b) => deleteBooking(user.uid, b.id).catch(() => {})));
-          }
+          const remoteIds = new Set(remote.map((b) => String(b.id)));
+
+          // מה שקיים מקומית ולא בענן מועלה; מה שנשאר בענן אחרי האיחוד
+          // נמחק, אחרת הכפילויות חוזרות בכל טעינה.
+          const toUpload = clean.filter((b) => !remoteIds.has(String(b.id)));
+          const kept = new Set(clean.map((b) => String(b.id)));
+          const stale = remote.filter((b) => !kept.has(String(b.id)));
+
+          await Promise.all([
+            ...toUpload.map((b) => saveBooking(user.uid, b)),
+            ...stale.map((b) => deleteBooking(user.uid, b.id)),
+          ]);
+
           writeLocal(clean);
-          if (!cancelled) setBookings(clean);
+          if (!cancelled) {
+            setBookings(clean);
+            setCloudError(false);
+          }
         } catch {
+          // הענן אינו זמין — ממשיכים מהעותק המקומי, אך מסמנים זאת כדי
+          // שהמשתמש לא יניח שהנתונים מגובים.
           if (!cancelled) {
             const clean = dedupe(readLocal());
             writeLocal(clean);
             setBookings(clean);
+            setCloudError(true);
           }
         }
       } else if (!cancelled) {
@@ -203,10 +216,16 @@ export const BookingsProvider = ({ children }) => {
       writeLocal(merged);
 
       if (user) {
-        await Promise.all([
-          ...changed.map((b) => saveBooking(user.uid, b).catch(() => {})),
-          ...stale.map((b) => deleteBooking(user.uid, b.id).catch(() => {})),
-        ]);
+        try {
+          await Promise.all([
+            ...changed.map((b) => saveBooking(user.uid, b)),
+            ...stale.map((b) => deleteBooking(user.uid, b.id)),
+          ]);
+          setCloudError(false);
+        } catch {
+          // הייבוא הצליח והנתונים שמורים מקומית; רק הגיבוי לענן נכשל
+          setCloudError(true);
+        }
       }
 
       const added = merged.length - bookings.length;
@@ -237,8 +256,11 @@ export const BookingsProvider = ({ children }) => {
   const trips = useMemo(() => groupBookingsIntoTrips(bookings), [bookings]);
 
   const value = useMemo(
-    () => ({ bookings, trips, loading, addBookings, removeBooking, autoScanning, autoScanResult }),
-    [bookings, trips, loading, addBookings, removeBooking, autoScanning, autoScanResult]
+    () => ({
+      bookings, trips, loading, addBookings, removeBooking,
+      autoScanning, autoScanResult, cloudError,
+    }),
+    [bookings, trips, loading, addBookings, removeBooking, autoScanning, autoScanResult, cloudError]
   );
 
   return <BookingsContext.Provider value={value}>{children}</BookingsContext.Provider>;

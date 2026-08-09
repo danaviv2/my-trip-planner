@@ -1,0 +1,42 @@
+rules_version = '2';
+
+// חוקי הגישה למסד הנתונים.
+//
+// תצורת Firebase ל-web היא ציבורית מעצם התכנון — היא חייבת להגיע
+// לדפדפן, וכל אחד יכול לקרוא אותה מהקוד. לכן החוקים כאן הם ההגנה
+// היחידה על הנתונים, ולא הסתרת המפתחות.
+//
+// העיקרון: משתמש ניגש אך ורק למסמכים שתחת המזהה שלו. אין כלל שמתיר
+// קריאה רוחבית, ולכן גם משתמש מחובר אינו יכול לראות נסיעות של אחר.
+//
+// פריסה:  firebase deploy --only firestore:rules
+// או הדבקה בקונסולה: Firestore Database → Rules → Publish
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      // הנסיעות השמורות של המשתמש
+      match /trips/{tripId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // ההזמנות שיובאו מהמייל — מספרי אישור, תאריכי טיסה וכתובות לינה.
+      // מידע אישי לכל דבר, ולכן אותה הגבלה בדיוק.
+      match /bookings/{bookingId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // כל השאר חסום. כלל מפורש עדיף על הסתמכות על ברירת המחדל.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

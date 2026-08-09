@@ -74,7 +74,7 @@ const TravelInfoComponent = () => {
   // מצבים לניהול תצוגה
   const [showFlights, setShowFlights] = useState(true);
   const [showCarRental, setShowCarRental] = useState(true);
-  const { trips, autoScanning, autoScanResult } = useBookings();
+  const { trips, autoScanning, autoScanResult, cloudError } = useBookings();
 
   // מחושב מחדש בכל שינוי בהזמנות
   const conflicts = findConflicts(flights, carRental, []);
@@ -105,6 +105,14 @@ const TravelInfoComponent = () => {
         </Button>
       </Box>
       
+      {cloudError && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          <AlertTitle sx={{ fontWeight: 700, mb: 0.25 }}>הנסיעות שמורות במכשיר הזה בלבד</AlertTitle>
+          הגיבוי לענן אינו זמין כרגע. הנתונים לא ילכו לאיבוד, אך ניקוי היסטוריית
+          הדפדפן ימחק אותם ולא תראה אותם ממכשיר אחר.
+        </Alert>
+      )}
+
       {/* הסריקה השקטה רצה בלי שהמשתמש ביקש. בלי חיווי, נסיעה חדשה
           שמופיעה לבדה נראית כמו תקלה ולא כמו שירות. */}
       {autoScanning && (
