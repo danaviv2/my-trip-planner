@@ -253,6 +253,10 @@ const StatisticsPanel = () => {
           </Card>
         </Grid>
 
+        {/* כרטיס העלות מוצג רק כשיש נתוני עלות אמיתיים. טיול נשמר עם
+            budget טקסטואלי ('medium') ולא עם סכום, ולכן הסכום היה תמיד
+            אפס — והוצג כמדידה. */}
+        {stats.hasCosts && (
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ bgcolor: 'warning.main', color: 'white', height: '100%' }}>
             <CardContent>
@@ -271,6 +275,7 @@ const StatisticsPanel = () => {
             </CardContent>
           </Card>
         </Grid>
+        )}
 
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ bgcolor: 'info.main', color: 'white', height: '100%' }}>
@@ -282,9 +287,11 @@ const StatisticsPanel = () => {
                     {stats.avgDuration}
                   </Typography>
                   <Typography variant="body1">ימים בממוצע</Typography>
-                  <Typography variant="caption">
-                    ₪{stats.avgCostPerTrip.toLocaleString()} לטיול
-                  </Typography>
+                  {stats.hasCosts && (
+                    <Typography variant="caption">
+                      ₪{stats.avgCostPerTrip.toLocaleString()} לטיול
+                    </Typography>
+                  )}
                 </Box>
               </Box>
             </CardContent>
@@ -393,9 +400,12 @@ const StatisticsPanel = () => {
           💡 תובנות והמלצות
         </Typography>
         <Grid container spacing={2}>
+          {/* השוואת עלויות דורשת עלויות. בלעדיהן הוצג "היעד היקר ביותר"
+              עם ₪0 — מסקנה שנשמעת כמו ניתוח ואינה נשענת על דבר. */}
+          {stats.hasCosts && (
           <Grid item xs={12} md={6}>
             <Typography variant="body1" sx={{ mb: 1 }}>
-              • <strong>היעד החסכוני ביותר:</strong> {stats.trips.reduce((min, t) => t.cost < min.cost ? t : min).name} 
+              • <strong>היעד החסכוני ביותר:</strong> {stats.trips.reduce((min, t) => t.cost < min.cost ? t : min).name}
               (₪{stats.trips.reduce((min, t) => t.cost < min.cost ? t : min).cost.toLocaleString()})
             </Typography>
             <Typography variant="body1" sx={{ mb: 1 }}>
@@ -403,6 +413,7 @@ const StatisticsPanel = () => {
               (₪{stats.trips.reduce((max, t) => t.cost > max.cost ? t : max).cost.toLocaleString()})
             </Typography>
           </Grid>
+          )}
           <Grid item xs={12} md={6}>
             <Typography variant="body1" sx={{ mb: 1 }}>
               • <strong>הטיול הארוך ביותר:</strong> {stats.trips.reduce((max, t) => t.days > max.days ? t : max).name} 
