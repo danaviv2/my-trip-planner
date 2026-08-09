@@ -70,6 +70,13 @@ const isFlightFragment = (f) =>
 const sameFlight = (a, b) => {
   if (!agrees(a.date, b.date)) return false;
   if (contradicts(a.flightNumber, b.flightNumber)) return false;
+
+  // מספר טיסה ותאריך הם זהות מוחלטת: LY5111 ב-24.6 היא טיסה אחת בעולם.
+  // כשהם מסכימים, אי-התאמה בשעות אינה מעידה על טיסה אחרת אלא על שדה
+  // שנקלט שגוי — נצפה בפועל כששעת הנחיתה נכתבה בשדה ההמראה. לכן השעה
+  // אינה מקבלת זכות וטו על מספר הטיסה.
+  if (agrees(a.flightNumber, b.flightNumber)) return true;
+
   if (contradicts(a.departureTime, b.departureTime)) return false;
   if (contradicts(a.arrivalTime, b.arrivalTime)) return false;
 
@@ -125,13 +132,25 @@ const mergeBookings = (a, b) => {
  * מסיר כפילויות מרשימה קיימת. נדרש כי רשומות שנשמרו לפני תיקון המפתח
  * עדיין במאגר, ובלעדיו אותה נסיעה מוצגת פעמיים.
  */
+/** כמה שדות בעלי ערך מולאו ברשומה. */
+const filled = (b) =>
+  Object.entries(b || {}).filter(
+    ([k, v]) => !['id', 'importedAt', 'type', 'direction'].includes(k) && v !== '' && v != null
+  ).length;
+
 const dedupe = (list = []) => {
   const out = [];
   (list || []).forEach((b) => {
     if (!b) return;
     const i = out.findIndex((o) => sameBooking(o, b));
-    if (i === -1) out.push({ ...b });
-    else out[i] = mergeBookings(out[i], b);
+    if (i === -1) {
+      out.push({ ...b });
+    } else {
+      // הרשומה עם יותר שדות מלאים משמשת בסיס. אחרת, כששתיהן מילאו את
+      // אותו שדה, סדר ההגעה קובע — וגרסה חלקית עלולה לדרוס ערך נכון.
+      const [base, extra] = filled(out[i]) >= filled(b) ? [out[i], b] : [b, out[i]];
+      out[i] = mergeBookings(base, extra);
+    }
   });
   return out;
 };
