@@ -12,22 +12,52 @@ const API = 'https://gmail.googleapis.com/gmail/v1/users/me';
  * כדי לא לשלוף את כל התיבה ולבזבז קריאות ל-AI.
  */
 const buildQuery = (monthsBack = 12) => {
-  const senders = [
-    'elal.co.il', 'israir.co.il', 'arkia.co.il',
-    'booking.com', 'expedia.com', 'hotels.com', 'agoda.com', 'airbnb.com',
-    'avis.com', 'hertz.com', 'sixt.com', 'europcar.com', 'budget.com',
-    'ryanair.com', 'easyjet.com', 'wizzair.com', 'lufthansa.com',
-    'britishairways.com', 'turkishairlines.com', 'aegeanair.com',
-  ];
+  // חיפוש לפי דומיין השולח בלבד הציף את התוצאות בדיוור שיווקי: ספקי
+  // נסיעות שולחים פרסומות מתת-דומיינים ייעודיים (e.avis.com,
+  // ma.elalmatmid.com) ואלה דחקו את האישורים האמיתיים.
+  // לכן: דורשים מילת אישור בנושא, ומסננים את קטגוריית הפרסומות של Gmail.
   const subjects = [
-    'confirmation', 'booking', 'reservation', 'itinerary', 'e-ticket', 'eticket',
-    'אישור הזמנה', 'אישור טיסה', 'כרטיס טיסה', 'אישור הזמנת',
+    'confirmation', 'confirmed', 'reservation', 'itinerary',
+    'e-ticket', 'eticket', 'boarding pass', 'booking reference',
+    'your booking', 'your trip', 'your flight', 'your reservation',
+    'אישור הזמנה', 'אישור טיסה', 'אישור הזמנת', 'כרטיס טיסה',
+    'הזמנתך', 'אישור רכישה', 'פרטי הטיסה', 'זימון טיסה',
   ];
 
-  const from = senders.map((s) => `from:${s}`).join(' OR ');
   const subj = subjects.map((s) => `subject:"${s}"`).join(' OR ');
 
-  return `((${from}) OR (${subj})) newer_than:${monthsBack}m -in:spam -in:trash`;
+  return [
+    `(${subj})`,
+    `newer_than:${monthsBack}m`,
+    '-in:spam',
+    '-in:trash',
+    // הסינון המשמעותי ביותר: Gmail כבר מסווג דיוור שיווקי
+    '-category:promotions',
+    '-subject:unsubscribe',
+    '-subject:"פרסומת"',
+    '-subject:newsletter',
+  ].join(' ');
+};
+
+/**
+ * סינון זול לפני הקריאה ל-AI. אישור הזמנה אמיתי מכיל כמעט תמיד תאריך
+ * ומספר אישור או מספר טיסה. מייל שאין בו אף אחד מהם כמעט בוודאות אינו
+ * אישור, ואין טעם לשלם עליו קריאה למודל.
+ */
+const looksLikeBooking = (text) => {
+  if (!text || text.length < 120) return false;
+
+  const hasDate =
+    /\b\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}\b/.test(text) ||
+    /\b\d{4}-\d{2}-\d{2}\b/.test(text) ||
+    /\b\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(text);
+
+  const hasReference =
+    /\b[A-Z0-9]{6}\b/.test(text) ||                       // PNR
+    /\b[A-Z]{2}\s?\d{2,4}\b/.test(text) ||                // מספר טיסה
+    /(confirmation|booking|reference|pnr|קוד הזמנה|מספר אישור)/i.test(text);
+
+  return hasDate && hasReference;
 };
 
 const authHeaders = (token) => ({ Authorization: `Bearer ${token}` });
@@ -125,6 +155,8 @@ export const fetchBookingEmails = async (token, { maxResults = 25, monthsBack = 
       const headers = msg.payload?.headers;
       const text = extractText(msg.payload);
       if (!text) return;
+      // סינון זול לפני ה-AI: חוסך קריאות על מיילים שאינם אישורים
+      if (!looksLikeBooking(text)) return;
       results.push({
         id: msg.id,
         subject: headerValue(headers, 'Subject'),
