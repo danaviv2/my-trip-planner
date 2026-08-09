@@ -25,6 +25,7 @@ const titleOf = (b) => {
     const dir = b.direction === 'return' ? 'טיסת חזור' : 'טיסת הלוך';
     return `✈️ ${dir}${b.flightNumber ? ` · ${b.flightNumber}` : ''}`;
   }
+  if (b.type === 'transfer') return `🚕 הסעה${b.company ? ` · ${b.company}` : ''}`;
   if (b.type === 'car_rental') return `🚗 השכרת רכב${b.company ? ` · ${b.company}` : ''}`;
   if (b.type === 'hotel') return `🏨 ${b.name || 'לינה'}`;
   return '📋 הזמנה';
@@ -56,6 +57,18 @@ const BookingDetails = ({ booking: b }) => {
           <Row label="שעת המראה" value={b.departureTime} />
           <Row label="שעת נחיתה" value={b.arrivalTime} />
           <Row label="טרמינל" value={b.terminal} />
+        </>
+      )}
+
+      {/* להסעה אין תאריך החזרה ואין סוג רכב — הצגת השדות האלה ריקים
+          מרמזת שחסר מידע, בעוד שבפועל הם פשוט לא קיימים בהזמנה כזו. */}
+      {b.type === 'transfer' && (
+        <>
+          <Row label="הוזמן דרך" value={b.company} />
+          <Row label="מספר אישור" value={b.confirmationNumber} />
+          <Row label="מועד" value={[b.pickupDate, b.pickupTime].filter(Boolean).join(' ') || ''} />
+          <Row label="מוצא" value={b.pickupLocation} />
+          <Row label="יעד" value={b.returnLocation} />
         </>
       )}
 

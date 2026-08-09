@@ -25,7 +25,8 @@ const tripConflicts = (trip) => {
   const flights = bookings
     .filter((b) => b.type === 'flight')
     .map((b) => ({ ...b, type: b.direction === 'return' ? 'return' : 'departure' }));
-  const cars = bookings.filter((b) => b.type === 'car_rental');
+  // הסעות נבדקות בנפרד מהשכרות: הכללים שונים לחלוטין
+  const cars = bookings.filter((b) => b.type === 'car_rental' || b.type === 'transfer');
   const hotels = bookings.filter((b) => b.type === 'hotel');
 
   if (!flights.length && !cars.length && !hotels.length) return [];
@@ -154,6 +155,7 @@ const TravelInfoComponent = () => {
                     {trip.summary.flights > 0 && <Chip size="small" label={`✈️ ${trip.summary.flights} טיסות`} />}
                     {trip.summary.hotels > 0 && <Chip size="small" label={`🏨 ${trip.summary.hotels} מלונות`} />}
                     {trip.summary.cars > 0 && <Chip size="small" label={`🚗 ${trip.summary.cars} רכב`} />}
+                    {trip.summary.transfers > 0 && <Chip size="small" label={`🚕 ${trip.summary.transfers} הסעות`} />}
                   </Box>
                 </Box>
               </AccordionSummary>

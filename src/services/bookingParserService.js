@@ -105,6 +105,7 @@ Return this exact structure:
     }
   ],
   "carRental": {
+    "category": "rental" or "transfer",
     "company": "rental company",
     "confirmationNumber": "reference",
     "pickupDate": "YYYY-MM-DD",
@@ -136,6 +137,13 @@ Rules:
   A message that merely allows cancelling ("free cancellation until...",
   "ביטול חינם עד") is NOT a cancellation — keep "confirmed".
 - If there is no car rental in the text, set "carRental" to null. Do NOT invent one.
+- Set "category" to "transfer" for an airport taxi, shuttle, private driver or
+  point-to-point transfer — a one-way ride from A to B at a single moment in
+  time, with no vehicle handed over to the traveller. Such a booking has a
+  pickup point and a destination but no return date and no car class.
+  Set "category" to "rental" when the traveller takes possession of a vehicle
+  and returns it later. For a transfer, put the destination in "returnLocation"
+  and leave "returnDate", "returnTime" and "carType" as null.
 - If there is no accommodation in the text, set "hotel" to null. Do NOT invent one.
 - If there are no flights, return an empty array. Do NOT invent flights.
 - Restaurant reservations are NOT accommodation. If the booking is for a
@@ -174,6 +182,14 @@ const normalizeParsed = (raw) => {
     })),
     carRental: parsed.carRental
       ? {
+          // גיבוי לסיווג של המודל: הסעה משדה תעופה אינה מוסרת רכב לידי
+          // הנוסע, ולכן אין לה תאריך החזרה ואין סוג רכב. אם שני אלה
+          // חסרים, זו הסעה גם אם המודל לא סימן זאת.
+          category:
+            parsed.carRental.category === 'transfer' ||
+            (!parsed.carRental.returnDate && !parsed.carRental.carType)
+              ? 'transfer'
+              : 'rental',
           company: parsed.carRental.company || '',
           confirmationNumber: parsed.carRental.confirmationNumber || '',
           pickupDate: parsed.carRental.pickupDate || '',

@@ -56,6 +56,15 @@ const shortPlace = (raw) => {
 export const findConflicts = (flights = [], carRental = null, accommodations = []) => {
   const issues = [];
 
+  // הסעה משדה תעופה אינה השכרה, וכללי ההשכרה אינם חלים עליה: מונית
+  // שממתינה בשעת הנחיתה היא בדיוק ההזמנה הנכונה, והנהג עוקב אחר הטיסה.
+  // ההפרדה נעשתה אחרי שהמערכת התריעה על הסעה תקינה כאילו היא תקלה.
+  const isTransfer =
+    !!carRental &&
+    (carRental.category === 'transfer' ||
+      carRental.type === 'transfer' ||
+      (!carRental.returnDate && !carRental.carType));
+
   const outbound = flights.find((f) => f.type === 'departure') || flights[0] || null;
   const inbound = flights.find((f) => f.type === 'return') || null;
 
@@ -88,7 +97,24 @@ export const findConflicts = (flights = [], carRental = null, accommodations = [
       });
     }
 
-    if (landing && pickup) {
+    if (landing && pickup && isTransfer) {
+      // בהסעה הבעיה ההפוכה: נהג שהוזמן לפני הנחיתה ימתין וייסע, ונהג
+      // שהוזמן שעות אחריה משאיר את הנוסע בשדה.
+      const gap = (pickup - landing) / 60000;
+      if (gap < -15) {
+        issues.push({
+          severity: 'warning',
+          title: 'ההסעה הוזמנה לפני שהטיסה נוחתת',
+          detail: `הנחיתה ב-${outbound.arrivalTime} וההסעה ${fmtGap(gap)} לפניה. ודא שהנהג יודע את מספר הטיסה, אחרת הוא עלול לצאת בלעדיך.`,
+        });
+      } else if (gap > 180) {
+        issues.push({
+          severity: 'warning',
+          title: 'ההסעה מוזמנת הרבה אחרי הנחיתה',
+          detail: `${fmtGap(gap)} של המתנה בשדה. בדוק שהשעה נכונה.`,
+        });
+      }
+    } else if (landing && pickup) {
       const gap = (pickup - landing) / 60000;
       if (gap < 0) {
         issues.push({
@@ -133,7 +159,7 @@ export const findConflicts = (flights = [], carRental = null, accommodations = [
     // איסוף והחזרה במקומות שונים גוררים לרוב תוספת תשלום
     const p = shortPlace(carRental.pickupLocation);
     const r = shortPlace(carRental.returnLocation);
-    if (p && r && p !== r) {
+    if (!isTransfer && p && r && p !== r) {
       issues.push({
         severity: 'info',
         title: 'איסוף והחזרה במקומות שונים',

@@ -14,7 +14,9 @@ import { parseTravelDocument, parseTravelDocumentFromPdf } from './bookingParser
 /** ממיר תוצאת פענוח לרשומות הזמנה שהמאגר מכיר. */
 const toBookings = (result) => [
   ...result.flights.map((f) => ({ ...f, type: 'flight', direction: f.type })),
-  ...(result.carRental ? [{ ...result.carRental, type: 'car_rental' }] : []),
+  ...(result.carRental
+    ? [{ ...result.carRental, type: result.carRental.category === 'transfer' ? 'transfer' : 'car_rental' }]
+    : []),
   ...(result.hotel ? [{ ...result.hotel, type: 'hotel' }] : []),
 ];
 

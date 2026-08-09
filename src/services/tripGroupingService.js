@@ -42,7 +42,7 @@ export const normalizeBooking = (b) => {
     end = start;
     location = b.arrivalAirport || b.to || '';
     title = [b.airline, b.flightNumber].filter(Boolean).join(' ') || 'טיסה';
-  } else if (type === 'car_rental') {
+  } else if (type === 'car_rental' || type === 'transfer') {
     start = parseDate(b.pickupDate || b.checkIn);
     end = parseDate(b.returnDate || b.checkOut) || start;
     location = b.pickupLocation || b.destination || '';
@@ -157,6 +157,7 @@ export const groupBookingsIntoTrips = (bookings = []) => {
     const outbound = group.find((x) => x.type === 'flight' && x.direction !== 'return');
     const stay = group.find((x) => x.type === 'hotel');
     const car = group.find((x) => x.type === 'car_rental');
+    const stayFallback = group.find((x) => x.type === 'transfer');
     const isAirportCode = (s) => /^[A-Z]{3}$/.test((s || '').trim());
 
     // כתובת מלאה אינה שם יעד. שתי צורות נפוצות דורשות טיפול שונה:
@@ -204,7 +205,7 @@ export const groupBookingsIntoTrips = (bookings = []) => {
 
     // יעד הטיסה הוא הסימן האמין ביותר ליעד הנסיעה — כשהוא כתוב בשם
     // ולא בקוד. אחריו כתובת הלינה, ורק לבסוף נקודת איסוף הרכב.
-    const candidates = [outbound?.location, stay?.location, car?.location, group[0].location];
+    const candidates = [outbound?.location, stay?.location, car?.location, stayFallback?.location, group[0].location];
     const readable = candidates.find((c) => c && !isAirportCode(c));
     const destination = readable
       ? cityOf(readable)
@@ -224,6 +225,7 @@ export const groupBookingsIntoTrips = (bookings = []) => {
         flights: group.filter((x) => x.type === 'flight').length,
         hotels: group.filter((x) => x.type === 'hotel').length,
         cars: group.filter((x) => x.type === 'car_rental').length,
+        transfers: group.filter((x) => x.type === 'transfer').length,
       },
     };
   });
