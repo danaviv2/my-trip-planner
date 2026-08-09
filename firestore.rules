@@ -19,19 +19,15 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == userId;
     }
 
-    match /users/{userId} {
+    // כל מה שתחת המשתמש — נסיעות, הזמנות שיובאו מהמייל וסימוני מחיקה.
+    // המרכיב {document=**} מכסה גם תת-אוספים עתידיים; בלעדיו כל אוסף
+    // חדש נחסם בשקט על ידי כלל ברירת המחדל שבתחתית, וזה מתגלה רק
+    // כשמשהו מפסיק לעבוד בלי הסבר.
+    //
+    // ההיקף רחב אך ההרשאה אינה: הגישה מותנית בבעלות בלבד, ולכן משתמש
+    // מחובר אינו יכול לקרוא או לכתוב דבר אצל משתמש אחר.
+    match /users/{userId}/{document=**} {
       allow read, write: if isOwner(userId);
-
-      // הנסיעות השמורות של המשתמש
-      match /trips/{tripId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      // ההזמנות שיובאו מהמייל — מספרי אישור, תאריכי טיסה וכתובות לינה.
-      // מידע אישי לכל דבר, ולכן אותה הגבלה בדיוק.
-      match /bookings/{bookingId} {
-        allow read, write: if isOwner(userId);
-      }
     }
 
     // כל השאר חסום. כלל מפורש עדיף על הסתמכות על ברירת המחדל.

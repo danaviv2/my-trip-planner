@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import { saveTrip as fsaveTrip, loadTrips as floadTrips, deleteTrip as fdeleteTrip } from '../services/firestoreService';
+import {
+  saveTrip as fsaveTrip,
+  loadTrips as floadTrips,
+  deleteTrip as fdeleteTrip,
+  loadDeletedTripIds as floadDeletedTripIds,
+} from '../services/firestoreService';
 
 const TripSaveContext = createContext();
 
@@ -32,13 +37,19 @@ export const TripSaveProvider = ({ children }) => {
       return;
     }
 
-    floadTrips(user.uid)
-      .then((firestoreTrips) => {
+    Promise.all([floadTrips(user.uid), floadDeletedTripIds(user.uid).catch(() => new Set())])
+      .then(([firestoreTrips, deletedIds]) => {
         // מיזוג: שמור טיולים מ-localStorage שאינם ב-Firestore (למקרה שהשמירה ל-Firestore נכשלה)
         let localTrips = [];
         try { localTrips = JSON.parse(localStorage.getItem('savedTrips') || '[]'); } catch {}
         const firestoreIds = new Set(firestoreTrips.map(t => String(t.id)));
-        const onlyLocal = localTrips.filter(t => !firestoreIds.has(String(t.id)));
+
+        // טיול שנמחק במכשיר אחר עדיין קיים במטמון המקומי כאן. בלי הסינון
+        // הזה הוא ייחשב "טיול שטרם סונכרן", יעלה חזרה לענן, והמחיקה
+        // תתבטל בכל המכשירים.
+        const onlyLocal = localTrips.filter(
+          t => !firestoreIds.has(String(t.id)) && !deletedIds.has(String(t.id))
+        );
         const merged = [...firestoreTrips, ...onlyLocal];
         setSavedTrips(merged);
         localStorage.setItem('savedTrips', JSON.stringify(merged));
@@ -97,7 +108,10 @@ export const TripSaveProvider = ({ children }) => {
   };
 
   const deleteTrip = async (tripId) => {
-    const updated = savedTrips.filter(t => t.id !== tripId);
+    // השוואה כמחרוזות, כמו בכל שאר ההשוואות בקובץ. מזהים מגיעים גם
+    // מפרמטר ב-URL, שם הם תמיד מחרוזות, והשוואה קפדנית הייתה משאירה
+    // את הטיול על המסך בעוד הוא נמחק מהענן.
+    const updated = savedTrips.filter(t => String(t.id) !== String(tripId));
     setSavedTrips(updated);
     localStorage.setItem('savedTrips', JSON.stringify(updated));
 
