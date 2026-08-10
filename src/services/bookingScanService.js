@@ -11,6 +11,14 @@ import { parseTravelDocument, parseTravelDocumentFromPdf } from './bookingParser
  * ההרשאה היא קריאה בלבד, ותוכן המיילים אינו נשמר — רק פרטי ההזמנה.
  */
 
+/** שם הקובץ מסגיר את תוכנו: פוליסה וכרטיס לפני קבלה ודף הסבר כללי. */
+const rank = (pdf) => {
+  const n = String(pdf.filename || '').toLowerCase();
+  if (/policy|פוליסה|ticket|כרטיס|voucher|שובר/.test(n)) return 2;
+  if (/information|מידע|terms|תנאים/.test(n)) return 0;
+  return 1;
+};
+
 /** ממיר תוצאת פענוח לרשומות הזמנה שהמאגר מכיר. */
 const toBookings = (result) => [
   ...result.flights.map((f) => ({ ...f, type: 'flight', direction: f.type })),
@@ -33,7 +41,7 @@ const toBookings = (result) => [
  */
 export const scanMailbox = async (
   token,
-  { maxResults = 60, monthsBack = 12, maxPdfsPerEmail = 2, onProgress = () => {} } = {}
+  { maxResults = 60, monthsBack = 12, maxPdfsPerEmail = 3, onProgress = () => {} } = {}
 ) => {
   onProgress('מחפש אישורי הזמנה בתיבה...', 0, 0);
   const emails = await fetchBookingEmails(token, { maxResults, monthsBack });
@@ -77,7 +85,11 @@ export const scanMailbox = async (
     // ספקים רבים שמים את הפרטים רק בקובץ המצורף. ניגשים אליו כשגוף
     // המייל לא הניב דבר, כדי לא לשלם על פענוח כפול.
     if (!gotSomething && email.pdfs?.length) {
-      for (const pdf of email.pdfs.slice(0, maxPdfsPerEmail)) {
+      // מייל אחד נושא לעיתים קבלה, דף מידע והפוליסה עצמה. כשהמכסה
+      // חתכה את הרשימה לפי סדר ההגעה, דווקא הפוליסה — הקובץ היחיד שיש
+      // בו תוכן — נותרה מחוץ לסריקה. לכן הקבצים ממוינים לפי שמם.
+      const byRelevance = [...email.pdfs].sort((x, y) => rank(y) - rank(x));
+      for (const pdf of byRelevance.slice(0, maxPdfsPerEmail)) {
         try {
           onProgress(`קורא קובץ מצורף (${i + 1}/${emails.length})...`, i + 1, emails.length);
           const base64 = await fetchAttachment(token, email.id, pdf.attachmentId);

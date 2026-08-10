@@ -114,9 +114,10 @@ const isEmptyFlight = (f) =>
   f.type === 'flight' && !norm(f.date) && !norm(f.flightNumber);
 
 const sameFlight = (a, b) => {
-  // שתי רשומות שאין להן תאריך אך יש להן אותו מספר טיסה הן אותה טיסה.
-  // בלי המקרה הזה הן היו מוכפלות בכל סריקה, כמו הרשומות הריקות.
-  if (!norm(a.date) && !norm(b.date)) return agrees(a.flightNumber, b.flightNumber);
+  // רשומה בלי תאריך אינה סותרת שום תאריך. תזכורת צ׳ק-אין נושאת את מספר
+  // הטיסה בלבד, ובלי הכלל הזה היא נשארה רשומה נפרדת לצד הטיסה עצמה —
+  // וגם הוכפלה בכל סריקה, כי שני תאריכים ריקים אינם "מסכימים".
+  if (!norm(a.date) || !norm(b.date)) return agrees(a.flightNumber, b.flightNumber);
   if (!agrees(a.date, b.date)) return false;
   if (contradicts(a.flightNumber, b.flightNumber)) return false;
 
