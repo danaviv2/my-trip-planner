@@ -125,10 +125,62 @@ export const projectStops = (stops = [], width = 600, height = 220, pad = 28) =>
   const offsetX = (width - spanX * scale) / 2;
   const offsetY = (height - spanY * scale) / 2;
 
-  return usable.map((s) => ({
+  const raw = usable.map((s) => ({
     stop: s,
     x: (Number(s.lng) * kx - minX) * scale + offsetX,
     // ציר Y הפוך: קו רוחב גדל צפונה, ופיקסלים גדלים מטה
     y: (maxY - Number(s.lat)) * scale + offsetY,
   }));
+
+  return separate(raw, width, height, pad);
+};
+
+// קוטר עיגול התחנה ועוד רווח מינימלי, כדי ששתי תחנות תישארנה קריאות
+const MIN_GAP = 24;
+
+/**
+ * מרחיק נקודות שנופלות זו על זו.
+ *
+ * במסלול ארוך יש תחנות סמוכות מאוד: מרסיי וקאסיס מרוחקות 25 ק"מ במסלול
+ * של 1,300, ובקנה המידה של השרטוט הן נופלות באותה נקודה ממש. בלי הפרדה
+ * העיגולים מכסים זה את זה ואי אפשר לקרוא את המספרים.
+ *
+ * ההזזה מכוונת ומינימלית, ומוצהרת בכיתוב שמתחת לשרטוט: המטרה היא צורת
+ * המסלול ולא מיקום מדויק. סדר התחנות והכיוון הכללי נשמרים, שכן ההזזה
+ * קטנה בהרבה מהמרחקים שהיא נועדה להבהיר.
+ */
+const separate = (points, width, height, pad) => {
+  const out = points.map((p) => ({ ...p }));
+
+  for (let pass = 0; pass < 60; pass++) {
+    let moved = false;
+    for (let i = 0; i < out.length; i++) {
+      for (let j = i + 1; j < out.length; j++) {
+        const dx = out[j].x - out[i].x;
+        const dy = out[j].y - out[i].y;
+        let dist = Math.hypot(dx, dy);
+        if (dist >= MIN_GAP) continue;
+
+        // נקודות חופפות לגמרי — דוחפים בכיוון שרירותי יציב
+        let ux = dist > 0.01 ? dx / dist : Math.cos(i);
+        let uy = dist > 0.01 ? dy / dist : Math.sin(i);
+        if (dist <= 0.01) dist = 0.01;
+
+        const push = (MIN_GAP - dist) / 2;
+        out[i].x -= ux * push;
+        out[i].y -= uy * push;
+        out[j].x += ux * push;
+        out[j].y += uy * push;
+        moved = true;
+      }
+    }
+    // החזרה לגבולות הלוח
+    out.forEach((p) => {
+      p.x = Math.min(width - pad / 2, Math.max(pad / 2, p.x));
+      p.y = Math.min(height - pad / 2, Math.max(pad / 2, p.y));
+    });
+    if (!moved) break;
+  }
+
+  return out;
 };
