@@ -9,6 +9,8 @@ import {
   Grid,
   Chip,
   Divider,
+  Alert,
+  AlertTitle,
 } from '@mui/material';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { useTripSave } from '../contexts/TripSaveContext';
@@ -34,6 +36,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { saveBooking, loadBookings, deleteBooking } from '../services/firestoreService';
 import { bookingEmoji, bookingColor, bookingLabel } from '../services/bookingParserService';
 import { groupBookingsIntoTrips } from '../services/tripGroupingService';
+import { findDrivingRestrictions } from '../services/drivingRestrictionsService';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 const TripPlannerPage = () => {
@@ -78,6 +81,18 @@ const TripPlannerPage = () => {
     });
     return match ? match.bookings : [];
   }, [syncedBookings, plannerDestination]);
+
+  /**
+   * מגבלות נהיגה ליעד שהוקלד, עוד לפני שהוזמן דבר.
+   *
+   * זה העיתוי שבו האזהרה שווה ביותר: מדבקת Crit'Air מגיעה בדואר תוך
+   * שבועות, ורישום רכב זר בבלגיה או בברצלונה נעשה מראש. אפליקציית ניווט
+   * מתריעה כשמגיעים לשער — ואז כבר אי אפשר להסדיר דבר.
+   */
+  const drivingAlerts = useMemo(
+    () => findDrivingRestrictions(tripBookings, plannerDestination),
+    [tripBookings, plannerDestination]
+  );
 
   /**
    * כותרת קריאה להזמנה, לפי סוגה.
@@ -378,6 +393,20 @@ const TripPlannerPage = () => {
               hotelModalOpen={hotelModalOpen}
               setHotelModalOpen={setHotelModalOpen}
             />
+
+            {/* מגבלות נהיגה ביעד. מוצג גם בלי הזמנות — התכנון הוא הרגע
+                שבו עוד אפשר להסדיר מדבקה או לוותר על הרכב. */}
+            {drivingAlerts.length > 0 && (
+              <Box mt={3}>
+                <Typography variant="h6" sx={{ mb: 1.5 }}>🚗 לפני שנוהגים ביעד</Typography>
+                {drivingAlerts.map((a, i) => (
+                  <Alert key={i} severity={a.severity} sx={{ mb: 1 }}>
+                    <AlertTitle sx={{ fontWeight: 700, mb: 0.25 }}>{a.title}</AlertTitle>
+                    {a.detail}
+                  </Alert>
+                ))}
+              </Box>
+            )}
 
             {/* פאנל הזמנות מסונכרנות */}
             <Box mt={3} mb={2}>
