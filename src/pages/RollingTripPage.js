@@ -31,6 +31,8 @@ import { useTripSave } from '../contexts/TripSaveContext';
 import { getPlacePhoto } from '../services/photoService';
 import { getStopWeatherSummary } from '../services/openMeteoService';
 import { analyzeItinerary, summarizeAnalysis, autoOptimize } from '../services/dayOptimizerService';
+import RouteShapeMap from '../components/rolling/RouteShapeMap';
+import { analyzeRoute, formatDuration } from '../services/routeGeometryService';
 import { geminiEndpoint } from '../services/geminiClient';
 
 // ─── קבועים ────────────────────────────────────────────────────
@@ -215,6 +217,8 @@ export default function RollingTripPage() {
       setLoading(false);
     }
   };
+
+  const routeAnalysis = React.useMemo(() => analyzeRoute(stops), [stops]);
 
   const adjustDays = (idx, delta) => setDaysPerStop(prev => ({
     ...prev, [idx]: Math.max(0, Math.min(10, (prev[idx] ?? stops[idx]?.recommendedDays ?? 1) + delta)),
@@ -489,10 +493,17 @@ export default function RollingTripPage() {
         </Box>
       </Paper>
 
+      {/* צורת המסלול. תוספת בלבד — הזרימה, השמירה והמעבר לתכנון
+          נותרו כשהיו. */}
+      <RouteShapeMap stops={stops} />
+
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
         {stops.map((stop, idx) => {
           const days    = daysPerStop[idx] ?? stop.recommendedDays ?? 1;
           const removed = days === 0;
+          // כמה מוסיפה התחנה לעומת נסיעה ישירה מהקודמת לבאה. זהו הנתון
+          // שחסר להחלטה אם להשאיר אותה, והוא לא הוצג עד כה כלל.
+          const detour  = routeAnalysis[idx];
           const photo   = stopPhotos[idx];
           const weather = stopWeather[idx];
           const color   = TYPE_COLORS[stop.type] || '#667eea';
@@ -573,6 +584,22 @@ export default function RollingTripPage() {
                     <IconButton size="small" onClick={() => removeStop(idx)} color="error"><CloseIcon fontSize="small" /></IconButton>
                   </Tooltip>
                 </Box>
+
+                {!removed && detour?.notable && (
+                  <Box sx={{
+                    mt: 1, mb: 1, p: 1, borderRadius: 1.5,
+                    bgcolor: 'warning.light', color: 'warning.contrastText',
+                    border: '1px solid', borderColor: 'warning.main',
+                  }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, display: 'block' }}>
+                      ⚠️ העצירה הזו מרחיקה אותך מהמסלול
+                    </Typography>
+                    <Typography variant="caption" sx={{ display: 'block' }}>
+                      +{detour.detour.toLocaleString()} ק״מ לעומת נסיעה ישירה מהתחנה הקודמת לבאה —
+                      כ־{formatDuration(detour.hours)} נהיגה נוספות, הלוך ושוב.
+                    </Typography>
+                  </Box>
+                )}
 
                 {!removed && (
                   <>
