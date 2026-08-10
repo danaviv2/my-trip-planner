@@ -12,6 +12,7 @@ import { findConflicts } from '../../services/itineraryConflictService';
 import { findDrivingRestrictions } from '../../services/drivingRestrictionsService';
 import { useBookings } from '../../contexts/BookingsContext';
 import BookingDetails from './BookingDetails';
+import FlightRights from './FlightRights';
 import { tripCost, formatTotals } from '../../services/tripCostService';
 
 /**
@@ -196,6 +197,15 @@ const TravelInfoComponent = () => {
                 {(trip.bookings || []).map((b, i) => (
                   <BookingDetails key={b.id || i} booking={b} />
                 ))}
+
+                {/* זכויות הנוסע לכל טיסה. מוצג גם כשהכול תקין — הידיעה
+                    שווה דווקא מראש, שכן הסף האירופי נמוך בהרבה מהישראלי
+                    ורוב הנוסעים אינם מודעים לכך. */}
+                {(trip.bookings || [])
+                  .filter((b) => b.type === 'flight')
+                  .map((b, i) => (
+                    <FlightRights key={`r${b.id || i}`} flight={b} passengers={2} />
+                  ))}
               </AccordionDetails>
             </Accordion>
           ))}
