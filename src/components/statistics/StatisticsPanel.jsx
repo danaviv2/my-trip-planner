@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTripSave } from '../../contexts/TripSaveContext';
+import { useBookings } from '../../contexts/BookingsContext';
+import { tripCost, formatTotals } from '../../services/tripCostService';
 import {
   Box,
   Paper,
@@ -54,6 +56,9 @@ ChartJS.register(
 
 const StatisticsPanel = () => {
   const { savedTrips } = useTripSave();
+  // עלות אמיתית מגיעה מהמחירים שבאישורי ההזמנה, לא מהשדה budget שערכו
+  // 'medium' ולכן תמיד התגלגל לאפס.
+  const { trips: importedTrips } = useBookings();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -213,6 +218,58 @@ const StatisticsPanel = () => {
             : `סיכום: ${stats.totalTrips} טיולים, ${stats.totalDays} ימים. הוסף תקציב לטיולים כדי לראות ניתוח עלויות.`}
         </Typography>
       </Alert>
+
+      {/* עלות בפועל מתוך אישורי ההזמנה שיובאו מהמייל. זהו מקור העלות
+          האמיתי היחיד שיש: הטיולים השמורים נושאים budget טקסטואלי
+          ('medium') ולא סכום, ולכן כל חישוב מהם התגלגל לאפס. */}
+      {(() => {
+        const withCost = (importedTrips || [])
+          .map((t) => ({ trip: t, cost: tripCost(t.bookings || []) }))
+          .filter((x) => x.cost.hasCost);
+        if (!withCost.length) return null;
+
+        const grand = {};
+        withCost.forEach(({ cost }) =>
+          Object.entries(cost.byCurrency).forEach(([code, amt]) => {
+            grand[code] = (grand[code] || 0) + amt;
+          })
+        );
+        const partial = withCost.some((x) => !x.cost.complete);
+
+        return (
+          <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+              💳 הוצאה בפועל, מתוך אישורי ההזמנה
+            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
+              {formatTotals(grand)}
+            </Typography>
+            {partial && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                חלק מההזמנות הגיעו ללא מחיר ואינן נכללות. הסכום נמוך מהעלות המלאה.
+              </Typography>
+            )}
+            <Grid container spacing={2}>
+              {withCost.map(({ trip, cost }) => (
+                <Grid item xs={12} sm={6} key={trip.id}>
+                  <Box sx={{ p: 1.5, bgcolor: 'action.hover', borderRadius: 1 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }} noWrap>
+                      {trip.destination}
+                    </Typography>
+                    <Typography variant="body2">{formatTotals(cost.byCurrency)}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {Object.entries(cost.byCategory)
+                        .map(([label, byCur]) => `${label} ${formatTotals(byCur)}`)
+                        .join(' · ')}
+                      {cost.complete ? '' : ` · ${cost.withPrice}/${cost.total} עם מחיר`}
+                    </Typography>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          </Paper>
+        );
+      })()}
 
       {/* כרטיסי סיכום */}
       <Grid container spacing={3} sx={{ mb: 4 }}>

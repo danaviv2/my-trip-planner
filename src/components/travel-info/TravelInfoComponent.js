@@ -12,6 +12,7 @@ import { findConflicts } from '../../services/itineraryConflictService';
 import { findDrivingRestrictions } from '../../services/drivingRestrictionsService';
 import { useBookings } from '../../contexts/BookingsContext';
 import BookingDetails from './BookingDetails';
+import { tripCost, formatTotals } from '../../services/tripCostService';
 
 /**
  * מריץ את בדיקת ההתנגשויות על ההזמנות של נסיעה שיובאה.
@@ -157,6 +158,23 @@ const TravelInfoComponent = () => {
                     {trip.startDate} — {trip.endDate}
                     {trip.nights ? ` · ${trip.nights} לילות` : ''}
                   </Typography>
+                  {/* עלות מתוך המחירים שנקלטו באישורים. כשחלק מההזמנות
+                      ללא מחיר נאמר זאת במפורש — סכום חלקי שמוצג כעלות
+                      הנסיעה מטעה יותר מאשר לא להציג דבר. */}
+                  {(() => {
+                    const c = tripCost(trip.bookings || []);
+                    if (!c.hasCost) return null;
+                    return (
+                      <Typography variant="body2" sx={{ mb: 1, fontWeight: 700 }}>
+                        {formatTotals(c.byCurrency)}
+                        {!c.complete && (
+                          <Typography component="span" variant="caption" sx={{ fontWeight: 400, color: 'text.secondary' }}>
+                            {' '}· מתוך {c.withPrice} מ-{c.total} הזמנות שכללו מחיר
+                          </Typography>
+                        )}
+                      </Typography>
+                    );
+                  })()}
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {trip.summary.flights > 0 && <Chip size="small" label={`✈️ ${trip.summary.flights} טיסות`} />}
                     {trip.summary.hotels > 0 && <Chip size="small" label={`🏨 ${trip.summary.hotels} מלונות`} />}

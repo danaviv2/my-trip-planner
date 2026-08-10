@@ -102,7 +102,8 @@ Return this exact structure:
       "departureTime": "HH:MM",
       "arrivalAirport": "IATA code",
       "arrivalTime": "HH:MM",
-      "terminal": "terminal of departure or null"
+      "terminal": "terminal of departure or null",
+      "price": "total price with currency symbol, or null"
     }
   ],
   "carRental": {
@@ -115,7 +116,8 @@ Return this exact structure:
     "returnDate": "YYYY-MM-DD",
     "returnTime": "HH:MM",
     "returnLocation": "full location",
-    "carType": "car model or class"
+    "carType": "car model or class",
+    "price": "total price with currency symbol, or null"
   },
   "hotel": {
     "name": "hotel or accommodation name",
@@ -130,6 +132,11 @@ Return this exact structure:
 }
 Rules:
 - Convert DD/MM/YYYY to YYYY-MM-DD.
+- For "price", copy the total charged amount exactly as written, including the
+  currency symbol or code (e.g. "€ 924.05", "$1,240", "₪3,500"). Never convert
+  between currencies and never estimate. If the message shows a price per night
+  or per day rather than a total, use the total; if only a partial amount is
+  shown, return null rather than a number that is not the total.
 - Set "status" to "cancelled" when the message announces that a booking was
   cancelled, refunded, voided, or is no longer valid — in any language
   (e.g. "cancelled", "cancellation", "בוטלה", "ביטול הזמנה", "הזמנתך בוטלה").
@@ -195,6 +202,7 @@ const normalizeParsed = (raw) => {
       arrivalAirport: f.arrivalAirport || '',
       arrivalTime: f.arrivalTime || '',
       terminal: f.terminal || '',
+      price: f.price || '',
     })),
     carRental: parsed.carRental
       ? {
@@ -215,6 +223,7 @@ const normalizeParsed = (raw) => {
           returnTime: parsed.carRental.returnTime || '',
           returnLocation: parsed.carRental.returnLocation || '',
           carType: parsed.carRental.carType || '',
+          price: parsed.carRental.price || '',
         }
       : null,
     hotel: parsed.hotel
