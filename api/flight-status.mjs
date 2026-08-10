@@ -25,7 +25,24 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiKey = process.env.RAPIDAPI_KEY;
+  // הדבקה של מפתח לממשק ניהול גוררת לעיתים רווח או שורה חדשה נסתרים,
+  // והשרת שולח מפתח פסול בעוד הערך נראה תקין לעין.
+  const rawKey = process.env.RAPIDAPI_KEY || '';
+  const apiKey = rawKey.trim();
+
+  // אבחון בלבד: מדווח על צורת המפתח ולא על תוכנו, כדי לאתר שגיאת
+  // הדבקה בלי לחשוף סוד.
+  if (req.query.debug === '1') {
+    return res.status(200).json({
+      keyPresent: !!rawKey,
+      rawLength: rawKey.length,
+      trimmedLength: apiKey.length,
+      hasHiddenWhitespace: rawKey.length !== apiKey.length,
+      startsWith: apiKey.slice(0, 4),
+      endsWith: apiKey.slice(-4),
+    });
+  }
+
   if (!apiKey) {
     return res.status(503).json({
       error: 'NOT_CONFIGURED',
