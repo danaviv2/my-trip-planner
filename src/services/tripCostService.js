@@ -73,6 +73,8 @@ const LABELS = {
   hotel: 'לינה',
   car_rental: 'רכב',
   transfer: 'הסעות',
+  activity: 'אטרקציות',
+  insurance: 'ביטוח',
 };
 
 /**

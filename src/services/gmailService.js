@@ -31,6 +31,13 @@ const buildQuery = (monthsBack = 12) => {
     'ההזמנה שלך', 'ההזמנה שלכם', 'הזמנה שלך', 'הזמנתך', 'הזמנתכם',
     'מספר אישור', 'מספר הזמנה', 'כרטיס טיסה', 'פרטי הטיסה',
     'קבלה על', 'שוברי הזמנה',
+    // ביטוח נסיעות ואטרקציות לא נסרקו כלל עד כה, ולכן פוליסה או כרטיס
+    // לאתר מעולם לא נקלטו — גם כשהאישור היה בתיבה.
+    'ביטוח נסיעות', 'פוליסת ביטוח', 'אישור ביטוח', 'travel insurance',
+    'insurance policy', 'policy number',
+    'הכרטיסים שלך', 'הכרטיס שלך', 'שובר כניסה', 'אישור כניסה',
+    'your tickets', 'your ticket', 'admission', 'skip the line',
+    'getyourguide', 'viator', 'tiqets', 'booking confirmed',
   ];
 
   const subj = subjects.map((s) => `subject:"${s}"`).join(' OR ');

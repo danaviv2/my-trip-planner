@@ -119,6 +119,27 @@ Return this exact structure:
     "carType": "car model or class",
     "price": "total price with currency symbol, or null"
   },
+  "insurance": {
+    "provider": "insurance company name",
+    "policyNumber": "policy or certificate number",
+    "emergencyPhone": "24/7 assistance phone number, with country code",
+    "startDate": "YYYY-MM-DD",
+    "endDate": "YYYY-MM-DD",
+    "coverage": "short summary of what is covered",
+    "insured": "names of the insured travellers",
+    "price": "total price with currency symbol, or null"
+  },
+  "activities": [
+    {
+      "name": "attraction, tour or event name",
+      "confirmationNumber": "booking reference or ticket number",
+      "date": "YYYY-MM-DD",
+      "time": "HH:MM entry or start time, or null",
+      "location": "venue name and address",
+      "guests": 2,
+      "price": "total price with currency symbol, or null"
+    }
+  ],
   "hotel": {
     "name": "hotel or accommodation name",
     "confirmationNumber": "reference",
@@ -158,6 +179,14 @@ Rules:
   and returns it later. For a transfer, put the destination in "returnLocation"
   and leave "returnDate", "returnTime" and "carType" as null.
 - If there is no accommodation in the text, set "hotel" to null. Do NOT invent one.
+- "insurance" is for travel insurance policies only. The emergency phone is the
+  single most important field: it is what the traveller needs in a hospital
+  abroad. Copy it exactly, including the country code. Set to null if absent.
+- "activities" covers attractions, guided tours, shows, museum entry and event
+  tickets. The entry time matters even more than the date, because a timed
+  ticket constrains the whole day. If no time is stated, use null rather than
+  guessing one.
+- If there are no activities, return an empty array. Do NOT invent any.
 - If there are no flights, return an empty array. Do NOT invent flights.
 - Restaurant reservations are NOT accommodation. If the booking is for a
   restaurant table, set "isBooking" to false.`;
@@ -173,6 +202,7 @@ const normalizeParsed = (raw) => {
   }
 
   const flights = Array.isArray(parsed.flights) ? parsed.flights : [];
+  const activities = Array.isArray(parsed.activities) ? parsed.activities : [];
 
   const cancelled = parsed.status === 'cancelled';
   const cancelledReferences = Array.isArray(parsed.cancelledReferences)
@@ -186,6 +216,7 @@ const normalizeParsed = (raw) => {
     isBooking:
       parsed.isBooking !== false &&
       (flights.length > 0 || !!parsed.carRental || !!parsed.hotel ||
+       !!parsed.insurance || activities.length > 0 ||
        (cancelled && cancelledReferences.length > 0)),
     cancelledReferences,
     // מייל ביטול נראה כמו אישור לכל דבר ומכיל את אותם פרטים. בלי השדה
@@ -226,6 +257,27 @@ const normalizeParsed = (raw) => {
           price: parsed.carRental.price || '',
         }
       : null,
+    insurance: parsed.insurance
+      ? {
+          provider: parsed.insurance.provider || '',
+          policyNumber: parsed.insurance.policyNumber || '',
+          emergencyPhone: parsed.insurance.emergencyPhone || '',
+          startDate: parsed.insurance.startDate || '',
+          endDate: parsed.insurance.endDate || '',
+          coverage: parsed.insurance.coverage || '',
+          insured: parsed.insurance.insured || '',
+          price: parsed.insurance.price || '',
+        }
+      : null,
+    activities: activities.map((a) => ({
+      name: a.name || '',
+      confirmationNumber: a.confirmationNumber || '',
+      date: a.date || '',
+      time: a.time || '',
+      location: a.location || '',
+      guests: Number(a.guests) || null,
+      price: a.price || '',
+    })),
     hotel: parsed.hotel
       ? {
           name: parsed.hotel.name || '',

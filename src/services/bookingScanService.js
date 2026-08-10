@@ -18,6 +18,8 @@ const toBookings = (result) => [
     ? [{ ...result.carRental, type: result.carRental.category === 'transfer' ? 'transfer' : 'car_rental' }]
     : []),
   ...(result.hotel ? [{ ...result.hotel, type: 'hotel' }] : []),
+  ...(result.insurance ? [{ ...result.insurance, type: 'insurance' }] : []),
+  ...(result.activities || []).map((a) => ({ ...a, type: 'activity' })),
 ];
 
 /**

@@ -26,6 +26,8 @@ const titleOf = (b) => {
     return `✈️ ${dir}${b.flightNumber ? ` · ${b.flightNumber}` : ''}`;
   }
   if (b.type === 'transfer') return `🚕 הסעה${b.company ? ` · ${b.company}` : ''}`;
+  if (b.type === 'insurance') return `🛡️ ביטוח נסיעות${b.provider ? ` · ${b.provider}` : ''}`;
+  if (b.type === 'activity') return `🎟️ ${b.name || 'אטרקציה'}`;
   if (b.type === 'car_rental') return `🚗 השכרת רכב${b.company ? ` · ${b.company}` : ''}`;
   if (b.type === 'hotel') return `🏨 ${b.name || 'לינה'}`;
   return '📋 הזמנה';
@@ -62,6 +64,45 @@ const BookingDetails = ({ booking: b }) => {
 
       {/* להסעה אין תאריך החזרה ואין סוג רכב — הצגת השדות האלה ריקים
           מרמזת שחסר מידע, בעוד שבפועל הם פשוט לא קיימים בהזמנה כזו. */}
+      {/* ביטוח: הטלפון הוא השדה החשוב ביותר ולכן מוצג ראשון ובולט.
+          את הפוליסה מחפשים בבית חולים בחו״ל, עם קליטה גרועה ובלחץ —
+          ואז לא מחפשים "מה מכוסה" אלא למי מתקשרים. */}
+      {b.type === 'insurance' && (
+        <>
+          {b.emergencyPhone && (
+            <Box sx={{ mb: 1, p: 1.25, bgcolor: 'error.light', borderRadius: 1.5 }}>
+              <Typography variant="caption" sx={{ display: 'block', fontWeight: 700, color: 'error.contrastText' }}>
+                טלפון חירום 24/7
+              </Typography>
+              <Typography
+                component="a"
+                href={`tel:${String(b.emergencyPhone).replace(/[^\d+]/g, '')}`}
+                dir="ltr"
+                sx={{ fontSize: '1.15rem', fontWeight: 800, color: 'error.contrastText', textDecoration: 'none' }}
+              >
+                {b.emergencyPhone}
+              </Typography>
+            </Box>
+          )}
+          <Row label="חברה" value={b.provider} />
+          <Row label="מספר פוליסה" value={b.policyNumber} />
+          <Row label="תוקף" value={[b.startDate, b.endDate].filter(Boolean).join(' → ')} />
+          <Row label="מבוטחים" value={b.insured} />
+          <Row label="כיסוי" value={b.coverage} />
+          <Row label="מחיר" value={b.price} />
+        </>
+      )}
+
+      {b.type === 'activity' && (
+        <>
+          <Row label="מועד" value={[b.date, b.time].filter(Boolean).join(' · ')} />
+          <Row label="מקום" value={b.location} />
+          <Row label="מספר אישור" value={b.confirmationNumber} />
+          <Row label="משתתפים" value={b.guests} />
+          <Row label="מחיר" value={b.price} />
+        </>
+      )}
+
       {b.type === 'transfer' && (
         <>
           <Row label="הוזמן דרך" value={b.company} />

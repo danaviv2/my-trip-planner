@@ -42,6 +42,16 @@ export const normalizeBooking = (b) => {
     end = start;
     location = b.arrivalAirport || b.to || '';
     title = [b.airline, b.flightNumber].filter(Boolean).join(' ') || 'טיסה';
+  } else if (type === 'insurance') {
+    start = parseDate(b.startDate);
+    end = parseDate(b.endDate) || start;
+    location = '';
+    title = b.provider || 'ביטוח נסיעות';
+  } else if (type === 'activity') {
+    start = parseDate(b.date);
+    end = start;
+    location = b.location || '';
+    title = b.name || 'אטרקציה';
   } else if (type === 'car_rental' || type === 'transfer') {
     start = parseDate(b.pickupDate || b.checkIn);
     end = parseDate(b.returnDate || b.checkOut) || start;
@@ -226,6 +236,8 @@ export const groupBookingsIntoTrips = (bookings = []) => {
         hotels: group.filter((x) => x.type === 'hotel').length,
         cars: group.filter((x) => x.type === 'car_rental').length,
         transfers: group.filter((x) => x.type === 'transfer').length,
+        activities: group.filter((x) => x.type === 'activity').length,
+        insurance: group.filter((x) => x.type === 'insurance').length,
       },
     };
   });
