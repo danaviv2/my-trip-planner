@@ -182,17 +182,40 @@ CRITICAL RULES:
       !isNaN(lat) && !isNaN(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && !(lat === 0 && lng === 0);
   };
 
-  // geocoding דרך Nominatim לפעילויות שחסרות קואורדינטות
-  const geocodeAddress = async (address, name) => {
-    const query = encodeURIComponent(`${name} ${address} ${destination}`);
+  const lookup = async (query) => {
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`, {
-        headers: { 'Accept-Language': 'en', 'User-Agent': 'MyTripPlanner/1.0' }
-      });
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
+        { headers: { 'Accept-Language': 'en', 'User-Agent': 'MyTripPlanner/1.0' } }
+      );
       const data = await res.json();
       if (data?.[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
     } catch {}
     return null;
+  };
+
+  /**
+   * מאתר פעילות, ומחזיר גם את מידת הוודאות.
+   *
+   * חיפוש לפי שם המקום מאשר שהמקום עצמו קיים. כשהוא נכשל, חיפוש לפי
+   * הכתובת בלבד מאשר שהרחוב קיים — אך לא שהעסק קיים בו. ההבחנה הזו
+   * חשובה: בדיקה הראתה ש-Eataly, מסעדה אמיתית, אינה נמצאת לפי שם, בעוד
+   * מסעדה מומצאת ברחוב אמיתי כן נמצאת לפי כתובת. לכן אי אפשר להכריע
+   * בין השתיים, ואין להעמיד פנים שכן.
+   *
+   * @returns {{coords, confidence: 'name'|'address'|'none'}}
+   */
+  const locateActivity = async (address, name) => {
+    if (name) {
+      const byName = await lookup(`${name}, ${destination}`);
+      if (byName) return { coords: byName, confidence: 'name' };
+    }
+    if (address) {
+      await new Promise((r) => setTimeout(r, 1100));
+      const byAddress = await lookup(`${address}, ${destination}`);
+      if (byAddress) return { coords: byAddress, confidence: 'address' };
+    }
+    return { coords: null, confidence: 'none' };
   };
 
   const geocodeMissing = async (daysList) => {
@@ -204,11 +227,24 @@ CRITICAL RULES:
       if (day.hotel && !isGoodCoord(day.hotel)) tasks.push({ act: day.hotel, day, isHotel: true });
     });
     if (tasks.length === 0) return daysList;
-    console.log(`🌍 Geocoding ${tasks.length} חסרי קואורדינטות...`);
-    await Promise.all(tasks.map(async ({ act }) => {
-      const coords = await geocodeAddress(act.address || '', act.name || '');
-      if (coords) { act.lat = coords.lat; act.lng = coords.lng; }
-    }));
+
+    // סדרתי ולא במקביל: מדיניות השימוש של Nominatim מגבילה לבקשה
+    // בשנייה, ומטח מקבילי גורר חסימה — כלומר מקומות אמיתיים היו
+    // מסומנים כלא מאומתים רק משום שנחסמנו.
+    for (const { act } of tasks) {
+      const { coords, confidence } = await locateActivity(act.address || '', act.name || '');
+      if (coords) {
+        act.lat = coords.lat;
+        act.lng = coords.lng;
+        // נמצא לפי כתובת בלבד: הרחוב קיים, העסק לא אומת.
+        if (confidence === 'address') act.nameUnverified = true;
+      } else {
+        // לא נמצא כלל — לא השם ולא הכתובת. אין לנו מיקום, ואסור להמציא
+        // לו אחד.
+        act.unverified = true;
+      }
+      await new Promise((r) => setTimeout(r, 1100));
+    }
     return daysList;
   };
 
@@ -220,7 +256,17 @@ CRITICAL RULES:
       const dValid = day.activities.filter(isGoodCoord);
       const fLat = dValid.length ? dValid.reduce((s, a) => s + Number(a.lat), 0) / dValid.length : cLat;
       const fLng = dValid.length ? dValid.reduce((s, a) => s + Number(a.lng), 0) / dValid.length : cLng;
-      return { ...day, activities: day.activities.map(act => isGoodCoord(act) || fLat == null ? act : { ...act, lat: fLat, lng: fLng }) };
+      return {
+        ...day,
+        activities: day.activities.map((act) => {
+          if (isGoodCoord(act) || fLat == null) return act;
+          // מקום שלא אומת אינו מקבל קואורדינטות מומצאות. עד כה הוצב
+          // כאן ממוצע שאר הפעילויות, כך שמקום שלא נמצא הופיע על המפה
+          // בנקודה סבירה ונראה אמיתי לחלוטין.
+          if (act.unverified) return act;
+          return { ...act, lat: fLat, lng: fLng, approxCoord: true };
+        }),
+      };
     });
   };
 

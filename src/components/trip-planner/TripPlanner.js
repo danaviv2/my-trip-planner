@@ -1449,6 +1449,29 @@ const TripPlanner = () => {
                               📍 {activity.address}
                             </Typography>
                           )}
+
+                          {/* מקום שלא נמצא במאגר המפות. המלצות ה-AI כוללות
+                              לעיתים מסעדות ואתרים שאינם קיימים, ועד כה הם
+                              קיבלו את הקואורדינטות הממוצעות של שאר היום —
+                              והופיעו על המפה כאילו אומתו. */}
+                          {activity.unverified && (
+                            <Typography
+                              variant="caption"
+                              sx={{ mt: 0.5, display: 'block', color: 'warning.dark', fontWeight: 600 }}
+                            >
+                              ⚠️ המקום לא נמצא במאגר המפות — ודא שהוא קיים לפני שתגיע
+                            </Typography>
+                          )}
+                          {activity.nameUnverified && !activity.unverified && (
+                            <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: 'text.secondary' }}>
+                              הכתובת אומתה, שם המקום לא — ייתכן ששונה או נסגר
+                            </Typography>
+                          )}
+                          {activity.approxCoord && !activity.unverified && !activity.nameUnverified && (
+                            <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: 'text.secondary' }}>
+                              מיקום משוער על המפה
+                            </Typography>
+                          )}
                         </Paper>
 
                         {/* סרגל ניווט בין פעילויות */}
