@@ -30,18 +30,6 @@ export default async function handler(req, res) {
   const rawKey = process.env.RAPIDAPI_KEY || '';
   const apiKey = rawKey.trim();
 
-  // אבחון בלבד: מדווח על צורת המפתח ולא על תוכנו, כדי לאתר שגיאת
-  // הדבקה בלי לחשוף סוד.
-  if (req.query.debug === '1') {
-    return res.status(200).json({
-      keyPresent: !!rawKey,
-      rawLength: rawKey.length,
-      trimmedLength: apiKey.length,
-      hasHiddenWhitespace: rawKey.length !== apiKey.length,
-      startsWith: apiKey.slice(0, 4),
-      endsWith: apiKey.slice(-4),
-    });
-  }
 
   if (!apiKey) {
     return res.status(503).json({
@@ -73,12 +61,6 @@ export default async function handler(req, res) {
       }
     );
 
-    // אבחון: מחזיר את תשובת הספק כפי שהיא, כדי לאתר את סיבת הדחייה
-    // במקום להסיק אותה מקוד הסטטוס בלבד.
-    if (req.query.debug === '2') {
-      const body = await upstream.text();
-      return res.status(200).json({ upstreamStatus: upstream.status, body: body.slice(0, 400) });
-    }
 
     if (upstream.status === 403) {
       return res.status(503).json({
