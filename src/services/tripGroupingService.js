@@ -43,7 +43,9 @@ export const normalizeBooking = (b) => {
     location = b.arrivalAirport || b.to || '';
     title = [b.airline, b.flightNumber].filter(Boolean).join(' ') || 'טיסה';
   } else if (type === 'insurance') {
-    start = parseDate(b.startDate);
+    // פוליסה נושאת לעיתים תוקף סיום בלבד. היא עדיין שייכת לנסיעה, ובלי
+    // הגיבוי היא נופלת לקבוצת "ללא תאריך" אף שיש בה תאריך.
+    start = parseDate(b.startDate) || parseDate(b.endDate);
     end = parseDate(b.endDate) || start;
     location = '';
     title = b.provider || 'ביטוח נסיעות';
@@ -178,7 +180,39 @@ export const groupBookingsIntoTrips = (bookings = []) => {
     clusters.push(current);
   }
 
-  const trips = clusters.map((group) => {
+  // איחוד קבוצות שטווחי התאריכים שלהן נחתכים.
+  //
+  // כל טיסה שלא נמצא לה בן-זוג פותחת חלון משלה, ולכן אישור צ׳ק-אין או
+  // כרטיס טיסה בודד יצרו "נסיעה" נפרדת שנפלה בתוך נסיעה קיימת: אותה
+  // נסיעה לנאפולי הופיעה כשש נסיעות, ובהן שתיים בשם TLV. נסיעה היא טווח
+  // זמן רציף, ושני טווחים נחתכים אינם יכולים להיות שתי נסיעות.
+  //
+  // התנאי הוא חיתוך בפועל ולא סמיכות, כדי ששתי נסיעות עוקבות באמת
+  // יישארו נפרדות.
+  const rangeOf = (group) => ({
+    start: group.reduce((min, x) => (x.start < min ? x.start : min), group[0].start),
+    end: group.reduce((max, x) => {
+      const e = x.end || x.start;
+      return e > max ? e : max;
+    }, group[0].end || group[0].start),
+  });
+
+  const mergedClusters = [];
+  clusters
+    .filter((g) => g.length)
+    .map((g) => ({ group: g, ...rangeOf(g) }))
+    .sort((a, b) => a.start - b.start)
+    .forEach((c) => {
+      const prev = mergedClusters[mergedClusters.length - 1];
+      if (prev && c.start <= prev.end) {
+        prev.group.push(...c.group);
+        if (c.end > prev.end) prev.end = c.end;
+      } else {
+        mergedClusters.push(c);
+      }
+    });
+
+  const trips = mergedClusters.map(({ group }) => {
     const start = group.reduce((min, x) => (x.start < min ? x.start : min), group[0].start);
     const end = group.reduce((max, x) => {
       const e = x.end || x.start;
