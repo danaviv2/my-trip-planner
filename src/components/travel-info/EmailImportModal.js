@@ -20,7 +20,7 @@ import {
 const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
   const { t } = useTranslation();
   const { addBookings, applyCancellations } = useBookings();
-  const { gmailToken, connectGmail, disconnectGmail } = useAuth();
+  const { gmailToken, connectGmail, disconnectGmail, refreshGmailToken } = useAuth();
   const [scanProgress, setScanProgress] = useState('');
   const [scannedSubjects, setScannedSubjects] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
@@ -48,12 +48,26 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
     try {
       const token = gmailToken || (await connectGmail());
 
-      const { bookings: collected, cancellations, parsed, fromPdf, matched, unrecognized } =
-        await scanMailbox(token, {
+      const scan = (t) =>
+        scanMailbox(t, {
           maxResults: 60,
           monthsBack: 12,
           onProgress: (msg) => setScanProgress(msg),
         });
+
+      // טוקן תקף לשעה, ולכן חזרה לאפליקציה למחרת נתקלת בטוקן שפג. זהו
+      // מצב צפוי: מנפיקים חדש בשקט וממשיכים. עד כה הוצגה כאן הודעה
+      // שביקשה מהמשתמש להתחבר מחדש, וההסכמה נמחקה יחד איתה.
+      let result;
+      try {
+        result = await scan(token);
+      } catch (e) {
+        if (e.message !== 'GMAIL_TOKEN_EXPIRED') throw e;
+        setScanProgress('מחדש את ההרשאה...');
+        result = await scan(await refreshGmailToken());
+      }
+
+      const { bookings: collected, cancellations, parsed, fromPdf, matched, unrecognized } = result;
 
       // מוצג תמיד ולא רק בכישלון: סריקה יכולה להצליח ועדיין להחמיץ את
       // אישור המלון, ובלי הרשימה אין דרך לדעת שהוא הוחמץ.
@@ -85,8 +99,9 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
       );
     } catch (err) {
       if (err.message === 'GMAIL_TOKEN_EXPIRED') {
+        // ההנפקה השקטה נכשלה גם היא — סימן שההרשאה עצמה כבר לא בתוקף
         disconnectGmail();
-        setError('ההרשאה פגה. לחץ שוב כדי להתחבר מחדש.');
+        setError('ההרשאה לגישה לתיבה כבר אינה בתוקף. לחץ שוב כדי לאשר מחדש.');
       } else if (err.code === 'auth/popup-closed-by-user') {
         setError('חלון ההרשאה נסגר לפני האישור.');
       } else if (err.message === 'GMAIL_FORBIDDEN') {

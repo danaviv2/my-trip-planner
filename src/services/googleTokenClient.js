@@ -67,11 +67,13 @@ const loadGis = () => {
  *
  * @param {object} opts
  * @param {boolean} opts.silent ללא כל תצוגה. נכשל אם ההרשאה לא ניתנה עדיין.
+ * @param {boolean} opts.chooseAccount לאלץ מסך בחירת חשבון ואישור מחדש.
+ *                                      נחוץ רק כשרוצים לסרוק תיבה אחרת.
  * @param {string}  opts.loginHint כתובת המייל של המשתמש המחובר, כדי שלא
  *                                 יידרש לבחור חשבון כשיש כמה בדפדפן.
  * @returns {Promise<string>} access token
  */
-export const requestGmailToken = async ({ silent = false, loginHint = '' } = {}) => {
+export const requestGmailToken = async ({ silent = false, loginHint = '', chooseAccount = false } = {}) => {
   const clientId = getClientId();
   if (!clientId) throw new Error('NO_CLIENT_ID');
 
@@ -83,8 +85,10 @@ export const requestGmailToken = async ({ silent = false, loginHint = '' } = {})
     const client = window.google.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: GMAIL_SCOPE,
-      // מחרוזת ריקה = אל תציג דבר אם ההרשאה כבר קיימת
-      prompt: silent ? '' : 'consent',
+      // מחרוזת ריקה = אל תציג דבר אם ההרשאה כבר קיימת. גם בבקשה שאינה
+      // שקטה אין טעם לאלץ אישור מחדש: גוגל תציג מסך רק אם באמת צריך.
+      // אילוץ 'consent' בכל פעם הכריח בחירת חשבון גם כשהכול כבר אושר.
+      prompt: chooseAccount ? 'consent' : '',
       login_hint: loginHint || undefined,
       callback: (res) => {
         if (settled) return;
@@ -99,7 +103,9 @@ export const requestGmailToken = async ({ silent = false, loginHint = '' } = {})
       error_callback: (err) => {
         if (settled) return;
         settled = true;
-        // ההרשאה בוטלה או שאין חשבון מחובר — בקשה שקטה לא תעבוד יותר
+        // ההרשאה בוטלה או שאין חשבון מחובר — בקשה שקטה לא תעבוד יותר.
+        // חשוב: פקיעת טוקן אינה מגיעה לכאן. טוקן פג אחרי שעה מעצם תכנונו,
+        // וזו אינה עדות לכך שההרשאה נשללה.
         if (silent) setGmailConsent(false);
         reject(new Error(err?.type || 'TOKEN_REQUEST_FAILED'));
       },

@@ -58,11 +58,27 @@ export const AuthProvider = ({ children }) => {
    * אפשר לקבל טוקן חדש בשקט וסריקה יכולה לרוץ מעצמה. חלון Firebase
    * דורש לחיצה בכל פעם מחדש, ואיתו הייבוא לעולם לא יהיה אוטומטי.
    */
-  const connectGmail = async () => {
+  const connectGmail = async ({ chooseAccount = false } = {}) => {
     let token;
 
     if (getClientId()) {
-      token = await requestGmailToken({ silent: false, loginHint: user?.email || '' });
+      // קודם בשקט: אם ההרשאה כבר ניתנה, אין סיבה להציג דבר. רק אם זה
+      // נכשל עוברים למסלול שמציג מסך. הגרסה הקודמת אילצה בחירת חשבון
+      // ואישור מחדש בכל פעם, גם כשלא היה בכך צורך.
+      if (!chooseAccount) {
+        try {
+          token = await requestGmailToken({ silent: true, loginHint: user?.email || '' });
+        } catch {
+          token = null;
+        }
+      }
+      if (!token) {
+        token = await requestGmailToken({
+          silent: false,
+          chooseAccount,
+          loginHint: chooseAccount ? '' : user?.email || '',
+        });
+      }
     } else {
       // עוד לא הוגדר Client ID לסריקה האוטומטית. נופלים חזרה לחלון של
       // Firebase כדי שהייבוא הידני ימשיך לעבוד — פחות נוח, אך תקין.
@@ -82,12 +98,34 @@ export const AuthProvider = ({ children }) => {
     return token;
   };
 
-  const disconnectGmail = () => {
+  /**
+   * מנפיק טוקן חדש בשקט. נדרש כשהטוקן שבזיכרון פג.
+   *
+   * טוקן גישה תקף לשעה מעצם תכנונו, ופקיעתו היא אירוע צפוי ולא תקלה.
+   * עד כה היא טופלה כאילו ההרשאה נשללה: סימון ההסכמה נמחק, ואיתו
+   * הושבתה הסריקה האוטומטית עד לאישור ידני מחדש.
+   */
+  const refreshGmailToken = async () => {
+    const token = await requestGmailToken({ silent: true, loginHint: user?.email || '' });
+    setGmailToken(token);
+    try {
+      sessionStorage.setItem('gmailAccessToken', token);
+    } catch {}
+    return token;
+  };
+
+  /** משכיח את הטוקן בלבד. ההסכמה נשמרת. */
+  const clearGmailToken = () => {
     setGmailToken(null);
-    setGmailConsent(false);
     try {
       sessionStorage.removeItem('gmailAccessToken');
     } catch {}
+  };
+
+  /** ניתוק יזום של המשתמש — כאן כן נכון לשכוח גם את ההסכמה. */
+  const disconnectGmail = () => {
+    clearGmailToken();
+    setGmailConsent(false);
   };
 
   const loginWithEmail = (email, password) =>
@@ -115,6 +153,8 @@ export const AuthProvider = ({ children }) => {
       gmailToken,
       connectGmail,
       disconnectGmail,
+      refreshGmailToken,
+      clearGmailToken,
     }}>
       {children}
     </AuthContext.Provider>
