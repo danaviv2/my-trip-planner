@@ -64,3 +64,21 @@ export const deleteBooking = async (uid, bookingId) => {
   const ref = doc(db, 'users', uid, 'bookings', String(bookingId));
   await deleteDoc(ref);
 };
+
+/**
+ * סימון קבוע שהזמנה בוטלה, לפי מספר האישור.
+ *
+ * מחיקת הרשומה בלבד אינה מספיקה: מייל האישור המקורי נשאר בתיבה, וכל
+ * סריקה עתידית מייבאת אותו מחדש. הביטול נמחק אפוא בכל סריקה, וההזמנה
+ * שבוטלה חזרה למסלול — נצפה בפועל.
+ */
+export const markCancelledRef = (uid, ref) =>
+  // אותה נורמליזציה כמו בהשוואת ההזמנות, אחרת "369 129 732" יישמר בצורה
+  // אחת ויושווה בצורה אחרת, והסימון יאבד. הלוכסן אסור במזהה מסמך.
+  markDeleted(
+    uid,
+    'cancelledBookings',
+    String(ref || '').trim().toLowerCase().replace(/\s+/g, '').replace(/\//g, '-')
+  );
+
+export const loadCancelledRefs = (uid) => loadDeletedIds(uid, 'cancelledBookings');

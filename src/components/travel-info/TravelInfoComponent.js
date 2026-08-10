@@ -156,8 +156,9 @@ const TravelInfoComponent = () => {
                     {trip.destination}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    {trip.startDate} — {trip.endDate}
-                    {trip.nights ? ` · ${trip.nights} לילות` : ''}
+                    {trip.undated
+                      ? 'לא נקראו תאריכים מהאישור — לכן אינן משויכות לנסיעה'
+                      : `${trip.startDate} — ${trip.endDate}${trip.nights ? ` · ${trip.nights} לילות` : ''}`}
                   </Typography>
                   {/* עלות מתוך המחירים שנקלטו באישורים. כשחלק מההזמנות
                       ללא מחיר נאמר זאת במפורש — סכום חלקי שמוצג כעלות

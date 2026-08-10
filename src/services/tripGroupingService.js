@@ -77,6 +77,26 @@ export const normalizeBooking = (b) => {
   };
 };
 
+/** קבוצה להזמנות שלא ניתן לתארך, כדי שלא ייעלמו מהמסך. */
+const undatedTrip = (group) => ({
+  id: 'trip_undated',
+  title: 'הזמנות ללא תאריך',
+  destination: 'ללא תאריך',
+  startDate: '',
+  endDate: '',
+  nights: 0,
+  undated: true,
+  bookings: group.map((x) => x.raw),
+  summary: {
+    flights: group.filter((x) => x.type === 'flight').length,
+    hotels: group.filter((x) => x.type === 'hotel').length,
+    cars: group.filter((x) => x.type === 'car_rental').length,
+    transfers: group.filter((x) => x.type === 'transfer').length,
+    activities: group.filter((x) => x.type === 'activity').length,
+    insurance: group.filter((x) => x.type === 'insurance').length,
+  },
+});
+
 /**
  * מקבץ הזמנות לטיולים.
  *
@@ -84,12 +104,15 @@ export const normalizeBooking = (b) => {
  * @returns {Array<{id,title,destination,startDate,endDate,bookings}>}
  */
 export const groupBookingsIntoTrips = (bookings = []) => {
-  const items = bookings
-    .map(normalizeBooking)
-    .filter((b) => b.start)
-    .sort((a, b) => a.start - b.start);
+  const normalized = bookings.map(normalizeBooking);
+  const items = normalized.filter((b) => b.start).sort((a, b) => a.start - b.start);
 
-  if (!items.length) return [];
+  // הזמנה שתאריכיה לא נקראו נעלמה כאן לחלוטין — בלי הודעה ובלי מקום
+  // להופיע בו. פוליסת ביטוח בלי תוקף קריא היא בדיוק המקרה: היא נסרקה,
+  // נשמרה, ופשוט לא הוצגה. עדיף להראות אותה בקבוצה נפרדת.
+  const undated = normalized.filter((b) => !b.start);
+
+  if (!items.length) return undated.length ? [undatedTrip(undated)] : [];
 
   // שלב 1 — טיסות מגדירות את גבולות הנסיעה.
   // זוג הלוך-חזור יוצר חלון, גם אם אין ביניהם דבר. בלי השלב הזה נסיעה
@@ -155,7 +178,7 @@ export const groupBookingsIntoTrips = (bookings = []) => {
     clusters.push(current);
   }
 
-  return clusters.map((group) => {
+  const trips = clusters.map((group) => {
     const start = group.reduce((min, x) => (x.start < min ? x.start : min), group[0].start);
     const end = group.reduce((max, x) => {
       const e = x.end || x.start;
@@ -241,6 +264,8 @@ export const groupBookingsIntoTrips = (bookings = []) => {
       },
     };
   });
+
+  return undated.length ? [...trips, undatedTrip(undated)] : trips;
 };
 
 /**

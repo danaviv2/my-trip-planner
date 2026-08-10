@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-import { saveBooking, loadBookings, deleteBooking } from '../services/firestoreService';
+import {
+  saveBooking, loadBookings, deleteBooking,
+  markCancelledRef, loadCancelledRefs,
+} from '../services/firestoreService';
 import { groupBookingsIntoTrips } from '../services/tripGroupingService';
 import { useAutoGmailScan } from '../hooks/useAutoGmailScan';
 
@@ -17,6 +20,35 @@ import { useAutoGmailScan } from '../hooks/useAutoGmailScan';
 const BookingsContext = createContext();
 
 const LS_KEY = 'importedBookings';
+// מספרי אישור שבוטלו. נשמרים גם מקומית, כדי שהסינון יעבוד גם בלי חיבור.
+const CANCELLED_KEY = 'cancelledBookingRefs';
+
+// מזהה הביטול חייב להיראות זהה בשלושת המקומות: בסינון, באחסון המקומי
+// ובמזהה המסמך בענן — שבו לוכסן אסור.
+const refKey = (s) => norm(s).replace(/\//g, '-');
+
+const readCancelled = () => {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(CANCELLED_KEY) || '[]'));
+  } catch {
+    return new Set();
+  }
+};
+
+const writeCancelled = (set) => {
+  try {
+    localStorage.setItem(CANCELLED_KEY, JSON.stringify([...set]));
+  } catch {}
+};
+
+/**
+ * מסלק הזמנות שמספר האישור שלהן סומן כמבוטל.
+ *
+ * מייל האישור המקורי נשאר בתיבה לנצח, ולכן כל סריקה מייבאת אותו מחדש.
+ * בלי הסינון הזה הביטול מחזיק עד הסריקה הבאה בלבד.
+ */
+const withoutCancelled = (list, refs) =>
+  refs.size ? list.filter((b) => !refs.has(refKey(b.confirmationNumber))) : list;
 
 const readLocal = () => {
   try {
@@ -101,13 +133,42 @@ const bookingKey = (b) => {
   const type = b.type || '';
   if (type === 'car_rental') return ['car', norm(b.company), norm(b.pickupDate)].join('|');
   if (type === 'hotel') return ['hotel', norm(b.name), norm(b.checkIn)].join('|');
+  // להסעה יש pickupDate ולא date, ולכן הענף הכללי הפיק לכולן מפתח זהה
+  // וכל ההסעות שאין להן מספר אישור התאחדו לאחת.
+  if (type === 'transfer') {
+    return ['transfer', norm(b.company), norm(b.pickupDate), norm(b.pickupTime)].join('|');
+  }
+  if (type === 'activity') {
+    return ['activity', norm(b.name), norm(b.date), norm(b.time)].join('|');
+  }
+  if (type === 'insurance') {
+    return ['insurance', norm(b.provider), norm(b.policyNumber || b.startDate)].join('|');
+  }
   return [type, norm(b.confirmationNumber), norm(b.date || b.checkIn)].join('|');
 };
 
-/** האם שתי רשומות הן אותה הזמנה. טיסות לפי סימנים, השאר לפי מפתח. */
+/**
+ * האם שתי רשומות הן אותה הזמנה.
+ *
+ * מספר אישור הוא זהות חזקה מן הסיווג: הספק מנפיק אותו להזמנה אחת. אותו
+ * מייל של Booking.com סווג פעם כהסעה ופעם כהשכרת רכב, וההשוואה שפסלה
+ * מיד סוגים שונים יצרה שלוש רשומות מאותה הזמנה.
+ *
+ * לטיסות זה אינו נכון: מספר אישור אחד מכסה גם הלוך וגם חזור, ואיחוד
+ * לפיו היה מוחק את אחת הטיסות. לכן הן נשארות בהשוואה לפי סימנים.
+ */
 const sameBooking = (a, b) => {
+  const aFlight = a.type === 'flight';
+  const bFlight = b.type === 'flight';
+
+  if (aFlight || bFlight) {
+    return aFlight && bFlight ? sameFlight(a, b) : false;
+  }
+
+  if (agrees(a.confirmationNumber, b.confirmationNumber)) return true;
+
   if ((a.type || '') !== (b.type || '')) return false;
-  return a.type === 'flight' ? sameFlight(a, b) : bookingKey(a) === bookingKey(b);
+  return bookingKey(a) === bookingKey(b);
 };
 
 /**
@@ -170,11 +231,16 @@ export const BookingsProvider = ({ children }) => {
       setLoading(true);
       if (user) {
         try {
-          const remote = await loadBookings(user.uid);
+          const [remote, remoteCancelled] = await Promise.all([
+            loadBookings(user.uid),
+            loadCancelledRefs(user.uid).catch(() => new Set()),
+          ]);
+          const cancelledRefs = new Set([...readCancelled(), ...remoteCancelled]);
+          writeCancelled(cancelledRefs);
           const merged = [...remote, ...readLocal()];
           // איחוד לפי מהות ההזמנה, ולא לפי מזהה: אותה טיסה עשויה להיות
           // שמורה בענן ובדפדפן תחת מזהים שונים.
-          const clean = dedupe(merged);
+          const clean = withoutCancelled(dedupe(merged), cancelledRefs);
           const remoteIds = new Set(remote.map((b) => String(b.id)));
 
           // מה שקיים מקומית ולא בענן מועלה; מה שנשאר בענן אחרי האיחוד
@@ -197,14 +263,14 @@ export const BookingsProvider = ({ children }) => {
           // הענן אינו זמין — ממשיכים מהעותק המקומי, אך מסמנים זאת כדי
           // שהמשתמש לא יניח שהנתונים מגובים.
           if (!cancelled) {
-            const clean = dedupe(readLocal());
+            const clean = withoutCancelled(dedupe(readLocal()), readCancelled());
             writeLocal(clean);
             setBookings(clean);
             setCloudError(true);
           }
         }
       } else if (!cancelled) {
-        const clean = dedupe(readLocal());
+        const clean = withoutCancelled(dedupe(readLocal()), readCancelled());
         writeLocal(clean);
         setBookings(clean);
       }
@@ -234,7 +300,7 @@ export const BookingsProvider = ({ children }) => {
       // מגוף המייל, מה-PDF המצורף ולעיתים ממייל נוסף. בדיקה מול המאגר
       // בלבד לא תופסת אותן, ולכן האיחוד רץ על הכל יחד.
       const before = new Map(bookings.map((b) => [String(b.id), JSON.stringify(b)]));
-      const merged = dedupe([...bookings, ...stamped]);
+      const merged = withoutCancelled(dedupe([...bookings, ...stamped]), readCancelled());
 
       // נשמר גם מה שנוסף וגם רשומה קיימת שהתעשרה בפרטים מהאצווה
       const changed = merged.filter((b) => before.get(String(b.id)) !== JSON.stringify(b));
@@ -281,13 +347,24 @@ export const BookingsProvider = ({ children }) => {
       // תאריכים, ולכן השוואה מלאה אינה מספיקה. מספר אישור הוא מזהה
       // ייחודי אצל הספק ודי בו כדי לאתר את ההזמנה.
       const refs = new Set(
-        cancelled.map((c) => norm(c.confirmationNumber)).filter(Boolean)
+        cancelled.map((c) => refKey(c.confirmationNumber)).filter(Boolean)
       );
       const doomed = bookings.filter(
         (b) =>
-          (norm(b.confirmationNumber) && refs.has(norm(b.confirmationNumber))) ||
+          (refKey(b.confirmationNumber) && refs.has(refKey(b.confirmationNumber))) ||
           cancelled.some((c) => sameBooking(b, c))
       );
+
+      // הסימון נשמר בנפרד מהמחיקה, אחרת הסריקה הבאה תייבא מחדש את אישור
+      // ההזמנה המקורי שעדיין יושב בתיבה.
+      const marked = readCancelled();
+      const fresh = [...refs, ...doomed.map((b) => refKey(b.confirmationNumber))]
+        .filter((r) => r && !marked.has(r));
+      fresh.forEach((r) => marked.add(r));
+      writeCancelled(marked);
+      if (user && fresh.length) {
+        await Promise.all(fresh.map((r) => markCancelledRef(user.uid, r).catch(() => {})));
+      }
       if (!doomed.length) return 0;
 
       const ids = new Set(doomed.map((b) => String(b.id)));
