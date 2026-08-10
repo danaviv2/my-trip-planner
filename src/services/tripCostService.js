@@ -65,7 +65,10 @@ export const parsePrice = (raw) => {
 export const formatMoney = (amount, code) => {
   const sym = CURRENCIES.find((c) => c.code === code)?.symbol;
   const num = amount.toLocaleString('he-IL', { maximumFractionDigits: 2 });
-  return sym ? `${sym}${num}` : `${num} ${code}`;
+  if (sym) return `${sym}${num}`;
+  // סכום שנקלט בלי סמל מטבע. "UNKNOWN 528.67" נראה כמו תקלה ואינו
+  // אומר דבר; עדיף לומר במפורש שהמטבע לא זוהה מאשר להציג קוד פנימי.
+  return code === 'UNKNOWN' ? `${num} (מטבע לא זוהה)` : `${num} ${code}`;
 };
 
 const LABELS = {

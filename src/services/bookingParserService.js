@@ -189,7 +189,15 @@ Rules:
 - If there are no activities, return an empty array. Do NOT invent any.
 - If there are no flights, return an empty array. Do NOT invent flights.
 - Restaurant reservations are NOT accommodation. If the booking is for a
-  restaurant table, set "isBooking" to false.`;
+  restaurant table, set "isBooking" to false.
+- A customer-service reply, support ticket or correspondence about a booking is
+  NOT itself a booking. Such messages quote a reference number and sometimes a
+  date, but they describe a conversation, not a reservation. Signals: a subject
+  beginning with "Re:" or "RE:", the words "customer query", "support",
+  "ticket", "we received your request", "פנייתך", "שירות לקוחות". Set
+  "isBooking" to false for these even when a reference number appears.
+- A voucher, upgrade, lounge pass or goodwill gesture sent after a disruption is
+  not a new booking either. Set "isBooking" to false.`;
 
 /** ממיר את תשובת המודל למבנה שהמסכים צורכים. משותף לשני המסלולים. */
 const normalizeParsed = (raw) => {

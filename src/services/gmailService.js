@@ -52,6 +52,12 @@ const buildQuery = (monthsBack = 12) => {
     '-subject:unsubscribe',
     '-subject:"פרסומת"',
     '-subject:newsletter',
+    // תכתובת שירות לקוחות מצטטת מספר הזמנה ותאריך, ולכן עוברת את
+    // הסינון המקדים ומגיעה לפענוח — ושם היא עלולה להיקלט כהזמנה חדשה.
+    // "Re: Booking reference — Customer query" יצר נסיעה שלמה מפנייה.
+    '-subject:"customer query"',
+    '-subject:"customer service"',
+    '-subject:"פנייתך"',
   ].join(' ');
 };
 
