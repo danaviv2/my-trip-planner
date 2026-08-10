@@ -47,6 +47,9 @@ const writeCancelled = (set) => {
  * מייל האישור המקורי נשאר בתיבה לנצח, ולכן כל סריקה מייבאת אותו מחדש.
  * בלי הסינון הזה הביטול מחזיק עד הסריקה הבאה בלבד.
  */
+/** מסלק רשומות טיסה ריקות, כולל כאלה שכבר הצטברו במאגר. */
+const withoutEmptyFlights = (list) => list.filter((b) => !isEmptyFlight(b));
+
 const withoutCancelled = (list, refs) =>
   refs.size ? list.filter((b) => !refs.has(refKey(b.confirmationNumber))) : list;
 
@@ -99,7 +102,21 @@ const agrees = (a, b) => !!norm(a) && !!norm(b) && norm(a) === norm(b);
 const isFlightFragment = (f) =>
   !norm(f.flightNumber) && !norm(f.departureTime) && !norm(f.arrivalTime);
 
+/**
+ * רשומת טיסה בלי תאריך ובלי מספר טיסה אינה מזהה דבר.
+ *
+ * היא נוצרת כשמייל מזכיר טיסה בלי פרטים, והיא הרסנית יותר מחסרת ערך:
+ * ההשוואה בין טיסות פותחת בדרישה שהתאריכים יסכימו, ושני תאריכים ריקים
+ * אינם מסכימים — ולכן שני עותקים זהים לעולם לא יתאחדו. כל סריקה הוסיפה
+ * עותק נוסף, עד שהצטברו תריסר "טיסות" ריקות.
+ */
+const isEmptyFlight = (f) =>
+  f.type === 'flight' && !norm(f.date) && !norm(f.flightNumber);
+
 const sameFlight = (a, b) => {
+  // שתי רשומות שאין להן תאריך אך יש להן אותו מספר טיסה הן אותה טיסה.
+  // בלי המקרה הזה הן היו מוכפלות בכל סריקה, כמו הרשומות הריקות.
+  if (!norm(a.date) && !norm(b.date)) return agrees(a.flightNumber, b.flightNumber);
   if (!agrees(a.date, b.date)) return false;
   if (contradicts(a.flightNumber, b.flightNumber)) return false;
 
@@ -240,7 +257,7 @@ export const BookingsProvider = ({ children }) => {
           const merged = [...remote, ...readLocal()];
           // איחוד לפי מהות ההזמנה, ולא לפי מזהה: אותה טיסה עשויה להיות
           // שמורה בענן ובדפדפן תחת מזהים שונים.
-          const clean = withoutCancelled(dedupe(merged), cancelledRefs);
+          const clean = withoutCancelled(withoutEmptyFlights(dedupe(merged)), cancelledRefs);
           const remoteIds = new Set(remote.map((b) => String(b.id)));
 
           // מה שקיים מקומית ולא בענן מועלה; מה שנשאר בענן אחרי האיחוד
@@ -263,14 +280,14 @@ export const BookingsProvider = ({ children }) => {
           // הענן אינו זמין — ממשיכים מהעותק המקומי, אך מסמנים זאת כדי
           // שהמשתמש לא יניח שהנתונים מגובים.
           if (!cancelled) {
-            const clean = withoutCancelled(dedupe(readLocal()), readCancelled());
+            const clean = withoutCancelled(withoutEmptyFlights(dedupe(readLocal())), readCancelled());
             writeLocal(clean);
             setBookings(clean);
             setCloudError(true);
           }
         }
       } else if (!cancelled) {
-        const clean = withoutCancelled(dedupe(readLocal()), readCancelled());
+        const clean = withoutCancelled(withoutEmptyFlights(dedupe(readLocal())), readCancelled());
         writeLocal(clean);
         setBookings(clean);
       }
@@ -300,7 +317,7 @@ export const BookingsProvider = ({ children }) => {
       // מגוף המייל, מה-PDF המצורף ולעיתים ממייל נוסף. בדיקה מול המאגר
       // בלבד לא תופסת אותן, ולכן האיחוד רץ על הכל יחד.
       const before = new Map(bookings.map((b) => [String(b.id), JSON.stringify(b)]));
-      const merged = withoutCancelled(dedupe([...bookings, ...stamped]), readCancelled());
+      const merged = withoutCancelled(withoutEmptyFlights(dedupe([...bookings, ...stamped])), readCancelled());
 
       // נשמר גם מה שנוסף וגם רשומה קיימת שהתעשרה בפרטים מהאצווה
       const changed = merged.filter((b) => before.get(String(b.id)) !== JSON.stringify(b));
