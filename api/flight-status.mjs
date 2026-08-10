@@ -60,8 +60,25 @@ export default async function handler(req, res) {
   try {
     const upstream = await fetch(
       `https://${HOST}/flights/number/${encodeURIComponent(flight)}/${encodeURIComponent(date)}?withAircraftImage=false&withLocation=false`,
-      { headers: { 'x-rapidapi-key': apiKey, 'x-rapidapi-host': HOST } }
+      {
+        headers: {
+          'x-rapidapi-key': apiKey,
+          'x-rapidapi-host': HOST,
+          // סביבת השרת אינה שולחת User-Agent כברירת מחדל, ויש שערים
+          // שדוחים בקשה כזו. שליחה מפורשת מונעת דחייה שאינה קשורה
+          // כלל להרשאה.
+          'User-Agent': 'my-trip-planner/1.0',
+          Accept: 'application/json',
+        },
+      }
     );
+
+    // אבחון: מחזיר את תשובת הספק כפי שהיא, כדי לאתר את סיבת הדחייה
+    // במקום להסיק אותה מקוד הסטטוס בלבד.
+    if (req.query.debug === '2') {
+      const body = await upstream.text();
+      return res.status(200).json({ upstreamStatus: upstream.status, body: body.slice(0, 400) });
+    }
 
     if (upstream.status === 403) {
       return res.status(503).json({
