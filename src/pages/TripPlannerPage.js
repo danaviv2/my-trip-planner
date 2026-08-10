@@ -37,6 +37,7 @@ import { saveBooking, loadBookings, deleteBooking } from '../services/firestoreS
 import { bookingEmoji, bookingColor, bookingLabel } from '../services/bookingParserService';
 import { groupBookingsIntoTrips } from '../services/tripGroupingService';
 import { findDrivingRestrictions } from '../services/drivingRestrictionsService';
+import { findTicketConflicts } from '../services/ticketConflictService';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 const TripPlannerPage = () => {
@@ -92,6 +93,17 @@ const TripPlannerPage = () => {
   const drivingAlerts = useMemo(
     () => findDrivingRestrictions(tripBookings, plannerDestination),
     [tripBookings, plannerDestination]
+  );
+
+  /**
+   * כרטיסים מתוזמנים מול התכנון היומי.
+   *
+   * כרטיס לשעה מסוימת הוא אילוץ ולא מסמך: אם המתכנן שיבץ באותה שעה משהו
+   * אחר, אחד מהם ייפול — והכרטיס לרוב אינו מוחזר בעוד התכנון ניתן לשינוי.
+   */
+  const ticketAlerts = useMemo(
+    () => findTicketConflicts(tripBookings, tripPlan?.dailyItinerary || [], userPreferences.startDate),
+    [tripBookings, tripPlan, userPreferences.startDate]
   );
 
   /**
@@ -393,6 +405,20 @@ const TripPlannerPage = () => {
               hotelModalOpen={hotelModalOpen}
               setHotelModalOpen={setHotelModalOpen}
             />
+
+            {/* כרטיסים שכבר שולמו מול התכנון. מוצג ראשון: זו ההתנגשות
+                היחידה כאן שכבר עלתה כסף. */}
+            {ticketAlerts.length > 0 && (
+              <Box mt={3}>
+                <Typography variant="h6" sx={{ mb: 1.5 }}>🎟️ כרטיסים מול המסלול</Typography>
+                {ticketAlerts.map((a, i) => (
+                  <Alert key={i} severity={a.severity} sx={{ mb: 1 }}>
+                    <AlertTitle sx={{ fontWeight: 700, mb: 0.25 }}>{a.title}</AlertTitle>
+                    {a.detail}
+                  </Alert>
+                ))}
+              </Box>
+            )}
 
             {/* מגבלות נהיגה ביעד. מוצג גם בלי הזמנות — התכנון הוא הרגע
                 שבו עוד אפשר להסדיר מדבקה או לוותר על הרכב. */}
