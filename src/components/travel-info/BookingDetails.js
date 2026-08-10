@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, Divider } from '@mui/material';
+import { Box, Typography, Paper, Divider, IconButton } from '@mui/material';
 
 /**
  * מציג את הפרטים המלאים של הזמנה בודדת.
@@ -33,14 +33,31 @@ const titleOf = (b) => {
   return '📋 הזמנה';
 };
 
-const BookingDetails = ({ booking: b }) => {
+const BookingDetails = ({ booking: b, onDelete }) => {
   if (!b) return null;
 
   return (
     <Paper variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: '8px' }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
-        {titleOf(b)}
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5, flex: 1 }}>
+          {titleOf(b)}
+        </Typography>
+        {/* פענוח אוטומטי אינו מושלם: תכתובת שירות לקוחות נקלטה פעם
+            כהזמנה ויצרה נסיעה שלמה. בלי דרך למחוק, רשומה שגויה נשארת
+            לנצח — מערכת שמייבאת לבד חייבת גם מסלול תיקון ידני. */}
+        {onDelete && (
+          <IconButton
+            size="small"
+            aria-label="הסר הזמנה"
+            onClick={() => {
+              if (window.confirm(`להסיר את "${titleOf(b)}" מהנסיעה?`)) onDelete(b.id);
+            }}
+            sx={{ color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+          >
+            <i className="material-icons" style={{ fontSize: 18 }}>delete_outline</i>
+          </IconButton>
+        )}
+      </Box>
       <Divider sx={{ mb: 1 }} />
 
       {b.type === 'flight' && (

@@ -5,6 +5,7 @@ import {
 import {
   flightRightsProfile, rightsFor, formatAmount, claimLetter,
 } from '../../services/passengerRightsService';
+import { fetchFlightStatus, formatClock } from '../../services/flightStatusService';
 
 /**
  * מה מגיע לך אם הטיסה תתעכב.
@@ -20,6 +21,23 @@ import {
 const FlightRights = ({ flight, passengers = 1 }) => {
   const [delay, setDelay] = useState('');
   const [copied, setCopied] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [status, setStatus] = useState(null);
+
+  /**
+   * שולף את האיחור בפועל במקום לבקש מהמשתמש לזכור אותו.
+   *
+   * זה ההבדל המעשי היחיד שנותר: אדם שלא יודע כמה בדיוק התעכבה הטיסה
+   * לא יתבע, גם כשמגיע לו.
+   */
+  const checkActual = async () => {
+    setChecking(true);
+    setStatus(null);
+    const r = await fetchFlightStatus(flight.flightNumber, flight.date);
+    setStatus(r);
+    if (r.found && r.delayHours != null) setDelay(String(r.delayHours));
+    setChecking(false);
+  };
 
   const profile = flightRightsProfile(flight, passengers);
   if (!profile) return null;
@@ -81,12 +99,36 @@ const FlightRights = ({ flight, passengers = 1 }) => {
           inputProps={{ min: 0, max: 48, step: 0.5 }}
           sx={{ width: 190 }}
         />
+        <Button size="small" variant="contained" onClick={checkActual} disabled={checking || !flight.date}>
+          {checking ? 'בודק...' : 'בדוק את האיחור בפועל'}
+        </Button>
         {checked && !eligible.length && (
           <Typography variant="caption" color="text.secondary">
             בעיכוב כזה לא קמה זכות לפיצוי כספי.
           </Typography>
         )}
       </Box>
+
+      {status && !status.found && (
+        <Alert severity="info" sx={{ mt: 1, py: 0.5 }}>
+          {status.reason} אפשר להזין את מספר השעות ידנית.
+        </Alert>
+      )}
+
+      {status?.found && (
+        <Alert severity={status.delayHours > 0 ? 'warning' : 'success'} sx={{ mt: 1, py: 0.5 }}>
+          <AlertTitle sx={{ fontWeight: 700, mb: 0.25 }}>
+            {status.delayHours > 0
+              ? `הטיסה הגיעה באיחור של ${status.delayHours} שעות`
+              : 'הטיסה הגיעה בזמן'}
+          </AlertTitle>
+          מתוכנן {formatClock(status.scheduled)} · בפועל {formatClock(status.actual)}
+          {/* התקנה מודדת את רגע פתיחת הדלת. כשהנתון הוא זמן נחיתה בלבד
+              הוא מוקדם ממנו, והאיחור האמיתי גדול מהמוצג — הבחנה שמכריעה
+              במקרי גבול. */}
+          {!status.atGate && ' · הנתון הוא זמן נחיתה ולא הגעה לעמדה, ולכן האיחור בפועל עשוי להיות ארוך יותר'}
+        </Alert>
+      )}
 
       {checked && result?.entitlements?.map((e, i) => (
         <Box key={i} sx={{ mt: 1.5 }}>

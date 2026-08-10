@@ -83,7 +83,7 @@ const TravelInfoComponent = () => {
   // מצבים לניהול תצוגה
   const [showFlights, setShowFlights] = useState(true);
   const [showCarRental, setShowCarRental] = useState(true);
-  const { trips, autoScanning, autoScanResult, cloudError } = useBookings();
+  const { trips, autoScanning, autoScanResult, cloudError, removeBooking } = useBookings();
 
   // מחושב מחדש בכל שינוי בהזמנות
   const conflicts = findConflicts(flights, carRental, []);
@@ -197,7 +197,7 @@ const TravelInfoComponent = () => {
                   </Alert>
                 ))}
                 {(trip.bookings || []).map((b, i) => (
-                  <BookingDetails key={b.id || i} booking={b} />
+                  <BookingDetails key={b.id || i} booking={b} onDelete={removeBooking} />
                 ))}
 
                 {/* זכויות הנוסע לכל טיסה. מוצג גם כשהכול תקין — הידיעה
