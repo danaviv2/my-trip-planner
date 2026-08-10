@@ -9,6 +9,7 @@ import FlightInfo from './FlightInfo';
 import CarRentalInfo from './CarRentalInfo';
 import EmailImportModal from './EmailImportModal';
 import { findConflicts } from '../../services/itineraryConflictService';
+import { findDrivingRestrictions } from '../../services/drivingRestrictionsService';
 import { useBookings } from '../../contexts/BookingsContext';
 import BookingDetails from './BookingDetails';
 
@@ -31,9 +32,14 @@ const tripConflicts = (trip) => {
 
   if (!flights.length && !cars.length && !hotels.length) return [];
 
-  const all = cars.length
-    ? cars.flatMap((car) => findConflicts(flights, car, hotels))
-    : findConflicts(flights, null, hotels);
+  const all = [
+    ...(cars.length
+      ? cars.flatMap((car) => findConflicts(flights, car, hotels))
+      : findConflicts(flights, null, hotels)),
+    // מגבלות נהיגה נגזרות מהנסיעה כולה ולא מהזמנה בודדת: הן תלויות
+    // בשילוב של רכב שכור והמקומות שבהם הוא ייסע.
+    ...findDrivingRestrictions(bookings),
+  ];
 
   const seen = new Set();
   return all.filter((c) => {
