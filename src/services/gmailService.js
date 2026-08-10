@@ -35,9 +35,14 @@ const buildQuery = (monthsBack = 12) => {
     // לאתר מעולם לא נקלטו — גם כשהאישור היה בתיבה.
     'ביטוח נסיעות', 'פוליסת ביטוח', 'אישור ביטוח', 'travel insurance',
     'insurance policy', 'policy number',
-    'הכרטיסים שלך', 'הכרטיס שלך', 'שובר כניסה', 'אישור כניסה',
+    // הניסוחים כאן נגזרו מאישורים אמיתיים בתיבה ולא מהשערה. ספקי
+    // כרטיסים כותבים "ההזמנה אושרה" ו"הוראות לכרטיס", לא "אישור הזמנה",
+    // ופונים בגוף שני רבים — ולכן אף אחד מהם לא נתפס קודם.
+    'ההזמנה אושרה', 'הזמנה אושרה', 'ההזמנה שלכם אושרה',
+    'הוראות לכרטיס', 'הכרטיסים שלכם', 'הכרטיסים שלך', 'הכרטיס שלך',
+    'שובר כניסה', 'אישור כניסה', 'הכרטיסים מוכנים',
     'your tickets', 'your ticket', 'admission', 'skip the line',
-    'getyourguide', 'viator', 'tiqets', 'booking confirmed',
+    'booking confirmed', 'is confirmed', 'ticket instructions',
   ];
 
   const subj = subjects.map((s) => `subject:"${s}"`).join(' OR ');
