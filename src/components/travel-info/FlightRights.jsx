@@ -110,7 +110,12 @@ const FlightRights = ({ flight, passengers = 1 }) => {
       </Box>
 
       {status && !status.found && (
-        <Alert severity="info" sx={{ mt: 1, py: 0.5 }}>
+        <Alert severity={status.departureOnly ? 'warning' : 'info'} sx={{ mt: 1, py: 0.5 }}>
+          {status.departureOnly && (
+            <AlertTitle sx={{ fontWeight: 700, mb: 0.25 }}>
+              ההמראה אחרה ב-{status.departureDelayHours} שעות
+            </AlertTitle>
+          )}
           {status.reason} אפשר להזין את מספר השעות ידנית.
         </Alert>
       )}

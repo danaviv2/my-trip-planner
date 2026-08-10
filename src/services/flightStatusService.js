@@ -67,6 +67,28 @@ export const fetchFlightStatus = async (flightNumber, date) => {
   const actual = parse(data.arrival?.actual);
 
   if (!scheduled || !actual) {
+    // הספק אינו מחזיק תמיד שעת הגעה בפועל, אך כן את שעת ההמראה. איחור
+    // בהמראה אינו הנתון הקובע, ובכל זאת הוא אינדיקציה טובה: טיסה שיצאה
+    // בזמן כמעט לעולם לא מגיעה באיחור של שלוש שעות. עדיף להציג אותו
+    // ולומר במפורש מה הוא, מאשר להשאיר את המשתמש בלי דבר.
+    const depSched = parse(data.departure?.scheduled);
+    const depActual = parse(data.departure?.actual);
+
+    if (depSched && depActual) {
+      const depDelay = Math.max(0, Math.round(((depActual - depSched) / HOURS) * 4) / 4);
+      return {
+        found: false,
+        departureOnly: true,
+        departureDelayHours: depDelay,
+        scheduled: depSched,
+        actual: depActual,
+        status: data.status || null,
+        reason:
+          `אין שעת הגעה בפועל במאגר. ידוע שההמראה אחרה ב-${depDelay} שעות — ` +
+          'אך התקנה נמדדת לפי ההגעה, וטיסה מצמצמת לעיתים חלק מהאיחור באוויר.',
+      };
+    }
+
     return {
       found: false,
       delayHours: null,
