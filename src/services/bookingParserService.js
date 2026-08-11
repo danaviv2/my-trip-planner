@@ -182,6 +182,13 @@ Rules:
 - "insurance" is for travel insurance policies only. The emergency phone is the
   single most important field: it is what the traveller needs in a hospital
   abroad. Copy it exactly, including the country code. Set to null if absent.
+- A travel insurance policy states a coverage period and a policy number. A
+  registration for a flight-delay compensation service or a lounge-access
+  benefit is NOT a travel insurance policy, even when the same company sends
+  it and even when it names a validity date. Signals: the only stated coverage
+  is flight delay or lounge access, and no medical cover is mentioned. Set
+  "insurance" to null for these. Presenting such a message as a policy puts a
+  wrong emergency number in front of a traveller who needs a real one.
 - "activities" covers attractions, guided tours, shows, museum entry and event
   tickets. The entry time matters even more than the date, because a timed
   ticket constrains the whole day. If no time is stated, use null rather than

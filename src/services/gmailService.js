@@ -89,20 +89,32 @@ const containsDate = (text) =>
  * ומספר אישור או מספר טיסה. מייל שאין בו אף אחד מהם כמעט בוודאות אינו
  * אישור, ואין טעם לשלם עליו קריאה למודל.
  */
-const looksLikeBooking = (text) => {
+const looksLikeBooking = (text, subject = '') => {
+  // הנושא נבדק יחד עם הגוף. אישור שכל זהותו בשורת הנושא — "סיכום פרטי
+  // פוליסה מס׳ 310558317" — נדחה קודם משום שהסינון הסתכל בגוף בלבד, אף
+  // שהנושא נושא את מספר הפוליסה במפורש.
+  const full = `${subject}\n${text || ''}`;
+
+  // נושא שיש בו גם מילת הזמנה וגם מספר זיהוי ארוך הוא ראיה בפני עצמה,
+  // ואינו זקוק לתאריך: מסמך פוליסה מפנה לתאריכים בקובץ המצורף.
+  const subjectCarriesId =
+    /(פוליסה|policy|הזמנה|booking|reservation|אישור|confirmation)/i.test(subject) &&
+    /\d{5,}/.test(subject);
+  if (subjectCarriesId) return true;
+
   if (!text || text.length < 120) return false;
 
   // אישורים בעברית כותבים את התאריך במילים — "מצפים לכם ביום ד', 24 ביוני" —
   // ובלי זיהוי שמות החודשים בעברית הם נזרקו לפני שהגיעו לפענוח כלל.
   // זו הייתה נקודה עיוורת מול כל ספק שכותב בעברית ולא רק מול אחד.
-  const hasDate = containsDate(text);
+  const hasDate = containsDate(full);
 
   const hasReference =
-    /\b[A-Z0-9]{6,}\b/.test(text) ||                      // PNR או מספר אישור ארוך
-    /\b\d{6,}\b/.test(text) ||                            // מספר הזמנה מספרי
-    /\b[A-Z]{2}\s?\d{2,4}\b/.test(text) ||                // מספר טיסה
-    /(confirmation|confirmed|booking|reservation|reference|pnr)/i.test(text) ||
-    /(אישור הזמנה|מספר הזמנה|הזמנה מספר|קוד הזמנה|מספר אישור|אישור טיסה|מספר כרטיס)/.test(text);
+    /\b[A-Z0-9]{6,}\b/.test(full) ||                      // PNR או מספר אישור ארוך
+    /\b\d{6,}\b/.test(full) ||                            // מספר הזמנה מספרי
+    /\b[A-Z]{2}\s?\d{2,4}\b/.test(full) ||                // מספר טיסה
+    /(confirmation|confirmed|booking|reservation|reference|pnr)/i.test(full) ||
+    /(אישור הזמנה|מספר הזמנה|הזמנה מספר|קוד הזמנה|מספר אישור|אישור טיסה|מספר כרטיס)/.test(full);
 
   return hasDate && hasReference;
 };
@@ -273,12 +285,16 @@ export const fetchBookingEmails = async (token, { maxResults = 60, monthsBack = 
           reason,
         });
 
+      const subject = headerValue(headers, 'Subject');
+
       if (!text && !pdfs.length) return note('אין טקסט ואין קובץ מצורף');
-      if (!pdfs.length && !looksLikeBooking(text)) return note('לא זוהו תאריך ומספר אישור בגוף המייל');
+      if (!pdfs.length && !looksLikeBooking(text, subject)) {
+        return note('לא זוהו תאריך ומספר אישור בנושא ובגוף המייל');
+      }
 
       results.push({
         id: msg.id,
-        subject: headerValue(headers, 'Subject'),
+        subject,
         from: headerValue(headers, 'From'),
         date: headerValue(headers, 'Date'),
         // חיתוך: הפרסר ממילא קורא רק את ההתחלה, ומייל שיווקי ארוך מבזבז טוקנים
