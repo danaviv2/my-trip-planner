@@ -82,8 +82,8 @@ export const normalizeBooking = (b) => {
 /** קבוצה להזמנות שלא ניתן לתארך, כדי שלא ייעלמו מהמסך. */
 const undatedTrip = (group) => ({
   id: 'trip_undated',
-  title: 'הזמנות ללא תאריך',
-  destination: 'ללא תאריך',
+  title: 'הזמנות שאינן משויכות לנסיעה',
+  destination: 'לא משויך לנסיעה',
   startDate: '',
   endDate: '',
   nights: 0,
@@ -212,7 +212,21 @@ export const groupBookingsIntoTrips = (bookings = []) => {
       }
     });
 
-  const trips = mergedClusters.map(({ group }) => {
+  // פוליסת ביטוח אינה נסיעה.
+  //
+  // כשהיא לא נחתכת עם שום נסיעה — פוליסה של שנה שעברה, למשל — היא פתחה
+  // קבוצה משלה, ומכיוון שאין בפוליסה שם מקום היא הוצגה כ"יעד לא ידוע".
+  // ביטוח נצמד לנסיעה קיימת או עומד בצד, אך לעולם אינו מגדיר נסיעה.
+  const standalone = [];
+  const realTrips = mergedClusters.filter(({ group }) => {
+    if (group.every((x) => x.type === 'insurance')) {
+      standalone.push(...group);
+      return false;
+    }
+    return true;
+  });
+
+  const trips = realTrips.map(({ group }) => {
     const start = group.reduce((min, x) => (x.start < min ? x.start : min), group[0].start);
     const end = group.reduce((max, x) => {
       const e = x.end || x.start;
@@ -299,7 +313,8 @@ export const groupBookingsIntoTrips = (bookings = []) => {
     };
   });
 
-  return undated.length ? [...trips, undatedTrip(undated)] : trips;
+  const unattached = [...undated, ...standalone];
+  return unattached.length ? [...trips, undatedTrip(unattached)] : trips;
 };
 
 /**

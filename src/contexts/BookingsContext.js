@@ -48,7 +48,8 @@ const writeCancelled = (set) => {
  * בלי הסינון הזה הביטול מחזיק עד הסריקה הבאה בלבד.
  */
 /** מסלק רשומות טיסה ריקות, כולל כאלה שכבר הצטברו במאגר. */
-const withoutEmptyFlights = (list) => list.filter((b) => !isEmptyFlight(b));
+const withoutEmptyFlights = (list) =>
+  list.filter((b) => !isEmptyFlight(b) && !isEmptyRide(b));
 
 const withoutCancelled = (list, refs) =>
   refs.size ? list.filter((b) => !refs.has(refKey(b.confirmationNumber))) : list;
@@ -113,6 +114,20 @@ const isFlightFragment = (f) =>
 const isEmptyFlight = (f) =>
   f.type === 'flight' && !norm(f.date) && !norm(f.flightNumber);
 
+/**
+ * רשומת רכב או הסעה שאין בה תאריך ואף לא מספר אישור.
+ *
+ * שם החברה לבדו אינו הזמנה: אי אפשר לדעת ממנו מתי, לאן, או על סמך מה
+ * לפנות לספק. רשומה כזו נוצרת כשתזכורת או מייל שיווקי מזכירים ספק בלי
+ * פרטים, והיא תופסת מקום בלי שאפשר לעשות בה דבר.
+ */
+const isEmptyRide = (b) =>
+  (b.type === 'car_rental' || b.type === 'transfer') &&
+  !norm(b.confirmationNumber) &&
+  !norm(b.pickupDate) &&
+  !norm(b.date) &&
+  !norm(b.returnDate);
+
 const sameFlight = (a, b) => {
   // רשומה בלי תאריך אינה סותרת שום תאריך. תזכורת צ׳ק-אין נושאת את מספר
   // הטיסה בלבד, ובלי הכלל הזה היא נשארה רשומה נפרדת לצד הטיסה עצמה —
@@ -160,7 +175,14 @@ const bookingKey = (b) => {
     return ['activity', norm(b.name), norm(b.date), norm(b.time)].join('|');
   }
   if (type === 'insurance') {
-    return ['insurance', norm(b.provider), norm(b.policyNumber || b.startDate)].join('|');
+    // פוליסה שלא נקרא ממנה מספר ולא תאריך התחלה הפיקה מפתח שכל תוכנו שם
+    // המבטח, ולכן כל הפוליסות מאותה חברה קרסו לאחת — הפוליסה הישנה שרדה
+    // והחדשה נבלעה. תאריך התוקף מבדיל ביניהן.
+    return [
+      'insurance',
+      norm(b.provider),
+      norm(b.policyNumber) || norm(b.startDate) || norm(b.endDate),
+    ].join('|');
   }
   return [type, norm(b.confirmationNumber), norm(b.date || b.checkIn)].join('|');
 };

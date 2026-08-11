@@ -157,7 +157,7 @@ const TravelInfoComponent = () => {
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                     {trip.undated
-                      ? 'לא נקראו תאריכים מהאישור — לכן אינן משויכות לנסיעה'
+                      ? 'לא נקראו תאריכים מהאישור, או שהתאריכים אינם חלים על אף נסיעה'
                       : `${trip.startDate} — ${trip.endDate}${trip.nights ? ` · ${trip.nights} לילות` : ''}`}
                   </Typography>
                   {/* עלות מתוך המחירים שנקלטו באישורים. כשחלק מההזמנות
