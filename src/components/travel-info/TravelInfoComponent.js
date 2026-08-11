@@ -1,5 +1,5 @@
 // src/components/travel-info/TravelInfoComponent.js
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Box, Paper, Typography, Button, IconButton, Alert, AlertTitle, Chip,
@@ -83,67 +83,30 @@ const TravelInfoComponent = () => {
   // מצבים לניהול תצוגה
   const [showFlights, setShowFlights] = useState(true);
   const [showCarRental, setShowCarRental] = useState(true);
+  const [showPast, setShowPast] = useState(false);
   const { trips, autoScanning, autoScanResult, cloudError, removeBooking } = useBookings();
+
+  // נסיעה שהסתיימה אינה רעש: היא נושאת הוצאות, אישורים ולעיתים תביעת
+  // פיצוי שטרם הוגשה. אבל נסיעה משנה שעברה כן מטשטשת את השאלה היחידה
+  // שמעניינת במסך — מה קרוב.
+  //
+  // הגבול אינו "עבר מול עתיד" אלא "פתוח מול סגור": בשבועות שאחרי
+  // החזרה עוד מגישים החזרים ובודקים חיובים, ולכן נסיעה טרייה נשארת
+  // למעלה. אחרי כן היא היסטוריה.
+  const { upcoming, past } = useMemo(() => {
+    const ACTIVE_DAYS = 90;
+    const cutoff = new Date(Date.now() - ACTIVE_DAYS * 86400000).toISOString().slice(0, 10);
+    return {
+      // הקבוצה הלא-משויכת אינה ארכיון: היא דורשת טיפול, ולכן נשארת למעלה.
+      upcoming: trips.filter((t) => t.undated || !t.endDate || t.endDate >= cutoff),
+      past: trips.filter((t) => !t.undated && t.endDate && t.endDate < cutoff),
+    };
+  }, [trips]);
 
   // מחושב מחדש בכל שינוי בהזמנות
   const conflicts = findConflicts(flights, carRental, []);
-  
-  return (
-    <Paper elevation={3} sx={{ p: 3, borderRadius: '10px', mb: 3 }}>
-      <Typography variant="h5" sx={{ mb: 2, display: 'flex', alignItems: 'center', fontWeight: 'bold' }}>
-        <i className="material-icons" style={{ marginRight: '8px', color: '#2196F3' }}>flight</i>
-        {t('travelInfoPage.title')}
-      </Typography>
-      
-      <Box sx={{ mb: 3, display: 'flex', gap: 1 }}>
-        <Button 
-          variant="contained" 
-          color="primary"
-          startIcon={<i className="material-icons">email</i>}
-          onClick={() => setEmailImportModalOpen(true)}
-        >
-          {t('travelInfoPage.import_email')}
-        </Button>
-        
-        <Button 
-          variant="outlined"
-          startIcon={<i className="material-icons">print</i>}
-          onClick={() => window.print()}
-        >
-          {t('travelInfoPage.print')}
-        </Button>
-      </Box>
-      
-      {cloudError && (
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          <AlertTitle sx={{ fontWeight: 700, mb: 0.25 }}>הנסיעות שמורות במכשיר הזה בלבד</AlertTitle>
-          הגיבוי לענן אינו זמין כרגע. הנתונים לא ילכו לאיבוד, אך ניקוי היסטוריית
-          הדפדפן ימחק אותם ולא תראה אותם ממכשיר אחר.
-        </Alert>
-      )}
 
-      {/* הסריקה השקטה רצה בלי שהמשתמש ביקש. בלי חיווי, נסיעה חדשה
-          שמופיעה לבדה נראית כמו תקלה ולא כמו שירות. */}
-      {autoScanning && (
-        <Alert severity="info" icon={<i className="material-icons">sync</i>} sx={{ mb: 2 }}>
-          מחפש אישורי הזמנה חדשים בתיבת המייל שלך...
-        </Alert>
-      )}
-      {!autoScanning && autoScanResult?.added > 0 && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          נמצאו {autoScanResult.added} הזמנות חדשות במייל ושויכו לנסיעות אוטומטית.
-        </Alert>
-      )}
-
-      {/* טיולים שנגזרו מההזמנות שיובאו. אישורים שהגיעו בנפרד —
-          טיסה, מלון ורכב — מתאחדים כאן לנסיעה אחת. */}
-      {trips.length > 0 && (
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-            <i className="material-icons" style={{ marginRight: '8px' }}>luggage</i>
-            הנסיעות שלך ({trips.length})
-          </Typography>
-          {trips.map((trip) => (
+  const renderTrip = (trip) => (
             <Accordion
               key={trip.id}
               disableGutters
@@ -211,7 +174,83 @@ const TravelInfoComponent = () => {
                   ))}
               </AccordionDetails>
             </Accordion>
-          ))}
+  );
+  
+  return (
+    <Paper elevation={3} sx={{ p: 3, borderRadius: '10px', mb: 3 }}>
+      <Typography variant="h5" sx={{ mb: 2, display: 'flex', alignItems: 'center', fontWeight: 'bold' }}>
+        <i className="material-icons" style={{ marginRight: '8px', color: '#2196F3' }}>flight</i>
+        {t('travelInfoPage.title')}
+      </Typography>
+      
+      <Box sx={{ mb: 3, display: 'flex', gap: 1 }}>
+        <Button 
+          variant="contained" 
+          color="primary"
+          startIcon={<i className="material-icons">email</i>}
+          onClick={() => setEmailImportModalOpen(true)}
+        >
+          {t('travelInfoPage.import_email')}
+        </Button>
+        
+        <Button 
+          variant="outlined"
+          startIcon={<i className="material-icons">print</i>}
+          onClick={() => window.print()}
+        >
+          {t('travelInfoPage.print')}
+        </Button>
+      </Box>
+      
+      {cloudError && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          <AlertTitle sx={{ fontWeight: 700, mb: 0.25 }}>הנסיעות שמורות במכשיר הזה בלבד</AlertTitle>
+          הגיבוי לענן אינו זמין כרגע. הנתונים לא ילכו לאיבוד, אך ניקוי היסטוריית
+          הדפדפן ימחק אותם ולא תראה אותם ממכשיר אחר.
+        </Alert>
+      )}
+
+      {/* הסריקה השקטה רצה בלי שהמשתמש ביקש. בלי חיווי, נסיעה חדשה
+          שמופיעה לבדה נראית כמו תקלה ולא כמו שירות. */}
+      {autoScanning && (
+        <Alert severity="info" icon={<i className="material-icons">sync</i>} sx={{ mb: 2 }}>
+          מחפש אישורי הזמנה חדשים בתיבת המייל שלך...
+        </Alert>
+      )}
+      {!autoScanning && autoScanResult?.added > 0 && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          נמצאו {autoScanResult.added} הזמנות חדשות במייל ושויכו לנסיעות אוטומטית.
+        </Alert>
+      )}
+
+      {/* טיולים שנגזרו מההזמנות שיובאו. אישורים שהגיעו בנפרד —
+          טיסה, מלון ורכב — מתאחדים כאן לנסיעה אחת. */}
+      {/* טיולים שנגזרו מההזמנות שיובאו. אישורים שהגיעו בנפרד —
+          טיסה, מלון ורכב — מתאחדים כאן לנסיעה אחת. */}
+      {upcoming.length > 0 && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+            <i className="material-icons" style={{ marginRight: '8px' }}>luggage</i>
+            הנסיעות שלך ({upcoming.length})
+          </Typography>
+          {upcoming.map(renderTrip)}
+        </Box>
+      )}
+
+      {/* נסיעות שהסתיימו — ארכיון. מקופל כברירת מחדל: הן אינן רלוונטיות
+          לתכנון, אך נושאות הוצאות ואישורים שאולי יידרשו מול הספק. */}
+      {past.length > 0 && (
+        <Box sx={{ mb: 3 }}>
+          <Button
+            size="small"
+            color="inherit"
+            onClick={() => setShowPast((v) => !v)}
+            startIcon={<i className="material-icons">{showPast ? 'expand_less' : 'expand_more'}</i>}
+            sx={{ fontWeight: 700, color: 'text.secondary' }}
+          >
+            נסיעות קודמות ({past.length})
+          </Button>
+          {showPast && <Box sx={{ mt: 1 }}>{past.map(renderTrip)}</Box>}
         </Box>
       )}
 
