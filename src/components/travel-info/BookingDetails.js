@@ -33,6 +33,19 @@ const titleOf = (b) => {
   return '📋 הזמנה';
 };
 
+/**
+ * האם המספר יכול להיות קו סיוע של מבטח.
+ *
+ * נייד ישראלי (05x) הוא מספרו של המבוטח, לא של המוקד. הפענוח שאב פעם
+ * את הנייד מתוך פרטי המבוטח והציג אותו ככותרת "טלפון חירום 24/7" —
+ * מספר שגוי בשעת חירום גרוע מהיעדר מספר, כי מסתמכים עליו.
+ */
+const isAssistanceLine = (phone) => {
+  const digits = String(phone || '').replace(/[^\d+]/g, '');
+  if (digits.length < 7) return false;
+  return !/^(\+?972|0)5\d/.test(digits);
+};
+
 const BookingDetails = ({ booking: b, onDelete }) => {
   if (!b) return null;
 
@@ -86,7 +99,7 @@ const BookingDetails = ({ booking: b, onDelete }) => {
           ואז לא מחפשים "מה מכוסה" אלא למי מתקשרים. */}
       {b.type === 'insurance' && (
         <>
-          {b.emergencyPhone && (
+          {isAssistanceLine(b.emergencyPhone) && (
             <Box sx={{ mb: 1, p: 1.25, bgcolor: 'error.light', borderRadius: 1.5 }}>
               <Typography variant="caption" sx={{ display: 'block', fontWeight: 700, color: 'error.contrastText' }}>
                 טלפון חירום 24/7
@@ -163,8 +176,22 @@ const BookingDetails = ({ booking: b, onDelete }) => {
 
       {/* כשהפרטים חלקיים — לרוב מפני שהם נמצאים בקובץ מצורף ולא בגוף המייל */}
       {!b.flightNumber && !b.company && !b.name && (
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
           לא חולצו פרטים נוספים מהמייל. ייתכן שהם נמצאים בקובץ מצורף.
+        </Typography>
+      )}
+
+      {/* מקור הרשומה. רשומה חלקית בלי מקור אינה ניתנת לאבחון: אי אפשר
+          לדעת אם המייל לא נסרק, אם נסרק ולא הניב את השדה, או אם הקובץ
+          המצורף לא נקרא — וכל תיקון נעשה בניחוש. */}
+      {b.sourceSubject && (
+        <Typography
+          variant="caption"
+          color="text.disabled"
+          sx={{ display: 'block', mt: 0.75, fontSize: '0.68rem' }}
+        >
+          מקור: {b.sourceSubject.slice(0, 60)}
+          {b.sourceKind && b.sourceKind !== 'body' ? ` · מתוך ${b.sourceKind}` : ' · מגוף המייל'}
         </Typography>
       )}
     </Paper>

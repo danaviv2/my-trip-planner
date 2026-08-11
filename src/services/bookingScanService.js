@@ -30,8 +30,14 @@ const isSubstantial = (b) =>
    'pickupDate', 'startDate', 'endDate', 'time', 'emergencyPhone']
     .some((k) => String(b[k] || '').trim());
 
-/** ממיר תוצאת פענוח לרשומות הזמנה שהמאגר מכיר. */
-const toBookings = (result) => [
+/**
+ * ממיר תוצאת פענוח לרשומות הזמנה שהמאגר מכיר.
+ *
+ * כל רשומה נושאת את מקורה. בלי זה, רשומה חלקית על המסך אינה ניתנת
+ * לאבחון: אי אפשר לדעת אם המייל לא נסרק, אם נסרק ולא הניב את השדה, או
+ * אם הקובץ המצורף לא נקרא — וכל תיקון הוא ניחוש.
+ */
+const toBookings = (result, source = {}) => [
   ...result.flights.map((f) => ({ ...f, type: 'flight', direction: f.type })),
   ...(result.carRental
     ? [{ ...result.carRental, type: result.carRental.category === 'transfer' ? 'transfer' : 'car_rental' }]
@@ -39,7 +45,7 @@ const toBookings = (result) => [
   ...(result.hotel ? [{ ...result.hotel, type: 'hotel' }] : []),
   ...(result.insurance ? [{ ...result.insurance, type: 'insurance' }] : []),
   ...(result.activities || []).map((a) => ({ ...a, type: 'activity' })),
-];
+].map((b) => ({ ...b, ...source }));
 
 /**
  * @param {string} token טוקן גישה ל-Gmail
@@ -89,7 +95,7 @@ export const scanMailbox = async (
               ...(result.cancelledReferences || []).map((ref) => ({ confirmationNumber: ref }))
             );
           } else {
-            bookings.push(...toBookings(result));
+            bookings.push(...toBookings(result, { sourceSubject: email.subject, sourceKind: 'body' }));
           }
           // "משהו" אינו "מספיק". מייל שגופו מכתב לוואי מניב רשומה שכל
           // תוכנה שם הספק, וזו חסמה את הקובץ המצורף שבו הפוליסה כולה —
@@ -121,7 +127,9 @@ export const scanMailbox = async (
                 ...(result.cancelledReferences || []).map((ref) => ({ confirmationNumber: ref }))
               );
             } else {
-              bookings.push(...toBookings(result));
+              bookings.push(
+                ...toBookings(result, { sourceSubject: email.subject, sourceKind: pdf.filename || 'קובץ מצורף' })
+              );
             }
             gotSomething = true;
             fromPdf++;

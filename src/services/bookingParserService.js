@@ -182,6 +182,13 @@ Rules:
 - "insurance" is for travel insurance policies only. The emergency phone is the
   single most important field: it is what the traveller needs in a hospital
   abroad. Copy it exactly, including the country code. Set to null if absent.
+- "emergencyPhone" is the INSURER's 24/7 assistance line — a company number.
+  It is never the policyholder's own phone. A document lists both: the
+  policyholder's contact details near their name and address, and the
+  assistance line near words like "emergency", "assistance", "מוקד", "חירום",
+  "24/7". An Israeli mobile number (05x) belonging to the insured is not the
+  assistance line. If only a personal number appears, set it to null — an
+  empty field is safe, a wrong number in an emergency is not.
 - A travel insurance policy states a coverage period and a policy number. A
   registration for a flight-delay compensation service or a lounge-access
   benefit is NOT a travel insurance policy, even when the same company sends
