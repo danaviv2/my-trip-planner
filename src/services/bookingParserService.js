@@ -182,6 +182,16 @@ Rules:
 - "insurance" is for travel insurance policies only. The emergency phone is the
   single most important field: it is what the traveller needs in a hospital
   abroad. Copy it exactly, including the country code. Set to null if absent.
+- Dates must come from a field that is labelled as a date — "תאריך תחילה",
+  "start date", "valid from", "בתוקף עד", a check-in row. NEVER derive a date
+  from a name or an identifier. Product and plan names routinely contain a
+  month and a year ("PassportCard DSIC Modular 11-2025", "Winter 2026 Plan",
+  "Policy 03/24"); that is a version, not a period of cover. If no labelled
+  date appears, set the date fields to null. An empty date is corrected by the
+  next document; an invented one is trusted and silently wrong.
+- "provider" is the brand the traveller bought from and recognises, which is
+  usually the name in the subject and the logo. An underwriter named in the
+  policy wording is not the provider; put it in "coverage" if it matters.
 - "emergencyPhone" is the INSURER's 24/7 assistance line — a company number.
   It is never the policyholder's own phone. A document lists both: the
   policyholder's contact details near their name and address, and the
