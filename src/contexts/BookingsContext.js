@@ -47,9 +47,8 @@ const writeCancelled = (set) => {
  * מייל האישור המקורי נשאר בתיבה לנצח, ולכן כל סריקה מייבאת אותו מחדש.
  * בלי הסינון הזה הביטול מחזיק עד הסריקה הבאה בלבד.
  */
-/** מסלק רשומות טיסה ריקות, כולל כאלה שכבר הצטברו במאגר. */
-const withoutEmptyFlights = (list) =>
-  list.filter((b) => !isEmptyFlight(b) && !isEmptyRide(b));
+/** מסלק רשומות חסרות תוכן, כולל כאלה שכבר הצטברו במאגר. */
+const withoutEmptyRecords = (list) => list.filter((b) => !isEmptyRecord(b));
 
 const withoutCancelled = (list, refs) =>
   refs.size ? list.filter((b) => !refs.has(refKey(b.confirmationNumber))) : list;
@@ -111,22 +110,29 @@ const isFlightFragment = (f) =>
  * אינם מסכימים — ולכן שני עותקים זהים לעולם לא יתאחדו. כל סריקה הוסיפה
  * עותק נוסף, עד שהצטברו תריסר "טיסות" ריקות.
  */
-const isEmptyFlight = (f) =>
-  f.type === 'flight' && !norm(f.date) && !norm(f.flightNumber);
-
 /**
- * רשומת רכב או הסעה שאין בה תאריך ואף לא מספר אישור.
+ * רשומה שאין בה מספר אישור, מזהה ייעודי ואף לא תאריך.
  *
- * שם החברה לבדו אינו הזמנה: אי אפשר לדעת ממנו מתי, לאן, או על סמך מה
- * לפנות לספק. רשומה כזו נוצרת כשתזכורת או מייל שיווקי מזכירים ספק בלי
- * פרטים, והיא תופסת מקום בלי שאפשר לעשות בה דבר.
+ * שם ספק לבדו אינו הזמנה: אי אפשר לדעת ממנו מתי, לאן, או על סמך מה
+ * לפנות. רשומות כאלה נוצרות מתזכורות וממכתבי לוואי, והן גם הרסניות —
+ * אין להן שום שדה להסכים עליו, ולכן אינן מתאחדות ומצטברות בכל סריקה.
+ *
+ * מלון ואטרקציה אינם נכללים: שם מוכר הוא מידע שהמשתמש יודע לזהות
+ * ולמחוק בעצמו, ומחיקה אוטומטית שלו מסוכנת יותר מהרעש שהיא חוסכת.
  */
-const isEmptyRide = (b) =>
-  (b.type === 'car_rental' || b.type === 'transfer') &&
-  !norm(b.confirmationNumber) &&
-  !norm(b.pickupDate) &&
-  !norm(b.date) &&
-  !norm(b.returnDate);
+const PURGEABLE = {
+  flight: ['flightNumber', 'date', 'departureTime', 'arrivalTime'],
+  car_rental: ['pickupDate', 'returnDate', 'date'],
+  transfer: ['pickupDate', 'pickupTime', 'date'],
+  insurance: ['policyNumber', 'startDate', 'endDate'],
+};
+
+const isEmptyRecord = (b) => {
+  const fields = PURGEABLE[b.type || ''];
+  if (!fields) return false;
+  if (norm(b.confirmationNumber)) return false;
+  return !fields.some((k) => norm(b[k]));
+};
 
 const sameFlight = (a, b) => {
   // רשומה בלי תאריך אינה סותרת שום תאריך. תזכורת צ׳ק-אין נושאת את מספר
@@ -162,29 +168,18 @@ const sameFlight = (a, b) => {
  * מזהה יציב לפי מהות ההזמנה, לא לפי הניירת שלה. גרסה קודמת כללה את מספר
  * האישור, ולכן אותה הזמנה שהגיעה גם מהספק וגם מאתר ההזמנות נספרה פעמיים.
  */
-const bookingKey = (b) => {
-  const type = b.type || '';
-  if (type === 'car_rental') return ['car', norm(b.company), norm(b.pickupDate)].join('|');
-  if (type === 'hotel') return ['hotel', norm(b.name), norm(b.checkIn)].join('|');
-  // להסעה יש pickupDate ולא date, ולכן הענף הכללי הפיק לכולן מפתח זהה
-  // וכל ההסעות שאין להן מספר אישור התאחדו לאחת.
-  if (type === 'transfer') {
-    return ['transfer', norm(b.company), norm(b.pickupDate), norm(b.pickupTime)].join('|');
-  }
-  if (type === 'activity') {
-    return ['activity', norm(b.name), norm(b.date), norm(b.time)].join('|');
-  }
-  if (type === 'insurance') {
-    // פוליסה שלא נקרא ממנה מספר ולא תאריך התחלה הפיקה מפתח שכל תוכנו שם
-    // המבטח, ולכן כל הפוליסות מאותה חברה קרסו לאחת — הפוליסה הישנה שרדה
-    // והחדשה נבלעה. תאריך התוקף מבדיל ביניהן.
-    return [
-      'insurance',
-      norm(b.provider),
-      norm(b.policyNumber) || norm(b.startDate) || norm(b.endDate),
-    ].join('|');
-  }
-  return [type, norm(b.confirmationNumber), norm(b.date || b.checkIn)].join('|');
+/**
+ * שדות הזהות והזמן של כל סוג הזמנה.
+ *
+ * זהות = מה שהספק מנפיק להזמנה אחת. זמן = מתי היא מתרחשת. שתי גרסאות
+ * של אותה הזמנה יסכימו על לפחות אחד מהם, ולעולם לא יסתרו זה את זה.
+ */
+const IDENTITY = {
+  insurance: { id: ['policyNumber'], time: ['startDate', 'endDate'] },
+  hotel: { id: ['name'], time: ['checkIn', 'checkOut'] },
+  car_rental: { id: ['company'], time: ['pickupDate', 'returnDate'] },
+  transfer: { id: ['company'], time: ['pickupDate', 'pickupTime'] },
+  activity: { id: ['name'], time: ['date', 'time'] },
 };
 
 /**
@@ -206,9 +201,23 @@ const sameBooking = (a, b) => {
   }
 
   if (agrees(a.confirmationNumber, b.confirmationNumber)) return true;
-
   if ((a.type || '') !== (b.type || '')) return false;
-  return bookingKey(a) === bookingKey(b);
+
+  // מפתח־גיבוב נבנה משדות שעשויים להיעדר, ולכן פיצל בהכרח גרסאות חלקיות
+  // של אותה הזמנה: מייל אחד נושא את מספר הפוליסה, קובץ מצורף נושא את
+  // התאריכים ואת טלפון החירום — ושניהם הפיקו מפתחות שונים. זה בדיוק
+  // הליקוי שתוקן לטיסות בהשוואה לפי סימנים, ולא הוחל על שאר הסוגים.
+  const fields = IDENTITY[a.type || ''];
+  if (!fields) return false;
+
+  const all = [...fields.id, ...fields.time];
+  if (all.some((k) => contradicts(a[k], b[k]))) return false;
+  if (contradicts(a.confirmationNumber, b.confirmationNumber)) return false;
+
+  // הסכמה חיובית באחד השדות היא התנאי. שתי רשומות שאין ביניהן אף שדה
+  // משותף אינן "אותה הזמנה" אלא שתי הזמנות שלא ידוע עליהן די — ואיחודן
+  // היה יוצר רשומה מורכבת משתי מציאויות.
+  return all.some((k) => agrees(a[k], b[k]));
 };
 
 /**
@@ -280,7 +289,7 @@ export const BookingsProvider = ({ children }) => {
           const merged = [...remote, ...readLocal()];
           // איחוד לפי מהות ההזמנה, ולא לפי מזהה: אותה טיסה עשויה להיות
           // שמורה בענן ובדפדפן תחת מזהים שונים.
-          const clean = withoutCancelled(withoutEmptyFlights(dedupe(merged)), cancelledRefs);
+          const clean = withoutCancelled(withoutEmptyRecords(dedupe(merged)), cancelledRefs);
           const remoteIds = new Set(remote.map((b) => String(b.id)));
 
           // מה שקיים מקומית ולא בענן מועלה; מה שנשאר בענן אחרי האיחוד
@@ -303,14 +312,14 @@ export const BookingsProvider = ({ children }) => {
           // הענן אינו זמין — ממשיכים מהעותק המקומי, אך מסמנים זאת כדי
           // שהמשתמש לא יניח שהנתונים מגובים.
           if (!cancelled) {
-            const clean = withoutCancelled(withoutEmptyFlights(dedupe(readLocal())), readCancelled());
+            const clean = withoutCancelled(withoutEmptyRecords(dedupe(readLocal())), readCancelled());
             writeLocal(clean);
             setBookings(clean);
             setCloudError(true);
           }
         }
       } else if (!cancelled) {
-        const clean = withoutCancelled(withoutEmptyFlights(dedupe(readLocal())), readCancelled());
+        const clean = withoutCancelled(withoutEmptyRecords(dedupe(readLocal())), readCancelled());
         writeLocal(clean);
         setBookings(clean);
       }
@@ -340,7 +349,7 @@ export const BookingsProvider = ({ children }) => {
       // מגוף המייל, מה-PDF המצורף ולעיתים ממייל נוסף. בדיקה מול המאגר
       // בלבד לא תופסת אותן, ולכן האיחוד רץ על הכל יחד.
       const before = new Map(bookings.map((b) => [String(b.id), JSON.stringify(b)]));
-      const merged = withoutCancelled(withoutEmptyFlights(dedupe([...bookings, ...stamped])), readCancelled());
+      const merged = withoutCancelled(withoutEmptyRecords(dedupe([...bookings, ...stamped])), readCancelled());
 
       // נשמר גם מה שנוסף וגם רשומה קיימת שהתעשרה בפרטים מהאצווה
       const changed = merged.filter((b) => before.get(String(b.id)) !== JSON.stringify(b));

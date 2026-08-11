@@ -19,6 +19,17 @@ const rank = (pdf) => {
   return 1;
 };
 
+/**
+ * האם ברשומה די מידע כדי לוותר על הקובץ המצורף.
+ *
+ * שם ספק לבדו אינו הזמנה: בלי תאריך, מספר או שעה אי אפשר להשתמש בה
+ * לכלום. הסף נמוך בכוונה — די בשדה משמעותי אחד.
+ */
+const isSubstantial = (b) =>
+  ['confirmationNumber', 'policyNumber', 'flightNumber', 'date', 'checkIn',
+   'pickupDate', 'startDate', 'endDate', 'time', 'emergencyPhone']
+    .some((k) => String(b[k] || '').trim());
+
 /** ממיר תוצאת פענוח לרשומות הזמנה שהמאגר מכיר. */
 const toBookings = (result) => [
   ...result.flights.map((f) => ({ ...f, type: 'flight', direction: f.type })),
@@ -63,7 +74,12 @@ export const scanMailbox = async (
     // קודם גוף המייל — זול ומהיר יותר
     try {
       if (email.text) {
-        const result = await parseTravelDocument(email.text);
+        // שורת הנושא נושאת לעיתים את הזהות היחידה של ההזמנה — "סיכום
+        // פרטי פוליסה מס׳ 310558317". היא שימשה לסינון ונזרקה לפני
+        // הפענוח, כך שדווקא המזהה לא הגיע למודל.
+        const result = await parseTravelDocument(
+          email.subject ? `נושא: ${email.subject}\n\n${email.text}` : email.text
+        );
         if (result.isBooking) {
           if (result.cancelled) {
             // ביטול ללא פרטים מיוצג במספר האישור בלבד — זו כל האחיזה
@@ -75,7 +91,10 @@ export const scanMailbox = async (
           } else {
             bookings.push(...toBookings(result));
           }
-          gotSomething = true;
+          // "משהו" אינו "מספיק". מייל שגופו מכתב לוואי מניב רשומה שכל
+          // תוכנה שם הספק, וזו חסמה את הקובץ המצורף שבו הפוליסה כולה —
+          // התאריכים וטלפון החירום. רשומה דלה אינה סיבה לוותר על הקובץ.
+          gotSomething = toBookings(result).some(isSubstantial);
         }
       }
     } catch {
