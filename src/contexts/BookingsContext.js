@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext';
 import {
   saveBooking, loadBookings, deleteBooking,
   markCancelledRef, loadCancelledRefs,
+  saveDismissed, loadDismissed,
 } from '../services/firestoreService';
 import { groupBookingsIntoTrips } from '../services/tripGroupingService';
 import { useAutoGmailScan } from '../hooks/useAutoGmailScan';
@@ -26,6 +27,34 @@ const CANCELLED_KEY = 'cancelledBookingRefs';
 // מזהה הביטול חייב להיראות זהה בשלושת המקומות: בסינון, באחסון המקומי
 // ובמזהה המסמך בענן — שבו לוכסן אסור.
 const refKey = (s) => norm(s).replace(/\//g, '-');
+
+// הזמנות שנמחקו ידנית. נשמר תוכן הרשומה ולא מזהה, כי המזהה משתנה בכל
+// ייבוא מחדש בעוד תוכן ההזמנה נשאר.
+const DISMISSED_KEY = 'dismissedBookings';
+
+const readDismissed = () => {
+  try {
+    return JSON.parse(localStorage.getItem(DISMISSED_KEY) || '[]');
+  } catch {
+    return [];
+  }
+};
+
+const writeDismissed = (list) => {
+  try {
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify(list));
+  } catch {}
+};
+
+/**
+ * מסלק הזמנות שהמשתמש מחק.
+ *
+ * בלי זה המחיקה מחזיקה עד הסריקה הבאה בלבד: מייל האישור נשאר בתיבה
+ * לנצח, וההזמנה שמחקת חוזרת. ההשוואה היא אותה השוואה שמזהה כפילויות,
+ * ולכן גרסה חלקית של רשומה שנמחקה לא תחזור מהדלת האחורית.
+ */
+const withoutDismissed = (list, dismissed) =>
+  dismissed.length ? list.filter((b) => !dismissed.some((d) => sameBooking(b, d))) : list;
 
 const readCancelled = () => {
   try {
@@ -280,16 +309,19 @@ export const BookingsProvider = ({ children }) => {
       setLoading(true);
       if (user) {
         try {
-          const [remote, remoteCancelled] = await Promise.all([
+          const [remote, remoteCancelled, remoteDismissed] = await Promise.all([
             loadBookings(user.uid),
             loadCancelledRefs(user.uid).catch(() => new Set()),
+            loadDismissed(user.uid).catch(() => []),
           ]);
+          const dismissed = dedupe([...readDismissed(), ...remoteDismissed]);
+          writeDismissed(dismissed);
           const cancelledRefs = new Set([...readCancelled(), ...remoteCancelled]);
           writeCancelled(cancelledRefs);
           const merged = [...remote, ...readLocal()];
           // איחוד לפי מהות ההזמנה, ולא לפי מזהה: אותה טיסה עשויה להיות
           // שמורה בענן ובדפדפן תחת מזהים שונים.
-          const clean = withoutCancelled(withoutEmptyRecords(dedupe(merged)), cancelledRefs);
+          const clean = withoutDismissed(withoutCancelled(withoutEmptyRecords(dedupe(merged)), cancelledRefs), dismissed);
           const remoteIds = new Set(remote.map((b) => String(b.id)));
 
           // מה שקיים מקומית ולא בענן מועלה; מה שנשאר בענן אחרי האיחוד
@@ -312,14 +344,14 @@ export const BookingsProvider = ({ children }) => {
           // הענן אינו זמין — ממשיכים מהעותק המקומי, אך מסמנים זאת כדי
           // שהמשתמש לא יניח שהנתונים מגובים.
           if (!cancelled) {
-            const clean = withoutCancelled(withoutEmptyRecords(dedupe(readLocal())), readCancelled());
+            const clean = withoutDismissed(withoutCancelled(withoutEmptyRecords(dedupe(readLocal())), readCancelled()), readDismissed());
             writeLocal(clean);
             setBookings(clean);
             setCloudError(true);
           }
         }
       } else if (!cancelled) {
-        const clean = withoutCancelled(withoutEmptyRecords(dedupe(readLocal())), readCancelled());
+        const clean = withoutDismissed(withoutCancelled(withoutEmptyRecords(dedupe(readLocal())), readCancelled()), readDismissed());
         writeLocal(clean);
         setBookings(clean);
       }
@@ -349,7 +381,7 @@ export const BookingsProvider = ({ children }) => {
       // מגוף המייל, מה-PDF המצורף ולעיתים ממייל נוסף. בדיקה מול המאגר
       // בלבד לא תופסת אותן, ולכן האיחוד רץ על הכל יחד.
       const before = new Map(bookings.map((b) => [String(b.id), JSON.stringify(b)]));
-      const merged = withoutCancelled(withoutEmptyRecords(dedupe([...bookings, ...stamped])), readCancelled());
+      const merged = withoutDismissed(withoutCancelled(withoutEmptyRecords(dedupe([...bookings, ...stamped])), readCancelled()), readDismissed());
 
       // נשמר גם מה שנוסף וגם רשומה קיימת שהתעשרה בפרטים מהאצווה
       const changed = merged.filter((b) => before.get(String(b.id)) !== JSON.stringify(b));
@@ -436,10 +468,20 @@ export const BookingsProvider = ({ children }) => {
 
   const removeBooking = useCallback(
     async (id) => {
+      const gone = bookings.find((b) => String(b.id) === String(id));
       const next = bookings.filter((b) => String(b.id) !== String(id));
       setBookings(next);
       writeLocal(next);
-      if (user) await deleteBooking(user.uid, id).catch(() => {});
+
+      // הסימון נשמר בנפרד מהמחיקה, אחרת הסריקה הבאה תייבא מחדש את אותו
+      // אישור שעדיין יושב בתיבה — וההזמנה שמחקת תחזור.
+      if (gone) writeDismissed([...readDismissed(), gone]);
+      if (user) {
+        await Promise.all([
+          deleteBooking(user.uid, id).catch(() => {}),
+          gone ? saveDismissed(user.uid, gone).catch(() => {}) : Promise.resolve(),
+        ]);
+      }
     },
     [bookings, user]
   );

@@ -82,3 +82,22 @@ export const markCancelledRef = (uid, ref) =>
   );
 
 export const loadCancelledRefs = (uid) => loadDeletedIds(uid, 'cancelledBookings');
+
+/**
+ * שמירת "צל" של הזמנה שנמחקה ידנית.
+ *
+ * מחיקת הרשומה בלבד אינה מספיקה מאותה סיבה שהביטול לא שרד: מייל האישור
+ * נשאר בתיבה וכל סריקה מייבאת אותו מחדש. כאן נשמר תוכן הרשומה עצמו ולא
+ * מספר אישור, כי להזמנות רבות אין מספר — ופוליסת ביטוח היא הדוגמה.
+ */
+export const saveDismissed = async (uid, booking) => {
+  await setDoc(doc(db, 'users', uid, 'dismissedBookings', String(booking.id)), {
+    ...booking,
+    dismissedAt: new Date().toISOString(),
+  });
+};
+
+export const loadDismissed = async (uid) => {
+  const snapshot = await getDocs(collection(db, 'users', uid, 'dismissedBookings'));
+  return snapshot.docs.map((d) => d.data());
+};
