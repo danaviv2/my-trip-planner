@@ -221,6 +221,22 @@ const IDENTITY = {
  * לטיסות זה אינו נכון: מספר אישור אחד מכסה גם הלוך וגם חזור, ואיחוד
  * לפיו היה מוחק את אחת הטיסות. לכן הן נשארות בהשוואה לפי סימנים.
  */
+/**
+ * שתי רשומות שהן בעצם אותו מסמך.
+ *
+ * זו הזהות החזקה ביותר שיש: לא הסקה משדות אלא ידיעה שהמקור זהה. היא
+ * חלה רק על סוגים שמסמך אחד מפיק מהם רשומה אחת לכל היותר — טיסות
+ * ואטרקציות באות בכמה עותקים מאותו אישור, ולכן אינן נכללות.
+ */
+const ONE_PER_DOCUMENT = ['insurance', 'hotel', 'car_rental', 'transfer'];
+
+const sameSource = (a, b) =>
+  ONE_PER_DOCUMENT.includes(a.type || '') &&
+  (a.type || '') === (b.type || '') &&
+  !!norm(a.sourceSubject) &&
+  norm(a.sourceSubject) === norm(b.sourceSubject) &&
+  norm(a.sourceKind) === norm(b.sourceKind);
+
 const sameBooking = (a, b) => {
   const aFlight = a.type === 'flight';
   const bFlight = b.type === 'flight';
@@ -228,6 +244,11 @@ const sameBooking = (a, b) => {
   if (aFlight || bFlight) {
     return aFlight && bFlight ? sameFlight(a, b) : false;
   }
+
+  // קריאה חוזרת של אותו מסמך היא אותה הזמנה גם כשהשדות שונים לגמרי —
+  // וזה בדיוק המצב שבו הפענוח תוקן: הקריאה הישנה נתנה ספק ותאריך
+  // שגויים, החדשה נותנת מספר פוליסה נכון, ואין ביניהן שדה מוסכם.
+  if (sameSource(a, b)) return true;
 
   if (agrees(a.confirmationNumber, b.confirmationNumber)) return true;
   if ((a.type || '') !== (b.type || '')) return false;
@@ -287,6 +308,14 @@ const dedupe = (list = []) => {
     } else {
       // הרשומה עם יותר שדות מלאים משמשת בסיס. אחרת, כששתיהן מילאו את
       // אותו שדה, סדר ההגעה קובע — וגרסה חלקית עלולה לדרוס ערך נכון.
+      // כשמדובר באותו מסמך, הקריאה המאוחרת גוברת במקום להתמזג. אחרת
+      // ערך שגוי שכבר שמור שורד לנצח: האיחוד ממלא שדות ריקים ומעדיף
+      // מחרוזת ארוכה יותר, אך אינו מסיר דבר — ותיקון בפענוח לעולם לא
+      // מגיע למסך בלי שהמשתמש ימחק ידנית.
+      if (sameSource(out[i], b)) {
+        out[i] = (b.importedAt || '') >= (out[i].importedAt || '') ? { ...b } : out[i];
+        return;
+      }
       const [base, extra] = filled(out[i]) >= filled(b) ? [out[i], b] : [b, out[i]];
       out[i] = mergeBookings(base, extra);
     }
