@@ -74,6 +74,9 @@ const toPlace = (raw) => {
     phone: tags.phone || tags['contact:phone'] || '',
     fee: tags.fee || '',
     cuisine: tags.cuisine || '',
+    // מזהי ויקיפדיה, שמאפשרים למשוך תקציר עובדתי על המקום
+    wikidata: tags.wikidata || '',
+    wikipedia: tags.wikipedia || '',
     raw,
   };
 };

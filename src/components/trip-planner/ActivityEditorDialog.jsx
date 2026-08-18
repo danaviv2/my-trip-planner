@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { locatePlace, searchPlaces, isGoodCoord } from '../../services/placeLookupService';
+import { fetchPlaceSummary, derivePlaceTips } from '../../services/placeInfoService';
 
 /**
  * הוספה ועריכה של פעילות ביום מסוים.
@@ -67,6 +68,7 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
   const [picked, setPicked] = useState(null);
   // איזו רשומה מציגה כרגע את שעות הפתיחה במקום את התגית
   const [shownHours, setShownHours] = useState(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
 
   const isEdit = !!activity;
 
@@ -108,9 +110,13 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
   };
 
   /** בחירת מקום ממלאת את כל מה שידוע עליו — ושום דבר שאינו ידוע. */
-  const choose = (place) => {
+  const choose = async (place) => {
     setPicked(place);
     setCandidates(null);
+
+    // טיפים נגזרים מהנתונים שכבר בידינו, ולא מהשערה על עומסים
+    const tips = derivePlaceTips({ openingHours: place.openingHours, fee: place.fee });
+
     setForm((f) => ({
       ...f,
       name: place.label || f.name,
@@ -122,7 +128,17 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
       openingHours: place.openingHours || f.openingHours || '',
       website: place.website || f.website || '',
       description: f.description || place.cuisine || '',
+      tips: f.tips || tips.join('. '),
     }));
+
+    // התקציר מגיע מוויקיפדיה ולא מהמודל: תיאור של מקום אמיתי כבר כתוב,
+    // ואין סיבה לייצר גרסה שאי אפשר לאמת.
+    if (place.wikidata || place.wikipedia) {
+      setLoadingSummary(true);
+      const { text } = await fetchPlaceSummary(place.wikidata, place.wikipedia);
+      setLoadingSummary(false);
+      if (text) setForm((f) => (f.description ? f : { ...f, description: text }));
+    }
   };
 
   // המקום נבדק מול מקור חיצוני ולא מנוחש. הפרדה בין "המקום נמצא" לבין
@@ -347,7 +363,11 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
           </Grid>
 
           <Grid item xs={12}>
-            <TextField fullWidth label="תיאור" multiline rows={2} value={form.description} onChange={set('description')} />
+            <TextField
+              fullWidth label="תיאור" multiline rows={3}
+              value={form.description} onChange={set('description')}
+              helperText={loadingSummary ? 'מביא תקציר מוויקיפדיה...' : 'ניתן לערוך'}
+            />
           </Grid>
 
           <Grid item xs={12}>
