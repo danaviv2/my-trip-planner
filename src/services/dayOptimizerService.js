@@ -168,3 +168,101 @@ export function autoOptimize(fullItinerary) {
 
   return { newItinerary: next, movedCount, details };
 }
+
+// ─── סידור גיאוגרפי בתוך היום ─────────────────────────────────
+
+/**
+ * מסדר מחדש את פעילויות היום כדי לקצר את הנסיעה ביניהן.
+ *
+ * המודל בוחר מקומות לפי עניין ולא לפי גיאוגרפיה, ולכן יום שלם עלול
+ * לזגזג בין שני קצות העיר ולחזור. הסידור אינו משנה מה עושים — רק באיזה
+ * סדר, ובאילו משבצות זמן.
+ *
+ * שלוש מגבלות שנשמרות בכוונה:
+ *
+ * • ארוחות ומנוחה אינן זזות. צהריים ב-13:00 אינם "עצירה במסלול" אלא
+ *   אילוץ; הזזתם לתשע בבוקר הייתה מקצרת נסיעה ומקלקלת את היום.
+ * • פעילות בלי קואורדינטות מאומתות אינה זזה. אין עליה מידע גיאוגרפי,
+ *   וניחוש מיקום הוא בדיוק מה שאסור כאן.
+ * • משבצות הזמן נשארות במקומן והפעילויות מוצבות בהן מחדש, כך שהיום
+ *   מתחיל ומסתיים באותן שעות ואורך הפעילויות נשמר.
+ *
+ * @returns {{activities, beforeKm, afterKm, savedKm, savedMinutes, moved}}
+ */
+export function optimizeDayOrder(activities = []) {
+  const unchanged = {
+    activities, beforeKm: 0, afterKm: 0, savedKm: 0, savedMinutes: 0, moved: 0,
+  };
+  if (activities.length < 3) return unchanged;
+
+  const hasCoord = (a) =>
+    a && a.lat != null && a.lng != null &&
+    !isNaN(Number(a.lat)) && !isNaN(Number(a.lng)) &&
+    !(Number(a.lat) === 0 && Number(a.lng) === 0);
+
+  // אינדקסים שמותר להזיז את תוכנם
+  const free = activities
+    .map((a, i) => i)
+    .filter((i) => {
+      const a = activities[i];
+      return hasCoord(a) && !['food', 'rest', 'transport'].includes(a.type);
+    });
+
+  if (free.length < 3) return unchanged;
+
+  const pathKm = (list) => {
+    let km = 0;
+    for (let i = 1; i < list.length; i++) {
+      const p = list[i - 1];
+      const c = list[i];
+      if (hasCoord(p) && hasCoord(c)) km += haversineKm(p.lat, p.lng, c.lat, c.lng);
+    }
+    return km;
+  };
+
+  const beforeKm = pathKm(activities);
+
+  // 2-opt על המשבצות הפנויות בלבד. היום קצר (יחידות בודדות), ולכן
+  // מיצוי מלא זול ומחזיר תוצאה יציבה — בלי אקראיות ובלי תלות בסדר הקלט.
+  let best = [...activities];
+  let bestKm = beforeKm;
+  let improved = true;
+  let passes = 0;
+
+  while (improved && passes < 20) {
+    improved = false;
+    passes++;
+    for (let x = 0; x < free.length; x++) {
+      for (let y = x + 1; y < free.length; y++) {
+        const candidate = [...best];
+        const i = free[x];
+        const j = free[y];
+        [candidate[i], candidate[j]] = [candidate[j], candidate[i]];
+        const km = pathKm(candidate);
+        // סף קטן מונע החלפות שמקזזות שברי קילומטר הלוך ושוב
+        if (km < bestKm - 0.05) {
+          best = candidate;
+          bestKm = km;
+          improved = true;
+        }
+      }
+    }
+  }
+
+  const moved = best.reduce((n, a, i) => (a !== activities[i] ? n + 1 : n), 0);
+  if (!moved) return { ...unchanged, beforeKm, afterKm: beforeKm };
+
+  // משבצות הזמן נשארות במקומן; רק התוכן שלהן התחלף.
+  const times = activities.map((a) => a.time);
+  const reordered = best.map((a, i) => (a.time === times[i] ? a : { ...a, time: times[i] }));
+
+  const savedKm = beforeKm - bestKm;
+  return {
+    activities: reordered,
+    beforeKm,
+    afterKm: bestKm,
+    savedKm,
+    savedMinutes: travelMinutes(savedKm),
+    moved,
+  };
+}

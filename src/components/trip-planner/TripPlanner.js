@@ -86,6 +86,7 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon,
   ArrowUpward as ArrowUpwardIcon,
+  Route as RouteIcon,
   ArrowDownward as ArrowDownwardIcon,
   DateRange as DateRangeIcon,
   NavigateNext as NavigateNextIcon,
@@ -121,6 +122,7 @@ import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { he } from 'date-fns/locale';
 import ActivityEditorDialog from './ActivityEditorDialog';
+import { optimizeDayOrder } from '../../services/dayOptimizerService';
 import ReactApexChart from 'react-apexcharts';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -674,6 +676,29 @@ const TripPlanner = () => {
       // את חישוב זמני הנסיעה, שנשען על סדר הרשימה ולא על השעה.
       return acts.sort((x, y) => String(x.time || '').localeCompare(String(y.time || '')));
     });
+  };
+
+  /**
+   * סידור גיאוגרפי של היום.
+   *
+   * החיסכון מדווח מהחישוב בפועל ולא מהערכה, וכשאין שיפור נאמר זאת
+   * במפורש במקום להציג הצלחה ולהשאיר את היום כמו שהיה.
+   */
+  const reorderDayGeographically = (dayIndex) => {
+    const day = tripPlan?.dailyItinerary?.[dayIndex];
+    const result = optimizeDayOrder(day?.activities || []);
+
+    if (!result.moved) {
+      setSnackbarMessage('היום כבר מסודר ביעילות — לא נמצא סדר שמקצר את הנסיעה');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    mutateDayActivities(dayIndex, () => result.activities);
+    setSnackbarMessage(
+      `סודר מחדש: ${result.savedKm.toFixed(1)} ק״מ פחות נסיעה, כ-${result.savedMinutes} דקות`
+    );
+    setSnackbarOpen(true);
   };
 
   const deleteActivity = (dayIndex, activityIndex) => {
@@ -1440,15 +1465,29 @@ const TripPlanner = () => {
             {/* תוכן היום הנבחר */}
             {currentDay && (
               <Box>
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle1" fontWeight={700}>
-                    {currentDay.title}
-                  </Typography>
-                  {currentDay.theme && (
-                    <Typography variant="body2" color="text.secondary">
-                      {currentDay.theme}
+                <Box sx={{ mb: 2, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
+                  <Box>
+                    <Typography variant="subtitle1" fontWeight={700}>
+                      {currentDay.title}
                     </Typography>
-                  )}
+                    {currentDay.theme && (
+                      <Typography variant="body2" color="text.secondary">
+                        {currentDay.theme}
+                      </Typography>
+                    )}
+                  </Box>
+
+                  {/* המודל בוחר מקומות לפי עניין ולא לפי גיאוגרפיה, ולכן
+                      יום שלם עלול לזגזג בין קצות העיר ולחזור. */}
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<RouteIcon />}
+                    onClick={() => reorderDayGeographically(selectedDayIndex)}
+                    sx={{ whiteSpace: 'nowrap', fontWeight: 600 }}
+                  >
+                    סדר לפי מסלול
+                  </Button>
                 </Box>
 
                 <Box sx={{ display: 'flex', flexDirection: 'column' }}>
