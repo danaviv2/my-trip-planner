@@ -308,6 +308,33 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
             </TextField>
           </Grid>
 
+          {/* מה שנקלט מהמקום. בלי התצוגה הזו השעות והאתר נשמרים בשקט
+              ונראים כאילו אבדו — המשתמש בחר מקום שהיו לו שעות ואתר,
+              והטופס לא הראה מהם. */}
+          {(form.openingHours || form.website) && (
+            <Grid item xs={12}>
+              <Box sx={{
+                display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap',
+                p: 1, bgcolor: 'action.hover', borderRadius: 1,
+              }}>
+                {form.openingHours && (
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: 'info.dark' }}>
+                    🕒 {form.openingHours}
+                  </Typography>
+                )}
+                {form.website && (
+                  <Button
+                    size="small"
+                    onClick={() => window.open(form.website, '_blank', 'noopener,noreferrer')}
+                    sx={{ minWidth: 0, px: 1, py: 0, fontSize: '0.7rem', fontWeight: 700 }}
+                  >
+                    🌐 האתר הרשמי
+                  </Button>
+                )}
+              </Box>
+            </Grid>
+          )}
+
           <Grid item xs={12}>
             <TextField
               fullWidth label="כתובת" value={form.address} onChange={set('address')}
