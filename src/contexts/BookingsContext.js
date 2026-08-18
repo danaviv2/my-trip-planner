@@ -3,7 +3,7 @@ import { useAuth } from './AuthContext';
 import {
   saveBooking, loadBookings, deleteBooking,
   markCancelledRef, loadCancelledRefs,
-  saveDismissed, loadDismissed,
+  saveDismissed, loadDismissed, clearCollection,
 } from '../services/firestoreService';
 import { groupBookingsIntoTrips } from '../services/tripGroupingService';
 import { useAutoGmailScan } from '../hooks/useAutoGmailScan';
@@ -555,6 +555,32 @@ export const BookingsProvider = ({ children }) => {
     [bookings, user]
   );
 
+  /**
+   * מחיקת כל ההזמנות והסימונים, מקומית ובענן.
+   *
+   * מחיקת ההזמנות בלבד אינה מספיקה לבדיקה נקייה: סימוני המחיקה והביטול
+   * שורדים, ולכן הסריקה הבאה מדלגת דווקא על ההזמנות שנמחקו — ומתקבלת
+   * תמונה חלקית שנראית ככשל בסריקה ולא כהתנהגות מכוונת.
+   */
+  const resetAllBookings = useCallback(async () => {
+    const count = bookings.length;
+
+    setBookings([]);
+    writeLocal([]);
+    writeCancelled(new Set());
+    writeDismissed([]);
+
+    if (user) {
+      await Promise.all(
+        ['bookings', 'cancelledBookings', 'dismissedBookings'].map((name) =>
+          clearCollection(user.uid, name).catch(() => {})
+        )
+      );
+    }
+
+    return { bookings: count };
+  }, [bookings, user]);
+
   // סריקה שקטה בפתיחת האפליקציה — אישור שהגיע למייל הופך לנסיעה בלי
   // שהמשתמש לחץ דבר. רצה רק לאחר שההרשאה אושרה פעם אחת.
   const { scanning: autoScanning, lastResult: autoScanResult } = useAutoGmailScan({
@@ -570,10 +596,10 @@ export const BookingsProvider = ({ children }) => {
   const value = useMemo(
     () => ({
       bookings, trips, loading, addBookings, removeBooking, applyCancellations,
-      autoScanning, autoScanResult, cloudError,
+      resetAllBookings, autoScanning, autoScanResult, cloudError,
     }),
     [bookings, trips, loading, addBookings, removeBooking, applyCancellations,
-     autoScanning, autoScanResult, cloudError]
+     resetAllBookings, autoScanning, autoScanResult, cloudError]
   );
 
   return <BookingsContext.Provider value={value}>{children}</BookingsContext.Provider>;

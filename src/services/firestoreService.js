@@ -97,6 +97,19 @@ export const saveDismissed = async (uid, booking) => {
   });
 };
 
+/**
+ * מוחק אוסף שלם תחת המשתמש.
+ *
+ * דרוש לאיפוס אמיתי: מחיקת ההזמנות בלבד משאירה את סימוני המחיקה
+ * והביטול, ולכן סריקה חוזרת מדלגת דווקא על מה שנמחק — ומתקבלת תמונה
+ * חלקית שנראית ככשל בסריקה.
+ */
+export const clearCollection = async (uid, name) => {
+  const snapshot = await getDocs(collection(db, 'users', uid, name));
+  await Promise.all(snapshot.docs.map((d) => deleteDoc(d.ref)));
+  return snapshot.size;
+};
+
 export const loadDismissed = async (uid) => {
   const snapshot = await getDocs(collection(db, 'users', uid, 'dismissedBookings'));
   return snapshot.docs.map((d) => d.data());

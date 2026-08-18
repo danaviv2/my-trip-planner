@@ -3,7 +3,8 @@ import React, { useState, useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Box, Paper, Typography, Button, IconButton, Alert, AlertTitle, Chip,
-  Accordion, AccordionSummary, AccordionDetails
+  Accordion, AccordionSummary, AccordionDetails,
+  Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
 import FlightInfo from './FlightInfo';
 import CarRentalInfo from './CarRentalInfo';
@@ -84,7 +85,9 @@ const TravelInfoComponent = () => {
   const [showFlights, setShowFlights] = useState(true);
   const [showCarRental, setShowCarRental] = useState(true);
   const [showPast, setShowPast] = useState(false);
-  const { trips, autoScanning, autoScanResult, cloudError, removeBooking } = useBookings();
+  const { trips, autoScanning, autoScanResult, cloudError, removeBooking, resetAllBookings } = useBookings();
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetDone, setResetDone] = useState(null);
 
   // נסיעה שהסתיימה אינה רעש: היא נושאת הוצאות, אישורים ולעיתים תביעת
   // פיצוי שטרם הוגשה. אבל נסיעה משנה שעברה כן מטשטשת את השאלה היחידה
@@ -239,6 +242,53 @@ const TravelInfoComponent = () => {
 
       {/* נסיעות שהסתיימו — ארכיון. מקופל כברירת מחדל: הן אינן רלוונטיות
           לתכנון, אך נושאות הוצאות ואישורים שאולי יידרשו מול הספק. */}
+      {/* איפוס. פעולה הרסנית, ולכן היא קטנה, מנוסחת במפורש ודורשת אישור.
+          נדרשת לבדיקה נקייה: סימוני המחיקה שורדים מחיקת הזמנות, ולכן
+          סריקה חוזרת מדלגת דווקא על מה שנמחק. */}
+      {(upcoming.length > 0 || past.length > 0) && (
+        <Box sx={{ mb: 2 }}>
+          <Button size="small" color="error" onClick={() => setResetOpen(true)} sx={{ fontSize: '0.75rem' }}>
+            נקה את כל ההזמנות והתחל מחדש
+          </Button>
+        </Box>
+      )}
+
+      <Dialog open={resetOpen} onClose={() => setResetOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>לנקות את כל ההזמנות?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 1.5 }}>
+            יימחקו כל ההזמנות שיובאו, וגם סימוני המחיקה והביטול ששמורים עליהן.
+          </Typography>
+          <Alert severity="info" sx={{ mb: 1 }}>
+            הסימונים נמחקים בכוונה: בלעדיהם הסריקה הבאה תדלג דווקא על ההזמנות
+            שמחקת בעבר, ותקבל תמונה חלקית.
+          </Alert>
+          <Typography variant="caption" color="text.secondary">
+            המיילים עצמם אינם נמחקים. סריקה חוזרת תייבא הכול מחדש.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetOpen(false)}>ביטול</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={async () => {
+              const r = await resetAllBookings();
+              setResetOpen(false);
+              setResetDone(r.bookings);
+            }}
+          >
+            נקה הכול
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {resetDone !== null && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setResetDone(null)}>
+          נוקו {resetDone} הזמנות וכל הסימונים. הרץ סריקה כדי לייבא מחדש.
+        </Alert>
+      )}
+
       {past.length > 0 && (
         <Box sx={{ mb: 3 }}>
           <Button
