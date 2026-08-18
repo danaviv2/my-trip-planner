@@ -85,6 +85,8 @@ import {
   Place as PlaceIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
+  ArrowUpward as ArrowUpwardIcon,
+  ArrowDownward as ArrowDownwardIcon,
   DateRange as DateRangeIcon,
   NavigateNext as NavigateNextIcon,
   NavigateBefore as NavigateBeforeIcon,
@@ -118,7 +120,7 @@ import { useUserPreferences } from '../../contexts/UserPreferencesContext';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { he } from 'date-fns/locale';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import ActivityEditorDialog from './ActivityEditorDialog';
 import ReactApexChart from 'react-apexcharts';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -303,6 +305,11 @@ const TripPlanner = () => {
   // מצב של דיאלוגים
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
   const [activityToEdit, setActivityToEdit] = useState(null);
+  // עורך הפעילויות של לוח הזמנים
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorDay, setEditorDay] = useState(null);
+  const [editorActivity, setEditorActivity] = useState(null);
+  const [editorIndex, setEditorIndex] = useState(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   
   // מצב תפריטים
@@ -632,17 +639,69 @@ const TripPlanner = () => {
     setItinerary(updatedItinerary);
   };
 
-  // טיפול בלחיצה על כפתור ההוספה של פעילות ליום
-  const handleAddActivityButtonClick = (dayIndex) => {
-    setDayToAddActivity(dayIndex);
-    setActivityDialogOpen(true);
+  /**
+   * מחיל שינוי על פעילויות של יום אחד וכותב חזרה למסלול.
+   *
+   * המסלול נקרא מ-tripPlan ולא מ-state מקומי, ולכן כל שינוי חייב לעבור
+   * דרך updateTripPlan — אחרת הוא נראה על המסך רק עד הרינדור הבא.
+   * העתקה בכל רמה נדרשת כי React משווה לפי הפניה.
+   */
+  const mutateDayActivities = (dayIndex, mutate) => {
+    const days = [...(tripPlan?.dailyItinerary || [])];
+    const day = days[dayIndex];
+    if (!day) return;
+    days[dayIndex] = { ...day, activities: mutate([...(day.activities || [])]) };
+    updateTripPlan({ ...tripPlan, dailyItinerary: days });
   };
 
-  // פתיחת דיאלוג לעריכת פעילות
-  const handleEditActivity = (dayIndex, activity) => {
-    setDayToAddActivity(dayIndex);
-    setActivityToEdit(activity);
-    setActivityDialogOpen(true);
+  const openActivityEditor = (dayIndex, activity = null, activityIndex = null) => {
+    setEditorDay(dayIndex);
+    setEditorActivity(activity);
+    setEditorIndex(activityIndex);
+    setEditorOpen(true);
+  };
+
+  /** שמירה: עדכון פעילות קיימת, או הוספה במקום הנכון לפי השעה. */
+  const saveActivity = (next) => {
+    if (editorDay === null) return;
+    mutateDayActivities(editorDay, (acts) => {
+      if (editorIndex !== null) {
+        acts[editorIndex] = next;
+      } else {
+        acts.push(next);
+      }
+      // מיון לפי שעה. פעילות שנוספת בסוף הרשימה אך מתחילה בבוקר שיברה
+      // את חישוב זמני הנסיעה, שנשען על סדר הרשימה ולא על השעה.
+      return acts.sort((x, y) => String(x.time || '').localeCompare(String(y.time || '')));
+    });
+  };
+
+  const deleteActivity = (dayIndex, activityIndex) => {
+    mutateDayActivities(dayIndex, (acts) => acts.filter((_, i) => i !== activityIndex));
+  };
+
+  /**
+   * הזזה בסדר היום, עם החלפת השעות בין השתיים.
+   *
+   * הזזה בלי החלפת שעות יוצרת יום לא קוהרנטי — 13:00 מוצג מעל 09:30 —
+   * וגם שוברת את חישוב זמני הנסיעה, שנשען על סדר הרשימה. "הזז מעלה"
+   * פירושו "שיהיה מוקדם יותר", ולכן גם השעה עוברת.
+   */
+  const moveActivity = (dayIndex, activityIndex, delta) => {
+    mutateDayActivities(dayIndex, (acts) => {
+      const to = activityIndex + delta;
+      if (to < 0 || to >= acts.length) return acts;
+
+      const a = { ...acts[activityIndex] };
+      const bAct = { ...acts[to] };
+      const tmp = a.time;
+      a.time = bAct.time;
+      bAct.time = tmp;
+
+      acts[activityIndex] = bAct;
+      acts[to] = a;
+      return acts;
+    });
   };
 
   // שמירת טיול
@@ -1425,11 +1484,38 @@ const TripPlanner = () => {
                                 </Typography>
                               </Box>
                             </Box>
-                            {activity.price && (
-                              <Typography variant="caption" sx={{ bgcolor: '#f5f5f5', px: 1, py: 0.3, borderRadius: 1, whiteSpace: 'nowrap' }}>
-                                {activity.price}
-                              </Typography>
-                            )}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                              {activity.price && (
+                                <Typography variant="caption" sx={{ bgcolor: '#f5f5f5', px: 1, py: 0.3, borderRadius: 1, whiteSpace: 'nowrap' }}>
+                                  {activity.price}
+                                </Typography>
+                              )}
+                              {/* עריכה, הזזה ומחיקה. עד כה הדרך היחידה לשנות
+                                  פרט אחת הייתה "צור מסלול מחדש", שמגריל את כל
+                                  הימים ומוחק גם את מה שהמשתמש אהב. */}
+                              <IconButton size="small" title="הזז מעלה"
+                                disabled={i === 0}
+                                onClick={() => moveActivity(selectedDayIndex, i, -1)}
+                              >
+                                <ArrowUpwardIcon sx={{ fontSize: '1rem' }} />
+                              </IconButton>
+                              <IconButton size="small" title="הזז מטה"
+                                disabled={i === (currentDay.activities || []).length - 1}
+                                onClick={() => moveActivity(selectedDayIndex, i, 1)}
+                              >
+                                <ArrowDownwardIcon sx={{ fontSize: '1rem' }} />
+                              </IconButton>
+                              <IconButton size="small" title="ערוך"
+                                onClick={() => openActivityEditor(selectedDayIndex, activity, i)}
+                              >
+                                <EditIcon sx={{ fontSize: '1rem' }} />
+                              </IconButton>
+                              <IconButton size="small" title="הסר" color="error"
+                                onClick={() => deleteActivity(selectedDayIndex, i)}
+                              >
+                                <DeleteIcon sx={{ fontSize: '1rem' }} />
+                              </IconButton>
+                            </Box>
                           </Box>
 
                           {activity.description && (
@@ -1513,6 +1599,18 @@ const TripPlanner = () => {
                       </React.Fragment>
                     );
                   })}
+
+                  {/* הוספה ידנית. בלעדיה ההתראה על כרטיס מתוזמן — "יש לך
+                      כניסה לפומפיי ב-10:00, הוסף אותו למסלול" — הצביעה על
+                      דלת נעולה. */}
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={() => openActivityEditor(selectedDayIndex)}
+                    sx={{ mt: 1, alignSelf: 'flex-start', borderStyle: 'dashed', fontWeight: 600 }}
+                  >
+                    הוסף פעילות ליום {currentDay.day}
+                  </Button>
                 </Box>
               </Box>
             )}
@@ -1614,6 +1712,16 @@ const TripPlanner = () => {
         </Box>
       )}
       
+      {/* עורך הפעילויות של לוח הזמנים */}
+      <ActivityEditorDialog
+        open={editorOpen}
+        activity={editorActivity}
+        dayTitle={tripPlan?.dailyItinerary?.[editorDay]?.title || ''}
+        destination={destination}
+        onClose={() => setEditorOpen(false)}
+        onSave={saveActivity}
+      />
+
       {/* דיאלוג הוספת פעילות */}
       <Dialog
         open={activityDialogOpen}

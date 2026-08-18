@@ -1,5 +1,6 @@
 import { jsonrepair } from 'jsonrepair';
 import { geminiEndpoint } from './geminiClient';
+import { locatePlace, isGoodCoord } from './placeLookupService';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_URL = geminiEndpoint(GEMINI_MODEL);
@@ -176,47 +177,10 @@ CRITICAL RULES:
     throw lastErr;
   };
 
-  const isGoodCoord = (a) => {
-    const lat = Number(a.lat), lng = Number(a.lng);
-    return a.lat != null && a.lng != null && a.lat !== '' && a.lng !== '' &&
-      !isNaN(lat) && !isNaN(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && !(lat === 0 && lng === 0);
-  };
-
-  const lookup = async (query) => {
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
-        { headers: { 'Accept-Language': 'en', 'User-Agent': 'MyTripPlanner/1.0' } }
-      );
-      const data = await res.json();
-      if (data?.[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-    } catch {}
-    return null;
-  };
-
-  /**
-   * מאתר פעילות, ומחזיר גם את מידת הוודאות.
-   *
-   * חיפוש לפי שם המקום מאשר שהמקום עצמו קיים. כשהוא נכשל, חיפוש לפי
-   * הכתובת בלבד מאשר שהרחוב קיים — אך לא שהעסק קיים בו. ההבחנה הזו
-   * חשובה: בדיקה הראתה ש-Eataly, מסעדה אמיתית, אינה נמצאת לפי שם, בעוד
-   * מסעדה מומצאת ברחוב אמיתי כן נמצאת לפי כתובת. לכן אי אפשר להכריע
-   * בין השתיים, ואין להעמיד פנים שכן.
-   *
-   * @returns {{coords, confidence: 'name'|'address'|'none'}}
-   */
-  const locateActivity = async (address, name) => {
-    if (name) {
-      const byName = await lookup(`${name}, ${destination}`);
-      if (byName) return { coords: byName, confidence: 'name' };
-    }
-    if (address) {
-      await new Promise((r) => setTimeout(r, 1100));
-      const byAddress = await lookup(`${address}, ${destination}`);
-      if (byAddress) return { coords: byAddress, confidence: 'address' };
-    }
-    return { coords: null, confidence: 'none' };
-  };
+  // isGoodCoord, lookup ו-locateActivity הועברו ל-placeLookupService, כדי
+  // שגם עריכה ידנית של המסלול תשתמש באותה בדיקת וודאות. שכפול היה מוביל
+  // לכך שתיקון באחד לא חל על השני.
+  const locateActivity = (address, name) => locatePlace(name, address, destination);
 
   const geocodeMissing = async (daysList) => {
     const tasks = [];
