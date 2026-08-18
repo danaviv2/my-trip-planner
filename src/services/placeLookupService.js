@@ -78,6 +78,18 @@ const toPlace = (raw) => {
   };
 };
 
+/**
+ * שם היעד מגיע משדה חופשי שהמשתמש מילא, ולכן הוא לא תמיד שם עיר נקי:
+ * "פריז, צרפת - טיול משפחתי" הוא ערך לגיטימי במסך התכנון. הדבקתו
+ * לשאילתה מאפסת את החיפוש — "מגדל אייפל, פריז" מחזיר תוצאה, ואותו מגדל
+ * עם היעד המלא מחזיר אפס.
+ */
+const cleanDestination = (d) =>
+  String(d || '')
+    .split(/[-–—|(]/)[0]   // מה שאחרי מקף הוא כינוי לטיול, לא מקום
+    .split(',')[0]          // המקטע הראשון הוא העיר
+    .trim();
+
 const query = async (q, limit) => {
   try {
     const res = await fetch(
@@ -100,9 +112,20 @@ const query = async (q, limit) => {
  * @returns {Promise<Array>} עד `limit` מקומות, עם כתובת, אתר, שעות ומחיר
  */
 export const searchPlaces = async (name, destination = '', limit = 5) => {
-  if (!String(name || '').trim()) return [];
-  const suffix = destination ? `, ${destination}` : '';
-  const results = await query(`${name}${suffix}`, limit);
+  const term = String(name || '').trim();
+  if (!term) return [];
+
+  const city = cleanDestination(destination);
+  let results = await query(city ? `${term}, ${city}` : term, limit);
+
+  // נסיגה לשם בלבד. יעד שאינו מזוהה — עיר קטנה, שם בעברית, או ניסוח
+  // חופשי — היה מאפס את החיפוש והמסך הודיע "לא נמצא מקום בשם הזה",
+  // אף שהמקום קיים היטב.
+  if (!results.length && city) {
+    await new Promise((r) => setTimeout(r, RATE_MS));
+    results = await query(term, limit);
+  }
+
   return results.map(toPlace).filter((p) => isGoodCoord(p));
 };
 
@@ -116,12 +139,18 @@ export const searchPlaces = async (name, destination = '', limit = 5) => {
  *   הנכון מבין כמה בעלי אותו שם, במקום לקחת את הראשון.
  */
 export const locatePlace = async (name, address, destination = '', activityType = '') => {
-  const suffix = destination ? `, ${destination}` : '';
+  const city = cleanDestination(destination);
+  const suffix = city ? `, ${city}` : '';
 
   if (name) {
     // חמש תוצאות ולא אחת: התוצאה הראשונה עלולה להיות עסק אחר בעל שם
     // דומה, וכאן אין משתמש שיבחין בכך.
-    const candidates = (await query(`${name}${suffix}`, 5)).map(toPlace).filter(isGoodCoord);
+    let raw = await query(`${name}${suffix}`, 5);
+    if (!raw.length && suffix) {
+      await new Promise((r) => setTimeout(r, RATE_MS));
+      raw = await query(name, 5);
+    }
+    const candidates = raw.map(toPlace).filter(isGoodCoord);
 
     if (candidates.length) {
       const expected = EXPECTED[activityType] || [];
