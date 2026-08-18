@@ -7,6 +7,7 @@ import {
 } from '../services/firestoreService';
 import { groupBookingsIntoTrips } from '../services/tripGroupingService';
 import { useAutoGmailScan } from '../hooks/useAutoGmailScan';
+import { dateKey, flightKey, sameName } from '../services/bookingIdentity';
 
 /**
  * מאגר ההזמנות של המשתמש והטיולים שנגזרים מהן.
@@ -109,10 +110,34 @@ const writeLocal = (list) => {
  */
 const norm = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
 
+/**
+ * השוואה לפי ערך קנוני ולא לפי המחרוזת כפי שהתקבלה.
+ *
+ * זה היה שורש סבב הכפילויות: הכללים היו נכונים, אך פעלו על מחרוזות
+ * גולמיות. אותה טיסה הופיעה כ-LY384 וכ-LY0384, אותו תאריך כ-2026-06-24
+ * וכ-24/06/2026 — והשוואת מחרוזות קבעה שאלה דברים שונים.
+ *
+ * @param {string} kind 'date' | 'flight' | ריק לטקסט רגיל
+ */
+const canon = (v, kind) => {
+  if (kind === 'date') return dateKey(v);
+  if (kind === 'flight') return flightKey(v);
+  return norm(v);
+};
+
 /** סתירה קיימת רק כששני הערכים מלאים ושונים. שדה חסר אינו סותר דבר. */
-const contradicts = (a, b) => !!norm(a) && !!norm(b) && norm(a) !== norm(b);
-/** הסכמה חיובית: שני הערכים מלאים וזהים. */
-const agrees = (a, b) => !!norm(a) && !!norm(b) && norm(a) === norm(b);
+const contradicts = (a, b, kind) => {
+  const x = canon(a, kind);
+  const y = canon(b, kind);
+  return !!x && !!y && x !== y;
+};
+
+/** הסכמה חיובית: שני הערכים מלאים וזהים לאחר קנוניזציה. */
+const agrees = (a, b, kind) => {
+  const x = canon(a, kind);
+  const y = canon(b, kind);
+  return !!x && !!y && x === y;
+};
 
 /**
  * האם שתי רשומות מתארות את אותה טיסה.
@@ -167,15 +192,15 @@ const sameFlight = (a, b) => {
   // רשומה בלי תאריך אינה סותרת שום תאריך. תזכורת צ׳ק-אין נושאת את מספר
   // הטיסה בלבד, ובלי הכלל הזה היא נשארה רשומה נפרדת לצד הטיסה עצמה —
   // וגם הוכפלה בכל סריקה, כי שני תאריכים ריקים אינם "מסכימים".
-  if (!norm(a.date) || !norm(b.date)) return agrees(a.flightNumber, b.flightNumber);
-  if (!agrees(a.date, b.date)) return false;
-  if (contradicts(a.flightNumber, b.flightNumber)) return false;
+  if (!dateKey(a.date) || !dateKey(b.date)) return agrees(a.flightNumber, b.flightNumber, 'flight');
+  if (!agrees(a.date, b.date, 'date')) return false;
+  if (contradicts(a.flightNumber, b.flightNumber, 'flight')) return false;
 
   // מספר טיסה ותאריך הם זהות מוחלטת: LY5111 ב-24.6 היא טיסה אחת בעולם.
   // כשהם מסכימים, אי-התאמה בשעות אינה מעידה על טיסה אחרת אלא על שדה
   // שנקלט שגוי — נצפה בפועל כששעת הנחיתה נכתבה בשדה ההמראה. לכן השעה
   // אינה מקבלת זכות וטו על מספר הטיסה.
-  if (agrees(a.flightNumber, b.flightNumber)) return true;
+  if (agrees(a.flightNumber, b.flightNumber, 'flight')) return true;
 
   if (contradicts(a.departureTime, b.departureTime)) return false;
   if (contradicts(a.arrivalTime, b.arrivalTime)) return false;
@@ -187,7 +212,7 @@ const sameFlight = (a, b) => {
   }
 
   return (
-    agrees(a.flightNumber, b.flightNumber) ||
+    agrees(a.flightNumber, b.flightNumber, 'flight') ||
     agrees(a.departureTime, b.departureTime) ||
     agrees(a.arrivalTime, b.arrivalTime)
   );
@@ -204,12 +229,17 @@ const sameFlight = (a, b) => {
  * של אותה הזמנה יסכימו על לפחות אחד מהם, ולעולם לא יסתרו זה את זה.
  */
 const IDENTITY = {
-  insurance: { id: ['policyNumber'], time: ['startDate', 'endDate'] },
-  hotel: { id: ['name'], time: ['checkIn', 'checkOut'] },
-  car_rental: { id: ['company'], time: ['pickupDate', 'returnDate'] },
-  transfer: { id: ['company'], time: ['pickupDate', 'pickupTime'] },
-  activity: { id: ['name'], time: ['date', 'time'] },
+  insurance: { id: ['policyNumber'], name: [], time: ['startDate', 'endDate'] },
+  // שם עסק מושווה בנפרד: ספק אחד כותב "Caruso Place" והשני "Caruso Place
+  // Luxury Rooms & Suites", ולכן השוואת מחרוזות הפרידה ביניהם.
+  hotel: { id: [], name: ['name'], time: ['checkIn', 'checkOut'] },
+  car_rental: { id: [], name: ['company'], time: ['pickupDate', 'returnDate'] },
+  transfer: { id: [], name: ['company'], time: ['pickupDate', 'pickupTime'] },
+  activity: { id: [], name: ['name'], time: ['date'] },
 };
+
+/** שדות הזמן של כל סוג הם תאריכים, למעט שעה — ואלה מושווים אחרת. */
+const isTimeOfDay = (field) => /time$/i.test(field) && field !== 'checkIn';
 
 /**
  * האם שתי רשומות הן אותה הזמנה.
@@ -260,14 +290,24 @@ const sameBooking = (a, b) => {
   const fields = IDENTITY[a.type || ''];
   if (!fields) return false;
 
-  const all = [...fields.id, ...fields.time];
-  if (all.some((k) => contradicts(a[k], b[k]))) return false;
   if (contradicts(a.confirmationNumber, b.confirmationNumber)) return false;
+
+  // כל סוג שדה מושווה בדרכו: מזהה כטקסט, תאריך לפי ערך קנוני, שם עסק
+  // לפי הליבה המזהה שלו.
+  const kindOf = (k) => (isTimeOfDay(k) ? '' : 'date');
+
+  if (fields.id.some((k) => contradicts(a[k], b[k]))) return false;
+  if (fields.time.some((k) => contradicts(a[k], b[k], kindOf(k)))) return false;
+  if (fields.name.some((k) => norm(a[k]) && norm(b[k]) && !sameName(a[k], b[k]))) return false;
 
   // הסכמה חיובית באחד השדות היא התנאי. שתי רשומות שאין ביניהן אף שדה
   // משותף אינן "אותה הזמנה" אלא שתי הזמנות שלא ידוע עליהן די — ואיחודן
   // היה יוצר רשומה מורכבת משתי מציאויות.
-  return all.some((k) => agrees(a[k], b[k]));
+  return (
+    fields.id.some((k) => agrees(a[k], b[k])) ||
+    fields.time.some((k) => agrees(a[k], b[k], kindOf(k))) ||
+    fields.name.some((k) => sameName(a[k], b[k]))
+  );
 };
 
 /**
