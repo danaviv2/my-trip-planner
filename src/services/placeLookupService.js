@@ -111,22 +111,36 @@ const query = async (q, limit) => {
  *
  * @returns {Promise<Array>} עד `limit` מקומות, עם כתובת, אתר, שעות ומחיר
  */
-export const searchPlaces = async (name, destination = '', limit = 5) => {
+export const searchPlaces = async (name, destination = '', limit = 6) => {
   const term = String(name || '').trim();
   if (!term) return [];
 
   const city = cleanDestination(destination);
-  let results = await query(city ? `${term}, ${city}` : term, limit);
 
-  // נסיגה לשם בלבד. יעד שאינו מזוהה — עיר קטנה, שם בעברית, או ניסוח
-  // חופשי — היה מאפס את החיפוש והמסך הודיע "לא נמצא מקום בשם הזה",
-  // אף שהמקום קיים היטב.
-  if (!results.length && city) {
+  // שתי שאילתות ואיחוד ביניהן, לא נסיגה בלבד.
+  //
+  // הצירוף עם העיר ממקד, אך גם מסתיר: "מוזיאון הלובר, פריז" החזיר את
+  // פירמידת הלובר בלבד, בעוד המוזיאון עצמו — הרשומה שיש בה שעות ומחיר —
+  // לא הופיע כלל. השם לבדו מחזיר מועמדים אחרים, ושילובם נותן למשתמש
+  // לבחור מתוך התמונה המלאה.
+  const seen = new Set();
+  const merged = [];
+  const collect = (rows) => {
+    rows.forEach((r) => {
+      if (seen.has(r.place_id)) return;
+      seen.add(r.place_id);
+      merged.push(r);
+    });
+  };
+
+  collect(await query(city ? `${term}, ${city}` : term, limit));
+
+  if (city && merged.length < limit) {
     await new Promise((r) => setTimeout(r, RATE_MS));
-    results = await query(term, limit);
+    collect(await query(term, limit));
   }
 
-  return results.map(toPlace).filter((p) => isGoodCoord(p));
+  return merged.map(toPlace).filter((p) => isGoodCoord(p)).slice(0, limit);
 };
 
 /**

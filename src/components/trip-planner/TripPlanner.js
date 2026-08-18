@@ -1575,6 +1575,28 @@ const TripPlanner = () => {
                             </Typography>
                           )}
 
+                          {/* שעות ואתר שנקלטו מהמקום עצמו. שעות פתיחה הן
+                              המידע שמכריע אם היום מתאפשר בכלל, ועד כה הן
+                              נדחסו לתוך התיאור ולא נראו. */}
+                          {(activity.openingHours || activity.website) && (
+                            <Box sx={{ mt: 0.75, display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                              {activity.openingHours && (
+                                <Typography variant="caption" sx={{ color: 'info.dark', fontWeight: 600 }}>
+                                  🕒 {activity.openingHours}
+                                </Typography>
+                              )}
+                              {activity.website && (
+                                <Button
+                                  size="small"
+                                  onClick={() => window.open(activity.website, '_blank', 'noopener,noreferrer')}
+                                  sx={{ minWidth: 0, px: 0.75, py: 0, fontSize: '0.65rem', fontWeight: 700 }}
+                                >
+                                  🌐 האתר הרשמי
+                                </Button>
+                              )}
+                            </Box>
+                          )}
+
                           {/* מקום שלא נמצא במאגר המפות. המלצות ה-AI כוללות
                               לעיתים מסעדות ואתרים שאינם קיימים, ועד כה הם
                               קיבלו את הקואורדינטות הממוצעות של שאר היום —

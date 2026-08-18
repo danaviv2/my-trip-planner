@@ -65,6 +65,8 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
   const [candidates, setCandidates] = useState(null);
   const [searching, setSearching] = useState(false);
   const [picked, setPicked] = useState(null);
+  // איזו רשומה מציגה כרגע את שעות הפתיחה במקום את התגית
+  const [shownHours, setShownHours] = useState(null);
 
   const isEdit = !!activity;
 
@@ -74,6 +76,7 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
     setLocationNote(null);
     setCandidates(null);
     setPicked(null);
+    setShownHours(null);
   }, [open, activity]);
 
   // שינוי ידני בשם או בכתובת מבטל מקום שנבחר: הקואורדינטות שייכות למה
@@ -114,7 +117,11 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
       address: place.address,
       type: KIND_TO_TYPE[place.kind] || f.type,
       price: priceFromFee(place.fee) || f.price,
-      description: f.description || [place.cuisine, place.openingHours].filter(Boolean).join(' · '),
+      // שעות ואתר הם שדות בפני עצמם ולא טקסט חופשי: דחיסתם לתיאור מנעה
+      // הצגה שלהם ככפתור על הכרטיס, והפכה אותם למחרוזת שאי אפשר לפעול לפיה.
+      openingHours: place.openingHours || f.openingHours || '',
+      website: place.website || f.website || '',
+      description: f.description || place.cuisine || '',
     }));
   };
 
@@ -133,6 +140,7 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
         lat: picked.lat,
         lng: picked.lng,
         website: picked.website || undefined,
+        openingHours: picked.openingHours || undefined,
         emoji: TYPES.find((t) => t.value === form.type)?.emoji || '📍',
       });
       onClose();
@@ -223,6 +231,15 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
                   <Typography variant="caption" sx={{ px: 1.5, pt: 1, display: 'block', color: 'text.secondary' }}>
                     בחר את המקום הנכון ({candidates.length} תוצאות)
                   </Typography>
+                  {/* שמות בעברית קיימים ב-OpenStreetMap רק על חלק מהרשומות:
+                      "מוזיאון הלובר" מחזיר את הפירמידה, בעוד הרשומה של
+                      המוזיאון עצמה — זו שיש בה שעות ומחיר — נמצאת רק תחת
+                      השם הלועזי. */}
+                  {/[\u0590-\u05FF]/.test(form.name) && candidates.length < 4 && (
+                    <Typography variant="caption" sx={{ px: 1.5, pb: 0.5, display: 'block', color: 'warning.dark' }}>
+                      מעט תוצאות. נסה את השם באנגלית או בשפת המקום — למשל "Louvre" — שם יש לרוב גם שעות ומחיר.
+                    </Typography>
+                  )}
                   <List dense disablePadding>
                     {candidates.map((c, i) => (
                       <React.Fragment key={c.id}>
@@ -233,8 +250,24 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
                                 <Typography variant="body2" fontWeight={700}>{c.label}</Typography>
                                 <Chip size="small" label={c.kind} sx={{ height: 18, fontSize: '0.65rem' }} />
-                                {c.website && <Chip size="small" color="success" label="אתר" sx={{ height: 18, fontSize: '0.65rem' }} />}
-                                {c.openingHours && <Chip size="small" color="info" label="שעות" sx={{ height: 18, fontSize: '0.65rem' }} />}
+                                {/* תגיות שהן פעולה ולא קישוט: "אתר" פותח
+                                    את האתר, "שעות" מציג אותן. תגית שנראית
+                                    לחיצה וסתם יושבת היא הבטחה ריקה. */}
+                                {c.website && (
+                                  <Chip
+                                    size="small" color="success" label="אתר" clickable
+                                    onClick={(e) => { e.stopPropagation(); window.open(c.website, '_blank', 'noopener,noreferrer'); }}
+                                    sx={{ height: 20, fontSize: '0.65rem' }}
+                                  />
+                                )}
+                                {c.openingHours && (
+                                  <Chip
+                                    size="small" color="info" clickable
+                                    label={shownHours === c.id ? c.openingHours : 'שעות'}
+                                    onClick={(e) => { e.stopPropagation(); setShownHours(shownHours === c.id ? null : c.id); }}
+                                    sx={{ height: 20, fontSize: '0.65rem', maxWidth: 320 }}
+                                  />
+                                )}
                               </Box>
                             }
                             secondary={
