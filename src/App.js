@@ -74,6 +74,7 @@ import AccommodationList from './components/trip-planner/AccommodationList';
 import ShareButtons from './components/trip-planner/ShareButtons';
 import TripItineraryView from './components/trip-planner/TripItineraryView';
 import RouteNavigationButtons from './components/trip-planner/RouteNavigationButtons';
+import OfflineBanner from './components/shared/OfflineBanner';
 
 
 
@@ -1568,6 +1569,9 @@ const shareUrl = `https://yourtripplandomain.com/trip?id=${Date.now()}`;
             <Header />
             {/* spacer — גובה AppBar + safe-area-inset-top (notch / Dynamic Island) */}
             <Box sx={{ height: { xs: 'calc(56px + env(safe-area-inset-top))', md: '64px' } }} />
+
+            {/* חיווי ניתוק. מוצג מעל התוכן כדי שלא יתפרש כתקלה. */}
+            <OfflineBanner />
 
             {/* רכיב הנתיבים החדש שיטפל בניתוב לדפים השונים */}
             <AppRoutes />
