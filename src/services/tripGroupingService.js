@@ -79,6 +79,37 @@ export const normalizeBooking = (b) => {
   };
 };
 
+/**
+ * קובע לכל טיסה אם היא הלוך או חזור, לפי הנסיעה עצמה.
+ *
+ * הכיוון הגיע עד כה מהמודל, והוא כמעט תמיד החזיר "departure" — ולכן
+ * טיסת החזור הוצגה כ"טיסת הלוך", וגם לא נמצא לה בן-זוג בבניית חלון
+ * הנסיעה, כך שהנסיעה התפצלה לשתיים.
+ *
+ * הנתונים יודעים את התשובה בלי לנחש: הטיסה המוקדמת ביותר יוצאת מהבית,
+ * וכל טיסה שנוחתת בנקודת המוצא ההיא היא חזור.
+ */
+const withFlightDirection = (bookings) => {
+  const flights = bookings
+    .filter((b) => b.type === 'flight' && b.date)
+    .sort((x, y) => String(x.date).localeCompare(String(y.date)));
+
+  const home = String(flights[0]?.departureAirport || '').trim().toUpperCase();
+  if (!home) return bookings;
+
+  const isHome = (v) => {
+    const s = String(v || '').trim().toUpperCase();
+    return !!s && (s === home || s.includes(home) || home.includes(s));
+  };
+
+  return bookings.map((b) => {
+    if (b.type !== 'flight') return b;
+    // הטיסה הראשונה היא ההלוך גם אם היא נוחתת קרוב לבית
+    if (b === flights[0]) return { ...b, direction: 'departure' };
+    return isHome(b.arrivalAirport) ? { ...b, direction: 'return' } : { ...b, direction: 'departure' };
+  });
+};
+
 /** קבוצה להזמנות שלא ניתן לתארך, כדי שלא ייעלמו מהמסך. */
 const undatedTrip = (group) => ({
   id: 'trip_undated',
@@ -106,7 +137,10 @@ const undatedTrip = (group) => ({
  * @returns {Array<{id,title,destination,startDate,endDate,bookings}>}
  */
 export const groupBookingsIntoTrips = (bookings = []) => {
-  const normalized = bookings.map(normalizeBooking);
+  // הכיוון נגזר לפני הקיבוץ ולא אחריו: הוא קובע אילו טיסות מזדווגות
+  // לחלון נסיעה. כשכל הטיסות מסומנות "הלוך", כל אחת פותחת חלון משלה
+  // והנסיעה מתפצלת.
+  const normalized = withFlightDirection(bookings).map(normalizeBooking);
   const items = normalized.filter((b) => b.start).sort((a, b) => a.start - b.start);
 
   // הזמנה שתאריכיה לא נקראו נעלמה כאן לחלוטין — בלי הודעה ובלי מקום

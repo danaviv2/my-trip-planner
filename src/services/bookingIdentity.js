@@ -70,6 +70,30 @@ export const flightKey = (value) => {
   return m ? `${m[1]}${m[2]}` : raw;
 };
 
+/**
+ * האם שני מספרי טיסה מתארים את אותה טיסה.
+ *
+ * מקור אחד רושם "LY 5111" ואחר "5111" בלבד — מספר בלי קוד חברה אינו
+ * מספר אחר, הוא פחות מפורט. השוואה ישירה הכריזה עליהם כסותרים, ולכן
+ * אותה טיסה הופיעה פעמיים: אחת מהכרטיס ואחת ממייל של שירות נלווה.
+ *
+ * שני מספרים שלשניהם יש קוד חברה כן מושווים במלואם: LY384 ו-BA384 הן
+ * טיסות שונות לחלוטין.
+ */
+const digitsOf = (v) => (/^[A-Z]{0,3}(\d{1,4})$/.exec(v) || [])[1] || '';
+const hasCarrier = (v) => /^[A-Z]/.test(v);
+
+export const sameFlightNumber = (a, b) => {
+  const x = flightKey(a);
+  const y = flightKey(b);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  // רק כשצד אחד חסר את קוד החברה מסתפקים בהשוואת הספרות
+  if (hasCarrier(x) === hasCarrier(y)) return false;
+  const dx = digitsOf(x);
+  return !!dx && dx === digitsOf(y);
+};
+
 // מילים שספקים מוסיפים לשם ואינן מזהות את העסק
 const NOISE = new RegExp(
   '\\b(' +

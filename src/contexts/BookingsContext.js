@@ -7,7 +7,7 @@ import {
 } from '../services/firestoreService';
 import { groupBookingsIntoTrips } from '../services/tripGroupingService';
 import { useAutoGmailScan } from '../hooks/useAutoGmailScan';
-import { dateKey, flightKey, sameName } from '../services/bookingIdentity';
+import { dateKey, flightKey, sameName, sameFlightNumber } from '../services/bookingIdentity';
 
 /**
  * מאגר ההזמנות של המשתמש והטיולים שנגזרים מהן.
@@ -192,15 +192,19 @@ const sameFlight = (a, b) => {
   // רשומה בלי תאריך אינה סותרת שום תאריך. תזכורת צ׳ק-אין נושאת את מספר
   // הטיסה בלבד, ובלי הכלל הזה היא נשארה רשומה נפרדת לצד הטיסה עצמה —
   // וגם הוכפלה בכל סריקה, כי שני תאריכים ריקים אינם "מסכימים".
-  if (!dateKey(a.date) || !dateKey(b.date)) return agrees(a.flightNumber, b.flightNumber, 'flight');
+  if (!dateKey(a.date) || !dateKey(b.date)) return sameFlightNumber(a.flightNumber, b.flightNumber);
   if (!agrees(a.date, b.date, 'date')) return false;
-  if (contradicts(a.flightNumber, b.flightNumber, 'flight')) return false;
+  // מספר בלי קוד חברה אינו סותר מספר עם קוד — הוא פחות מפורט
+  if (
+    flightKey(a.flightNumber) && flightKey(b.flightNumber) &&
+    !sameFlightNumber(a.flightNumber, b.flightNumber)
+  ) return false;
 
   // מספר טיסה ותאריך הם זהות מוחלטת: LY5111 ב-24.6 היא טיסה אחת בעולם.
   // כשהם מסכימים, אי-התאמה בשעות אינה מעידה על טיסה אחרת אלא על שדה
   // שנקלט שגוי — נצפה בפועל כששעת הנחיתה נכתבה בשדה ההמראה. לכן השעה
   // אינה מקבלת זכות וטו על מספר הטיסה.
-  if (agrees(a.flightNumber, b.flightNumber, 'flight')) return true;
+  if (sameFlightNumber(a.flightNumber, b.flightNumber)) return true;
 
   if (contradicts(a.departureTime, b.departureTime)) return false;
   if (contradicts(a.arrivalTime, b.arrivalTime)) return false;
@@ -212,7 +216,7 @@ const sameFlight = (a, b) => {
   }
 
   return (
-    agrees(a.flightNumber, b.flightNumber, 'flight') ||
+    sameFlightNumber(a.flightNumber, b.flightNumber) ||
     agrees(a.departureTime, b.departureTime) ||
     agrees(a.arrivalTime, b.arrivalTime)
   );
