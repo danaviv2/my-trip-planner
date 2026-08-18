@@ -91,9 +91,18 @@ const getBookingButtons = (activity, destination) => {
   });
 
   if (activity.type === 'food') {
+    // לא OpenTable. שתי בעיות נמצאו בבדיקה מול האתר עצמו:
+    // היעד לא נשלח כלל (metroId=0 אינו מיקום), ולכן החיפוש הוסט למדינת
+    // הגולש — "You searched for les cocottes in Israel"; וגם כשהמסעדה
+    // נמצאה, התשובה הייתה שהיא אינה ברשת ההזמנות שלהם, שכמעט אינה פעילה
+    // בצרפת ובאיטליה.
+    //
+    // חיפוש מחזיר את כרטיס המקום: טלפון, שעות, האתר הרשמי וקישור ההזמנה
+    // בפלטפורמה שבה המסעדה באמת נמצאת — TheFork באירופה. זה עובד בכל
+    // יעד, ואינו מבטיח רשת מסוימת שאולי אינה מכסה את המקום.
     buttons.push({
-      label: '🍽️ הזמן שולחן',
-      url: `https://www.opentable.com/s/?term=${name}&metroId=0`,
+      label: '🍽️ הזמנת שולחן',
+      url: `https://www.google.com/search?q=${name}+${dest}+reservation`,
       color: '#DA3743',
     });
     buttons.push({
@@ -313,15 +322,26 @@ const TripMap = ({ tripPlan, selectedDayIndex }) => {
                   </Typography>
                 )}
 
-                {/* אתר רשמי */}
-                {activity.website && activity.website.startsWith('http') && (
+                {/* האתר הרשמי.
+                    כתובת שהמודל מחזיר אינה מאומתת: השדה website אינו קיים
+                    כלל בסכימת המסלול, ולכן כל ערך שהגיע בו הומצא — כתובת
+                    סבירה למראה שמובילה לדף שאינו קיים. חיפוש מחזיר את
+                    האתר האמיתי (lescocottes.paris, ולא ניחוש), ולכן
+                    הכפתור מחפש במקום לפתוח כתובת שלא נבדקה. */}
+                {activity.name && (
                   <Button
                     fullWidth size="small" variant="outlined"
                     endIcon={<OpenInNewIcon sx={{ fontSize: '0.75rem' }} />}
-                    onClick={() => window.open(activity.website, '_blank', 'noopener,noreferrer')}
+                    onClick={() =>
+                      window.open(
+                        `https://www.google.com/search?q=${encodeURIComponent(activity.name)}+${encodeURIComponent(tripPlan?.destination || '')}+official+site`,
+                        '_blank',
+                        'noopener,noreferrer'
+                      )
+                    }
                     sx={{ mb: 0.5, fontSize: '0.7rem', py: 0.3, borderColor: '#333', color: '#333' }}
                   >
-                    🌐 אתר רשמי
+                    🌐 האתר הרשמי
                   </Button>
                 )}
 
