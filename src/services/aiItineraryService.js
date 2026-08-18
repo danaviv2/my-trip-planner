@@ -180,7 +180,7 @@ CRITICAL RULES:
   // isGoodCoord, lookup ו-locateActivity הועברו ל-placeLookupService, כדי
   // שגם עריכה ידנית של המסלול תשתמש באותה בדיקת וודאות. שכפול היה מוביל
   // לכך שתיקון באחד לא חל על השני.
-  const locateActivity = (address, name) => locatePlace(name, address, destination);
+  const locateActivity = (address, name, type) => locatePlace(name, address, destination, type);
 
   const geocodeMissing = async (daysList) => {
     const tasks = [];
@@ -196,7 +196,7 @@ CRITICAL RULES:
     // בשנייה, ומטח מקבילי גורר חסימה — כלומר מקומות אמיתיים היו
     // מסומנים כלא מאומתים רק משום שנחסמנו.
     for (const { act } of tasks) {
-      const { coords, confidence } = await locateActivity(act.address || '', act.name || '');
+      const { coords, confidence } = await locateActivity(act.address || '', act.name || '', act.type || '');
       if (coords) {
         act.lat = coords.lat;
         act.lng = coords.lng;

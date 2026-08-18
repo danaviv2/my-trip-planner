@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
-  MenuItem, Grid, Alert, CircularProgress, Box, Typography,
+  MenuItem, Grid, Alert, CircularProgress, Box, Typography, InputAdornment,
+  IconButton, List, ListItemButton, ListItemText, Chip, Divider,
 } from '@mui/material';
-import { locatePlace, isGoodCoord } from '../../services/placeLookupService';
+import SearchIcon from '@mui/icons-material/Search';
+import { locatePlace, searchPlaces, isGoodCoord } from '../../services/placeLookupService';
 
 /**
  * הוספה ועריכה של פעילות ביום מסוים.
@@ -31,6 +33,23 @@ const TYPES = [
   { value: 'rest', label: 'מנוחה', emoji: '☕' },
 ];
 
+/**
+ * סוג OSM → סוג הפעילות שלנו, כדי שבחירת מקום תמלא גם את הסוג והסמל.
+ * לא כל סיווג ממופה; מה שאינו מוכר נשאר על הבחירה הקיימת.
+ */
+const KIND_TO_TYPE = {
+  'amenity/restaurant': 'food', 'amenity/cafe': 'food', 'amenity/fast_food': 'food',
+  'amenity/bar': 'nightlife', 'amenity/pub': 'nightlife', 'amenity/nightclub': 'nightlife',
+  'amenity/ice_cream': 'food', 'shop/bakery': 'food',
+  'tourism/museum': 'museum', 'tourism/gallery': 'museum', 'amenity/arts_centre': 'museum',
+  'tourism/attraction': 'attraction', 'tourism/artwork': 'attraction',
+  'tourism/viewpoint': 'attraction', 'tourism/theme_park': 'attraction', 'tourism/zoo': 'attraction',
+  'man_made/tower': 'attraction',
+  'leisure/park': 'nature', 'leisure/garden': 'nature', 'leisure/nature_reserve': 'nature',
+  'natural/beach': 'beach',
+  'amenity/marketplace': 'shopping',
+};
+
 const EMPTY = {
   time: '09:00', name: '', type: 'attraction', duration: '2h',
   address: '', description: '', price: '', tips: '',
@@ -40,6 +59,12 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
   const [form, setForm] = useState(EMPTY);
   const [locating, setLocating] = useState(false);
   const [locationNote, setLocationNote] = useState(null);
+  // תוצאות החיפוש. הבחירה של המשתמש היא האימות: חיפוש "Les Cocottes"
+  // מחזיר גם מסעדה וגם חנות בעלת שם דומה, ולקיחת הראשונה נועלת כתובת
+  // שגויה תחת סימון "אומת".
+  const [candidates, setCandidates] = useState(null);
+  const [searching, setSearching] = useState(false);
+  const [picked, setPicked] = useState(null);
 
   const isEdit = !!activity;
 
@@ -47,9 +72,51 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
     if (!open) return;
     setForm(activity ? { ...EMPTY, ...activity } : EMPTY);
     setLocationNote(null);
+    setCandidates(null);
+    setPicked(null);
   }, [open, activity]);
 
-  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  // שינוי ידני בשם או בכתובת מבטל מקום שנבחר: הקואורדינטות שייכות למה
+  // שנבחר, ולא למה שנכתב אחריו.
+  const set = (key) => (e) => {
+    const value = e.target.value;
+    setForm((f) => ({ ...f, [key]: value }));
+    if (key === 'name' || key === 'address') setPicked(null);
+  };
+
+  const runSearch = async () => {
+    const name = form.name.trim();
+    if (!name) return;
+    setSearching(true);
+    setCandidates(await searchPlaces(name, destination));
+    setSearching(false);
+  };
+
+  /**
+   * שדה fee ב-OSM הוא לעיתים סכום ("10-25€") ולעיתים בוליאני ("yes"/"no").
+   * "yes" אינו מחיר אלא ידיעה שיש תשלום, ומילויו בשדה המחיר היה יוצר
+   * "מחיר: yes" על הכרטיס.
+   */
+  const priceFromFee = (fee) => {
+    const v = String(fee || '').trim().toLowerCase();
+    if (!v || v === 'yes') return '';
+    if (v === 'no' || v === 'free') return 'חינם';
+    return fee;
+  };
+
+  /** בחירת מקום ממלאת את כל מה שידוע עליו — ושום דבר שאינו ידוע. */
+  const choose = (place) => {
+    setPicked(place);
+    setCandidates(null);
+    setForm((f) => ({
+      ...f,
+      name: place.label || f.name,
+      address: place.address,
+      type: KIND_TO_TYPE[place.kind] || f.type,
+      price: priceFromFee(place.fee) || f.price,
+      description: f.description || [place.cuisine, place.openingHours].filter(Boolean).join(' · '),
+    }));
+  };
 
   // המקום נבדק מול מקור חיצוני ולא מנוחש. הפרדה בין "המקום נמצא" לבין
   // "הרחוב נמצא" נשמרת גם כאן, כי היא ההבדל בין נקודה אמיתית על המפה
@@ -57,6 +124,20 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
   const handleSave = async () => {
     const name = form.name.trim();
     if (!name) return;
+
+    // מקום שנבחר מהרשימה כבר אומת על ידי המשתמש — אין צורך לחפש שוב.
+    if (picked) {
+      onSave({
+        ...form,
+        name,
+        lat: picked.lat,
+        lng: picked.lng,
+        website: picked.website || undefined,
+        emoji: TYPES.find((t) => t.value === form.type)?.emoji || '📍',
+      });
+      onClose();
+      return;
+    }
 
     const addressChanged = isEdit && form.address !== (activity.address || '');
     const nameChanged = isEdit && name !== (activity.name || '');
@@ -75,7 +156,7 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
     }
 
     setLocating(true);
-    const { coords, confidence } = await locatePlace(name, form.address.trim(), destination);
+    const { coords, confidence } = await locatePlace(name, form.address.trim(), destination, form.type);
     setLocating(false);
 
     // שדות הוודאות מנוקים תחילה, אחרת סימון ישן נשאר על מקום שאומת מחדש
@@ -114,8 +195,62 @@ const ActivityEditorDialog = ({ open, activity, dayTitle, destination, onClose, 
             <TextField
               fullWidth autoFocus label="שם המקום" value={form.name} onChange={set('name')}
               placeholder="למשל: Musée d'Orsay"
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); runSearch(); } }}
+              helperText={picked ? '✓ מקום נבחר — הכתובת והמיקום מאומתים' : 'הקלד שם ולחץ חיפוש כדי למלא את שאר הפרטים'}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={runSearch} disabled={searching || !form.name.trim()} title="חפש את המקום">
+                      {searching ? <CircularProgress size={20} /> : <SearchIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
           </Grid>
+
+          {/* מועמדים. הבחירה של המשתמש היא האימות — במקום שהמערכת תכריע
+              לבד ותנעל כתובת שגויה תחת סימון "אומת". */}
+          {candidates && (
+            <Grid item xs={12}>
+              {candidates.length === 0 ? (
+                <Alert severity="info">
+                  לא נמצא מקום בשם הזה. אפשר למלא את הפרטים ידנית — הפעילות תתווסף
+                  ללוח הזמנים ותסומן כלא מאומתת על המפה.
+                </Alert>
+              ) : (
+                <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                  <Typography variant="caption" sx={{ px: 1.5, pt: 1, display: 'block', color: 'text.secondary' }}>
+                    בחר את המקום הנכון ({candidates.length} תוצאות)
+                  </Typography>
+                  <List dense disablePadding>
+                    {candidates.map((c, i) => (
+                      <React.Fragment key={c.id}>
+                        {i > 0 && <Divider component="li" />}
+                        <ListItemButton onClick={() => choose(c)} alignItems="flex-start">
+                          <ListItemText
+                            primary={
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                                <Typography variant="body2" fontWeight={700}>{c.label}</Typography>
+                                <Chip size="small" label={c.kind} sx={{ height: 18, fontSize: '0.65rem' }} />
+                                {c.website && <Chip size="small" color="success" label="אתר" sx={{ height: 18, fontSize: '0.65rem' }} />}
+                                {c.openingHours && <Chip size="small" color="info" label="שעות" sx={{ height: 18, fontSize: '0.65rem' }} />}
+                              </Box>
+                            }
+                            secondary={
+                              <Typography variant="caption" color="text.secondary">
+                                {c.address.split(',').slice(0, 4).join(',')}
+                              </Typography>
+                            }
+                          />
+                        </ListItemButton>
+                      </React.Fragment>
+                    ))}
+                  </List>
+                </Box>
+              )}
+            </Grid>
+          )}
 
           <Grid item xs={6} sm={4}>
             <TextField

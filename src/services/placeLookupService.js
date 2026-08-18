@@ -10,6 +10,11 @@
  * כתובת. לכן אי אפשר להכריע בין השתיים, ואין להעמיד פנים שכן.
  */
 
+const API = 'https://nominatim.openstreetmap.org/search';
+
+/** מדיניות Nominatim מגבילה לבקשה בשנייה. מטח מקבילי גורר חסימה. */
+const RATE_MS = 1100;
+
 /** קואורדינטה שמישה — לא ריקה, לא NaN, ולא (0,0) שהוא ברירת מחדל שקטה. */
 export const isGoodCoord = (a) => {
   if (!a) return false;
@@ -23,39 +28,119 @@ export const isGoodCoord = (a) => {
   );
 };
 
-const lookup = async (query) => {
+/**
+ * סוגי OSM שמתאימים לכל סוג פעילות.
+ *
+ * נדרש משום שחיפוש לפי שם מחזיר לעיתים עסק אחר לגמרי בעל שם דומה:
+ * "Les Cocottes, Paris" החזיר shop/erotic כתוצאה הראשונה, בעוד שתי
+ * המסעדות בשם הזה היו במקומות השני והשלישי. לקיחת התוצאה הראשונה
+ * נעלה כתובת שגויה תחת סימון "אומת".
+ */
+const EXPECTED = {
+  food: ['amenity/restaurant', 'amenity/cafe', 'amenity/fast_food', 'amenity/bar', 'amenity/pub', 'amenity/ice_cream', 'shop/bakery'],
+  museum: ['tourism/museum', 'tourism/gallery', 'amenity/arts_centre'],
+  attraction: ['tourism/attraction', 'tourism/artwork', 'tourism/viewpoint', 'tourism/theme_park', 'tourism/zoo', 'man_made/tower', 'leisure/park'],
+  nature: ['leisure/park', 'leisure/garden', 'leisure/nature_reserve'],
+  beach: ['natural/beach', 'leisure/beach_resort'],
+  shopping: ['amenity/marketplace'],
+  nightlife: ['amenity/bar', 'amenity/pub', 'amenity/nightclub', 'amenity/casino', 'amenity/theatre'],
+  transport: ['amenity/bus_station', 'public_transport/station'],
+};
+
+const kindOf = (raw) => `${raw.class}/${raw.type}`;
+
+/** קטגוריות רחבות שאין להן ערך מדויק ברשימה, אך עדיין מתאימות. */
+const looselyMatches = (raw, activityType) => {
+  const cls = raw.class;
+  if (activityType === 'shopping') return cls === 'shop';
+  if (activityType === 'nature') return cls === 'natural' || cls === 'leisure';
+  if (activityType === 'attraction') return cls === 'historic' || cls === 'tourism';
+  if (activityType === 'transport') return cls === 'railway' || cls === 'aeroway';
+  return false;
+};
+
+/** ממיר תוצאה גולמית של Nominatim לשדות שהמסכים צורכים. */
+const toPlace = (raw) => {
+  const tags = raw.extratags || {};
+  return {
+    id: raw.place_id,
+    label: (raw.display_name || '').split(',')[0].trim(),
+    address: raw.display_name || '',
+    lat: parseFloat(raw.lat),
+    lng: parseFloat(raw.lon),
+    kind: kindOf(raw),
+    website: tags.website || tags['contact:website'] || '',
+    openingHours: tags.opening_hours || '',
+    phone: tags.phone || tags['contact:phone'] || '',
+    fee: tags.fee || '',
+    cuisine: tags.cuisine || '',
+    raw,
+  };
+};
+
+const query = async (q, limit) => {
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
-      { headers: { 'Accept-Language': 'en', 'User-Agent': 'MyTripPlanner/1.0' } }
+      `${API}?q=${encodeURIComponent(q)}&format=json&limit=${limit}&extratags=1`,
+      { headers: { 'Accept-Language': 'he,en', 'User-Agent': 'MyTripPlanner/1.0' } }
     );
     const data = await res.json();
-    if (data?.[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-  } catch {}
-  return null;
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
 };
 
 /**
- * @returns {{coords: {lat,lng}|null, confidence: 'name'|'address'|'none'}}
+ * מחפש מקום ומחזיר מועמדים לבחירת המשתמש.
+ *
+ * הבחירה של המשתמש היא האימות. במקום שהמערכת תכריע לבד ותטעה בשקט,
+ * מוצגות האפשרויות — וברור מיד שהשלישית אינה המקום המבוקש.
+ *
+ * @returns {Promise<Array>} עד `limit` מקומות, עם כתובת, אתר, שעות ומחיר
+ */
+export const searchPlaces = async (name, destination = '', limit = 5) => {
+  if (!String(name || '').trim()) return [];
+  const suffix = destination ? `, ${destination}` : '';
+  const results = await query(`${name}${suffix}`, limit);
+  return results.map(toPlace).filter((p) => isGoodCoord(p));
+};
+
+/**
+ * @returns {{coords: {lat,lng}|null, confidence: 'name'|'address'|'none', place}}
  *   'name'    — המקום עצמו נמצא
  *   'address' — הרחוב נמצא, אך לא אושר שהמקום קיים בו
  *   'none'    — לא נמצא דבר. אין להמציא מיקום.
+ *
+ * @param {string} activityType סוג הפעילות, אם ידוע. משמש לבחירת המועמד
+ *   הנכון מבין כמה בעלי אותו שם, במקום לקחת את הראשון.
  */
-export const locatePlace = async (name, address, destination = '') => {
+export const locatePlace = async (name, address, destination = '', activityType = '') => {
   const suffix = destination ? `, ${destination}` : '';
 
   if (name) {
-    const byName = await lookup(`${name}${suffix}`);
-    if (byName) return { coords: byName, confidence: 'name' };
+    // חמש תוצאות ולא אחת: התוצאה הראשונה עלולה להיות עסק אחר בעל שם
+    // דומה, וכאן אין משתמש שיבחין בכך.
+    const candidates = (await query(`${name}${suffix}`, 5)).map(toPlace).filter(isGoodCoord);
+
+    if (candidates.length) {
+      const expected = EXPECTED[activityType] || [];
+      const best =
+        candidates.find((c) => expected.includes(c.kind)) ||
+        candidates.find((c) => looselyMatches(c.raw, activityType)) ||
+        candidates[0];
+      return { coords: { lat: best.lat, lng: best.lng }, confidence: 'name', place: best };
+    }
   }
 
   if (address) {
-    // מדיניות השימוש של Nominatim מגבילה לבקשה בשנייה. מטח מקבילי גורר
-    // חסימה, ואז מקום אמיתי מסומן כלא מאומת רק משום שנחסמנו.
-    await new Promise((r) => setTimeout(r, 1100));
-    const byAddress = await lookup(`${address}${suffix}`);
-    if (byAddress) return { coords: byAddress, confidence: 'address' };
+    await new Promise((r) => setTimeout(r, RATE_MS));
+    const byAddress = (await query(`${address}${suffix}`, 1)).map(toPlace).filter(isGoodCoord);
+    if (byAddress.length) {
+      const p = byAddress[0];
+      return { coords: { lat: p.lat, lng: p.lng }, confidence: 'address', place: p };
+    }
   }
 
-  return { coords: null, confidence: 'none' };
+  return { coords: null, confidence: 'none', place: null };
 };
