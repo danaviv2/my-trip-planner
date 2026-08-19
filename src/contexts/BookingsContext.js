@@ -390,10 +390,23 @@ export const BookingsProvider = ({ children }) => {
    */
   const bookingsRef = useRef([]);
 
+  /**
+   * נקודת הכתיבה היחידה — והמקום שבו נאכפת התכונה.
+   *
+   * חמישה סבבי תיקון חיפשו איזה קורא מתנהג לא נכון. הכלי האבחוני הוכיח
+   * שההשוואה תקינה לחלוטין ושהרצה חוזרת מצמצמת — כלומר רשומה נכתבה בלי
+   * לעבור באיחוד. אבל יש ארבעה מסלולי כתיבה, ריצות מקבילות, מטמון ענן
+   * ו-React באמצע; תמיד יימצא עוד מסלול שלא נצפה מראש.
+   *
+   * לכן האיחוד אינו באחריות הקוראים אלא מוטבע כאן: מרגע זה אי אפשר
+   * לשמור רשימה שיש בה כפילות, ולא משנה מי כתב אותה או מתי.
+   */
   const applyBookings = useCallback((next) => {
-    bookingsRef.current = next;
-    setBookings(next);
-    writeLocal(next);
+    const clean = withoutEmptyRecords(dedupe(next || []));
+    bookingsRef.current = clean;
+    setBookings(clean);
+    writeLocal(clean);
+    return clean;
   }, []);
   const [loading, setLoading] = useState(true);
   // כשל בשמירה לענן היה נבלע בשקט, והמשתמש האמין שהנתונים מגובים בעוד
@@ -489,13 +502,19 @@ export const BookingsProvider = ({ children }) => {
 
       if (!changed.length && !stale.length) return { added: 0, skipped: list.length };
 
-      applyBookings(merged);
+      const saved = applyBookings(merged);
+
+      // הרשימה שנשמרה בפועל היא זו שנאכפה בנקודת הכתיבה, ולכן הסנכרון
+      // לענן נגזר ממנה ולא מהחישוב המקומי שקדם לה.
+      const savedIds = new Set(saved.map((x) => String(x.id)));
+      const toSave = changed.filter((x) => savedIds.has(String(x.id)));
+      const toDrop = [...stale, ...merged.filter((x) => !savedIds.has(String(x.id)))];
 
       if (user) {
         try {
           await Promise.all([
-            ...changed.map((b) => saveBooking(user.uid, b)),
-            ...stale.map((b) => deleteBooking(user.uid, b.id)),
+            ...toSave.map((b) => saveBooking(user.uid, b)),
+            ...toDrop.map((b) => deleteBooking(user.uid, b.id)),
           ]);
           setCloudError(false);
         } catch {
@@ -504,7 +523,7 @@ export const BookingsProvider = ({ children }) => {
         }
       }
 
-      const added = merged.length - current.length;
+      const added = saved.length - current.length;
       return { added: Math.max(added, 0), skipped: list.length - Math.max(added, 0) };
     },
     [user, applyBookings]
