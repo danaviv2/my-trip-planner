@@ -14,6 +14,7 @@
 
 import webpush from 'web-push';
 import { getDb } from './_lib/adminApp.mjs';
+import { verifyIdToken } from './_lib/verifyIdToken.mjs';
 
 const VAPID_PUBLIC = 'BLk3XREbVbR3a_I6IB4oJtMhC5mMIM8X6qX-FBG6r9b9jyHKD6-qpCW_yPUfsSO2LfRT_sZEjt16DWU8Ibnucj8';
 
@@ -49,23 +50,9 @@ async function run(req, res) {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   if (!token) return res.status(401).json({ error: 'חסר אסימון זהות.' });
 
-  // ייבוא דינמי: כשל בטעינת תת-המודול הזה בסביבת הריצה היה מפיל את
-  // הפונקציה כולה עוד לפני שהיא מתחילה, ואז אין מי שידווח מה קרה.
-  let uid;
-  try {
-    const { getAuth } = await import('firebase-admin/auth');
-    uid = (await getAuth().verifyIdToken(token)).uid;
-  } catch (err) {
-    const msg = String(err?.message || err);
-    // הבחנה חשובה: אסימון פסול היא תקלת משתמש, כשל בטעינת המודול היא
-    // תקלת שרת. הודעה אחת לשתיהן הייתה שולחת אותנו לכיוון הלא נכון.
-    const isTokenProblem = /token|expired|argument|decode|aud|iss/i.test(msg);
-    return res.status(isTokenProblem ? 401 : 500).json({
-      error: isTokenProblem
-        ? 'אסימון הזהות אינו תקף. התחבר מחדש ונסה שוב.'
-        : `אימות הזהות נכשל בשרת: ${msg}`,
-    });
-  }
+  const auth = await verifyIdToken(token);
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+  const uid = auth.uid;
 
   webpush.setVapidDetails(process.env.VAPID_SUBJECT, VAPID_PUBLIC, process.env.VAPID_PRIVATE_KEY);
 
