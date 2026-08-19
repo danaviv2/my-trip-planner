@@ -70,9 +70,14 @@ const FlightAlertsCard = ({ hasFlights }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
+      // ההנחיה חיונית ואינה קוסמטית: באייפון iOS אינו מציג באנר לאפליקציה
+      // שנמצאת בחזית, ולכן בדיקה שהצליחה נראית ככישלון כשהמסך פתוח.
       setTestResult(
         res.ok
-          ? { ok: true, text: `נשלחה התראה ל-${data.sent} מכשירים. אם היא לא הופיעה — בדוק את הגדרות ההתראות של המכשיר.` }
+          ? {
+              ok: true,
+              text: `נשלחה התראה ל-${data.sent} מכשירים. צא עכשיו למסך הבית — באייפון ההתראה אינה מוצגת כשהאפליקציה פתוחה בחזית. אם היא לא הופיעה, בדוק במרכז ההתראות.`,
+            }
           : { ok: false, text: data.error || 'השליחה נכשלה.' }
       );
     } catch (err) {
