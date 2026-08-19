@@ -13,12 +13,27 @@
  */
 
 import webpush from 'web-push';
-import { getAuth } from 'firebase-admin/auth';
 import { getDb } from './_lib/adminApp.mjs';
 
 const VAPID_PUBLIC = 'BLk3XREbVbR3a_I6IB4oJtMhC5mMIM8X6qX-FBG6r9b9jyHKD6-qpCW_yPUfsSO2LfRT_sZEjt16DWU8Ibnucj8';
 
+/**
+ * פונקציה שקורסת מחזירה דף שגיאה של הפלטפורמה — טקסט, לא JSON — והלקוח
+ * נכשל בפענוח עם הודעה שאינה מסבירה דבר ("The string did not match the
+ * expected pattern"). לכן כל הגוף עטוף, וכל תקלה חוזרת כ-JSON שאומר מה קרה.
+ */
 export default async function handler(req, res) {
+  try {
+    return await run(req, res);
+  } catch (err) {
+    return res.status(500).json({
+      error: `הפונקציה נכשלה: ${err?.message || err}`,
+      where: String(err?.stack || '').split('\n')[1]?.trim() || '',
+    });
+  }
+}
+
+async function run(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
@@ -34,11 +49,22 @@ export default async function handler(req, res) {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   if (!token) return res.status(401).json({ error: 'חסר אסימון זהות.' });
 
+  // ייבוא דינמי: כשל בטעינת תת-המודול הזה בסביבת הריצה היה מפיל את
+  // הפונקציה כולה עוד לפני שהיא מתחילה, ואז אין מי שידווח מה קרה.
   let uid;
   try {
+    const { getAuth } = await import('firebase-admin/auth');
     uid = (await getAuth().verifyIdToken(token)).uid;
-  } catch {
-    return res.status(401).json({ error: 'אסימון הזהות אינו תקף. התחבר מחדש ונסה שוב.' });
+  } catch (err) {
+    const msg = String(err?.message || err);
+    // הבחנה חשובה: אסימון פסול היא תקלת משתמש, כשל בטעינת המודול היא
+    // תקלת שרת. הודעה אחת לשתיהן הייתה שולחת אותנו לכיוון הלא נכון.
+    const isTokenProblem = /token|expired|argument|decode|aud|iss/i.test(msg);
+    return res.status(isTokenProblem ? 401 : 500).json({
+      error: isTokenProblem
+        ? 'אסימון הזהות אינו תקף. התחבר מחדש ונסה שוב.'
+        : `אימות הזהות נכשל בשרת: ${msg}`,
+    });
   }
 
   webpush.setVapidDetails(process.env.VAPID_SUBJECT, VAPID_PUBLIC, process.env.VAPID_PRIVATE_KEY);

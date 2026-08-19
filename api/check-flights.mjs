@@ -70,7 +70,16 @@ const messageFor = (flight, info, bucket) => {
   };
 };
 
+/** עטיפה שמונעת החזרת דף שגיאה של הפלטפורמה במקום JSON. */
 export default async function handler(req, res) {
+  try {
+    return await run(req, res);
+  } catch (err) {
+    return res.status(500).json({ error: `הבדיקה נכשלה: ${err?.message || err}` });
+  }
+}
+
+async function run(req, res) {
   // נקודת קצה ששולחת התראות חייבת להיות מוגנת: בלי סוד, כל אחד היה יכול
   // להפעיל אותה ולהציף את המכשירים.
   const secret = process.env.CRON_SECRET;
