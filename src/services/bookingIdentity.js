@@ -13,6 +13,22 @@
  * נכון, גם אם הפירוש עצמו שגוי. עקביות חשובה כאן יותר מדיוק.
  */
 
+/**
+ * תווים שאינם נראים על המסך ומשנים את המחרוזת.
+ *
+ * טקסט עברי מעורב באנגלית נושא סימני כיווניות (RLM, LRM, isolates), וגם
+ * רווח קשיח ותו BOM מגיעים מתוך HTML של מיילים. הם בלתי נראים לחלוטין,
+ * אך "LY 384" ו-"LY\u200f 384" הם שתי מחרוזות שונות — ולכן אותה טיסה
+ * נחשבה לשתיים, ובדיקה על ערכים מודפסים הראתה שהם זהים.
+ *
+ * זה גם ההסבר לכך שהשוואה במעבדה הצליחה בעוד היישום נכשל: הערכים
+ * שהודפסו לקונסול נראו זהים, וההבדל היה בתווים שאינם מודפסים.
+ */
+const INVISIBLE = /[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF\u00AD]/g;
+
+/** מסיר תווים בלתי נראים לפני כל השוואה. */
+export const stripInvisible = (v) => String(v || '').replace(INVISIBLE, '');
+
 const MONTHS = {
   jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
   jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
@@ -29,7 +45,7 @@ const pad = (n) => String(n).padStart(2, '0');
  *   עדיף על ניחוש שיפריד בין שתי רשומות של אותה הזמנה.
  */
 export const dateKey = (value) => {
-  const raw = String(value || '').trim();
+  const raw = stripInvisible(value).trim();
   if (!raw) return '';
 
   // ISO, גם בלי ריפוד: 2026-6-4
@@ -65,7 +81,7 @@ export const dateKey = (value) => {
  * באישור וכ-LY0384 בכרטיס האלקטרוני.
  */
 export const flightKey = (value) => {
-  const raw = String(value || '').toUpperCase().replace(/[\s-]/g, '');
+  const raw = stripInvisible(value).toUpperCase().replace(/[\s-]/g, '');
   const m = /^([A-Z]{1,3})0*(\d{1,4})$/.exec(raw);
   return m ? `${m[1]}${m[2]}` : raw;
 };
@@ -111,7 +127,7 @@ const NOISE = new RegExp(
  * ושני ספקים כותבים אותו אחרת. הניקוי משאיר את הליבה המזהה.
  */
 export const nameKey = (value) =>
-  String(value || '')
+  stripInvisible(value)
     .toLowerCase()
     .replace(/[''`"״׳,.\-–—|()]/g, ' ')
     .replace(NOISE, ' ')

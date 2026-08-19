@@ -7,7 +7,9 @@ import {
 } from '../services/firestoreService';
 import { groupBookingsIntoTrips } from '../services/tripGroupingService';
 import { useAutoGmailScan } from '../hooks/useAutoGmailScan';
-import { dateKey, flightKey, sameName, sameFlightNumber } from '../services/bookingIdentity';
+import {
+  dateKey, flightKey, sameName, sameFlightNumber, stripInvisible,
+} from '../services/bookingIdentity';
 
 /**
  * מאגר ההזמנות של המשתמש והטיולים שנגזרים מהן.
@@ -108,7 +110,9 @@ const writeLocal = (list) => {
  * לפי הספק ותאריך האיסוף. אלה מזהים את הדבר עצמו, ללא תלות בערוץ שדרכו
  * הגיע האישור.
  */
-const norm = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
+// סימני כיווניות ותווים בלתי נראים מוסרים כאן: הם מגיעים מ-HTML של
+// מיילים בעברית, אינם נראים על המסך, והופכים שתי מחרוזות זהות לשונות.
+const norm = (s) => stripInvisible(s).trim().toLowerCase().replace(/\s+/g, '');
 
 /**
  * השוואה לפי ערך קנוני ולא לפי המחרוזת כפי שהתקבלה.
