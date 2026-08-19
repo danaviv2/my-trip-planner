@@ -11,6 +11,34 @@
 
 import { getDb } from './_lib/adminApp.mjs';
 
+/**
+ * תיאור מבני של הערך שהודבק, בלי לחשוף אותו.
+ *
+ * "התקלה סביב תו 6" אינו מספיק כדי לדעת מה קרה, והמשתמש רואה קובץ שנראה
+ * תקין. במקום עוד סבב ניחוש — כמה עובדות על צורת הערך: אורך, תו ראשון
+ * ואחרון, אילו שדות מזוהים, ואילו תווים בעייתיים נוכחים.
+ *
+ * שום קטע מהמפתח אינו מוחזר. גם התו הראשון והאחרון הם סימני מבנה בלבד
+ * ('{' ו-'}'), ומספרים אינם מגלים תוכן.
+ */
+const fingerprint = (raw) => {
+  if (!raw) return null;
+  const curly = /[\u201C\u201D\u2018\u2019]/.test(raw);
+  return {
+    length: raw.length,
+    firstChar: raw.trim().charAt(0) || '',
+    lastChar: raw.trim().slice(-1) || '',
+    hasTypeField: raw.includes('"type"'),
+    hasPrivateKeyField: raw.includes('"private_key"'),
+    hasClientEmailField: raw.includes('"client_email"'),
+    quoteCount: (raw.match(/"/g) || []).length,
+    hasCurlyQuotes: curly,
+    hasEscapedNewline: raw.includes('\\n'),
+    hasRawNewline: /\r|\n/.test(raw),
+    startsWithBom: raw.charCodeAt(0) === 0xfeff,
+  };
+};
+
 export default async function handler(req, res) {
   const report = {
     vapidPrivateKey: !!process.env.VAPID_PRIVATE_KEY,
@@ -28,6 +56,7 @@ export default async function handler(req, res) {
   const conn = getDb();
   if (!conn.ok) {
     report.errors.push(conn.error);
+    report.valueShape = fingerprint(process.env.FIREBASE_SERVICE_ACCOUNT);
   } else {
     report.serviceAccount = true;
     report.projectId = conn.projectId;
