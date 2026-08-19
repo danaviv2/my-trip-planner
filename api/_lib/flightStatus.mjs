@@ -8,6 +8,19 @@
 
 const HOST = 'aerodatabox.p.rapidapi.com';
 
+/**
+ * זהות טיסה אחידה, בהתאמה לנורמליזציה שבצד הלקוח.
+ *
+ * חברות תעופה מרפדות באפסים באופן לא עקבי, ולכן LY384 ו-LY0384 הן אותה
+ * טיסה. מפתוח לפי הערך הגולמי היה יוצר שתי רשומות התראה ושולח שתי הודעות
+ * על אותו עיכוב.
+ */
+export const flightAlertKey = (flightNumber, date) => {
+  const raw = String(flightNumber || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const m = /^([A-Z]{1,3})0*(\d{1,4})$/.exec(raw);
+  return `${m ? `${m[1]}${m[2]}` : raw}_${date}`;
+};
+
 export const isValidFlight = (s) => /^[A-Z0-9]{2,8}$/i.test(String(s || '').replace(/\s+/g, ''));
 export const isValidDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(String(s || ''));
 

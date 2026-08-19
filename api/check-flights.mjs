@@ -18,7 +18,7 @@
 
 import webpush from 'web-push';
 import { getDb } from './_lib/adminApp.mjs';
-import { fetchFlight, delayFrom } from './_lib/flightStatus.mjs';
+import { fetchFlight, delayFrom, flightAlertKey } from './_lib/flightStatus.mjs';
 
 /** מהעיכוב הזה ואילך שווה להודיע: מספיק כדי לשנות הסעה. */
 const NOTIFY_MINUTES = 30;
@@ -134,8 +134,15 @@ export default async function handler(req, res) {
         if (bucket === 'none') continue;
         report.delayed++;
 
-        // הדלי שנשלח בפעם הקודמת. התראה חדשה נשלחת רק כשהמצב החמיר.
-        const stateRef = userRef.collection('flightAlerts').doc(doc.id);
+        // מצב ההתראה ממופתח לפי זהות הטיסה ולא לפי מזהה המסמך.
+        //
+        // הענן עשוי להחזיק שתי רשומות לאותה טיסה — למשל כשהאיחוד נאכף
+        // מקומית ומחיקת המסמך בענן לא הושלמה. מפתוח לפי מזהה מסמך היה
+        // מייצר שתי רשומות התראה, ושולח שתי הודעות על אותו עיכוב.
+        // זהות הטיסה יציבה גם כשהניירת כפולה.
+        const stateRef = userRef
+          .collection('flightAlerts')
+          .doc(flightAlertKey(flight.flightNumber, flight.date));
         const prev = (await stateRef.get()).data()?.bucket || 'none';
         if (prev === bucket) continue;
 

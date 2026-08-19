@@ -23,6 +23,8 @@ const FlightAlertsCard = ({ hasFlights }) => {
   const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -47,6 +49,36 @@ const FlightAlertsCard = ({ hasFlights }) => {
     if (user) await savePushSubscription(user.uid, res.subscription).catch(() => {});
     setEnabled(true);
     setBusy(false);
+  };
+
+  /**
+   * בדיקת השרשרת מקצה לקצה.
+   *
+   * זו החוליה היחידה שאי אפשר לאמת בעקיפין: אפשר לוודא תצורה, הרשאות
+   * וקריאת נתונים, אבל לא שההודעה באמת מגיעה למכשיר. כישלון שם יתגלה
+   * בפעם הראשונה שתהיה טיסה מתעכבת — ברגע היחיד שבו זה משנה.
+   */
+  const sendTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      // אסימון הזהות של Firebase: השרת מאמת אותו ושולח אך ורק למכשירים
+      // של המשתמש הזה.
+      const token = await user.getIdToken();
+      const res = await fetch('/api/push-test', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setTestResult(
+        res.ok
+          ? { ok: true, text: `נשלחה התראה ל-${data.sent} מכשירים. אם היא לא הופיעה — בדוק את הגדרות ההתראות של המכשיר.` }
+          : { ok: false, text: data.error || 'השליחה נכשלה.' }
+      );
+    } catch (err) {
+      setTestResult({ ok: false, text: `השליחה נכשלה: ${err?.message || err}` });
+    }
+    setTesting(false);
   };
 
   const disable = async () => {
@@ -83,6 +115,15 @@ const FlightAlertsCard = ({ hasFlights }) => {
               <Alert severity="success" sx={{ flex: 1, minWidth: 200, fontSize: '0.85rem', py: 0 }}>
                 ההתראות פעילות במכשיר הזה
               </Alert>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={sendTest}
+                disabled={testing || !user}
+                startIcon={testing ? <CircularProgress size={14} /> : null}
+              >
+                {testing ? 'שולח...' : 'שלח בדיקה'}
+              </Button>
               <Button size="small" color="inherit" onClick={disable} disabled={busy}>
                 כבה
               </Button>
@@ -96,6 +137,16 @@ const FlightAlertsCard = ({ hasFlights }) => {
             >
               {busy ? 'מפעיל...' : 'הפעל התראות'}
             </Button>
+          )}
+
+          {testResult && (
+            <Alert
+              severity={testResult.ok ? 'success' : 'warning'}
+              sx={{ mt: 1, fontSize: '0.85rem' }}
+              onClose={() => setTestResult(null)}
+            >
+              {testResult.text}
+            </Alert>
           )}
         </Box>
       )}
