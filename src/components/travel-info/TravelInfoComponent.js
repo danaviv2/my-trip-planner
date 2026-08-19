@@ -11,6 +11,7 @@ import { findConflicts } from '../../services/itineraryConflictService';
 import { findDrivingRestrictions } from '../../services/drivingRestrictionsService';
 import { useBookings } from '../../contexts/BookingsContext';
 import TripTimeline from './TripTimeline';
+import NextUpCard from './NextUpCard';
 import { geocodeBookings } from '../../services/bookingGeocodeService';
 import FlightAlertsCard from './FlightAlertsCard';
 import FlightRights from './FlightRights';
@@ -243,6 +244,10 @@ const TravelInfoComponent = () => {
 
       {/* טיולים שנגזרו מההזמנות שיובאו. אישורים שהגיעו בנפרד —
           טיסה, מלון ורכב — מתאחדים כאן לנסיעה אחת. */}
+      {/* הדבר הבא בתור. מופיע רק כשהוא קרוב, ולכן הוא בראש המסך: כשאתה
+          בדרך זו השאלה היחידה, וגלילה אליה מבטלת את התועלת. */}
+      <NextUpCard trips={upcoming} />
+
       {/* התראות על עיכוב. מוצג רק כשיש טיסות — אחרת זו הצעה חסרת הקשר. */}
       <FlightAlertsCard
         hasFlights={upcoming.some((t) => (t.bookings || []).some((b) => b.type === 'flight'))}

@@ -224,14 +224,30 @@ export const spanningItems = (bookings = []) =>
   bookings.filter((b) => b.type === 'insurance');
 
 /**
+ * האם האירוע כבר מאחורינו.
+ *
+ * אירוע בלי שעה מיוצג בחצות, ולכן השוואה ישירה הכריזה עליו כחלף כבר
+ * בתחילת היום: הכניסה למלון "עברה" בשש בבוקר, לפני שהגעת. אירוע כזה
+ * נחשב עתידי עד סוף היום שלו — זה מה שידוע, ולא יותר.
+ */
+const hasPassed = (ev, now) => {
+  if (!ev.allDay) return ev.at < now;
+  const endOfDay = new Date(ev.at);
+  endOfDay.setHours(23, 59, 59, 999);
+  return endOfDay < now;
+};
+
+/**
  * האירוע הקרוב ביותר שטרם קרה.
  *
  * זה מה שמעניין כשפותחים את האפליקציה באמצע נסיעה — לא הרשימה כולה.
+ * הסדר נלקח מהציר עצמו ולא מהשעה, כדי שאירוע בלי שעה יישאר במקומו
+ * ההגיוני ביום ולא יקפוץ לתחילתו.
  */
 export const nextEvent = (days = [], now = new Date()) => {
   for (const day of days) {
     for (const ev of day.events) {
-      if (ev.at >= now) return ev;
+      if (!hasPassed(ev, now)) return ev;
     }
   }
   return null;
