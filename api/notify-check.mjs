@@ -31,6 +31,8 @@ export default async function handler(req, res) {
   } else {
     report.serviceAccount = true;
     report.projectId = conn.projectId;
+    // איזה תיקון נדרש כדי לקרוא את המפתח. 'as-is' פירושו שהודבק תקין.
+    report.repaired = conn.repaired;
 
     // קריאה אמיתית ולא בדיקת קיום מפתח: מפתח תקין שאין לו הרשאות ייכשל
     // רק כאן, וזו בדיוק התקלה שקשה לאבחן אחר כך.
