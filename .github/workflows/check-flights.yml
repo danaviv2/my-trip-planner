@@ -1,0 +1,34 @@
+# בדיקת עיכובי טיסה תקופתית.
+#
+# ב-Vercel Hobby, Cron מוגבל לפעם ביום — חסר תועלת לעיכובים, שמשתנים
+# משעה לשעה. GitHub Actions מריץ בכל תדירות בחינם, והריפו כבר כאן.
+#
+# הסוד CRON_SECRET מוגדר גם ב-Vercel וגם כ-Repository Secret כאן, והוא מה
+# שמונע מכל אחד להפעיל את שליחת ההתראות.
+name: check-flights
+
+on:
+  schedule:
+    # כל חצי שעה. GitHub עשוי לדחות בדקות בשעות עומס — לא קריטי כאן.
+    - cron: '*/30 * * * *'
+  # אפשר להפעיל ידנית מהלשונית Actions, לבדיקה
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: בדיקת עיכובים ושליחת התראות
+        run: |
+          response=$(curl -sS -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://my-trip-planner-ten.vercel.app/api/check-flights")
+          body=$(echo "$response" | sed '$d')
+          code=$(echo "$response" | tail -n1)
+          echo "$body"
+          # כישלון חייב להיכשל בגלוי: בדיקה שמדווחת הצלחה ואינה עושה דבר
+          # היא בדיוק סוג התקלה שנשאר סמוי לשבועות.
+          if [ "$code" != "200" ]; then
+            echo "::error::הבדיקה נכשלה עם קוד $code"
+            exit 1
+          fi

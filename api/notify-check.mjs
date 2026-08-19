@@ -65,17 +65,26 @@ export default async function handler(req, res) {
 
     // קריאה אמיתית ולא בדיקת קיום מפתח: מפתח תקין שאין לו הרשאות ייכשל
     // רק כאן, וזו בדיוק התקלה שקשה לאבחן אחר כך.
+    //
+    // listDocuments ולא get: מסמך שיש לו רק תת-אוספים ואין לו שדות אינו
+    // מופיע בשאילתת אוסף. האפליקציה כותבת users/{uid}/bookings/... ולא את
+    // המסמך users/{uid} עצמו, ולכן get החזיר אפס משתמשים — והבדיקה דיווחה
+    // תצורה תקינה בעוד השרת לא רואה שום נתון.
     try {
-      const users = await conn.db.collection('users').limit(5).get();
+      const refs = await conn.db.collection('users').listDocuments();
       report.firestoreRead = true;
-      report.users = users.size;
+      report.users = refs.length;
 
       let subs = 0;
-      for (const u of users.docs) {
-        const s = await u.ref.collection('pushSubscriptions').count().get();
+      let flights = 0;
+      for (const ref of refs.slice(0, 10)) {
+        const s = await ref.collection('pushSubscriptions').count().get();
         subs += s.data().count;
+        const f = await ref.collection('bookings').where('type', '==', 'flight').count().get();
+        flights += f.data().count;
       }
       report.subscriptions = subs;
+      report.flights = flights;
     } catch (err) {
       report.errors.push(`קריאה מ-Firestore נכשלה: ${err?.message || err}`);
     }
