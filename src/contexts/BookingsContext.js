@@ -608,6 +608,57 @@ export const BookingsProvider = ({ children }) => {
     return { bookings: count };
   }, [bookings, user]);
 
+  /**
+   * כלי אבחון לכפילויות.
+   *
+   * חמישה סבבי תיקון נכשלו מאותה סיבה: dedupe על הרשומות השמורות מחזיר
+   * את התוצאה הנכונה, ואף על פי כן היישום שומר כפילות. כלומר הרשומות לא
+   * הגיעו יחד להשוואה — ואי אפשר לדעת מדוע מבלי לראות את הריצה עצמה.
+   *
+   * במקום להמשיך לנחש מתוך צילומי מסך, הפונקציה מריצה את ההשוואה על מה
+   * ששמור בפועל ומדפיסה את ההכרעה לכל זוג. היא נחשפת על window ואינה
+   * משנה דבר.
+   */
+  useEffect(() => {
+    window.__dedupeReport = () => {
+      const list = bookingsRef.current;
+      const flights = list.filter((x) => x.type === 'flight');
+
+      console.log('%c— רשומות שמורות —', 'font-weight:bold');
+      console.table(
+        list.map((x) => ({
+          type: x.type, id: String(x.id),
+          num: x.flightNumber || x.name || x.company || x.provider || '',
+          date: x.date || x.checkIn || x.pickupDate || x.startDate || '',
+          route: x.departureAirport ? `${x.departureAirport}→${x.arrivalAirport}` : '',
+          src: (x.sourceSubject || '').slice(0, 40),
+        }))
+      );
+
+      console.log('%c— הכרעה לכל זוג טיסות —', 'font-weight:bold');
+      for (let i = 0; i < flights.length; i++) {
+        for (let j = i + 1; j < flights.length; j++) {
+          const a = flights[i];
+          const b2 = flights[j];
+          console.log(
+            `${a.flightNumber} (${a.id}) ↔ ${b2.flightNumber} (${b2.id}) →`,
+            sameBooking(a, b2) ? 'אותה טיסה' : 'שונות',
+            '| מפתחות:', flightKey(a.flightNumber), 'vs', flightKey(b2.flightNumber),
+            '|', dateKey(a.date), 'vs', dateKey(b2.date)
+          );
+        }
+      }
+
+      const after = withoutEmptyRecords(dedupe(list));
+      console.log('%c— תוצאה —', 'font-weight:bold');
+      console.log(`שמור: ${list.length} · אחרי איחוד מחדש: ${after.length}`);
+      if (after.length !== list.length) {
+        console.log('%c⚠️ האיחוד כן מצמצם — כלומר הרשומות נשמרו בלי לעבור בו יחד.', 'color:#c00');
+      }
+      return after.length;
+    };
+  }, []);
+
   // סריקה שקטה בפתיחת האפליקציה — אישור שהגיע למייל הופך לנסיעה בלי
   // שהמשתמש לחץ דבר. רצה רק לאחר שההרשאה אושרה פעם אחת.
   const { scanning: autoScanning, lastResult: autoScanResult } = useAutoGmailScan({
