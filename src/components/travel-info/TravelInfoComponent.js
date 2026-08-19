@@ -253,6 +253,16 @@ const TravelInfoComponent = () => {
         </Box>
       )}
 
+      {/* חותמת הבנייה. קטנה ולא מפריעה, אך מסיימת את השאלה "האם התיקון
+          כבר אצלי" — שאלה שעלתה כאן שוב ושוב ובזבזה סבבים שלמים. */}
+      <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'text.disabled', fontSize: '0.65rem' }}>
+        גרסה: {process.env.REACT_APP_BUILD_TIME
+          ? new Date(process.env.REACT_APP_BUILD_TIME).toLocaleString('he-IL', {
+              day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+            })
+          : 'פיתוח'}
+      </Typography>
+
       <Dialog open={resetOpen} onClose={() => setResetOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>לנקות את כל ההזמנות?</DialogTitle>
         <DialogContent>
