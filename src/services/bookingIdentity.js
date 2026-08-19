@@ -1,3 +1,5 @@
+import { findAirport } from './airportsData';
+
 /**
  * קנוניזציה של הערכים שלפיהם מזוהות הזמנות.
  *
@@ -27,6 +29,34 @@
 const INVISIBLE = /[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF\u00AD]/g;
 
 /** מסיר תווים בלתי נראים לפני כל השוואה. */
+/**
+ * קוד שדה תעופה אחיד.
+ *
+ * הפענוח מחזיר לעיתים קוד ("FCO") ולעיתים שם מלא ("ROME FIUMICINO"),
+ * לפי מה שכתוב באישור. השוואת מחרוזות הכריזה עליהם כשדות שונים, וטיסת
+ * החזור הופיעה פעמיים — הטבלה שיודעת לתרגם ביניהם כבר הייתה בפרויקט,
+ * אבל הזיהוי לא השתמש בה.
+ */
+export const airportKey = (value) => {
+  const raw = stripInvisible(value).trim();
+  if (!raw) return '';
+  const found = findAirport(raw);
+  return found ? found.code : raw.toUpperCase().replace(/\s+/g, ' ');
+};
+
+/**
+ * האם שני ערכים מתארים את אותו שדה תעופה.
+ *
+ * ערך ריק אינו סותר דבר: רשומה שלא נכתב בה שדה יציאה אינה טיסה אחרת,
+ * היא פחות מפורטת — אותו עיקרון שכבר חל על מספר טיסה בלי קוד חברה.
+ */
+export const sameAirport = (a, b) => {
+  const x = airportKey(a);
+  const y = airportKey(b);
+  if (!x || !y) return true;
+  return x === y;
+};
+
 export const stripInvisible = (v) => String(v || '').replace(INVISIBLE, '');
 
 const MONTHS = {

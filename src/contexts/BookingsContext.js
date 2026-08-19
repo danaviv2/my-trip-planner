@@ -9,7 +9,7 @@ import { groupBookingsIntoTrips } from '../services/tripGroupingService';
 import { clearLedger } from '../services/scanLedgerService';
 import { useAutoGmailScan } from '../hooks/useAutoGmailScan';
 import {
-  dateKey, flightKey, sameName, sameFlightNumber, stripInvisible,
+  dateKey, flightKey, sameName, sameFlightNumber, sameAirport, stripInvisible,
 } from '../services/bookingIdentity';
 
 /**
@@ -217,7 +217,11 @@ const sameFlight = (a, b) => {
   // שבר מידע נבלע לתוך טיסה מלאה באותו יום ובאותו מסלול. בלי זה הוא
   // אינו מוצא שום סימן להסכים עליו, נשאר בנפרד, ופותח נסיעה משלו.
   if (isFlightFragment(a) || isFlightFragment(b)) {
-    return !contradicts(a.departureAirport, b.departureAirport);
+    // המסלול מושווה לפי זהות השדה ולא לפי הכתוב: אישור אחד רושם "FCO"
+    // והשני "ROME FIUMICINO", והשוואת מחרוזות הכריזה עליהם כסותרים —
+    // כך נשארה טיסת החזור כשתי רשומות.
+    return sameAirport(a.departureAirport, b.departureAirport) &&
+           sameAirport(a.arrivalAirport, b.arrivalAirport);
   }
 
   return (

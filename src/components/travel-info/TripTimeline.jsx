@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography, IconButton, Chip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import { buildTimeline, humanGap } from '../../services/tripTimelineService';
-import DayMiniMap from './DayMiniMap';
+import DayMiniMap, { groundPoints } from './DayMiniMap';
 
 /**
  * הנסיעה כרצף אירועים לפי זמן.
@@ -39,7 +39,7 @@ const DAY_MS = 86400000;
 /** כמה ימים חלפו בין שני ימי ציר. */
 const daysBetween = (a, b) => Math.round((b - a) / DAY_MS);
 
-const EventRow = ({ ev, onDelete }) => (
+const EventRow = ({ ev, onDelete, mapNumber }) => (
   <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', mb: 0.5 }}>
     <Box
       sx={{
@@ -56,6 +56,7 @@ const EventRow = ({ ev, onDelete }) => (
     <Box sx={{ width: 32, display: 'flex', justifyContent: 'center', pt: 1.25, flexShrink: 0 }}>
       <Box
         sx={{
+          position: 'relative',
           width: 32, height: 32, borderRadius: '50%',
           bgcolor: `${ev.color}1a`, color: ev.color,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -65,6 +66,22 @@ const EventRow = ({ ev, onDelete }) => (
         }}
       >
         {ev.icon}
+        {/* אותו מספר שעל המפה. בלעדיו המפה היא ציור נפרד שצריך לפענח
+            מחדש; איתו היא מקרא של הרשימה שמתחתיה. */}
+        {mapNumber != null && (
+          <Box
+            sx={{
+              position: 'absolute', top: -3, left: -3,
+              width: 15, height: 15, borderRadius: '50%',
+              bgcolor: ev.color, color: '#fff',
+              fontSize: '0.6rem', fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 0 2px #f5f7fa',
+            }}
+          >
+            {mapNumber}
+          </Box>
+        )}
       </Box>
     </Box>
 
@@ -131,6 +148,13 @@ const TripTimeline = ({ bookings = [], onDelete }) => {
       {days.map((day, i) => {
         const skipped = i === 0 ? 0 : daysBetween(days[i - 1].date, day.date) - 1;
 
+        // המספור נבנה מהרשימה שהמפה עצמה מציירת, ולא מסינון מקביל:
+        // המפה פוסלת גם קואורדינטה פגומה, ומספור נפרד היה מעניק מספר
+        // לשורה שאין לה נקודה על המפה.
+        const numbers = new Map();
+        const mapped = groundPoints(day.events);
+        if (mapped.length >= 2) mapped.forEach((p, n) => numbers.set(p.ev, n + 1));
+
         return (
           <React.Fragment key={day.dayKey}>
             {skipped > 0 && (
@@ -163,7 +187,7 @@ const TripTimeline = ({ bookings = [], onDelete }) => {
               {day.events.map((ev, j) => (
                 <React.Fragment key={`${ev.kind}-${ev.booking?.id || j}`}>
                   {ev.gapBefore != null && ev.gapBefore >= 30 && <GapRow minutes={ev.gapBefore} />}
-                  <EventRow ev={ev} onDelete={onDelete} />
+                  <EventRow ev={ev} onDelete={onDelete} mapNumber={numbers.get(ev)} />
                 </React.Fragment>
               ))}
             </Box>
