@@ -1,0 +1,322 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: 'Rubik', 'Heebo', 'Assistant', 'Segoe UI', sans-serif; }
+    a { color: #5568d3; } a:hover { color: #764ba2; }
+  </style>
+</helmet>
+
+<div dir="rtl" style="width: 430px; background: #f5f7fa; color: #212121; padding-bottom: 40px">
+
+  <!-- סרגל עליון, כפי שהוא באפליקציה -->
+  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between">
+    <div style="display: flex; align-items: center; gap: 14px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,.25)"></div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+    </div>
+    <div style="font-weight: 600; font-size: 15px; letter-spacing: .2px">My Trip Planner</div>
+  </div>
+
+  <div style="padding: 16px">
+
+    <!-- כותרת הנסיעה -->
+    <div style="background: #fff; border-radius: 14px; padding: 18px 18px 16px; box-shadow: 0 1px 3px rgba(16,24,40,.06)">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px">
+        <div style="flex: 1">
+          <div style="font-size: 22px; font-weight: 700; letter-spacing: -.3px; line-height: 1.2">נאפולי · רומא</div>
+          <div style="margin-top: 6px; font-size: 13px; color: #666">24 ביוני – 5 ביולי · 11 לילות</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; background: #eef6ee; color: #2e7d32; padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          מבוטח
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #f0f1f5">
+        <div style="font-size: 20px; font-weight: 700; letter-spacing: -.3px">€4,313</div>
+        <div style="font-size: 12px; color: #8a8fa3">מתוך 6 מ-11 ההזמנות שכללו מחיר</div>
+      </div>
+    </div>
+
+    <!-- ═══ יום 1 ═══ -->
+    <div style="display: flex; align-items: center; gap: 10px; margin: 26px 2px 12px">
+      <div style="font-size: 13px; font-weight: 700; color: #5568d3; letter-spacing: .2px">יום 1</div>
+      <div style="font-size: 13px; color: #8a8fa3">רביעי · 24.6</div>
+      <div style="flex: 1; height: 1px; background: #e6e8f0"></div>
+    </div>
+
+    <!-- מפת היום: נקודות הקרקע בלבד. הטיסה משתרעת על 2,000 ק״מ והייתה
+         מוחצת את המעבר מהשדה למלון לנקודה אחת. משורטטת מקואורדינטות ולא
+         מאריחים — נטענת מיד, ועובדת גם בלי קליטה. -->
+    <div style="background: #fff; border-radius: 12px; padding: 10px 12px 8px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(16,24,40,.06)">
+      <svg width="100%" viewBox="0 0 366 90" style="display: block">
+        <line x1="350" y1="16" x2="16" y2="74" stroke="#c9cdda" stroke-width="1.6" stroke-dasharray="4 4"/>
+        <circle cx="350" cy="16" r="5.5" fill="#fff" stroke="#1e5bb8" stroke-width="2.4"/>
+        <circle cx="16" cy="74" r="5.5" fill="#6b3a92"/>
+        <text x="338" y="14" text-anchor="end" font-size="10.5" fill="#8a8fa3" font-family="Rubik, sans-serif">נמל התעופה</text>
+        <text x="28" y="78" font-size="10.5" fill="#8a8fa3" font-family="Rubik, sans-serif">Caruso Place</text>
+        <text x="183" y="52" text-anchor="middle" font-size="10" fill="#a0a4b5" font-family="Rubik, sans-serif">8 ק״מ</text>
+      </svg>
+    </div>
+
+    <div style="position: relative">
+      <div style="position: absolute; top: 14px; bottom: 14px; right: 65px; width: 2px; background: #e6e8f0"></div>
+
+      <!-- טיסה -->
+      <div style="display: flex; gap: 12px; align-items: flex-start; position: relative; margin-bottom: 4px">
+        <div style="width: 46px; padding-top: 12px; text-align: left; font-size: 14px; font-weight: 600; color: #212121; letter-spacing: -.2px">15:00</div>
+        <div style="width: 32px; display: flex; justify-content: center; padding-top: 10px">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #e8eefc; color: #1e5bb8; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px #f5f7fa">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5a2.1 2.1 0 0 0-3-3L13 8 4.8 6.2a.5.5 0 0 0-.5.8l3.4 3.4-2.6 2.6-1.9-.5a.5.5 0 0 0-.5.8L5 15.9l1.6 2.3a.5.5 0 0 0 .8-.5l-.5-1.9 2.6-2.6 3.4 3.4a.5.5 0 0 0 .8-.5z"/></svg>
+          </div>
+        </div>
+        <div style="flex: 1; background: #fff; border-radius: 12px; padding: 13px 14px; box-shadow: 0 1px 3px rgba(16,24,40,.06)">
+          <div style="font-size: 15px; font-weight: 600; letter-spacing: -.2px">LY 5111</div>
+          <div style="margin-top: 5px; font-size: 14px; color: #444; display: flex; align-items: center; gap: 7px">
+            <span>TLV</span>
+            <svg width="16" height="10" viewBox="0 0 20 10" fill="none" stroke="#b9bdcc" stroke-width="1.6" stroke-linecap="round"><path d="M19 5H2M7 1 2 5l5 4"/></svg>
+            <span>נאפולי</span>
+          </div>
+          <div style="margin-top: 7px; font-size: 12px; color: #8a8fa3">נחיתה 17:15 · טרמינל 3</div>
+        </div>
+      </div>
+
+      <!-- פער -->
+      <div style="display: flex; gap: 12px; align-items: center; margin: 2px 0">
+        <div style="width: 46px"></div>
+        <div style="width: 32px; display: flex; justify-content: center">
+          <svg width="10" height="14" viewBox="0 0 10 14" fill="none" stroke="#c9cdda" stroke-width="1.6" stroke-linecap="round"><path d="M5 1v11M1.5 8.5 5 12l3.5-3.5"/></svg>
+        </div>
+        <div style="font-size: 11.5px; color: #a0a4b5">45 דקות</div>
+      </div>
+
+      <!-- הסעה -->
+      <div style="display: flex; gap: 12px; align-items: flex-start; position: relative; margin-bottom: 4px">
+        <div style="width: 46px; padding-top: 12px; text-align: left; font-size: 14px; font-weight: 600; letter-spacing: -.2px">18:00</div>
+        <div style="width: 32px; display: flex; justify-content: center; padding-top: 10px">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #fef4dd; color: #b07d10; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px #f5f7fa">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 1 0 4 0M15 17a2 2 0 1 0 4 0M4 17v-4l2-5h12l2 5v4"/><path d="M7 12h10"/></svg>
+          </div>
+        </div>
+        <div style="flex: 1; background: #fff; border-radius: 12px; padding: 13px 14px; box-shadow: 0 1px 3px rgba(16,24,40,.06)">
+          <div style="font-size: 15px; font-weight: 600; letter-spacing: -.2px">הסעה · Booking.com</div>
+          <div style="margin-top: 5px; font-size: 13.5px; color: #444">משדה התעופה נאפולי</div>
+          <div style="margin-top: 6px; font-size: 12px; color: #8a8fa3">אל Caruso Place, Via Toledo 256</div>
+        </div>
+      </div>
+
+      <!-- מלון -->
+      <div style="display: flex; gap: 12px; align-items: flex-start; position: relative">
+        <div style="width: 46px; padding-top: 12px; text-align: left; font-size: 13px; font-weight: 500; color: #8a8fa3; letter-spacing: -.2px">כניסה</div>
+        <div style="width: 32px; display: flex; justify-content: center; padding-top: 10px">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #f2eaf8; color: #6b3a92; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px #f5f7fa">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V9l9-5 9 5v11"/><path d="M3 20h18M9 20v-5h6v5"/></svg>
+          </div>
+        </div>
+        <div style="flex: 1; background: #fff; border-radius: 12px; padding: 13px 14px; box-shadow: 0 1px 3px rgba(16,24,40,.06)">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px">
+            <div style="font-size: 15px; font-weight: 600; letter-spacing: -.2px; flex: 1">Caruso Place</div>
+            <div style="font-size: 11.5px; color: #6b3a92; background: #f6f1fa; padding: 3px 8px; border-radius: 999px; white-space: nowrap">2 לילות</div>
+          </div>
+          <div style="margin-top: 6px; font-size: 12px; color: #8a8fa3">Via Toledo 256, נאפולי</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ יום 3 ═══ -->
+    <div style="display: flex; align-items: center; gap: 10px; margin: 26px 2px 12px">
+      <div style="font-size: 13px; font-weight: 700; color: #5568d3; letter-spacing: .2px">יום 3</div>
+      <div style="font-size: 13px; color: #8a8fa3">שישי · 26.6</div>
+      <div style="flex: 1; height: 1px; background: #e6e8f0"></div>
+    </div>
+
+    <div style="background: #fff; border-radius: 12px; padding: 10px 12px 8px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(16,24,40,.06)">
+      <svg width="100%" viewBox="0 0 366 90" style="display: block">
+        <polyline points="16,18 98,16 350,74" fill="none" stroke="#c9cdda" stroke-width="1.6" stroke-dasharray="4 4"/>
+        <circle cx="16" cy="18" r="5" fill="#fff" stroke="#8a6aa8" stroke-width="2.2"/>
+        <circle cx="98" cy="16" r="5.5" fill="#b35309"/>
+        <circle cx="350" cy="74" r="5.5" fill="#6b3a92"/>
+        <text x="16" y="36" font-size="10.5" fill="#8a8fa3" font-family="Rubik, sans-serif">Caruso</text>
+        <text x="98" y="9" text-anchor="middle" font-size="10.5" fill="#8a8fa3" font-family="Rubik, sans-serif">תחנת הרכבת</text>
+        <text x="350" y="86" text-anchor="end" font-size="10.5" fill="#8a8fa3" font-family="Rubik, sans-serif">Sant'Agata</text>
+        <text x="230" y="42" text-anchor="middle" font-size="10" fill="#a0a4b5" font-family="Rubik, sans-serif">48 דק׳ נסיעה</text>
+      </svg>
+    </div>
+
+    <div style="position: relative">
+      <div style="position: absolute; top: 14px; bottom: 14px; right: 65px; width: 2px; background: #e6e8f0"></div>
+
+      <div style="display: flex; gap: 12px; align-items: flex-start; margin-bottom: 4px">
+        <div style="width: 46px; padding-top: 12px; text-align: left; font-size: 13px; font-weight: 500; color: #8a8fa3">יציאה</div>
+        <div style="width: 32px; display: flex; justify-content: center; padding-top: 10px">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #f7f4fa; color: #8a6aa8; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px #f5f7fa">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13"/><path d="M4 20h16M9 5V3h6v2"/></svg>
+          </div>
+        </div>
+        <div style="flex: 1; background: #fff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 1px 3px rgba(16,24,40,.06)">
+          <div style="font-size: 14px; font-weight: 500; color: #555">יציאה · Caruso Place</div>
+        </div>
+      </div>
+
+      <!-- אזהרה במקום שבו היא נוצרת -->
+      <div style="display: flex; gap: 12px; align-items: flex-start; margin: 6px 0">
+        <div style="width: 46px"></div>
+        <div style="width: 32px; display: flex; justify-content: center; padding-top: 9px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c77700" stroke-width="2.2" stroke-linecap="round"><path d="M12 9v5M12 17.5v.5"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        </div>
+        <div style="flex: 1; background: #fffaf0; border: 1px solid #f5e3c0; border-radius: 10px; padding: 10px 12px">
+          <div style="font-size: 12.5px; color: #8a6414; line-height: 1.5">
+            <strong style="font-weight: 600">4.5 שעות בין היציאה לאיסוף הרכב.</strong>
+            שווה לתאם אחסון מזוודות במלון.
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; align-items: flex-start; margin-bottom: 4px">
+        <div style="width: 46px; padding-top: 12px; text-align: left; font-size: 14px; font-weight: 600; letter-spacing: -.2px">15:30</div>
+        <div style="width: 32px; display: flex; justify-content: center; padding-top: 10px">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #fdece0; color: #b35309; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px #f5f7fa">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16h14M5 16a2 2 0 1 0 4 0M15 16a2 2 0 1 0 4 0M3 16v-4l2.5-5h13L21 12v4"/></svg>
+          </div>
+        </div>
+        <div style="flex: 1; background: #fff; border-radius: 12px; padding: 13px 14px; box-shadow: 0 1px 3px rgba(16,24,40,.06)">
+          <div style="font-size: 15px; font-weight: 600; letter-spacing: -.2px">איסוף רכב · Noleggiare</div>
+          <div style="margin-top: 5px; font-size: 13.5px; color: #444">תחנת הרכבת נאפולי</div>
+          <div style="margin-top: 6px; font-size: 12px; color: #8a8fa3">Peugeot 5008 · החזרה 5.7 ברומא</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; align-items: flex-start">
+        <div style="width: 46px; padding-top: 12px; text-align: left; font-size: 13px; font-weight: 500; color: #8a8fa3">כניסה</div>
+        <div style="width: 32px; display: flex; justify-content: center; padding-top: 10px">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #f2eaf8; color: #6b3a92; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px #f5f7fa">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V9l9-5 9 5v11"/><path d="M3 20h18M9 20v-5h6v5"/></svg>
+          </div>
+        </div>
+        <div style="flex: 1; background: #fff; border-radius: 12px; padding: 13px 14px; box-shadow: 0 1px 3px rgba(16,24,40,.06)">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px">
+            <div style="font-size: 15px; font-weight: 600; letter-spacing: -.2px; flex: 1">Hotel Sant'Agata</div>
+            <div style="font-size: 11.5px; color: #6b3a92; background: #f6f1fa; padding: 3px 8px; border-radius: 999px; white-space: nowrap">7 לילות</div>
+          </div>
+          <div style="margin-top: 6px; font-size: 12px; color: #8a8fa3">Via Dei Campi 8/A, סנט אגאתה</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ יום 4 ═══ -->
+    <div style="display: flex; align-items: center; gap: 10px; margin: 26px 2px 12px">
+      <div style="font-size: 13px; font-weight: 700; color: #5568d3; letter-spacing: .2px">יום 4</div>
+      <div style="font-size: 13px; color: #8a8fa3">שבת · 27.6</div>
+      <div style="flex: 1; height: 1px; background: #e6e8f0"></div>
+    </div>
+
+    <div style="position: relative">
+      <div style="position: absolute; top: 14px; bottom: 14px; right: 65px; width: 2px; background: #e6e8f0"></div>
+      <div style="display: flex; gap: 12px; align-items: flex-start">
+        <div style="width: 46px; padding-top: 12px; text-align: left; font-size: 14px; font-weight: 600; letter-spacing: -.2px">15:40</div>
+        <div style="width: 32px; display: flex; justify-content: center; padding-top: 10px">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #e7f3e9; color: #2c6e36; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px #f5f7fa">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 0 6v3h18v-3a2 2 0 0 1 0-6V6H3z"/><path d="M13 6v12"/></svg>
+          </div>
+        </div>
+        <div style="flex: 1; background: #fff; border-radius: 12px; padding: 13px 14px; box-shadow: 0 1px 3px rgba(16,24,40,.06)">
+          <div style="font-size: 15px; font-weight: 600; letter-spacing: -.2px">סיור בהר וזוב</div>
+          <div style="margin-top: 5px; font-size: 13.5px; color: #444">Sentiero del Gran Cono, ארקולנו</div>
+          <div style="margin-top: 6px; font-size: 12px; color: #8a8fa3">4 משתתפים · ₪164</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- קיפול הימים שבאמצע -->
+    <div style="display: flex; align-items: center; gap: 10px; margin: 22px 2px 4px">
+      <div style="flex: 1; height: 1px; background: #e6e8f0"></div>
+      <div style="font-size: 12px; color: #8a8fa3; display: flex; align-items: center; gap: 6px">
+        6 ימים ללא הזמנות
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div style="flex: 1; height: 1px; background: #e6e8f0"></div>
+    </div>
+
+    <!-- ═══ יום אחרון ═══ -->
+    <div style="display: flex; align-items: center; gap: 10px; margin: 22px 2px 12px">
+      <div style="font-size: 13px; font-weight: 700; color: #5568d3; letter-spacing: .2px">יום 12</div>
+      <div style="font-size: 13px; color: #8a8fa3">ראשון · 5.7</div>
+      <div style="flex: 1; height: 1px; background: #e6e8f0"></div>
+    </div>
+
+    <div style="position: relative">
+      <div style="position: absolute; top: 14px; bottom: 14px; right: 65px; width: 2px; background: #e6e8f0"></div>
+
+      <div style="display: flex; gap: 12px; align-items: flex-start; margin-bottom: 4px">
+        <div style="width: 46px; padding-top: 12px; text-align: left; font-size: 14px; font-weight: 600; letter-spacing: -.2px">15:30</div>
+        <div style="width: 32px; display: flex; justify-content: center; padding-top: 10px">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #fdece0; color: #b35309; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px #f5f7fa">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12 20 3M17 6l2 2M15 8l2 2"/></svg>
+          </div>
+        </div>
+        <div style="flex: 1; background: #fff; border-radius: 12px; padding: 13px 14px; box-shadow: 0 1px 3px rgba(16,24,40,.06)">
+          <div style="font-size: 15px; font-weight: 600; letter-spacing: -.2px">החזרת רכב · Noleggiare</div>
+          <div style="margin-top: 5px; font-size: 13.5px; color: #444">נמל התעופה רומא פיומיצ׳ינו</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; align-items: flex-start; margin-bottom: 4px">
+        <div style="width: 46px; padding-top: 12px; text-align: left; font-size: 14px; font-weight: 600; letter-spacing: -.2px">18:00</div>
+        <div style="width: 32px; display: flex; justify-content: center; padding-top: 10px">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #fef4dd; color: #b07d10; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px #f5f7fa">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 1 0 4 0M15 17a2 2 0 1 0 4 0M4 17v-4l2-5h12l2 5v4"/><path d="M7 12h10"/></svg>
+          </div>
+        </div>
+        <div style="flex: 1; background: #fff; border-radius: 12px; padding: 13px 14px; box-shadow: 0 1px 3px rgba(16,24,40,.06)">
+          <div style="font-size: 15px; font-weight: 600; letter-spacing: -.2px">הסעה · Booking.com</div>
+          <div style="margin-top: 5px; font-size: 13.5px; color: #444">מ-SuiteSistina, רומא</div>
+          <div style="margin-top: 6px; font-size: 12px; color: #8a8fa3">אל נמל התעופה פיומיצ׳ינו</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; align-items: flex-start">
+        <div style="width: 46px; padding-top: 12px; text-align: left; font-size: 14px; font-weight: 600; letter-spacing: -.2px">21:50</div>
+        <div style="width: 32px; display: flex; justify-content: center; padding-top: 10px">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #e8eefc; color: #1e5bb8; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px #f5f7fa">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5a2.1 2.1 0 0 0-3-3L13 8 4.8 6.2a.5.5 0 0 0-.5.8l3.4 3.4-2.6 2.6-1.9-.5a.5.5 0 0 0-.5.8L5 15.9l1.6 2.3a.5.5 0 0 0 .8-.5l-.5-1.9 2.6-2.6 3.4 3.4a.5.5 0 0 0 .8-.5z"/></svg>
+          </div>
+        </div>
+        <div style="flex: 1; background: #fff; border-radius: 12px; padding: 13px 14px; box-shadow: 0 1px 3px rgba(16,24,40,.06)">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px">
+            <div style="flex: 1">
+              <div style="font-size: 15px; font-weight: 600; letter-spacing: -.2px">LY 384</div>
+              <div style="margin-top: 5px; font-size: 14px; color: #444; display: flex; align-items: center; gap: 7px">
+                <span>רומא</span>
+                <svg width="16" height="10" viewBox="0 0 20 10" fill="none" stroke="#b9bdcc" stroke-width="1.6" stroke-linecap="round"><path d="M19 5H2M7 1 2 5l5 4"/></svg>
+                <span>TLV</span>
+              </div>
+            </div>
+            <div style="font-size: 11px; color: #5568d3; background: #eef0fc; padding: 3px 8px; border-radius: 999px; white-space: nowrap">חזור</div>
+          </div>
+          <div style="margin-top: 7px; font-size: 12px; color: #8a8fa3">נחיתה 02:10 · טרמינל 3</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":430,"height":1940}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

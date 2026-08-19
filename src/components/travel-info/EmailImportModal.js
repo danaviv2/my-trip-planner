@@ -17,7 +17,7 @@ import {
   Alert
 } from '@mui/material';
 
-const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
+const EmailImportModal = ({ open, onClose }) => {
   const { t } = useTranslation();
   const { addBookings, applyCancellations } = useBookings();
   const { gmailToken, connectGmail, disconnectGmail, refreshGmailToken } = useAuth();
@@ -141,14 +141,10 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
       }
 
       const parts = [];
-      if (result.flights.length) {
-        setFlights(result.flights);
-        parts.push(`${result.flights.length} טיסות`);
-      }
-      if (result.carRental) {
-        setCarRental(result.carRental);
-        parts.push('השכרת רכב');
-      }
+      // הכתיבה לטפסים הידניים הוסרה יחד איתם: היא הזינה מודל נתונים
+      // מקביל שאיש לא קרא. addBookings למטה הוא המסלול היחיד.
+      if (result.flights.length) parts.push(`${result.flights.length} טיסות`);
+      if (result.carRental) parts.push('השכרת רכב');
       if (result.hotel) {
         parts.push(`לינה ב${result.hotel.name || 'מלון'}`);
       }

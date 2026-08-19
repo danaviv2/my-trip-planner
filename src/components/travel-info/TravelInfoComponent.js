@@ -6,13 +6,11 @@ import {
   Accordion, AccordionSummary, AccordionDetails,
   Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
-import FlightInfo from './FlightInfo';
-import CarRentalInfo from './CarRentalInfo';
 import EmailImportModal from './EmailImportModal';
 import { findConflicts } from '../../services/itineraryConflictService';
 import { findDrivingRestrictions } from '../../services/drivingRestrictionsService';
 import { useBookings } from '../../contexts/BookingsContext';
-import BookingDetails from './BookingDetails';
+import TripTimeline from './TripTimeline';
 import FlightAlertsCard from './FlightAlertsCard';
 import FlightRights from './FlightRights';
 import { tripCost, formatTotals } from '../../services/tripCostService';
@@ -60,31 +58,11 @@ const tripConflicts = (trip) => {
  */
 const TravelInfoComponent = () => {
   const { t } = useTranslation();
-  // מצבים לניהול פרטי הטיסות
-  const [flights, setFlights] = useState([
-    { id: 1, type: 'departure', flightNumber: '', airline: '', date: '', departureTime: '', departureAirport: '', arrivalTime: '', arrivalAirport: '', terminal: '' }
-  ]);
-  
-  // מצבים לניהול פרטי הרכב
-  const [carRental, setCarRental] = useState({
-    company: '',
-    pickupDate: '',
-    pickupTime: '',
-    pickupLocation: '',
-    returnDate: '',
-    returnTime: '',
-    returnLocation: '',
-    carType: '',
-    confirmationNumber: ''
-  });
-  
   // מצב פתיחת חלונית מידע
   const [infoModalOpen, setInfoModalOpen] = useState(false);
   const [emailImportModalOpen, setEmailImportModalOpen] = useState(false);
   
   // מצבים לניהול תצוגה
-  const [showFlights, setShowFlights] = useState(true);
-  const [showCarRental, setShowCarRental] = useState(true);
   const [showPast, setShowPast] = useState(false);
   const { trips, autoScanning, autoScanResult, cloudError, removeBooking, resetAllBookings } = useBookings();
   const [resetOpen, setResetOpen] = useState(false);
@@ -107,8 +85,6 @@ const TravelInfoComponent = () => {
     };
   }, [trips]);
 
-  // מחושב מחדש בכל שינוי בהזמנות
-  const conflicts = findConflicts(flights, carRental, []);
 
   const renderTrip = (trip) => (
             <Accordion
@@ -164,9 +140,8 @@ const TravelInfoComponent = () => {
                     {c.detail}
                   </Alert>
                 ))}
-                {(trip.bookings || []).map((b, i) => (
-                  <BookingDetails key={b.id || i} booking={b} onDelete={removeBooking} />
-                ))}
+                {/* הנסיעה כרצף ולא כרשימה מקובצת לפי סוג */}
+                <TripTimeline bookings={trip.bookings || []} onDelete={removeBooking} />
 
                 {/* זכויות הנוסע לכל טיסה. מוצג גם כשהכול תקין — הידיעה
                     שווה דווקא מראש, שכן הסף האירופי נמוך בהרבה מהישראלי
@@ -325,45 +300,15 @@ const TravelInfoComponent = () => {
         </Box>
       )}
 
-      {/* התנגשויות בין ההזמנות. הצלבה של פרטים שנראים תקינים בנפרד —
-          למשל נחיתה ב-09:55 מול איסוף רכב ב-11:30. */}
-      {conflicts.length > 0 && (
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-            <i className="material-icons" style={{ marginRight: '8px' }}>rule</i>
-            בדיקת התאמה בין ההזמנות
-          </Typography>
-          {conflicts.map((c, i) => (
-            <Alert key={i} severity={c.severity} sx={{ mb: 1 }}>
-              <AlertTitle sx={{ mb: 0.25, fontWeight: 700 }}>{c.title}</AlertTitle>
-              {c.detail}
-            </Alert>
-          ))}
-        </Box>
-      )}
+      {/* כאן ישבו שני טפסים ידניים ריקים לטיסה ולרכב.
+          הם היו מודל נתונים מקביל שאיש לא הזין: בדיקת ההתנגשויות שמתחתם
+          רצה עליהם, כלומר על טופס ריק, והמסך נראה לא גמור והזמין למלא
+          משהו שלא השפיע על דבר. ההזמנות מגיעות מהמייל ונערכות בציר. */}
 
-      {/* אזור טיסות */}
-      <FlightInfo
-        flights={flights}
-        setFlights={setFlights}
-        showFlights={showFlights}
-        setShowFlights={setShowFlights}
-      />
-      
-      {/* אזור השכרת רכב */}
-      <CarRentalInfo 
-        carRental={carRental}
-        setCarRental={setCarRental}
-        showCarRental={showCarRental}
-        setShowCarRental={setShowCarRental}
-      />
-      
       {/* חלונית ייבוא מאימייל */}
-      <EmailImportModal 
+      <EmailImportModal
         open={emailImportModalOpen}
         onClose={() => setEmailImportModalOpen(false)}
-        setFlights={setFlights}
-        setCarRental={setCarRental}
       />
     </Paper>
   );
