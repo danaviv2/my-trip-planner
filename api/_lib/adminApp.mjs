@@ -54,6 +54,19 @@ const escapeNewlinesInStrings = (text) => {
 };
 
 /**
+ * משלים סוגר מסולסל שנשמט בקצה.
+ *
+ * מוחל רק כשהצורה חד-משמעית: מתחיל במרכאה ומסתיים ב-'}' פירושו שהסוגר
+ * הפותח נשמט, ולהיפך. תיקון עיוור היה עלול להפוך קלט פגום באמת ל-JSON
+ * שנקרא בהצלחה ומכיל שטויות.
+ */
+const addMissingBrace = (t) => {
+  if (t.startsWith('"') && t.endsWith('}')) return `{${t}`;
+  if (t.startsWith('{') && !t.endsWith('}')) return `${t}}`;
+  return t;
+};
+
+/**
  * קריאת מפתח חשבון השירות, עם תיקונים לתקלות הדבקה שכיחות.
  *
  * כל תיקון מדווח בשמו, כדי שנדע מה בדיוק היה פגום במקום לנחש.
@@ -66,6 +79,11 @@ const parseServiceAccount = (raw) => {
     ['unquote', (t) => t.trim().replace(/^['"]|['"]$/g, '')],
     ['escape-newlines', (t) => escapeNewlinesInStrings(t.trim())],
     ['unquote+escape', (t) => escapeNewlinesInStrings(t.trim().replace(/^['"]|['"]$/g, ''))],
+    // הסוגר הפותח נשמט בהדבקה: בקובץ המעוצב הוא יושב לבד בשורה הראשונה,
+    // וסימון שמתחיל מ-"type" מחמיץ אותו. הערך נראה שלם לחלוטין, והשגיאה
+    // מצביעה על תו 6 — מקום שאינו מסביר דבר למי שמסתכל בקובץ.
+    ['add-brace', (t) => addMissingBrace(t.trim())],
+    ['add-brace+escape', (t) => escapeNewlinesInStrings(addMissingBrace(t.trim()))],
   ];
 
   let lastPosition = null;
