@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback , useRef } from 'react';
 import { useAuth } from './AuthContext';
 import {
   saveBooking, loadBookings, deleteBooking,
@@ -373,6 +373,28 @@ const dedupe = (list = []) => {
 
 export const BookingsProvider = ({ children }) => {
   const [bookings, setBookings] = useState([]);
+
+  /**
+   * הרשימה הסמכותית, מעודכנת באופן סינכרוני.
+   *
+   * הסריקה השקטה בפתיחה והסריקה הידנית יכולות לרוץ במקביל. כל אחת חישבה
+   * את האיחוד מול `bookings` שנתפס בסגירה שלה — ערך שהיה נכון כשהפונקציה
+   * נוצרה ומיושן כשהיא רצה. שתיהן בנפרד נכונות, אך אינן רואות זו את זו,
+   * ולכן אותה טיסה נכתבה פעמיים אף שהאיחוד עצמו תקין לחלוטין.
+   *
+   * זה הסביר את הפער שרדף אותנו: הרצת אותן רשומות במעבדה איחדה אותן, כי
+   * שם הן עברו בקריאה אחת.
+   *
+   * ה-ref מתעדכן ברגע הכתיבה ולא בעיבוד הבא, ולכן קריאה שנייה רואה תמיד
+   * את תוצאת הראשונה.
+   */
+  const bookingsRef = useRef([]);
+
+  const applyBookings = useCallback((next) => {
+    bookingsRef.current = next;
+    setBookings(next);
+    writeLocal(next);
+  }, []);
   const [loading, setLoading] = useState(true);
   // כשל בשמירה לענן היה נבלע בשקט, והמשתמש האמין שהנתונים מגובים בעוד
   // הם קיימים רק בדפדפן. עדיף לומר זאת מאשר להסתיר.
@@ -412,9 +434,8 @@ export const BookingsProvider = ({ children }) => {
             ...stale.map((b) => deleteBooking(user.uid, b.id)),
           ]);
 
-          writeLocal(clean);
           if (!cancelled) {
-            setBookings(clean);
+            applyBookings(clean);
             setCloudError(false);
           }
         } catch {
@@ -422,15 +443,13 @@ export const BookingsProvider = ({ children }) => {
           // שהמשתמש לא יניח שהנתונים מגובים.
           if (!cancelled) {
             const clean = withoutDismissed(withoutCancelled(withoutEmptyRecords(dedupe(readLocal())), readCancelled()), readDismissed());
-            writeLocal(clean);
-            setBookings(clean);
+            applyBookings(clean);
             setCloudError(true);
           }
         }
       } else if (!cancelled) {
         const clean = withoutDismissed(withoutCancelled(withoutEmptyRecords(dedupe(readLocal())), readCancelled()), readDismissed());
-        writeLocal(clean);
-        setBookings(clean);
+        applyBookings(clean);
       }
       if (!cancelled) setLoading(false);
     };
@@ -457,18 +476,20 @@ export const BookingsProvider = ({ children }) => {
       // האצווה הנכנסת עצמה מכילה כפילויות: סריקה אחת מחזירה את אותה טיסה
       // מגוף המייל, מה-PDF המצורף ולעיתים ממייל נוסף. בדיקה מול המאגר
       // בלבד לא תופסת אותן, ולכן האיחוד רץ על הכל יחד.
-      const before = new Map(bookings.map((b) => [String(b.id), JSON.stringify(b)]));
-      const merged = withoutDismissed(withoutCancelled(withoutEmptyRecords(dedupe([...bookings, ...stamped])), readCancelled()), readDismissed());
+      // מול הרשימה הסמכותית ולא מול הסגירה: סריקה מקבילה כבר עשויה
+      // להיות כתובה, וקריאה מיושנת הייתה מוסיפה את אותן הזמנות שוב.
+      const current = bookingsRef.current;
+      const before = new Map(current.map((b) => [String(b.id), JSON.stringify(b)]));
+      const merged = withoutDismissed(withoutCancelled(withoutEmptyRecords(dedupe([...current, ...stamped])), readCancelled()), readDismissed());
 
       // נשמר גם מה שנוסף וגם רשומה קיימת שהתעשרה בפרטים מהאצווה
       const changed = merged.filter((b) => before.get(String(b.id)) !== JSON.stringify(b));
       const kept = new Set(merged.map((b) => String(b.id)));
-      const stale = bookings.filter((b) => !kept.has(String(b.id)));
+      const stale = current.filter((b) => !kept.has(String(b.id)));
 
       if (!changed.length && !stale.length) return { added: 0, skipped: list.length };
 
-      setBookings(merged);
-      writeLocal(merged);
+      applyBookings(merged);
 
       if (user) {
         try {
@@ -483,10 +504,10 @@ export const BookingsProvider = ({ children }) => {
         }
       }
 
-      const added = merged.length - bookings.length;
+      const added = merged.length - current.length;
       return { added: Math.max(added, 0), skipped: list.length - Math.max(added, 0) };
     },
-    [bookings, user]
+    [user, applyBookings]
   );
 
   /**
@@ -507,7 +528,8 @@ export const BookingsProvider = ({ children }) => {
       const refs = new Set(
         cancelled.map((c) => refKey(c.confirmationNumber)).filter(Boolean)
       );
-      const doomed = bookings.filter(
+      const current = bookingsRef.current;
+      const doomed = current.filter(
         (b) =>
           (refKey(b.confirmationNumber) && refs.has(refKey(b.confirmationNumber))) ||
           cancelled.some((c) => sameBooking(b, c))
@@ -526,9 +548,8 @@ export const BookingsProvider = ({ children }) => {
       if (!doomed.length) return 0;
 
       const ids = new Set(doomed.map((b) => String(b.id)));
-      const next = bookings.filter((b) => !ids.has(String(b.id)));
-      setBookings(next);
-      writeLocal(next);
+      const next = current.filter((b) => !ids.has(String(b.id)));
+      applyBookings(next);
 
       if (user) {
         try {
@@ -545,10 +566,9 @@ export const BookingsProvider = ({ children }) => {
 
   const removeBooking = useCallback(
     async (id) => {
-      const gone = bookings.find((b) => String(b.id) === String(id));
-      const next = bookings.filter((b) => String(b.id) !== String(id));
-      setBookings(next);
-      writeLocal(next);
+      const gone = bookingsRef.current.find((b) => String(b.id) === String(id));
+      const next = bookingsRef.current.filter((b) => String(b.id) !== String(id));
+      applyBookings(next);
 
       // הסימון נשמר בנפרד מהמחיקה, אחרת הסריקה הבאה תייבא מחדש את אותו
       // אישור שעדיין יושב בתיבה — וההזמנה שמחקת תחזור.
@@ -571,10 +591,9 @@ export const BookingsProvider = ({ children }) => {
    * תמונה חלקית שנראית ככשל בסריקה ולא כהתנהגות מכוונת.
    */
   const resetAllBookings = useCallback(async () => {
-    const count = bookings.length;
+    const count = bookingsRef.current.length;
 
-    setBookings([]);
-    writeLocal([]);
+    applyBookings([]);
     writeCancelled(new Set());
     writeDismissed([]);
 
