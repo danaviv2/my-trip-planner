@@ -16,15 +16,27 @@
  * נקודת האיסוף בנאפולי.
  */
 
-import { locatePlace } from './placeLookupService';
+import { locateAddress } from './placeLookupService';
 import { eventsFor } from './tripTimelineService';
 
 /** טיסה אינה מקום על הקרקע: מיקומה שדה תעופה, והיא אינה מופיעה במפת היום. */
 const LOCATABLE = new Set(['hotel-in', 'hotel-out', 'car-pickup', 'car-return', 'transfer', 'activity']);
 
+/**
+ * גרסת האיתור.
+ *
+ * כישלון נשמר כדי לא לבזבז את מגבלת הקצב על אותה כתובת שוב ושוב — אבל
+ * זה גם קיבע את הבאג הראשון לנצח: הכתובות נשלחו במבנה שגוי, נכשלו,
+ * והכישלון נרשם. העלאת המספר מבטלת כישלונות שנרשמו בגרסה קודמת, בלי
+ * לגעת במיקומים שכבר נמצאו.
+ */
+const GEO_VERSION = 2;
+
 const hasGeo = (b, kind) => {
   const g = b.geo && b.geo[kind];
-  return !!g && (Number.isFinite(Number(g.lat)) || g.failed);
+  if (!g) return false;
+  if (Number.isFinite(Number(g.lat))) return true;
+  return !!g.failed && g.v === GEO_VERSION;
 };
 
 /**
@@ -56,11 +68,10 @@ export const missingPlaces = (bookings = []) => {
  * מאתר את החסרים ומחזיר את ההזמנות המעודכנות בלבד.
  *
  * @param {Array} bookings
- * @param {string} destination יעד הנסיעה, לצמצום החיפוש
  * @param {number} max תקרה לבקשות בריצה אחת
  * @returns {Promise<Array>} הזמנות עם שדה geo מעודכן
  */
-export const geocodeBookings = async (bookings = [], destination = '', max = 12) => {
+export const geocodeBookings = async (bookings = [], _destination = '', max = 12) => {
   const tasks = missingPlaces(bookings).slice(0, max);
   if (!tasks.length) return [];
 
@@ -71,7 +82,11 @@ export const geocodeBookings = async (bookings = [], destination = '', max = 12)
     let found = resolved.get(task.dedupeKey);
 
     if (found === undefined) {
-      const { coords, confidence } = await locatePlace(task.place, '', destination);
+      // הכתובת נשלחת כ*כתובת*. קודם היא נשלחה כשם מקום, ושדה הכתובת
+      // נשאר ריק — כך שגם נסיגת החיפוש לפי כתובת מעולם לא רצה, וכל
+      // כתובת שהיא נכשלה. מדידה מול שירות המפות אישרה זאת: הכתובות
+      // כפי שהן החזירו אפס, ומנוקות הן נמצאו.
+      const { coords, confidence } = await locateAddress(task.place);
       found = coords ? { ...coords, unverified: confidence === 'address' } : null;
       resolved.set(task.dedupeKey, found);
     }
@@ -81,7 +96,7 @@ export const geocodeBookings = async (bookings = [], destination = '', max = 12)
 
     // כישלון נרשם גם הוא. בלעדיו אותה כתובת שלא נמצאה הייתה נבדקת שוב
     // בכל טעינה, ומשלמת את מגבלת הקצב לנצח.
-    current.geo[task.kind] = found || { failed: true };
+    current.geo[task.kind] = found || { failed: true, v: GEO_VERSION };
     touched.set(id, current);
   }
 

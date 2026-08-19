@@ -12,6 +12,25 @@
 
 const API = 'https://nominatim.openstreetmap.org/search';
 
+/**
+ * מילים בעברית בתוך כתובת לטינית מאפסות את החיפוש.
+ *
+ * הן מוסרות ברמת המילה ולא ברמת המקטע: "80100 נאפולי" מכיל גם מיקוד,
+ * ומחיקת המקטע כולו הייתה מוחקת את העוגן היחיד שנשאר בכתובת.
+ */
+const HEBREW_WORD = /[\u0590-\u05FF][\u0590-\u05FF'"\u05F3\u05F4-]*/g;
+
+/** הוראות מסירה וסיווג פנימי של הספק, שאינם חלק מהכתובת. */
+const ADDRESS_NOISE = /\b(c\/o|piano interrato|galleria commerciale|mainland)\b/gi;
+
+/** מנקה מקטע אחד; מחזיר מחרוזת ריקה אם לא נשאר בו דבר שמיש. */
+const scrubSegment = (seg) => {
+  const out = String(seg).replace(HEBREW_WORD, ' ').replace(ADDRESS_NOISE, ' ').replace(/\s+/g, ' ').trim();
+  // שריד קצר כמו "Sn" הוא קוד סניף שנותר אחרי הניקוי, ושאילתה עליו
+  // רק שורפת את מגבלת הקצב.
+  return out.length >= 3 && /[A-Za-z0-9]/.test(out) ? out : '';
+};
+
 /** מדיניות Nominatim מגבילה לבקשה בשנייה. מטח מקבילי גורר חסימה. */
 const RATE_MS = 1100;
 
@@ -92,6 +111,70 @@ const cleanDestination = (d) =>
     .split(/[-–—|(]/)[0]   // מה שאחרי מקף הוא כינוי לטיול, לא מקום
     .split(',')[0]          // המקטע הראשון הוא העיר
     .trim();
+
+/**
+ * וריאנטים של כתובת, מהמלא אל המצומצם.
+ *
+ * כתובת מאישור הזמנה אינה כתובת דואר: היא נושאת פירורי הוראות ("C/O",
+ * "Piano Interrato"), סיווג פנימי של חברת ההשכרה ("Mainland"), ולעיתים
+ * חצי ממנה מתורגם לעברית בעוד השאר לטיני. שירות המפות מחזיר אפס על
+ * מחרוזת כזו — לא כי המקום אינו קיים, אלא כי הטקסט אינו כתובת.
+ *
+ * ── מדוע כל וריאנט שומר עוגן ──
+ * מדידה הראתה שנסיגה לשם רחוב בלבד גרועה מכישלון: "Via Dei Campi"
+ * נמצא — בסרדיניה, אי אחר לגמרי מהמלון בסורנטו; ו"Piazza Garibaldi"
+ * של נאפולי נמצא בטוסקנה, 400 ק"מ צפונה. נקודה בעיר הלא נכונה נראית על
+ * המפה בדיוק כמו נקודה נכונה. לכן שני המקטעים האחרונים — עיר, מיקוד,
+ * מדינה — נשארים מוצמדים לכל ניסיון.
+ */
+export const addressVariants = (raw = '') => {
+  const txt = String(raw).replace(/\s+-\s+/g, ',').replace(/\s+/g, ' ').trim();
+  if (!txt) return [];
+
+  const parts = txt.split(',').map(scrubSegment).filter(Boolean);
+  if (!parts.length) return [txt];
+
+  const anchor = parts.length >= 3 ? parts.slice(-2).join(', ') : parts[parts.length - 1];
+  const body = parts.slice(0, Math.max(0, parts.length - (parts.length >= 3 ? 2 : 1)));
+
+  const out = [];
+  const push = (s) => {
+    const v = String(s).trim().replace(/(^,|,$)/g, '').trim();
+    if (v && !out.includes(v)) out.push(v);
+  };
+
+  push(txt);
+  push(parts.join(', '));
+  // הארוך קודם: המקטע המפורט ביותר הוא בדרך כלל הרחוב או שם המקום,
+  // בעוד הקצרים הם קודי סניף.
+  body
+    .filter((s) => /[A-Za-z]/.test(s))
+    .sort((a, b) => b.length - a.length)
+    .forEach((s) => push(`${s}, ${anchor}`));
+  push(anchor);
+
+  return out;
+};
+
+/**
+ * מאתר כתובת בלבד, בלי להעמיד פנים שהמקום עצמו אומת.
+ *
+ * ההחזרה תמיד ב-confidence 'address': מה שנמצא הוא הרחוב, ואין ראיה
+ * שהמלון או המשרד באמת יושבים עליו.
+ */
+export const locateAddress = async (address) => {
+  const variants = addressVariants(address);
+
+  for (let i = 0; i < variants.length; i += 1) {
+    if (i > 0) await new Promise((r) => setTimeout(r, RATE_MS));
+    const rows = (await query(variants[i], 1)).map(toPlace).filter(isGoodCoord);
+    if (rows.length) {
+      return { coords: { lat: rows[0].lat, lng: rows[0].lng }, confidence: 'address', place: rows[0], matched: variants[i] };
+    }
+  }
+
+  return { coords: null, confidence: 'none', place: null, matched: null };
+};
 
 const query = async (q, limit) => {
   try {
