@@ -221,9 +221,14 @@ const TravelInfoComponent = () => {
           מחפש אישורי הזמנה חדשים בתיבת המייל שלך...
         </Alert>
       )}
+      {/* גילוי שקט אינו שווה הרבה: אם הזמנה נוספה מעצמה והמשתמש לא ידע,
+          הוא לא יבטח במסך ויחפש את האישור במייל בכל מקרה. */}
       {!autoScanning && autoScanResult?.added > 0 && (
         <Alert severity="success" sx={{ mb: 2 }}>
-          נמצאו {autoScanResult.added} הזמנות חדשות במייל ושויכו לנסיעות אוטומטית.
+          <AlertTitle sx={{ fontWeight: 700, mb: 0.25 }}>
+            נוספו {autoScanResult.added} הזמנות חדשות מהמייל
+          </AlertTitle>
+          הן שויכו לנסיעה המתאימה אוטומטית ומופיעות ברשימה למטה.
         </Alert>
       )}
 

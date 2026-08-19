@@ -16,8 +16,19 @@ import { scanMailbox } from '../services/bookingScanService';
 
 const LAST_SCAN_KEY = 'gmailLastAutoScan';
 
-// מרווח מינימלי בין סריקות אוטומטיות
-const MIN_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 שעות
+/**
+ * מרווח מינימלי בין סריקות אוטומטיות.
+ *
+ * היה שש שעות, מפני שכל סריקה פענחה מחדש את כל המיילים המתאימים — עשרות
+ * קריאות למודל בכל פעם. יומן הסריקה שינה את זה: מייל שכבר פוענח אינו
+ * נשלף ואינו נשלח לפענוח, ולכן סריקה שאין בה חדש עולה קריאה אחת.
+ *
+ * המרווח קוצר לרבע שעה. המשמעות המעשית: אישור שהגיע למייל מופיע כנסיעה
+ * כבר בפתיחה הבאה של האפליקציה, במקום להמתין עד שש שעות.
+ *
+ * הוא אינו אפס בכוונה — מעבר בין מסכים לא אמור להפעיל סריקה חוזרת.
+ */
+const MIN_INTERVAL_MS = 15 * 60 * 1000;
 
 // השהיה קצרה אחרי טעינה, כדי שהסריקה לא תתחרה על הרשת עם ציור המסך
 const START_DELAY_MS = 2500;
@@ -66,9 +77,11 @@ export const useAutoGmailScan = ({ user, addBookings, applyCancellations, ready 
 
         setScanning(true);
         // טווח קצר: הסריקה השוטפת מחפשת מה שהגיע לאחרונה, לא היסטוריה
-        const { emails, bookings, cancellations } = await scanMailbox(token, {
-          maxResults: 25,
-          monthsBack: 2,
+        const { emails, bookings, cancellations, alreadyKnown } = await scanMailbox(token, {
+          // הטווח הורחב יחד עם קיצור המרווח: העלות נקבעת כעת לפי מספר
+          // המיילים החדשים ולא לפי גודל הטווח, ולכן אין סיבה לצמצם אותו.
+          maxResults: 40,
+          monthsBack: 3,
         });
         if (cancelled) return;
 
@@ -76,7 +89,14 @@ export const useAutoGmailScan = ({ user, addBookings, applyCancellations, ready 
         // ביטול שהגיע בזמן שהמשתמש לא הסתכל חשוב לא פחות מהזמנה חדשה
         if (cancellations?.length) await applyCancellations(cancellations);
         writeLastScan(Date.now());
-        if (!cancelled) setLastResult({ added, scanned: emails.length });
+        if (!cancelled) {
+          setLastResult({
+            added,
+            scanned: emails.length,
+            alreadyKnown: alreadyKnown || 0,
+            at: Date.now(),
+          });
+        }
       } catch {
         // כישלון שקט הוא הכוונה: המשתמש לא ביקש דבר, ואין סיבה להטריד
         // אותו בשגיאה. הייבוא הידני נשאר זמין בכל מקרה.
