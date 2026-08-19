@@ -13,6 +13,7 @@ import { findConflicts } from '../../services/itineraryConflictService';
 import { findDrivingRestrictions } from '../../services/drivingRestrictionsService';
 import { useBookings } from '../../contexts/BookingsContext';
 import BookingDetails from './BookingDetails';
+import FlightAlertsCard from './FlightAlertsCard';
 import FlightRights from './FlightRights';
 import { tripCost, formatTotals } from '../../services/tripCostService';
 
@@ -228,6 +229,11 @@ const TravelInfoComponent = () => {
 
       {/* טיולים שנגזרו מההזמנות שיובאו. אישורים שהגיעו בנפרד —
           טיסה, מלון ורכב — מתאחדים כאן לנסיעה אחת. */}
+      {/* התראות על עיכוב. מוצג רק כשיש טיסות — אחרת זו הצעה חסרת הקשר. */}
+      <FlightAlertsCard
+        hasFlights={upcoming.some((t) => (t.bookings || []).some((b) => b.type === 'flight'))}
+      />
+
       {/* טיולים שנגזרו מההזמנות שיובאו. אישורים שהגיעו בנפרד —
           טיסה, מלון ורכב — מתאחדים כאן לנסיעה אחת. */}
       {upcoming.length > 0 && (

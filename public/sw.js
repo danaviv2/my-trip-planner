@@ -99,3 +99,60 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// ─── התראות דחיפה ────────────────────────────────────────────────
+
+/**
+ * הצגת התראה שנשלחה מהשרת.
+ *
+ * זה החלק שעובד כשהאפליקציה סגורה: ה-service worker מתעורר גם כשאין
+ * לשונית פתוחה. באייפון זה מותנה בכך שהאפליקציה הותקנה במסך הבית —
+ * בלשונית Safari רגילה PushManager אינו קיים כלל.
+ */
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { title: 'עדכון על הטיסה', body: event.data ? event.data.text() : '' };
+  }
+
+  const title = data.title || 'עדכון על הטיסה';
+  const options = {
+    body: data.body || '',
+    icon: '/logo192.png',
+    badge: '/logo192.png',
+    dir: 'rtl',
+    lang: 'he',
+    // תג זהה מחליף התראה קודמת על אותה טיסה במקום לערום עוד אחת
+    tag: data.tag || 'flight-update',
+    renotify: true,
+    requireInteraction: false,
+    data: { url: data.url || '/travel-info' },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+/**
+ * פתיחת המסך הנכון בלחיצה.
+ *
+ * אם האפליקציה כבר פתוחה, מתמקדים בה ומנווטים במקום לפתוח חלון נוסף —
+ * שני מופעים של אותה אפליקציה מבלבלים ומאבדים מצב.
+ */
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = event.notification.data?.url || '/travel-info';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        if ('focus' in client) {
+          client.navigate(target);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(target);
+    })
+  );
+});

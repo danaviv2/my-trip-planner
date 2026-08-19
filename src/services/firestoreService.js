@@ -104,6 +104,31 @@ export const saveDismissed = async (uid, booking) => {
  * והביטול, ולכן סריקה חוזרת מדלגת דווקא על מה שנמחק — ומתקבלת תמונה
  * חלקית שנראית ככשל בסריקה.
  */
+/**
+ * שמירת הרשמה להתראות דחיפה.
+ *
+ * מזהה המסמך נגזר מכתובת ה-endpoint, שהיא ייחודית למכשיר. כך אותו מכשיר
+ * אינו נשמר פעמיים, וכמה מכשירים של אותו משתמש מקבלים התראה כל אחד.
+ *
+ * הכתיבה נעשית מהדפדפן ולא מהשרת, כי כאן יש התחברות. השרת רק קורא.
+ */
+export const savePushSubscription = async (uid, subscription) => {
+  const id = btoa(String(subscription?.endpoint || '')).replace(/[^A-Za-z0-9]/g, '').slice(-60);
+  if (!id) return;
+  await setDoc(doc(db, 'users', uid, 'pushSubscriptions', id), {
+    ...subscription,
+    updatedAt: new Date().toISOString(),
+    // שפת ההתראה נשמרת עם ההרשמה: השרת אינו יודע מי המשתמש
+    lang: 'he',
+  });
+};
+
+export const deletePushSubscription = async (uid, subscription) => {
+  const id = btoa(String(subscription?.endpoint || '')).replace(/[^A-Za-z0-9]/g, '').slice(-60);
+  if (!id) return;
+  await deleteDoc(doc(db, 'users', uid, 'pushSubscriptions', id)).catch(() => {});
+};
+
 export const clearCollection = async (uid, name) => {
   const snapshot = await getDocs(collection(db, 'users', uid, name));
   await Promise.all(snapshot.docs.map((d) => deleteDoc(d.ref)));
