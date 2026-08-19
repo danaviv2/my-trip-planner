@@ -73,6 +73,39 @@ const EVENT_META = {
   activity: { icon: '🎟️', color: '#2e7d32', label: 'פעילות' },
 };
 
+/**
+ * טקסט המיקום של כל אירוע.
+ *
+ * לא כל אירוע יושב במקום של ההזמנה: איסוף רכב והחזרתו הם שתי כתובות
+ * שונות באותה רשומה, ולעיתים בשתי ערים. מיקום אחד לכל הזמנה היה מציב את
+ * ההחזרה ברומא על נקודת האיסוף בנאפולי.
+ */
+export const placeOf = (kind, b) => {
+  switch (kind) {
+    case 'hotel-in':
+    case 'hotel-out':
+      return b.address || b.name || '';
+    case 'car-pickup':
+      return b.pickupLocation || '';
+    case 'car-return':
+      return b.returnLocation || b.pickupLocation || '';
+    case 'transfer':
+      return b.pickupLocation || '';
+    case 'activity':
+      return b.location || b.name || '';
+    default:
+      return '';
+  }
+};
+
+/** קואורדינטות שנשמרו לאירוע הזה, אם אותרו. */
+const coordsOf = (kind, b) => {
+  const g = b.geo && b.geo[kind];
+  return g && Number.isFinite(Number(g.lat)) && Number.isFinite(Number(g.lng))
+    ? { lat: Number(g.lat), lng: Number(g.lng), unverified: !!g.unverified }
+    : null;
+};
+
 /** כותרת ותיאור לכל סוג, בשפה שאדם היה משתמש בה. */
 const describe = (kind, b) => {
   switch (kind) {
@@ -104,13 +137,14 @@ const describe = (kind, b) => {
 };
 
 /** הזמנה אחת → אירוע אחד או שניים. */
-const eventsFor = (b) => {
+export const eventsFor = (b) => {
   const out = [];
   const push = (kind, date, time) => {
     const m = momentOf(date, time);
     if (!m) return;
     out.push({
       kind, booking: b, ...m, order: orderOf(kind, m),
+      place: placeOf(kind, b), coords: coordsOf(kind, b),
       ...describe(kind, b), ...EVENT_META[kind],
     });
   };

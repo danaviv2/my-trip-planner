@@ -1,5 +1,5 @@
 // src/components/travel-info/TravelInfoComponent.js
-import React, { useState, useContext, useMemo } from 'react';
+import React, { useState, useContext, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Box, Paper, Typography, Button, IconButton, Alert, AlertTitle, Chip,
@@ -11,6 +11,7 @@ import { findConflicts } from '../../services/itineraryConflictService';
 import { findDrivingRestrictions } from '../../services/drivingRestrictionsService';
 import { useBookings } from '../../contexts/BookingsContext';
 import TripTimeline from './TripTimeline';
+import { geocodeBookings } from '../../services/bookingGeocodeService';
 import FlightAlertsCard from './FlightAlertsCard';
 import FlightRights from './FlightRights';
 import { tripCost, formatTotals } from '../../services/tripCostService';
@@ -64,7 +65,7 @@ const TravelInfoComponent = () => {
   
   // מצבים לניהול תצוגה
   const [showPast, setShowPast] = useState(false);
-  const { trips, autoScanning, autoScanResult, cloudError, removeBooking, resetAllBookings } = useBookings();
+  const { trips, autoScanning, autoScanResult, cloudError, removeBooking, resetAllBookings, addBookings } = useBookings();
   const [resetOpen, setResetOpen] = useState(false);
   const [resetDone, setResetDone] = useState(null);
 
@@ -86,9 +87,42 @@ const TravelInfoComponent = () => {
   }, [trips]);
 
 
-  const renderTrip = (trip) => (
+  /**
+   * הנסיעה הראשונה נפתחת מעצמה.
+   *
+   * הציר הוא תוכן המסך, והוא היה מוסתר מאחורי לחיצה: מי שנכנס ראה את
+   * אותם כרטיסי סיכום כמו קודם והסיק שדבר לא השתנה. נסיעה שאינה הראשונה
+   * נשארת מקופלת, כדי שמסך עם כמה נסיעות לא ייפתח כרשימה אינסופית.
+   */
+  /**
+   * השלמת מיקומים ברקע, לנסיעות הקרובות בלבד.
+   *
+   * שירות המיקומים מגביל לבקשה בשנייה, ולכן זה אינו רץ בזמן הסריקה — שם
+   * המשתמש מחכה. כאן המסך כבר מוצג. כל כתובת מאותרת פעם אחת: גם כישלון
+   * נרשם, אחרת אותה כתובת שלא נמצאה הייתה נבדקת שוב בכל טעינה.
+   */
+  const geocodedRef = useRef(false);
+  useEffect(() => {
+    if (geocodedRef.current || !upcoming.length) return;
+    geocodedRef.current = true;
+
+    let alive = true;
+    (async () => {
+      for (const trip of upcoming) {
+        if (!alive) return;
+        const updated = await geocodeBookings(trip.bookings || [], trip.destination || '');
+        if (alive && updated.length) await addBookings(updated);
+      }
+    })();
+
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [upcoming.length]);
+
+  const renderTrip = (trip, index = 0) => (
             <Accordion
               key={trip.id}
+              defaultExpanded={index === 0 && !trip.undated}
               disableGutters
               sx={{ mb: 1, borderRadius: '8px !important', '&:before': { display: 'none' } }}
               variant="outlined"
@@ -222,7 +256,7 @@ const TravelInfoComponent = () => {
             <i className="material-icons" style={{ marginRight: '8px' }}>luggage</i>
             הנסיעות שלך ({upcoming.length})
           </Typography>
-          {upcoming.map(renderTrip)}
+          {upcoming.map((trip, i) => renderTrip(trip, i))}
         </Box>
       )}
 
@@ -296,7 +330,7 @@ const TravelInfoComponent = () => {
           >
             נסיעות קודמות ({past.length})
           </Button>
-          {showPast && <Box sx={{ mt: 1 }}>{past.map(renderTrip)}</Box>}
+          {showPast && <Box sx={{ mt: 1 }}>{past.map((trip) => renderTrip(trip, -1))}</Box>}
         </Box>
       )}
 

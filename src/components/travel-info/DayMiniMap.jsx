@@ -33,10 +33,10 @@ const hasCoord = (p) =>
  */
 const groundPoints = (events = []) =>
   events
-    .filter((e) => e.kind !== 'flight')
+    .filter((e) => e.kind !== 'flight' && e.coords)
     .map((e) => ({
-      lat: Number(e.booking?.lat),
-      lng: Number(e.booking?.lng),
+      lat: e.coords.lat,
+      lng: e.coords.lng,
       label: e.title,
       color: e.color,
       kind: e.kind,
