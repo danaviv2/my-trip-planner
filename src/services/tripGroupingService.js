@@ -49,6 +49,13 @@ export const normalizeBooking = (b) => {
     end = parseDate(b.endDate) || start;
     location = '';
     title = b.provider || 'ביטוח נסיעות';
+  } else if (type === 'custom') {
+    // פריט שהמשתמש הוסיף בעצמו. יש לו תאריך ותו לא, וזה מספיק כדי
+    // לשייך אותו לנסיעה הנכונה.
+    start = parseDate(b.date);
+    end = start;
+    location = b.location || '';
+    title = b.title || 'פריט בתוכנית';
   } else if (type === 'activity') {
     start = parseDate(b.date);
     end = start;

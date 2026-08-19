@@ -1,8 +1,13 @@
-import React from 'react';
-import { Box, Typography, IconButton, Chip } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Typography, IconButton, Chip, Button, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
-import { buildTimeline, humanGap } from '../../services/tripTimelineService';
+import EditIcon from '@mui/icons-material/EditOutlined';
+import AddIcon from '@mui/icons-material/Add';
+import DragIcon from '@mui/icons-material/DragIndicator';
+import { buildTimeline, humanGap, timeBetween } from '../../services/tripTimelineService';
 import DayMiniMap, { groundPoints } from './DayMiniMap';
+import EventEditDialog from './EventEditDialog';
+import AddPlanItemDialog from './AddPlanItemDialog';
 
 /**
  * הנסיעה כרצף אירועים לפי זמן.
@@ -39,8 +44,15 @@ const DAY_MS = 86400000;
 /** כמה ימים חלפו בין שני ימי ציר. */
 const daysBetween = (a, b) => Math.round((b - a) / DAY_MS);
 
-const EventRow = ({ ev, onDelete, mapNumber }) => (
-  <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', mb: 0.5 }}>
+const EventRow = ({ ev, onDelete, onEdit, mapNumber, draggable, dragging, onDragStart, onDragOver, onDrop, onDragEnd }) => (
+  <Box
+    sx={{
+      display: 'flex', gap: 1.5, alignItems: 'flex-start', mb: 0.5,
+      opacity: dragging ? 0.4 : 1,
+    }}
+    onDragOver={onDragOver}
+    onDrop={onDrop}
+  >
     <Box
       sx={{
         width: 46, pt: 1.5, textAlign: 'left', flexShrink: 0,
@@ -92,11 +104,28 @@ const EventRow = ({ ev, onDelete, mapNumber }) => (
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+        {/* הידית היא היחידה שנגררת, ולא הכרטיס כולו: גרירה בטעות תוך
+            כדי גלילה בטלפון הייתה משנה שעות בלי שהמשתמש התכוון. */}
+        {draggable && (
+          <Box
+            draggable
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+            sx={{ color: '#c9cdda', cursor: 'grab', mt: -0.25, ml: -0.5, touchAction: 'none' }}
+          >
+            <DragIcon sx={{ fontSize: '1.05rem' }} />
+          </Box>
+        )}
         <Typography sx={{ flex: 1, fontSize: '0.95rem', fontWeight: 600, letterSpacing: '-0.2px', wordBreak: 'break-word' }}>
           {ev.title}
         </Typography>
         {ev.booking?.direction === 'return' && ev.kind === 'flight' && (
           <Chip size="small" label="חזור" sx={{ height: 20, fontSize: '0.65rem', bgcolor: '#eef0fc', color: '#5568d3' }} />
+        )}
+        {onEdit && (
+          <IconButton size="small" onClick={() => onEdit(ev)} sx={{ mt: -0.5 }}>
+            <EditIcon sx={{ fontSize: '0.95rem' }} />
+          </IconButton>
         )}
         {onDelete && (
           <IconButton size="small" onClick={() => onDelete(ev.booking.id)} sx={{ mt: -0.5, mr: -0.5 }}>
@@ -123,6 +152,16 @@ const EventRow = ({ ev, onDelete, mapNumber }) => (
           ⚠️ המקום לא נמצא במאגר המפות
         </Typography>
       )}
+
+      {/* שורה שתוקנה ידנית מסומנת: אחרת המסך סותר את האישור שביד בלי
+          שדבר יסביר למה. */}
+      {ev.edited && ev.booking?.type !== 'custom' && (
+        <Tooltip title="הערך באישור שונה. התיקון שלך נשמר בנפרד ולא יימחק בסריקה הבאה.">
+          <Typography sx={{ mt: 0.75, fontSize: '0.7rem', color: 'text.disabled' }}>
+            ✎ תוקן ידנית
+          </Typography>
+        </Tooltip>
+      )}
     </Box>
   </Box>
 );
@@ -139,9 +178,38 @@ const GapRow = ({ minutes }) => (
   </Box>
 );
 
-const TripTimeline = ({ bookings = [], onDelete }) => {
+const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent, onAddItem }) => {
+  const [editing, setEditing] = useState(null);
+  const [adding, setAdding] = useState(null);
+  const [drag, setDrag] = useState(null);
+
   const days = buildTimeline(bookings);
   if (!days.length) return null;
+
+  const editable = !!onEditEvent;
+
+  /**
+   * גרירה בתוך היום.
+   *
+   * הפריט מקבל שעה בין שכניו החדשים. זו אינה בחירה עיצובית אלא הכרח:
+   * הציר ממוין לפי זמן, ו"סדר מועדף" שסותר את השעות היה מציג פריט של
+   * 09:00 מתחת לפריט של 14:00 — מסך שסותר את עצמו במסך שכל תפקידו לענות
+   * "מה עכשיו".
+   */
+  const handleDrop = async (day, targetIndex) => {
+    if (!drag || drag.dayKey !== day.dayKey) return;
+    const from = drag.index;
+    if (from === targetIndex) return;
+
+    // הרשימה בלי הפריט הנגרר היא זו שקובעת מי יהיו שכניו החדשים.
+    const rest = day.events.filter((_, i) => i !== from);
+    const at = from < targetIndex ? targetIndex - 1 : targetIndex;
+    const time = timeBetween(rest[at - 1] || null, rest[at] || null);
+    if (!time) return;
+
+    const ev = day.events[from];
+    await onEditEvent(ev, { time });
+  };
 
   return (
     <Box>
@@ -187,13 +255,60 @@ const TripTimeline = ({ bookings = [], onDelete }) => {
               {day.events.map((ev, j) => (
                 <React.Fragment key={`${ev.kind}-${ev.booking?.id || j}`}>
                   {ev.gapBefore != null && ev.gapBefore >= 30 && <GapRow minutes={ev.gapBefore} />}
-                  <EventRow ev={ev} onDelete={onDelete} mapNumber={numbers.get(ev)} />
+                  <EventRow
+                    ev={ev}
+                    onDelete={onDelete}
+                    onEdit={editable ? setEditing : null}
+                    mapNumber={numbers.get(ev)}
+                    // גרירה נדרשת שני אירועים לפחות, ולפחות אחד מהם עם
+                    // שעה — אחרת אין ממה לגזור שעה חדשה.
+                    draggable={editable && day.events.length > 1 && day.events.some((x) => !x.allDay)}
+                    dragging={drag && drag.dayKey === day.dayKey && drag.index === j}
+                    onDragStart={() => setDrag({ dayKey: day.dayKey, index: j })}
+                    onDragEnd={() => setDrag(null)}
+                    onDragOver={(e) => { if (drag && drag.dayKey === day.dayKey) e.preventDefault(); }}
+                    onDrop={(e) => { e.preventDefault(); handleDrop(day, j); setDrag(null); }}
+                  />
                 </React.Fragment>
               ))}
+
+              {onAddItem && (
+                <Box sx={{ display: 'flex', gap: 1.5, mt: 0.5 }}>
+                  <Box sx={{ width: 46, flexShrink: 0 }} />
+                  <Box sx={{ width: 32, flexShrink: 0 }} />
+                  <Button
+                    size="small"
+                    startIcon={<AddIcon sx={{ fontSize: '1rem' }} />}
+                    onClick={() => setAdding(day.dayKey)}
+                    sx={{
+                      color: 'text.disabled', fontSize: '0.78rem', fontWeight: 500,
+                      justifyContent: 'flex-start', px: 1,
+                      '&:hover': { color: 'primary.main', bgcolor: 'transparent' },
+                    }}
+                  >
+                    הוסף לתוכנית היום
+                  </Button>
+                </Box>
+              )}
             </Box>
           </React.Fragment>
         );
       })}
+
+      <EventEditDialog
+        open={!!editing}
+        event={editing}
+        onClose={() => setEditing(null)}
+        onSave={(patch) => onEditEvent(editing, patch)}
+        onReset={() => onResetEvent(editing)}
+      />
+
+      <AddPlanItemDialog
+        open={!!adding}
+        dayKey={adding}
+        onClose={() => setAdding(null)}
+        onAdd={onAddItem}
+      />
     </Box>
   );
 };

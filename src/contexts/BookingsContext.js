@@ -332,8 +332,16 @@ const sameBooking = (a, b) => {
  */
 const mergeBookings = (a, b) => {
   const out = { ...a };
+
+  // התיקונים של המשתמש מאוחדים משני הצדדים. כלל "המחרוזת הארוכה גוברת"
+  // אינו חל על אובייקט, וההשארה השקטה של צד אחד הייתה מאבדת תיקון
+  // שנרשם על העותק השני של אותה הזמנה.
+  if (a.overrides || b.overrides) {
+    out.overrides = { ...(b.overrides || {}), ...(a.overrides || {}) };
+  }
+
   Object.entries(b).forEach(([k, v]) => {
-    if (k === 'id' || k === 'importedAt') return;
+    if (k === 'id' || k === 'importedAt' || k === 'overrides') return;
     const cur = out[k];
     if (cur === '' || cur == null) out[k] = v;
     else if (typeof cur === 'string' && typeof v === 'string' && v.length > cur.length) out[k] = v;
@@ -366,7 +374,13 @@ const dedupe = (list = []) => {
       // מחרוזת ארוכה יותר, אך אינו מסיר דבר — ותיקון בפענוח לעולם לא
       // מגיע למסך בלי שהמשתמש ימחק ידנית.
       if (sameSource(out[i], b)) {
-        out[i] = (b.importedAt || '') >= (out[i].importedAt || '') ? { ...b } : out[i];
+        // התיקונים של המשתמש עוברים לגרסה המנצחת. הקריאה המאוחרת דורסת
+        // את הרשומה כולה, ובלי ההעברה הזו תיקון ידני היה נמחק בשקט
+        // בסריקה הבאה — בדיוק מה שהשכבה הנפרדת נועדה למנוע.
+        const edits = out[i].overrides || b.overrides;
+        const winner = (b.importedAt || '') >= (out[i].importedAt || '') ? { ...b } : { ...out[i] };
+        if (edits) winner.overrides = { ...(b.overrides || {}), ...(out[i].overrides || {}) };
+        out[i] = winner;
         return;
       }
       const [base, extra] = filled(out[i]) >= filled(b) ? [out[i], b] : [b, out[i]];
@@ -532,6 +546,87 @@ export const BookingsProvider = ({ children }) => {
       return { added: Math.max(added, 0), skipped: list.length - Math.max(added, 0) };
     },
     [user, applyBookings]
+  );
+
+  /**
+   * כתיבה ישירה של רשומה אחת, בלי מיזוג.
+   *
+   * `addBookings` מאחד רשומות דומות ומעדיף מחרוזת ארוכה יותר — התנהגות
+   * נכונה לייבוא, והרסנית לעריכה: מחיקת טקסט או קיצורו היו מתבטלות,
+   * והמשתמש היה רואה את הערך הישן חוזר.
+   */
+  const updateBooking = useCallback(
+    async (id, patch) => {
+      const key = String(id);
+      const current = bookingsRef.current;
+      if (!current.some((x) => String(x.id) === key)) return null;
+
+      const next = current.map((x) => (String(x.id) === key ? { ...x, ...patch } : x));
+      const saved = applyBookings(next);
+      const row = saved.find((x) => String(x.id) === key);
+
+      if (user && row) {
+        try {
+          await saveBooking(user.uid, row);
+          setCloudError(false);
+        } catch {
+          setCloudError(true);
+        }
+      }
+      return row || null;
+    },
+    [user, applyBookings]
+  );
+
+  /**
+   * תיקון של אירוע בודד בתוך הזמנה.
+   *
+   * נשמר בשכבה נפרדת ולא על השדה עצמו, כדי שהסריקה הבאה של אותו מייל לא
+   * תחזיר את הערך שבאישור. מפתח ריק מוחק את התיקון וחוזר למקור.
+   */
+  const editEvent = useCallback(
+    async (id, kind, patch) => {
+      const current = bookingsRef.current.find((x) => String(x.id) === String(id));
+      if (!current) return null;
+
+      const merged = { ...(current.overrides || {}) };
+      const next = { ...(merged[kind] || {}), ...patch };
+
+      // ערך זהה למקור אינו תיקון. שמירתו הייתה מסמנת את השורה כ"נערכה"
+      // בלי שדבר השתנה בה.
+      Object.keys(next).forEach((k) => {
+        if (next[k] === undefined || next[k] === null) delete next[k];
+      });
+
+      if (Object.keys(next).length) merged[kind] = next;
+      else delete merged[kind];
+
+      const write = { overrides: Object.keys(merged).length ? merged : null };
+
+      // שינוי מקום מבטל את המיקום שאותר: הקואורדינטה הישנה שייכת לכתובת
+      // הישנה, והשארתה הייתה מציבה על המפה נקודה נכונה למקום שכבר לא
+      // רלוונטי — שקר שנראה בדיוק כמו אמת.
+      if ('place' in patch && current.geo && current.geo[kind]) {
+        const geo = { ...current.geo };
+        delete geo[kind];
+        write.geo = Object.keys(geo).length ? geo : null;
+      }
+
+      return updateBooking(id, write);
+    },
+    [updateBooking]
+  );
+
+  /** מבטל את כל התיקונים על אירוע וחוזר למה שכתוב באישור. */
+  const clearEventEdits = useCallback(
+    async (id, kind) => {
+      const current = bookingsRef.current.find((x) => String(x.id) === String(id));
+      if (!current || !current.overrides) return null;
+      const merged = { ...current.overrides };
+      delete merged[kind];
+      return updateBooking(id, { overrides: Object.keys(merged).length ? merged : null });
+    },
+    [updateBooking]
   );
 
   /**
@@ -702,9 +797,11 @@ export const BookingsProvider = ({ children }) => {
   const value = useMemo(
     () => ({
       bookings, trips, loading, addBookings, removeBooking, applyCancellations,
+      updateBooking, editEvent, clearEventEdits,
       resetAllBookings, autoScanning, autoScanResult, cloudError,
     }),
     [bookings, trips, loading, addBookings, removeBooking, applyCancellations,
+     updateBooking, editEvent, clearEventEdits,
      resetAllBookings, autoScanning, autoScanResult, cloudError]
   );
 

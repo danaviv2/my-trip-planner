@@ -20,7 +20,7 @@ import { locateAddress } from './placeLookupService';
 import { eventsFor } from './tripTimelineService';
 
 /** טיסה אינה מקום על הקרקע: מיקומה שדה תעופה, והיא אינה מופיעה במפת היום. */
-const LOCATABLE = new Set(['hotel-in', 'hotel-out', 'car-pickup', 'car-return', 'transfer', 'activity']);
+const LOCATABLE = new Set(['hotel-in', 'hotel-out', 'car-pickup', 'car-return', 'transfer', 'activity', 'custom']);
 
 /**
  * גרסת האיתור.

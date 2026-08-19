@@ -1,5 +1,5 @@
 // src/components/travel-info/TravelInfoComponent.js
-import React, { useState, useContext, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useContext, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Box, Paper, Typography, Button, IconButton, Alert, AlertTitle, Chip,
@@ -66,7 +66,10 @@ const TravelInfoComponent = () => {
   
   // מצבים לניהול תצוגה
   const [showPast, setShowPast] = useState(false);
-  const { trips, autoScanning, autoScanResult, cloudError, removeBooking, resetAllBookings, addBookings } = useBookings();
+  const {
+    trips, autoScanning, autoScanResult, cloudError,
+    removeBooking, resetAllBookings, addBookings, editEvent, clearEventEdits,
+  } = useBookings();
   const [resetOpen, setResetOpen] = useState(false);
   const [resetDone, setResetDone] = useState(null);
 
@@ -119,6 +122,32 @@ const TravelInfoComponent = () => {
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [upcoming.length]);
+
+  /**
+   * שמירת תיקון על אירוע.
+   *
+   * התאריך נשלח רק כשהוא באמת השתנה: שליחתו תמיד הייתה מסמנת כל שורה
+   * שנגעו בה כ"נערכה", גם כשהמשתמש רק פתח וסגר את החלון.
+   */
+  const handleEditEvent = useCallback(
+    async (ev, patch) => {
+      if (!ev || !ev.booking) return;
+      const d = ev.at;
+      const currentDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const clean = { ...patch };
+      if (clean.date === currentDate) delete clean.date;
+      await editEvent(ev.booking.id, ev.kind, clean);
+    },
+    [editEvent]
+  );
+
+  const handleResetEvent = useCallback(
+    async (ev) => {
+      if (!ev || !ev.booking) return;
+      await clearEventEdits(ev.booking.id, ev.kind);
+    },
+    [clearEventEdits]
+  );
 
   const renderTrip = (trip, index = 0) => (
             <Accordion
@@ -176,7 +205,13 @@ const TravelInfoComponent = () => {
                   </Alert>
                 ))}
                 {/* הנסיעה כרצף ולא כרשימה מקובצת לפי סוג */}
-                <TripTimeline bookings={trip.bookings || []} onDelete={removeBooking} />
+                <TripTimeline
+                  bookings={trip.bookings || []}
+                  onDelete={removeBooking}
+                  onEditEvent={handleEditEvent}
+                  onResetEvent={handleResetEvent}
+                  onAddItem={addBookings}
+                />
 
                 {/* זכויות הנוסע לכל טיסה. מוצג גם כשהכול תקין — הידיעה
                     שווה דווקא מראש, שכן הסף האירופי נמוך בהרבה מהישראלי

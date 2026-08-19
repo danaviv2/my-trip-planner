@@ -71,6 +71,7 @@ const EVENT_META = {
   'car-return': { icon: '🔑', color: '#e65100', label: 'החזרת רכב' },
   transfer: { icon: '🚕', color: '#f9a825', label: 'הסעה' },
   activity: { icon: '🎟️', color: '#2e7d32', label: 'פעילות' },
+  custom: { icon: '📌', color: '#00838f', label: 'תוכנית' },
 };
 
 /**
@@ -93,6 +94,8 @@ export const placeOf = (kind, b) => {
       return b.pickupLocation || '';
     case 'activity':
       return b.location || b.name || '';
+    case 'custom':
+      return b.location || '';
     default:
       return '';
   }
@@ -131,21 +134,52 @@ const describe = (kind, b) => {
       };
     case 'activity':
       return { title: b.name || 'פעילות', detail: b.location || '', extra: b.participants ? `${b.participants} משתתפים` : '' };
+    case 'custom':
+      return { title: b.title || 'פריט בתוכנית', detail: b.location || '', extra: b.note || '' };
     default:
       return { title: '', detail: '', extra: '' };
   }
 };
 
+/**
+ * תיקון שהמשתמש הזין, אם יש.
+ *
+ * ── למה שכבה נפרדת ולא כתיבה על השדה ──
+ * מייל האישור נשאר בתיבה לנצח, וכל סריקה מייבאת אותו מחדש. כתיבת השעה
+ * המתוקנת ישירות על ההזמנה הייתה מחזיקה עד הסריקה הבאה בלבד, ואז חוזרת
+ * לערך שבאישור — בלי שדבר יסמן שזה קרה. שדה שאף מפענח אינו כותב אליו
+ * הוא היחיד שיכול לשרוד את הייבוא.
+ *
+ * המפתח הוא סוג האירוע: איסוף רכב והחזרתו הם שני רגעים באותה רשומה,
+ * ותיקון של אחד אינו נוגע לשני.
+ */
+const overrideFor = (b, kind) => (b && b.overrides && b.overrides[kind]) || null;
+
 /** הזמנה אחת → אירוע אחד או שניים. */
 export const eventsFor = (b) => {
   const out = [];
   const push = (kind, date, time) => {
-    const m = momentOf(date, time);
+    const ov = overrideFor(b, kind);
+
+    // מחיקת השעה היא ערך לגיטימי ולא היעדר תיקון: "לא יודע מתי" הוא
+    // מידע. לכן נבדקת נוכחות המפתח ולא האם הערך ריק.
+    const m = momentOf(
+      ov && ov.date ? ov.date : date,
+      ov && 'time' in ov ? ov.time : time
+    );
     if (!m) return;
+
+    const base = describe(kind, b);
+
     out.push({
       kind, booking: b, ...m, order: orderOf(kind, m),
-      place: placeOf(kind, b), coords: coordsOf(kind, b),
-      ...describe(kind, b), ...EVENT_META[kind],
+      place: (ov && ov.place) || placeOf(kind, b),
+      coords: coordsOf(kind, b),
+      ...base,
+      ...EVENT_META[kind],
+      ...(ov && ov.title ? { title: ov.title } : {}),
+      ...(ov && ov.place ? { detail: ov.place } : {}),
+      edited: !!ov,
     });
   };
 
@@ -170,6 +204,9 @@ export const eventsFor = (b) => {
       break;
     case 'activity':
       push('activity', b.date, b.time);
+      break;
+    case 'custom':
+      push('custom', b.date, b.time);
       break;
     default:
       // ביטוח ומה שאין לו רגע בזמן אינם אירועים בציר
@@ -217,6 +254,37 @@ export const buildTimeline = (bookings = []) => {
   });
 
   return days;
+};
+
+/**
+ * השעה שאירוע צריך לקבל כדי לשבת בין שני שכניו.
+ *
+ * ── למה גרירה משנה את השעה ──
+ * הציר ממוין לפי זמן. סדר ידני שסותר את השעות היה יוצר מסך שקרי: פריט
+ * של 09:00 יושב מתחת לפריט של 14:00 מפני שגררת אותו לשם, והשעות שלצידם
+ * אומרות את ההפך. מכיוון שהמסך הזה נועד לענות "מה עכשיו", סתירה כזו היא
+ * בדיוק סוג התקלה שאסור להכניס.
+ *
+ * לכן הגרירה אינה "סדר מועדף" אלא קביעת שעה: הפריט מקבל שעה בין שכניו,
+ * והמסך נשאר נכון בכל קריאה שלו.
+ *
+ * @returns {string|null} "HH:MM", או null כשאי אפשר לגזור שעה
+ */
+export const timeBetween = (prev, next) => {
+  const minutes = (ev) => (ev && !ev.allDay ? ev.at.getHours() * 60 + ev.at.getMinutes() : null);
+  const a = minutes(prev);
+  const z = minutes(next);
+
+  // שכן בלי שעה אינו נותן גבול. במקום להמציא אחד, הגרירה פשוט לא זמינה.
+  let result;
+  if (a == null && z == null) return null;
+  if (a == null) result = z - 30;
+  else if (z == null) result = a + 30;
+  else if (z - a < 2) result = a;      // אין רווח לחלק — נצמד לקודם
+  else result = Math.round((a + z) / 2);
+
+  const clamped = Math.max(0, Math.min(23 * 60 + 59, result));
+  return `${String(Math.floor(clamped / 60)).padStart(2, '0')}:${String(clamped % 60).padStart(2, '0')}`;
 };
 
 /** ביטוחים ופריטים שחלים על הנסיעה כולה ואינם רגע בזמן. */
