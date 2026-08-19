@@ -6,6 +6,7 @@ import {
   saveDismissed, loadDismissed, clearCollection,
 } from '../services/firestoreService';
 import { groupBookingsIntoTrips } from '../services/tripGroupingService';
+import { clearLedger } from '../services/scanLedgerService';
 import { useAutoGmailScan } from '../hooks/useAutoGmailScan';
 import {
   dateKey, flightKey, sameName, sameFlightNumber, stripInvisible,
@@ -615,6 +616,10 @@ export const BookingsProvider = ({ children }) => {
     applyBookings([]);
     writeCancelled(new Set());
     writeDismissed([]);
+
+    // בלי ניקוי יומן הסריקה, הסריקה שאחרי האיפוס תדלג על כל המיילים ולא
+    // תייבא דבר — מסך ריק שנראה ככשל. אותה מלכודת של סימוני המחיקה.
+    clearLedger();
 
     if (user) {
       await Promise.all(

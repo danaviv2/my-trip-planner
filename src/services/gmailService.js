@@ -242,18 +242,27 @@ export const fetchAttachment = async (token, messageId, attachmentId) => {
  * @param {object} opts
  * @param {number} opts.maxResults מספר מיילים מרבי (ברירת מחדל 60)
  * @param {number} opts.monthsBack כמה חודשים אחורה (ברירת מחדל 12)
+ * @param {Set<string>} opts.skipIds מזהי הודעות שכבר פוענחו
  * @returns {Promise<Array<{id,subject,from,date,text}>>}
  */
-export const fetchBookingEmails = async (token, { maxResults = 60, monthsBack = 12 } = {}) => {
+export const fetchBookingEmails = async (
+  token,
+  { maxResults = 60, monthsBack = 12, skipIds = new Set() } = {}
+) => {
   if (!token) throw new Error('NO_GMAIL_TOKEN');
 
   const q = encodeURIComponent(buildQuery(monthsBack));
   const list = await request(`${API}/messages?q=${q}&maxResults=${maxResults}`, token);
 
-  const ids = (list.messages || []).map((m) => m.id);
+  // הדילוג נעשה לפני שליפת גוף ההודעה, ולא רק לפני הפענוח: כך נחסכת גם
+  // מכסת ה-API וגם התעבורה, ולא רק הקריאה למודל.
+  const allIds = (list.messages || []).map((m) => m.id);
+  const ids = allIds.filter((id) => !skipIds.has(String(id)));
+  const alreadyKnown = allIds.length - ids.length;
   if (!ids.length) {
     const empty = [];
     empty.skipped = [];
+    empty.alreadyKnown = alreadyKnown;
     return empty;
   }
 
@@ -306,6 +315,7 @@ export const fetchBookingEmails = async (token, { maxResults = 60, monthsBack = 
 
   // מוצמד למערך ולא מוחזר כאובייקט עוטף, כדי לא לשבור קוראים קיימים
   results.skipped = skipped;
+  results.alreadyKnown = alreadyKnown;
   results.matched = ids.length;
   return results;
 };

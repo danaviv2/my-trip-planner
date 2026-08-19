@@ -1,0 +1,82 @@
+/**
+ * יומן המיילים שכבר פוענחו.
+ *
+ * עד כה כל סריקה פענחה מחדש את כל המיילים המתאימים — עשרות קריאות למודל
+ * בכל פעם, גם כשדבר לא השתנה. זה עלה זמן וטוקנים, ובעיקר: זה הפך כל
+ * סריקה לפעולה יקרה שהמשתמש נמנע ממנה.
+ *
+ * הדפוס הוא Inbox Pattern: שומרים את מזהה ההודעה שטופלה, ומדלגים עליה
+ * בפעם הבאה. המזהה של Gmail יציב ואינו משתנה.
+ *
+ * גרסת הפענוח נשמרת יחד עם המזהה. כשהפענוח משתפר — ניסוח חדש בהנחיות,
+ * שדה נוסף — הגרסה עולה והמיילים נסרקים מחדש פעם אחת. בלי זה כל שיפור
+ * בפענוח לא היה מגיע למיילים שכבר נקראו, וזו הייתה מלכודת שקטה.
+ */
+
+/**
+ * גרסת הפענוח. יש להעלות אותה כשההנחיות למודל או מבנה השדות משתנים,
+ * אחרת שיפור בפענוח לא יחול על מיילים שכבר נסרקו.
+ */
+export const PARSER_VERSION = 1;
+
+const KEY = 'scannedMessages';
+
+/** תקרה לגודל היומן, כדי שלא יגדל בלי גבול. */
+const MAX_ENTRIES = 3000;
+
+const read = () => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEY) || '{}');
+    return raw && typeof raw === 'object' ? raw : {};
+  } catch {
+    return {};
+  }
+};
+
+const write = (ledger) => {
+  try {
+    const keys = Object.keys(ledger);
+    // הישנים נזרקים ראשונים: מייל שנסרק לפני חודשים לא יופיע שוב בטווח
+    // הסריקה, ולכן אין ערך בשמירתו.
+    const trimmed = keys.length > MAX_ENTRIES
+      ? Object.fromEntries(keys.slice(-MAX_ENTRIES).map((k) => [k, ledger[k]]))
+      : ledger;
+    localStorage.setItem(KEY, JSON.stringify(trimmed));
+  } catch {
+    // המכסה מלאה. עדיף לאבד את היומן מאשר להפיל את הסריקה.
+  }
+};
+
+/** מזהי ההודעות שאין צורך לפענח שוב בגרסה הנוכחית. */
+export const processedIds = () => {
+  const ledger = read();
+  return new Set(
+    Object.keys(ledger).filter((id) => ledger[id] === PARSER_VERSION)
+  );
+};
+
+/** מסמן הודעות כמטופלות בגרסת הפענוח הנוכחית. */
+export const markProcessed = (ids = []) => {
+  if (!ids.length) return;
+  const ledger = read();
+  ids.forEach((id) => {
+    if (id) ledger[String(id)] = PARSER_VERSION;
+  });
+  write(ledger);
+};
+
+/**
+ * מנקה את היומן.
+ *
+ * חייב לרוץ עם איפוס ההזמנות. בלעדיו הסריקה שאחרי האיפוס תדלג על כל
+ * המיילים ולא תייבא דבר — מסך ריק שנראה ככשל בסריקה. זו בדיוק המלכודת
+ * שהתגלתה בסימוני המחיקה.
+ */
+export const clearLedger = () => {
+  try {
+    localStorage.removeItem(KEY);
+  } catch {}
+};
+
+/** כמה הודעות ביומן, לצורך חיווי למשתמש. */
+export const ledgerSize = () => Object.keys(read()).length;

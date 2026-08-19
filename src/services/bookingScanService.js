@@ -1,5 +1,6 @@
 import { fetchBookingEmails, fetchAttachment } from './gmailService';
 import { parseTravelDocument, parseTravelDocumentFromPdf } from './bookingParserService';
+import { processedIds, markProcessed } from './scanLedgerService';
 
 /**
  * סריקת תיבת הדואר ופענוח האישורים שנמצאו.
@@ -61,7 +62,11 @@ export const scanMailbox = async (
   { maxResults = 60, monthsBack = 12, maxPdfsPerEmail = 3, onProgress = () => {} } = {}
 ) => {
   onProgress('מחפש אישורי הזמנה בתיבה...', 0, 0);
-  const emails = await fetchBookingEmails(token, { maxResults, monthsBack });
+
+  // מיילים שכבר פוענחו בגרסת הפענוח הנוכחית אינם נשלפים ואינם נשלחים
+  // למודל. זה מה שהופך סריקה חוזרת מפעולה יקרה לפעולה זולה.
+  const known = processedIds();
+  const emails = await fetchBookingEmails(token, { maxResults, monthsBack, skipIds: known });
 
   const bookings = [];
   // ביטולים אינם הזמנות ואסור שייכנסו למאגר. הם נאספים בנפרד כדי לשמש
@@ -145,10 +150,15 @@ export const scanMailbox = async (
     else unrecognized.push(email);
   }
 
+  // הסימון נעשה בסוף ורק על מיילים שהמעבר עליהם הושלם. סימון מוקדם היה
+  // גורם לדילוג בפעם הבאה על מייל שהפענוח שלו נכשל באמצע.
+  markProcessed(emails.map((e) => e.id));
+
   // מיילים שגוגל החזירה ולא הניבו הזמנה — בין אם סוננו לפני הפענוח ובין
   // אם הפענוח לא זיהה בהם דבר. זו הרשימה שמסבירה אישור חסר.
   return {
     emails,
+    alreadyKnown: emails.alreadyKnown || 0,
     bookings,
     cancellations,
     parsed,

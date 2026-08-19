@@ -67,7 +67,7 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
         result = await scan(await refreshGmailToken());
       }
 
-      const { bookings: collected, cancellations, parsed, fromPdf, matched, unrecognized } = result;
+      const { bookings: collected, cancellations, parsed, fromPdf, matched, unrecognized, alreadyKnown } = result;
 
       // מוצג תמיד ולא רק בכישלון: סריקה יכולה להצליח ועדיין להחמיץ את
       // אישור המלון, ובלי הרשימה אין דרך לדעת שהוא הוחמץ.
@@ -94,8 +94,12 @@ const EmailImportModal = ({ open, onClose, setFlights, setCarRental }) => {
       const missed = unrecognized?.length
         ? ` ${unrecognized.length} מיילים לא זוהו — ראה את הרשימה למטה.`
         : '';
+      // החיסכון נאמר במפורש: סריקה שמדלגת בשקט נראית כסריקה שלא עבדה.
+      const cached = alreadyKnown > 0
+        ? ` ${alreadyKnown} מיילים נסרקו בעבר ולא פוענחו שוב.`
+        : '';
       setSuccess(
-        `נסרקו ${matched} מיילים, זוהו ${parsed} אישורים${fromPdf ? ` (${fromPdf} מתוך קבצים מצורפים)` : ''}, ויובאו ${added} הזמנות חדשות.${dup}${canc}${missed}`
+        `נסרקו ${matched} מיילים, זוהו ${parsed} אישורים${fromPdf ? ` (${fromPdf} מתוך קבצים מצורפים)` : ''}, ויובאו ${added} הזמנות חדשות.${dup}${canc}${cached}${missed}`
       );
     } catch (err) {
       if (err.message === 'GMAIL_TOKEN_EXPIRED') {
