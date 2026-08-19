@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Box, Typography, IconButton, Chip, Button, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/EditOutlined';
@@ -44,14 +44,19 @@ const DAY_MS = 86400000;
 /** כמה ימים חלפו בין שני ימי ציר. */
 const daysBetween = (a, b) => Math.round((b - a) / DAY_MS);
 
-const EventRow = ({ ev, onDelete, onEdit, mapNumber, draggable, dragging, onDragStart, onDragOver, onDrop, onDragEnd }) => (
+const EventRow = ({ ev, onDelete, onEdit, mapNumber, draggable, dragging, dropBefore, onGrab, rowRef }) => (
   <Box
+    ref={rowRef}
     sx={{
       display: 'flex', gap: 1.5, alignItems: 'flex-start', mb: 0.5,
-      opacity: dragging ? 0.4 : 1,
+      opacity: dragging ? 0.35 : 1,
+      // קו שמראה לאן הפריט ייפול. בלעדיו הגרירה בטלפון היא ניחוש:
+      // האצבע מכסה את השורה, ואין שום סימן מה יקרה כשתשוחרר.
+      borderTop: dropBefore ? '2px solid' : '2px solid transparent',
+      borderColor: dropBefore ? 'primary.main' : 'transparent',
+      borderRadius: dropBefore ? '2px' : 0,
+      transition: 'border-color .12s',
     }}
-    onDragOver={onDragOver}
-    onDrop={onDrop}
   >
     <Box
       sx={{
@@ -108,12 +113,15 @@ const EventRow = ({ ev, onDelete, onEdit, mapNumber, draggable, dragging, onDrag
             כדי גלילה בטלפון הייתה משנה שעות בלי שהמשתמש התכוון. */}
         {draggable && (
           <Box
-            draggable
-            onDragStart={onDragStart}
-            onDragEnd={onDragEnd}
-            sx={{ color: '#c9cdda', cursor: 'grab', mt: -0.25, ml: -0.5, touchAction: 'none' }}
+            onPointerDown={onGrab}
+            sx={{
+              color: dragging ? 'primary.main' : '#b9bdcc',
+              cursor: 'grab', mt: -0.5, ml: -0.75, p: 0.5,
+              // בלי זה מגע בידית גולל את הדף במקום לגרור
+              touchAction: 'none', userSelect: 'none',
+            }}
           >
-            <DragIcon sx={{ fontSize: '1.05rem' }} />
+            <DragIcon sx={{ fontSize: '1.2rem' }} />
           </Box>
         )}
         <Typography sx={{ flex: 1, fontSize: '0.95rem', fontWeight: 600, letterSpacing: '-0.2px', wordBreak: 'break-word' }}>
@@ -183,6 +191,10 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent, onAd
   const [adding, setAdding] = useState(null);
   const [drag, setDrag] = useState(null);
 
+  // מיקומי השורות על המסך. נדרשים כדי לדעת מעל איזו שורה האצבע נמצאת:
+  // אירועי מצביע מדווחים נקודה, לא יעד.
+  const rows = useRef({});
+
   const days = buildTimeline(bookings);
   if (!days.length) return null;
 
@@ -196,19 +208,52 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent, onAd
    * 09:00 מתחת לפריט של 14:00 — מסך שסותר את עצמו במסך שכל תפקידו לענות
    * "מה עכשיו".
    */
-  const handleDrop = async (day, targetIndex) => {
-    if (!drag || drag.dayKey !== day.dayKey) return;
-    const from = drag.index;
-    if (from === targetIndex) return;
+  const applyDrop = async (day, from, to) => {
+    if (from === to || to == null) return;
 
     // הרשימה בלי הפריט הנגרר היא זו שקובעת מי יהיו שכניו החדשים.
     const rest = day.events.filter((_, i) => i !== from);
-    const at = from < targetIndex ? targetIndex - 1 : targetIndex;
+    const at = from < to ? to - 1 : to;
     const time = timeBetween(rest[at - 1] || null, rest[at] || null);
     if (!time) return;
 
-    const ev = day.events[from];
-    await onEditEvent(ev, { time });
+    await onEditEvent(day.events[from], { time });
+  };
+
+  /**
+   * גרירה באירועי מצביע ולא בגרירת HTML.
+   *
+   * הגרסה הראשונה השתמשה ב-draggable, שאינו מגיב למגע כלל: על הטלפון —
+   * המכשיר היחיד שהמסך הזה נועד לו — הידית פשוט לא עשתה דבר. אירועי
+   * מצביע מכסים עכבר ומגע באותו קוד.
+   */
+  const startDrag = (day, index) => (e) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDrag({ dayKey: day.dayKey, index, over: index });
+  };
+
+  const onDragMove = (day) => (e) => {
+    if (!drag || drag.dayKey !== day.dayKey) return;
+    const y = e.clientY;
+
+    // היעד הוא השורה הראשונה שמרכזה מתחת לאצבע. שורה שהוסרה מה-DOM
+    // מדולגת במקום להפיל את החישוב.
+    let over = day.events.length;
+    for (let i = 0; i < day.events.length; i += 1) {
+      const el = rows.current[`${day.dayKey}:${i}`];
+      if (!el) continue;
+      const box = el.getBoundingClientRect();
+      if (y < box.top + box.height / 2) { over = i; break; }
+    }
+    if (over !== drag.over) setDrag((d) => ({ ...d, over }));
+  };
+
+  const endDrag = (day) => async () => {
+    if (!drag || drag.dayKey !== day.dayKey) return;
+    const { index, over } = drag;
+    setDrag(null);
+    await applyDrop(day, index, over);
   };
 
   return (
@@ -245,7 +290,12 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent, onAd
             <DayMiniMap events={day.events} />
 
             {/* הקו האנכי נמתח על כל היום ויושב מאחורי העיגולים */}
-            <Box sx={{ position: 'relative' }}>
+            <Box
+              sx={{ position: 'relative' }}
+              onPointerMove={onDragMove(day)}
+              onPointerUp={endDrag(day)}
+              onPointerCancel={() => setDrag(null)}
+            >
               <Box
                 sx={{
                   position: 'absolute', top: 14, bottom: 14, right: 62,
@@ -260,14 +310,13 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent, onAd
                     onDelete={onDelete}
                     onEdit={editable ? setEditing : null}
                     mapNumber={numbers.get(ev)}
+                    rowRef={(el) => { rows.current[`${day.dayKey}:${j}`] = el; }}
                     // גרירה נדרשת שני אירועים לפחות, ולפחות אחד מהם עם
                     // שעה — אחרת אין ממה לגזור שעה חדשה.
                     draggable={editable && day.events.length > 1 && day.events.some((x) => !x.allDay)}
-                    dragging={drag && drag.dayKey === day.dayKey && drag.index === j}
-                    onDragStart={() => setDrag({ dayKey: day.dayKey, index: j })}
-                    onDragEnd={() => setDrag(null)}
-                    onDragOver={(e) => { if (drag && drag.dayKey === day.dayKey) e.preventDefault(); }}
-                    onDrop={(e) => { e.preventDefault(); handleDrop(day, j); setDrag(null); }}
+                    dragging={!!drag && drag.dayKey === day.dayKey && drag.index === j}
+                    dropBefore={!!drag && drag.dayKey === day.dayKey && drag.over === j && drag.index !== j}
+                    onGrab={startDrag(day, j)}
                   />
                 </React.Fragment>
               ))}
