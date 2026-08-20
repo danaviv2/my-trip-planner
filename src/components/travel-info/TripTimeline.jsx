@@ -4,6 +4,7 @@ import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import DragIcon from '@mui/icons-material/DragIndicator';
+import CloseIcon from '@mui/icons-material/Close';
 import { buildTimeline, humanGap, timeBetween } from '../../services/tripTimelineService';
 import DayMiniMap, { groundPoints } from './DayMiniMap';
 import EventEditDialog from './EventEditDialog';
@@ -117,14 +118,23 @@ const EventRow = ({ ev, onDelete, onEdit, mapNumber, draggable, dragging, dropBe
         {draggable && (
           <Box
             onPointerDown={onGrab}
+            aria-label="גרור לשינוי השעה"
             sx={{
-              color: dragging ? 'primary.main' : '#b9bdcc',
-              cursor: 'grab', mt: -0.25, ml: -0.25, p: 0.25, flexShrink: 0,
+              // ── למה זה נראה ככפתור ולא כקישוט ──
+              // הגרסה הקודמת הייתה שש נקודות בגוון כמעט-לבן, בגודל 19
+              // פיקסל, צמודות לכותרת. היא לא אותרה בשלושה נסיונות
+              // נפרדים — כלומר מבחינת המשתמש היא לא הייתה קיימת.
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 30, height: 30, borderRadius: 2, flexShrink: 0,
+              mt: -0.25, ml: -0.5,
+              color: dragging ? '#fff' : '#7a8194',
+              bgcolor: dragging ? 'primary.main' : '#eef0f5',
+              cursor: 'grab',
               // בלי זה מגע בידית גולל את הדף במקום לגרור
               touchAction: 'none', userSelect: 'none',
             }}
           >
-            <DragIcon sx={{ fontSize: '1.2rem' }} />
+            <DragIcon sx={{ fontSize: '1.15rem' }} />
           </Box>
         )}
         <Typography
@@ -207,6 +217,50 @@ const GapRow = ({ minutes }) => (
   </Box>
 );
 
+/**
+ * רמז חד-פעמי על הגרירה.
+ *
+ * פקד שאיש אינו מוצא שקול לפקד שאינו קיים. שורה אחת שנעלמת אחרי
+ * שקראו אותה עולה פחות מאשר תכונה שלמה שיושבת במסך בלי שידעו עליה.
+ */
+const HINT_KEY = 'timelineDragHintSeen';
+
+const DragHint = () => {
+  const [seen, setSeen] = useState(() => {
+    try { return localStorage.getItem(HINT_KEY) === '1'; } catch { return false; }
+  });
+  if (seen) return null;
+
+  const dismiss = () => {
+    try { localStorage.setItem(HINT_KEY, '1'); } catch {}
+    setSeen(true);
+  };
+
+  return (
+    <Box
+      sx={{
+        display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, px: 1.25, py: 1,
+        bgcolor: '#eef0fc', borderRadius: 2.5, color: '#4b5468', fontSize: '0.75rem',
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 26, height: 26, borderRadius: 2, bgcolor: '#fff', color: '#7a8194', flexShrink: 0,
+        }}
+      >
+        <DragIcon sx={{ fontSize: '1rem' }} />
+      </Box>
+      <Box sx={{ flex: 1, lineHeight: 1.4 }}>
+        גרור את הידית כדי לשנות שעה או סדר · הכפתורים בתחתית כל כרטיס לעריכה ומחיקה
+      </Box>
+      <IconButton size="small" onClick={dismiss} sx={{ p: 0.4, flexShrink: 0 }}>
+        <CloseIcon sx={{ fontSize: '0.9rem' }} />
+      </IconButton>
+    </Box>
+  );
+};
+
 const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent, onAddItem }) => {
   const [editing, setEditing] = useState(null);
   const [adding, setAdding] = useState(null);
@@ -277,8 +331,13 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent, onAd
     await applyDrop(day, index, over);
   };
 
+  // מוצג רק כשיש בכלל מה לגרור
+  const anyDraggable = editable && days.some((d) => d.events.length > 1 && d.events.some((x) => !x.allDay));
+
   return (
     <Box>
+      {anyDraggable && <DragHint />}
+
       {days.map((day, i) => {
         const skipped = i === 0 ? 0 : daysBetween(days[i - 1].date, day.date) - 1;
 
