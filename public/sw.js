@@ -66,6 +66,11 @@ self.addEventListener('fetch', (event) => {
   // דלג על בקשות חיצוניות אחרות (API, Firebase וכו')
   if (url.origin !== self.location.origin) return;
 
+  // בדיקת הגרסה חייבת להגיע מהרשת. הגשתה מהמטמון הייתה משווה את הגרסה
+  // הישנה לעצמה ומדווחת תמיד שהכול מעודכן — בדיקה שתמיד עוברת ולעולם
+  // אינה מגלה דבר.
+  if (url.pathname === '/version.json') return;
+
   // ניווט — Network First עם fallback ל-index.html (תמיכה ב-React Router)
   if (request.mode === 'navigate') {
     event.respondWith(

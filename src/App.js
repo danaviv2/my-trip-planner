@@ -49,6 +49,7 @@ import ThemeWrapper from './components/layout/ThemeWrapper';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { TripSaveProvider } from './contexts/TripSaveContext';
 import { BookingsProvider } from './contexts/BookingsContext';
+import UpdateBanner from './components/UpdateBanner';
 import { AuthProvider } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 
@@ -1562,6 +1563,9 @@ const shareUrl = `https://yourtripplandomain.com/trip?id=${Date.now()}`;
         <UserPreferencesProvider>
         <LanguageProvider>
           <ThemeWrapper>
+          {/* מוצב מעל הכול: גרסה ישנה שרצה במכשיר משפיעה על כל מסך,
+              ולא רק על זה שבו במקרה הבחינו בה. */}
+          <UpdateBanner />
           <TripProvider>
           <AIChatProvider>
           <Box className="app" sx={{ p: { xs: '8px 8px calc(70px + env(safe-area-inset-bottom)) 8px', md: '20px' } }} role="main" aria-label="אפליקציית תכנון טיולים">
