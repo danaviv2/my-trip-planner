@@ -194,7 +194,7 @@ const TravelInfoComponent = () => {
                   </Box>
                 </Box>
               </AccordionSummary>
-              <AccordionDetails sx={{ pt: 0 }}>
+              <AccordionDetails sx={{ pt: 0, px: { xs: 0.75, sm: 2 } }}>
                 {/* ההתנגשויות נבדקות על ההזמנות של הנסיעה עצמה. קודם הן
                     חושבו על הטופס בלבד, ולכן פער של אפס דקות בין נחיתה
                     לאיסוף רכב שיובאו מהמייל לא נתפס. */}
@@ -225,8 +225,12 @@ const TravelInfoComponent = () => {
             </Accordion>
   );
   
+  // ריפוד מקונן נמדד: שלוש שכבות של 24 פיקסל, בתוך עמוד שגם הוא מרופד,
+  // בלעו 220 מתוך 375 פיקסל במסך טלפון — יותר ממחצית הרוחב. הציר קיבל
+  // 181, הכרטיס 79, והכותרת 14: אות אחת בשורה. במסך רחב אין בעיה, ולכן
+  // הצמצום חל רק היכן שהוא נחוץ.
   return (
-    <Paper elevation={3} sx={{ p: 3, borderRadius: '10px', mb: 3 }}>
+    <Paper elevation={3} sx={{ p: { xs: 1.25, sm: 3 }, borderRadius: '10px', mb: 3 }}>
       <Typography variant="h5" sx={{ mb: 2, display: 'flex', alignItems: 'center', fontWeight: 'bold' }}>
         <i className="material-icons" style={{ marginRight: '8px', color: '#2196F3' }}>flight</i>
         {t('travelInfoPage.title')}

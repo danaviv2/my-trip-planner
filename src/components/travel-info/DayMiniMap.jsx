@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { distanceKm } from '../../services/routeGeometryService';
+import { distanceKmExact } from '../../services/routeGeometryService';
 
 /**
  * מפת היום, מצוירת מקואורדינטות ולא מאריחים.
@@ -83,10 +83,12 @@ const DayMiniMap = ({ events = [] }) => {
 
   const placed = points.map((p) => ({ ...p, ...xy(p) }));
 
+  // הפונקציה מקבלת שתי נקודות, לא ארבעה מספרים. הקריאה השגויה החזירה
+  // null בכל קטע, והסכום הצטבר לאפס — המפה הציגה "0 מ׳" בין ערים.
   const legs = placed.slice(1).map((p, i) => ({
     from: placed[i],
     to: p,
-    km: distanceKm(placed[i].lat, placed[i].lng, p.lat, p.lng),
+    km: distanceKmExact(placed[i], p) || 0,
   }));
   const totalKm = legs.reduce((sum, l) => sum + l.km, 0);
 

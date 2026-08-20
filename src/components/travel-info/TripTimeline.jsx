@@ -48,7 +48,7 @@ const EventRow = ({ ev, onDelete, onEdit, mapNumber, draggable, dragging, dropBe
   <Box
     ref={rowRef}
     sx={{
-      display: 'flex', gap: 1.5, alignItems: 'flex-start', mb: 0.5,
+      display: 'flex', gap: { xs: 0.75, sm: 1.5 }, alignItems: 'flex-start', mb: 0.5,
       opacity: dragging ? 0.35 : 1,
       // קו שמראה לאן הפריט ייפול. בלעדיו הגרירה בטלפון היא ניחוש:
       // האצבע מכסה את השורה, ואין שום סימן מה יקרה כשתשוחרר.
@@ -60,7 +60,7 @@ const EventRow = ({ ev, onDelete, onEdit, mapNumber, draggable, dragging, dropBe
   >
     <Box
       sx={{
-        width: 46, pt: 1.5, textAlign: 'left', flexShrink: 0,
+        width: { xs: 38, sm: 46 }, pt: 1.5, textAlign: 'left', flexShrink: 0,
         fontSize: ev.allDay ? '0.8rem' : '0.875rem',
         fontWeight: ev.allDay ? 500 : 600,
         color: ev.allDay ? 'text.disabled' : 'text.primary',
@@ -104,11 +104,14 @@ const EventRow = ({ ev, onDelete, onEdit, mapNumber, draggable, dragging, dropBe
 
     <Box
       sx={{
-        flex: 1, minWidth: 0, bgcolor: '#fff', borderRadius: 3, px: 1.75, py: 1.5,
+        flex: 1, minWidth: 0, bgcolor: '#fff', borderRadius: 3,
+        px: { xs: 1.25, sm: 1.75 }, py: 1.5,
         boxShadow: '0 1px 3px rgba(16,24,40,.06)',
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+      {/* הפקדים אינם מתכווצים, ולכן חייבים להיות צרים: בטלפון הם
+          מתחרים על אותו רוחב עם הכותרת עצמה. */}
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.25 }}>
         {/* הידית היא היחידה שנגררת, ולא הכרטיס כולו: גרירה בטעות תוך
             כדי גלילה בטלפון הייתה משנה שעות בלי שהמשתמש התכוון. */}
         {draggable && (
@@ -116,7 +119,7 @@ const EventRow = ({ ev, onDelete, onEdit, mapNumber, draggable, dragging, dropBe
             onPointerDown={onGrab}
             sx={{
               color: dragging ? 'primary.main' : '#b9bdcc',
-              cursor: 'grab', mt: -0.5, ml: -0.75, p: 0.5,
+              cursor: 'grab', mt: -0.25, ml: -0.25, p: 0.25, flexShrink: 0,
               // בלי זה מגע בידית גולל את הדף במקום לגרור
               touchAction: 'none', userSelect: 'none',
             }}
@@ -124,21 +127,19 @@ const EventRow = ({ ev, onDelete, onEdit, mapNumber, draggable, dragging, dropBe
             <DragIcon sx={{ fontSize: '1.2rem' }} />
           </Box>
         )}
-        <Typography sx={{ flex: 1, fontSize: '0.95rem', fontWeight: 600, letterSpacing: '-0.2px', wordBreak: 'break-word' }}>
+        <Typography
+          sx={{
+            // בלי minWidth הכותרת אינה מוותרת על רוחב המילה הארוכה בה,
+            // ובמסך צר היא דוחקת את עצמה לעמודה של אות אחת.
+            flex: 1, minWidth: 0,
+            fontSize: '0.95rem', fontWeight: 600, letterSpacing: '-0.2px',
+            overflowWrap: 'anywhere',
+          }}
+        >
           {ev.title}
         </Typography>
         {ev.booking?.direction === 'return' && ev.kind === 'flight' && (
-          <Chip size="small" label="חזור" sx={{ height: 20, fontSize: '0.65rem', bgcolor: '#eef0fc', color: '#5568d3' }} />
-        )}
-        {onEdit && (
-          <IconButton size="small" onClick={() => onEdit(ev)} sx={{ mt: -0.5 }}>
-            <EditIcon sx={{ fontSize: '0.95rem' }} />
-          </IconButton>
-        )}
-        {onDelete && (
-          <IconButton size="small" onClick={() => onDelete(ev.booking.id)} sx={{ mt: -0.5, mr: -0.5 }}>
-            <DeleteIcon sx={{ fontSize: '1rem' }} />
-          </IconButton>
+          <Chip size="small" label="חזור" sx={{ height: 20, fontSize: '0.65rem', bgcolor: '#eef0fc', color: '#5568d3', flexShrink: 0 }} />
         )}
       </Box>
 
@@ -159,6 +160,26 @@ const EventRow = ({ ev, onDelete, onEdit, mapNumber, draggable, dragging, dropBe
         <Typography sx={{ mt: 0.75, fontSize: '0.72rem', color: 'warning.dark', fontWeight: 600 }}>
           ⚠️ המקום לא נמצא במאגר המפות
         </Typography>
+      )}
+
+      {/* הפקדים בשורה משלהם ולא לצד הכותרת.
+          מדידה על מסך של 375 פיקסל הראתה שהכרטיס מקבל 135 והפקדים
+          בולעים 80 מהם — הכותרת נדחקה ל-15 פיקסל והתרנדרה אות בשורה.
+          שורה נפרדת מבטיחה לכותרת את מלוא רוחב הכרטיס תמיד, בלי תלות
+          בכמה פקדים יתווספו בעתיד. */}
+      {(onEdit || onDelete) && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, mt: 0.5, mb: -0.75, mr: -0.75 }}>
+          {onEdit && (
+            <IconButton size="small" onClick={() => onEdit(ev)} sx={{ p: 0.6 }}>
+              <EditIcon sx={{ fontSize: '1rem' }} />
+            </IconButton>
+          )}
+          {onDelete && (
+            <IconButton size="small" onClick={() => onDelete(ev.booking.id)} sx={{ p: 0.6 }}>
+              <DeleteIcon sx={{ fontSize: '1.05rem' }} />
+            </IconButton>
+          )}
+        </Box>
       )}
 
       {/* שורה שתוקנה ידנית מסומנת: אחרת המסך סותר את האישור שביד בלי

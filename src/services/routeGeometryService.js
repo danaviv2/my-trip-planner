@@ -19,15 +19,26 @@ export const hasCoords = (s) =>
   !(Number(s.lat) === 0 && Number(s.lng) === 0);
 
 /** מרחק קו אווירי בין שתי נקודות, בק"מ. */
-export const distanceKm = (a, b) => {
-  if (!hasCoords(a) || !hasCoords(b)) return null;
+const haversine = (a, b) => {
   const dLat = rad(b.lat - a.lat);
   const dLng = rad(b.lng - a.lng);
   const s =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
-  return Math.round(2 * R * Math.asin(Math.sqrt(s)));
+  return 2 * R * Math.asin(Math.sqrt(s));
 };
+
+export const distanceKm = (a, b) => (hasCoords(a) && hasCoords(b) ? Math.round(haversine(a, b)) : null);
+
+/**
+ * אותו מרחק, בלי עיגול.
+ *
+ * העיגול לקילומטרים שלמים נכון להשוואת מסלולים, ושגוי להצגה: מעבר של
+ * 800 מטר בין שתי עצירות באותה עיר מוצג כ"0", והמפה נראית כאילו לא קרה
+ * בה דבר. החישוב משותף בכוונה — שני מימושים היו נפרדים גם כשאחד מהם
+ * טועה.
+ */
+export const distanceKmExact = (a, b) => (hasCoords(a) && hasCoords(b) ? haversine(a, b) : null);
 
 /**
  * כמה קילומטרים מוסיפה התחנה למסלול, לעומת נסיעה ישירה מהקודמת לבאה.

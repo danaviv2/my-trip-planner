@@ -6,8 +6,8 @@ import TravelInfoComponent from '../components/travel-info/TravelInfoComponent';
 const TravelInfoPage = () => {
   const { t } = useTranslation();
   return (
-    <Box sx={{ maxWidth: '1200px', margin: '0 auto', p: 3 }}>
-      <Paper elevation={3} sx={{ p: 3, mb: 4, bgcolor: '#ffffff', borderRadius: '16px' }}>
+    <Box sx={{ maxWidth: '1200px', margin: '0 auto', p: { xs: 1, sm: 3 } }}>
+      <Paper elevation={3} sx={{ p: { xs: 1.5, sm: 3 }, mb: 4, bgcolor: '#ffffff', borderRadius: '16px' }}>
         <Typography variant="h4" align="center" gutterBottom sx={{
           color: '#2c3e50',
           fontWeight: 'bold',
