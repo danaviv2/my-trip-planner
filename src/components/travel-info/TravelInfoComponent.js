@@ -1,6 +1,7 @@
 // src/components/travel-info/TravelInfoComponent.js
 import React, { useState, useContext, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import {
   Box, Paper, Typography, Button, IconButton, Alert, AlertTitle, Chip,
   Accordion, AccordionSummary, AccordionDetails,
@@ -66,6 +67,7 @@ const TravelInfoComponent = () => {
   
   // מצבים לניהול תצוגה
   const [showPast, setShowPast] = useState(false);
+  const navigate = useNavigate();
   const {
     trips, autoScanning, autoScanResult, cloudError,
     removeBooking, resetAllBookings, addBookings, editEvent, clearEventEdits,
@@ -149,6 +151,42 @@ const TravelInfoComponent = () => {
     [clearEventEdits]
   );
 
+  /**
+   * קישור לתכנון הנסיעה, או null כשאין מה לתכנן.
+   *
+   * ── מה נגזר ומה לא ──
+   * יעד, יום ראשון ומספר ימים. פעילויות אינן נוצרות כאן: המסגרת מגיעה
+   * מההזמנות, והתוכן נשאר של המשתמש.
+   *
+   * נסיעה שהסתיימה או שאין לה תאריכים אינה מקבלת כפתור. בורר התאריכים
+   * בתכנון חוסם ממילא תאריכי עבר, וכפתור שמוביל למסך שידחה אותך גרוע
+   * מהיעדרו.
+   */
+  const planLink = (trip) => {
+    if (!trip || trip.undated || !trip.startDate || !trip.endDate) return null;
+
+    const today = new Date();
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    if (trip.endDate < todayKey) return null;
+
+    // נסיעה שכבר התחילה מתוכננת מהיום ולא מתחילתה
+    const start = trip.startDate < todayKey ? todayKey : trip.startDate;
+
+    const dayOf = (k) => {
+      const [y, m, d] = k.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    };
+    const days = Math.round((dayOf(trip.endDate) - dayOf(start)) / 86400000) + 1;
+    if (!Number.isFinite(days) || days < 1) return null;
+
+    const q = new URLSearchParams({
+      destination: trip.destination || '',
+      start,
+      days: String(Math.min(days, 30)),
+    });
+    return `/trip-planner?${q.toString()}`;
+  };
+
   const renderTrip = (trip, index = 0) => (
             <Accordion
               key={trip.id}
@@ -195,6 +233,24 @@ const TravelInfoComponent = () => {
                 </Box>
               </AccordionSummary>
               <AccordionDetails sx={{ pt: 0, px: { xs: 0.75, sm: 2 } }}>
+                {/* הגשר לתכנון. בלעדיו התכנון נפתח בתאריך של היום, ועל
+                    המשתמש היה ליישר ידנית בין המסכים — מקור טעות קבוע:
+                    יום שאינו תואם לתאריך של הזמנה אינו מציג שום עוגן,
+                    בלי שדבר יסביר למה.
+                    מוצג רק על נסיעה שטרם הסתיימה, כי אין מה לתכנן
+                    ליום שחלף. */}
+                {planLink(trip) && (
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    onClick={() => navigate(planLink(trip))}
+                    startIcon={<i className="material-icons" style={{ fontSize: '1.1rem' }}>event_note</i>}
+                    sx={{ mb: 1.5, fontWeight: 600, borderRadius: 2.5 }}
+                  >
+                    תכנן את הנסיעה הזאת
+                  </Button>
+                )}
+
                 {/* ההתנגשויות נבדקות על ההזמנות של הנסיעה עצמה. קודם הן
                     חושבו על הטופס בלבד, ולכן פער של אפס דקות בין נחיתה
                     לאיסוף רכב שיובאו מהמייל לא נתפס. */}

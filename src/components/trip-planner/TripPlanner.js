@@ -283,9 +283,25 @@ const TripPlanner = () => {
   const { saveTripToList: saveTrip } = useTripSave();
   const { userPreferences, updateLocation, updateBudget: updateBudgetPref, updateThemes, updateAdvancedPreferences } = useUserPreferences();
   
-  // מחלץ את פרמטר היעד מה-URL אם קיים
+  // מחלץ את פרמטרי הנסיעה מה-URL אם קיימים.
+  //
+  // התאריכים נכנסו כאן אחרי שהתברר שיישור ידני בין המסכים הוא מקור
+  // טעות קבוע: התכנון פתח תמיד בתאריך של היום, וכל עוד הוא לא תאם ליום
+  // של הזמנה — לא הופיע שום עוגן, בלי שדבר יסביר למה.
   const searchParams = new URLSearchParams(location.search);
   const destinationParam = searchParams.get('destination');
+  const startParam = searchParams.get('start');
+  const daysParam = Number(searchParams.get('days'));
+
+  // התאריך נבנה מרכיביו ולא מ-new Date(str). מחרוזת ISO מפורשת כ-UTC,
+  // ולכן היום שיתקבל תלוי באזור הזמן: באזורים ממערב לגריניץ' חצות UTC
+  // היא עדיין אתמול מקומית. בשעון ישראל שתי הצורות מסכימות, ולכן זו
+  // הגנה ולא תיקון של תקלה שנצפתה — בניגוד ל-toISOString בצד השני של
+  // הגשר, ששם הסטייה כן פגעה.
+  const startFromParam = (() => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(startParam || '');
+    return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+  })();
   
   // שלבים של תהליך התכנון
   const [activeStep, setActiveStep] = useState(0);
@@ -294,9 +310,11 @@ const TripPlanner = () => {
   
   // מידע בסיסי על הטיול
   const [destination, setDestination] = useState(destinationParam || tripData?.destination || '');
-  const [tripDays, setTripDays] = useState(tripPlan?.duration || Number(userPreferences?.days) || 5);
+  const [tripDays, setTripDays] = useState(
+    (Number.isFinite(daysParam) && daysParam > 0 ? daysParam : null) || tripPlan?.duration || Number(userPreferences?.days) || 5
+  );
   const [startDate, setStartDate] = useState(
-    tripPlan?.startDate ? new Date(tripPlan.startDate) : new Date()
+    startFromParam || (tripPlan?.startDate ? new Date(tripPlan.startDate) : new Date())
   );
   const [interests, setInterests] = useState(tripPlan?.theme || userPreferences?.interests || []);
   const [tripName, setTripName] = useState(tripPlan?.name || `טיול ל${destination}`);
