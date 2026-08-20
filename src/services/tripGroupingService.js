@@ -1,3 +1,4 @@
+import { eventsFor } from './tripTimelineService';
 /**
  * קיבוץ הזמנות בודדות לטיולים — הלב של הייבוא האוטומטי.
  *
@@ -29,6 +30,35 @@ const daysBetween = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / DAY_M
  * ממיר הזמנה גולמית לצורה אחידה שאפשר להשוות לפיה.
  * תומך בשמות השדות שמגיעים מ-parseTravelDocument ומהמסכים הקיימים.
  */
+/**
+ * מתי ההזמנה מתרחשת בפועל, אחרי תיקוני המשתמש.
+ *
+ * ── הבאג שזה סוגר ──
+ * תיקון ידני נשמר בשכבת overrides, ויושם בציר בלבד. הקיבוץ המשיך לקרוא
+ * את השדות המקוריים, ולכן אותה רשומה הייתה בשני מקומות בו-זמנית: פריט
+ * שהוזז ל-26.8 הוצג בציר תחת 26.8, אך נשאר משויך לנסיעה שהסתיימה ב-5.7
+ * — כי מבחינת הקיבוץ הוא עדיין ב-26.6. המסך והמאגר לא הסכימו על עובדה
+ * אחת, ואי אפשר היה לדעת איזה מהם צודק.
+ *
+ * ── למה דרך eventsFor ──
+ * זו כבר הפונקציה שיודעת אילו רגעים הזמנה מייצרת ואיך תיקון משפיע
+ * עליהם. חישוב מקביל כאן היה נכון היום ומתפצל בעדכון הבא — הדפוס שחזר
+ * בפרויקט הזה שוב ושוב. הזמנה שאינה מייצרת רגע בזמן, כמו ביטוח, נופלת
+ * בחזרה לשדות המקוריים.
+ */
+/** YYYY-MM-DD לפי השעון המקומי. */
+const localKey = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const actualDates = (b) => {
+  const moments = eventsFor(b).map((e) => e.at).filter((d) => d instanceof Date && !isNaN(d));
+  if (!moments.length) return null;
+  return {
+    start: new Date(Math.min(...moments)),
+    end: new Date(Math.max(...moments)),
+  };
+};
+
 export const normalizeBooking = (b) => {
   const type = b.type || (b.flightNumber ? 'flight' : b.carType ? 'car_rental' : 'hotel');
 
@@ -71,6 +101,13 @@ export const normalizeBooking = (b) => {
     end = parseDate(b.checkOut) || start;
     location = b.address || b.destination || b.city || '';
     title = b.name || 'לינה';
+  }
+
+  // התיקונים גוברים על השדות המקוריים, בדיוק כפי שהם גוברים בציר.
+  const fixed = actualDates(b);
+  if (fixed) {
+    start = fixed.start;
+    end = fixed.end;
   }
 
   return {
@@ -363,8 +400,12 @@ export const groupBookingsIntoTrips = (bookings = []) => {
       id: `trip_${start.getTime()}_${destination.replace(/\s+/g, '').slice(0, 8)}`,
       title: `${destination}${nights ? ` · ${nights} לילות` : ''}`,
       destination,
-      startDate: start.toISOString().slice(0, 10),
-      endDate: end.toISOString().slice(0, 10),
+      // מרכיבי הזמן המקומיים ולא toISOString: חצות מקומית בישראל היא
+      // עדיין אתמול בשעון UTC, והנסיעה הייתה מוצגת יום אחד אחורה. זה
+      // לא נראה קודם רק משום שהתאריכים הגיעו מ-parseDate; מרגע שהם
+      // נגזרים מרגעי הציר, שהם מקומיים, הסטייה נחשפה.
+      startDate: localKey(start),
+      endDate: localKey(end),
       nights,
       bookings: group.map((x) => x.raw),
       summary: {
