@@ -1458,7 +1458,19 @@ const TripPlanner = () => {
 
   // שלב 3 - לוח זמנים
   const renderItineraryStep = () => {
-    const days = tripPlan?.dailyItinerary || [];
+    // ── התאריך נגזר כאן, ולא נשמר במצב נפרד ──
+    // הלשוניות נבנות מהמסלול שהמודל יצר, והימים שלו נושאים מספר וכותרת
+    // בלבד — אין בהם שדה תאריך. שלושת האפקטים שכן מחשבים תאריכים עובדים
+    // על משתנה אחר (itinerary), שאינו זה שמוצג. לכן day.date היה
+    // undefined: לא הופיעה תווית תאריך, ורצועת "כבר סגור ליום הזה" קיבלה
+    // מפתח ריק ולא הופיעה לעולם.
+    //
+    // הגזירה כאן ולא סנכרון בין שני משתנים: שני מקורות לאותה עובדה הם
+    // בדיוק מה שהוליד את הבאג.
+    const days = (tripPlan?.dailyItinerary || []).map((d, i) => ({
+      ...d,
+      date: d.date || dayDate(i),
+    }));
     const currentDay = days[selectedDayIndex];
 
     return (
