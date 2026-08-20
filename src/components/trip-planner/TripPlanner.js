@@ -129,6 +129,8 @@ import html2canvas from 'html2canvas';
 import WeatherForecast from '../../components/WeatherForecast';
 import BudgetMeter from '../budget/BudgetMeter';
 import { generateAttractions } from '../../services/aiAttractionsService';
+import DayAnchors from './DayAnchors';
+import { useBookings } from '../../contexts/BookingsContext';
 
 // רכיבים מסוגננים קיימים
 const StepperContainer = styled(Paper)(({ theme }) => ({
@@ -274,6 +276,9 @@ const TripPlanner = () => {
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { tripData, tripPlan, updateTripPlan, planTripWithAI, tripLoading, selectedDayIndex, setSelectedDayIndex } = useTripContext();
+
+  // ההזמנות נקראות ולא מועתקות — ראה DayAnchors.
+  const { bookings } = useBookings();
   const { saveTripToList: saveTrip } = useTripSave();
   const { userPreferences, updateLocation, updateBudget: updateBudgetPref, updateThemes, updateAdvancedPreferences } = useUserPreferences();
   
@@ -1489,6 +1494,15 @@ const TripPlanner = () => {
                     סדר לפי מסלול
                   </Button>
                 </Box>
+
+                {/* מה שכבר סגור, נקרא מפרטי הנסיעה בזמן התצוגה.
+                    שום דבר לא מועתק: ההזמנה נשארת הבעלים היחיד, ולכן
+                    ביטול כרטיס מסיר את העוגן מעצמו. */}
+                <DayAnchors
+                  bookings={bookings}
+                  dayKey={currentDay.date}
+                  activities={currentDay.activities || []}
+                />
 
                 <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                   {(currentDay.activities || []).map((activity, i) => {
