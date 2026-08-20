@@ -50,11 +50,44 @@ const ACTIVITY_EMOJIS = {
  * @param {string} params.budget  low | medium | high
  * @returns {Promise<Array>} מערך ימים עם פעילויות
  */
-export const generateItinerary = async ({ destination, days = 3, interests = [], budget = 'medium', advancedPreferences = {} }) => {
+/**
+ * שורות האילוץ למודל: מה שכבר סגור בימים האלה.
+ *
+ * ── למה זה נכנס לבקשה ולא רק לתצוגה ──
+ * רצועת העוגנים מראה שהתוכנית דורסת את הכרטיס, אבל היא מראה זאת אחרי
+ * שהוא כבר נדרס. מודל שיודע מראש על סיור ב-15:40 פשוט לא יקבע מוזיאון
+ * ב-14:00 למשך שעתיים וחצי, ואין מה להתריע עליו.
+ *
+ * המודל מקבל את השעה, השם והמקום — ואיסור מפורש לתכנן עליהם. הוא אינו
+ * מקבל רשות לשנות אותם: הזמנה סגורה אינה נתונה למשא ומתן.
+ */
+const anchorLines = (anchorsByDay, startDay, chunkDays) => {
+  const rows = [];
+  for (let d = startDay; d < startDay + chunkDays; d += 1) {
+    (anchorsByDay[d] || []).forEach((a) => {
+      const when = a.time ? `at ${a.time}` : 'sometime that day';
+      rows.push(`  Day ${d} ${when}: ${a.title}${a.place ? ` (${a.place})` : ''}`);
+    });
+  }
+  if (!rows.length) return '';
+
+  return `\n\nALREADY BOOKED — these are fixed and paid for. You MUST plan around them:\n${rows.join('\n')}
+- Do NOT schedule any activity that overlaps a booked time slot.
+- Do NOT repeat a booked item as one of your activities.
+- Leave realistic travel time before and after each booked item.`;
+};
+
+export const generateItinerary = async ({ destination, days = 3, interests = [], budget = 'medium', advancedPreferences = {}, anchorsByDay = {} }) => {
 
   const { hasChildren, travelPace, travelStyle, foodPreferences, specialNeeds } = advancedPreferences;
   const advKey = `${hasChildren ? 'kids' : ''}_${travelPace || ''}_${travelStyle || ''}_${foodPreferences || ''}_${specialNeeds || ''}`;
-  const cacheKey = `${destination}_${days}_${interests.sort().join(',')}_${budget}_${advKey}`.toLowerCase().replace(/\s+/g, '_');
+  // העוגנים נכנסים למפתח המטמון. בלעדיהם סגירת אטרקציה חדשה הייתה
+  // מחזירה בדיוק את אותו מסלול שנבנה כשהיא לא הייתה קיימת — התכונה
+  // הייתה נראית עובדת ולא משנה דבר.
+  const anchorKey = Object.keys(anchorsByDay).sort().map(
+    (d) => `${d}:${(anchorsByDay[d] || []).map((a) => `${a.time}${a.title}`).join('|')}`
+  ).join(';');
+  const cacheKey = `${destination}_${days}_${interests.sort().join(',')}_${budget}_${advKey}_${anchorKey}`.toLowerCase().replace(/\s+/g, '_');
   const cached = getCached(cacheKey);
   // השתמש ב-cache רק אם הוא כולל קואורדינטות תקינות (לא 0,0) ומספר ימים נכון
   const cacheIsValid = cached && cached.length === days &&
@@ -90,7 +123,7 @@ export const generateItinerary = async ({ destination, days = 3, interests = [],
   const CHUNK_SIZE = 3;
 
   const buildPrompt = (startDay, chunkDays, totalDays) => `Travel expert. Days ${startDay}–${startDay + chunkDays - 1} of ${totalDays}-day trip to ${destination}.
-Budget: ${budgetLabel}. Style: ${styleLabel}. Pace: ${paceLabel}.${specialLines ? '\n' + specialLines : ''}
+Budget: ${budgetLabel}. Style: ${styleLabel}. Pace: ${paceLabel}.${specialLines ? '\n' + specialLines : ''}${anchorLines(anchorsByDay, startDay, chunkDays)}
 Output JSON array of EXACTLY ${chunkDays} objects. Hebrew for title/theme/description/tips/bookingTip. description ≤20 Hebrew words, tips ≤10 Hebrew words.
 
 [{"day":${startDay},"title":"כותרת","theme":"נושא","activities":[{"time":"09:00","name":"Eiffel Tower","type":"attraction","description":"תיאור קצר","address":"Champ de Mars, Paris, France","lat":48.8584,"lng":2.2945,"duration":"2h","tips":"טיפ","price":"free"}],"hotel":{"name":"Hotel du Louvre","stars":4,"description":"תיאור","priceRange":"€€","address":"Place André Malraux, Paris","lat":48.8638,"lng":2.3363,"bookingTip":"טיפ"}}]

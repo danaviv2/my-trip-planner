@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import { anchorsForDay } from '../../services/tripAnchorsService';
+import { distanceKmExact } from '../../services/routeGeometryService';
 
 /**
  * מה שכבר סגור ליום הזה.
@@ -56,6 +57,43 @@ export const clashesWith = (anchor, activities = []) => {
   });
 };
 
+/**
+ * האם אי אפשר להספיק מהפעילות הקודמת אל העוגן.
+ *
+ * ── למה סף שמרני ──
+ * ההערכה היא 60 קמ"ש בקו אווירי ועוד עשר דקות. זו מהירות שאי אפשר
+ * להשיג בפועל — כבישים מתעקלים, יש חניה, ויש רגליים — ולכן אזהרה שכן
+ * מופיעה מתארת מצב בלתי אפשרי ודאי, לא צפוף. אזהרה שגויה אחת מלמדת
+ * להתעלם מכולן, וזה מבטל גם את הנכונות.
+ *
+ * @returns {{from, km, need, gap}|null}
+ */
+export const tooFarFrom = (anchor, activities = []) => {
+  const target = minutesOf(anchor.time);
+  if (target == null || !anchor.coords) return null;
+
+  // הפעילות האחרונה שמסתיימת לפני העוגן ויש לה מיקום
+  let prev = null;
+  (activities || []).forEach((act) => {
+    const start = minutesOf(act.time);
+    const lat = Number(act.lat);
+    const lng = Number(act.lng);
+    if (start == null || start >= target) return;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || (lat === 0 && lng === 0)) return;
+    if (!prev || start > minutesOf(prev.time)) prev = act;
+  });
+  if (!prev) return null;
+
+  const km = distanceKmExact(anchor.coords, { lat: Number(prev.lat), lng: Number(prev.lng) });
+  if (km == null || km < 1) return null;
+
+  const len = durationMinutes(prev.duration) || 0;
+  const gap = target - (minutesOf(prev.time) + len);
+  const need = Math.round(km + 10);
+
+  return gap < need ? { from: prev, km, need, gap } : null;
+};
+
 const DayAnchors = ({ bookings = [], dayKey, activities = [] }) => {
   const anchors = anchorsForDay(bookings, dayKey);
   if (!anchors.length) return null;
@@ -79,6 +117,7 @@ const DayAnchors = ({ bookings = [], dayKey, activities = [] }) => {
 
       {anchors.map((a) => {
         const clash = clashesWith(a, activities);
+        const far = tooFarFrom(a, activities);
 
         return (
           <Box key={`${a.bookingId}-${a.kind}`} sx={{ mb: 0.75, '&:last-of-type': { mb: 0 } }}>
@@ -111,11 +150,15 @@ const DayAnchors = ({ bookings = [], dayKey, activities = [] }) => {
                 {a.title}
               </Typography>
 
-              {clash.length > 0 && (
+              {(clash.length > 0 || far) && (
                 <Chip
                   size="small"
-                  label="התנגשות"
-                  sx={{ height: 19, fontSize: '0.62rem', fontWeight: 700, bgcolor: '#fdecea', color: '#b3261e', flexShrink: 0 }}
+                  label={clash.length > 0 ? 'התנגשות' : 'זמן נסיעה'}
+                  sx={{
+                    height: 19, fontSize: '0.62rem', fontWeight: 700, flexShrink: 0,
+                    bgcolor: clash.length > 0 ? '#fdecea' : '#fff5d6',
+                    color: clash.length > 0 ? '#b3261e' : '#8a6d00',
+                  }}
                 />
               )}
             </Box>
@@ -125,6 +168,14 @@ const DayAnchors = ({ bookings = [], dayKey, activities = [] }) => {
             {clash.length > 0 && (
               <Typography sx={{ mt: 0.4, mr: 4.6, fontSize: '0.72rem', color: '#b3261e' }}>
                 מתנגש עם {clash.map((c) => `${c.time} ${c.name}`).join(' · ')}
+              </Typography>
+            )}
+
+            {/* מרחק. מוצג רק כשההגעה בלתי אפשרית ודאית, ולא כשהיא צפופה. */}
+            {clash.length === 0 && far && (
+              <Typography sx={{ mt: 0.4, mr: 4.6, fontSize: '0.72rem', color: '#8a6d00' }}>
+                מ״{far.from.name}״ {Math.round(far.km)} ק״מ · נשארו {Math.max(far.gap, 0)} דק׳,
+                {' '}וצריך לפחות {far.need}
               </Typography>
             )}
           </Box>

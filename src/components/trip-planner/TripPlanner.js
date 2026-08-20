@@ -130,6 +130,7 @@ import WeatherForecast from '../../components/WeatherForecast';
 import BudgetMeter from '../budget/BudgetMeter';
 import { generateAttractions } from '../../services/aiAttractionsService';
 import DayAnchors from './DayAnchors';
+import { anchorsByDayNumber } from '../../services/tripAnchorsService';
 import { useBookings } from '../../contexts/BookingsContext';
 
 // רכיבים מסוגננים קיימים
@@ -872,6 +873,9 @@ const TripPlanner = () => {
           foodPreferences,
           specialNeeds,
         },
+        // מה שכבר סגור נכנס לבקשה עצמה. אזהרה על התנגשות מגיעה אחרי
+        // שהיא כבר נוצרה; מודל שיודע מראש פשוט לא יוצר אותה.
+        anchorsByDay: anchorsByDayNumber(bookings, startDate, tripDays),
       });
       if (result.success) {
         setSnackbarMessage('המסלול נוצר בהצלחה! 🎉');

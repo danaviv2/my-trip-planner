@@ -50,14 +50,14 @@ export const TripProvider = ({ children }) => {
   // היום הנבחר בתצוגת הלשוניות — TripPlanner מעדכן, TripPlannerPage קורא
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
 
-  const planTripWithAI = async ({ destination, days = 3, interests = [], budget = 'medium', advancedPreferences = {} } = {}) => {
+  const planTripWithAI = async ({ destination, days = 3, interests = [], budget = 'medium', advancedPreferences = {}, anchorsByDay = {} } = {}) => {
     if (!destination) return { success: false, error: 'NO_DESTINATION' };
 
     setTripLoading(true);
     setTripError(null);
 
     try {
-      const dailyItinerary = await generateItinerary({ destination, days, interests, budget, advancedPreferences });
+      const dailyItinerary = await generateItinerary({ destination, days, interests, budget, advancedPreferences, anchorsByDay });
       setTripPlan({ destination, dailyItinerary });
       setSelectedDayIndex(0);
       return { success: true };

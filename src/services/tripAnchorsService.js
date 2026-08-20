@@ -20,8 +20,6 @@
 import { eventsFor } from './tripTimelineService';
 import { dateKey } from './bookingIdentity';
 
-const DAY_MS = 86400000;
-
 /**
  * התאריך של יום מספר N בתוכנית.
  *
@@ -71,6 +69,31 @@ export const anchorsForDay = (bookings = [], dayKey) => {
         : `${String(ev.at.getHours()).padStart(2, '0')}:${String(ev.at.getMinutes()).padStart(2, '0')}`,
     }))
     .sort((a, b) => a.order - b.order);
+};
+
+/**
+ * העוגנים של כל ימי הנסיעה, ממופים למספר היום שהמתכנן מדבר בו.
+ *
+ * זו הצורה שהמודל צריך: הוא מתכנן "יום 3", לא "26 ביוני".
+ *
+ * @param {Date|string} startDate תאריך היום הראשון
+ * @param {number} totalDays אורך הנסיעה
+ */
+export const anchorsByDayNumber = (bookings = [], startDate, totalDays = 0) => {
+  // התאריך נגזר מרכיבי הזמן המקומיים ולא מ-toISOString: חצות מקומית
+  // בישראל היא עדיין אתמול בשעון UTC, וכל העוגנים היו נופלים ליום
+  // הקודם — שגיאה שקטה שהייתה גורמת למודל לתכנן סביב היום הלא נכון.
+  const local = startDate instanceof Date
+    ? `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`
+    : startDate;
+
+  const out = {};
+  for (let d = 1; d <= Number(totalDays || 0); d += 1) {
+    const key = dateForDay(local, d);
+    const list = anchorsForDay(bookings, key);
+    if (list.length) out[d] = list;
+  }
+  return out;
 };
 
 /** האם ליום הזה יש בכלל משהו סגור. */
