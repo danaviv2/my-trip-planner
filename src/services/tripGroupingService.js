@@ -143,6 +143,26 @@ const undatedTrip = (group) => ({
  * @param {Array<object>} bookings הזמנות גולמיות
  * @returns {Array<{id,title,destination,startDate,endDate,bookings}>}
  */
+/**
+ * הפריטים שקובעים את גבולות הנסיעה.
+ *
+ * ── למה ביטוח אינו אחד מהם ──
+ * פוליסה נמכרת לחלון תוקף רחב, ולא לתאריכי הנסיעה בפועל. פוליסה שתקפה
+ * 24.6–31.8 מתחה את הנסיעה לנאפולי עד סוף אוגוסט, ואז כל פריט חדש
+ * בתווך נבלע לתוכה: ארוחת ערב שנקבעה ל-26.8 הופיעה בתוך נסיעה שהסתיימה
+ * ב-5.7, עם מפריד של "52 ימים ללא הזמנות" באמצע.
+ *
+ * הביטוח עדיין שייך לנסיעה ומוצג בה — הוא פשוט אינו מגדיר אותה. זו
+ * אותה הבחנה שכבר קיימת בציר, שם ביטוח אינו אירוע אלא פריט שחל על
+ * הנסיעה כולה.
+ *
+ * קבוצה שכולה ביטוח נשארת עם גבולותיה: אין ממה אחר לגזור אותם.
+ */
+const boundingItems = (group = []) => {
+  const solid = group.filter((x) => x.type !== 'insurance');
+  return solid.length ? solid : group;
+};
+
 export const groupBookingsIntoTrips = (bookings = []) => {
   // הכיוון נגזר לפני הקיבוץ ולא אחריו: הוא קובע אילו טיסות מזדווגות
   // לחלון נסיעה. כשכל הטיסות מסומנות "הלוך", כל אחת פותחת חלון משלה
@@ -230,13 +250,16 @@ export const groupBookingsIntoTrips = (bookings = []) => {
   //
   // התנאי הוא חיתוך בפועל ולא סמיכות, כדי ששתי נסיעות עוקבות באמת
   // יישארו נפרדות.
-  const rangeOf = (group) => ({
-    start: group.reduce((min, x) => (x.start < min ? x.start : min), group[0].start),
-    end: group.reduce((max, x) => {
-      const e = x.end || x.start;
-      return e > max ? e : max;
-    }, group[0].end || group[0].start),
-  });
+  const rangeOf = (group) => {
+    const src = boundingItems(group);
+    return {
+      start: src.reduce((min, x) => (x.start < min ? x.start : min), src[0].start),
+      end: src.reduce((max, x) => {
+        const e = x.end || x.start;
+        return e > max ? e : max;
+      }, src[0].end || src[0].start),
+    };
+  };
 
   const mergedClusters = [];
   clusters
@@ -268,11 +291,12 @@ export const groupBookingsIntoTrips = (bookings = []) => {
   });
 
   const trips = realTrips.map(({ group }) => {
-    const start = group.reduce((min, x) => (x.start < min ? x.start : min), group[0].start);
-    const end = group.reduce((max, x) => {
+    const bounds = boundingItems(group);
+    const start = bounds.reduce((min, x) => (x.start < min ? x.start : min), bounds[0].start);
+    const end = bounds.reduce((max, x) => {
       const e = x.end || x.start;
       return e > max ? e : max;
-    }, group[0].end || group[0].start);
+    }, bounds[0].end || bounds[0].start);
 
     // שם היעד: מעדיפים מקום קריא לאדם על פני קוד IATA. "ורונה" עדיף
     // על "MXP" גם כשהטיסה מגדירה את הטיול.
