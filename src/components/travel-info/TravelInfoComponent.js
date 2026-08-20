@@ -14,6 +14,7 @@ import { useBookings } from '../../contexts/BookingsContext';
 import TripTimeline from './TripTimeline';
 import NextUpCard from './NextUpCard';
 import AddPlanItemDialog from './AddPlanItemDialog';
+import TripBoundsReport from './TripBoundsReport';
 import { geocodeBookings } from '../../services/bookingGeocodeService';
 import FlightAlertsCard from './FlightAlertsCard';
 import FlightRights from './FlightRights';
@@ -399,6 +400,11 @@ const TravelInfoComponent = () => {
 
       {/* חותמת הבנייה. קטנה ולא מפריעה, אך מסיימת את השאלה "האם התיקון
           כבר אצלי" — שאלה שעלתה כאן שוב ושוב ובזבזה סבבים שלמים. */}
+      {/* כלי מדידה, לא תכונה: הוא עונה על "למה נסיעה מכילה את מה שהיא
+          מכילה" — שאלה שניחוש עליה כבר נכשל פעם אחת. מחוץ לאלמנט הטקסט
+          שמתחתיו, כי הוא מכיל כפתור ובלוק. */}
+      <TripBoundsReport trips={[...upcoming, ...past]} />
+
       <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'text.disabled', fontSize: '0.65rem' }}>
         גרסה: {process.env.REACT_APP_BUILD_TIME
           ? new Date(process.env.REACT_APP_BUILD_TIME).toLocaleString('he-IL', {
