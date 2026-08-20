@@ -160,6 +160,40 @@ Two traps that produced real waste here:
   `\uXXXX` and there were 35 chunks, not one. Sanity-check the instrument against a
   known-true case before trusting what it says.
 
+## Verify before shipping, not after
+
+Measuring only once the user reports that the fix did not appear is the same loop,
+one step later. The check belongs **before** the deploy.
+
+**Before shipping any fix, produce a check that fails without it and passes with it —
+on the path the user actually exercises.**
+
+The trap that cost the most here: **a helper tested in isolation proves nothing about
+the screen.** A day-label formatter was unit-tested with hand-written dates and passed
+every case; the screen still showed nothing, because the component read `day.date`
+from a source that never carried a date, and the formatter was called with
+`undefined` forever. The function was correct and the wiring was not.
+
+So the assertion must be on **the value the caller really passes**, not on a value
+invented for the test. Pull the input from the real pipeline — the grouped trips, the
+stored records, the props the component receives.
+
+Two more rules from the same day:
+
+- **Two views of one fact must be asserted against each other.** The timeline honoured
+  the `overrides` layer and grouping did not, so one record sat under two different
+  dates. Nothing failed; the screen and the store simply disagreed. When a value is
+  derived in more than one place, test that the places agree — or better, delete one
+  of them.
+- **Verifying a deploy means comparing content, not hashes.** The bundle hash always
+  differs because the injected build stamp is part of the bundle. Fetch the live
+  chunks and compare against the local build (remember the Hebrew is escaped as
+  `\uXXXX`, and there are ~36 chunks, not one).
+
+When the real path genuinely cannot be exercised — `/trip-planner` needs a login, a
+push notification needs a device — say so explicitly in the report instead of letting
+a passing unit test imply the feature was verified end to end.
+
 Before claiming a fix works, state what was measured. "Should work" is not a result.
 
 ## Conventions
@@ -168,7 +202,7 @@ Comments are in Hebrew and explain **why**, usually by naming the failure the co
 prevents. This is deliberate: nearly every non-obvious branch encodes a bug that
 reached a real user. Match that style — a comment that restates the code adds nothing.
 
-Four failure patterns recur; check for them in any change:
+Five failure patterns recur; check for them in any change:
 
 1. **A fix applied to one type but not its siblings.** Signal-based dedupe, deletion
    tombstones and cancellation tombstones were each written for one booking type and
@@ -183,6 +217,9 @@ Four failure patterns recur; check for them in any change:
 4. **A fix shipped on an unverified theory.** See "Debugging: never guess" above. The
    cost is not the wrong code — it is the round trip through deploy, refresh and
    report that it spends.
+5. **A helper verified while its wiring is not.** The unit test passes, the screen
+   stays empty, because nothing ever calls the helper with real data. See "Verify
+   before shipping, not after".
 
 Backup files (`*.backup_*`, `*.bak2`, `*_old_backup.js`) sit next to live code in
 `src/pages`; they are dead. `src/bookingAPI.js` and
