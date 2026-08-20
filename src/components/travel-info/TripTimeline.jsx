@@ -1,10 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Box, Typography, IconButton, Chip, Button, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import AddIcon from '@mui/icons-material/Add';
-import DragIcon from '@mui/icons-material/DragIndicator';
-import CloseIcon from '@mui/icons-material/Close';
+import UpIcon from '@mui/icons-material/ArrowUpward';
+import DownIcon from '@mui/icons-material/ArrowDownward';
 import { buildTimeline, humanGap, timeBetween } from '../../services/tripTimelineService';
 import DayMiniMap, { groundPoints } from './DayMiniMap';
 import EventEditDialog from './EventEditDialog';
@@ -45,20 +45,8 @@ const DAY_MS = 86400000;
 /** כמה ימים חלפו בין שני ימי ציר. */
 const daysBetween = (a, b) => Math.round((b - a) / DAY_MS);
 
-const EventRow = ({ ev, onDelete, onEdit, mapNumber, draggable, dragging, dropBefore, onGrab, rowRef }) => (
-  <Box
-    ref={rowRef}
-    sx={{
-      display: 'flex', gap: { xs: 0.75, sm: 1.5 }, alignItems: 'flex-start', mb: 0.5,
-      opacity: dragging ? 0.35 : 1,
-      // קו שמראה לאן הפריט ייפול. בלעדיו הגרירה בטלפון היא ניחוש:
-      // האצבע מכסה את השורה, ואין שום סימן מה יקרה כשתשוחרר.
-      borderTop: dropBefore ? '2px solid' : '2px solid transparent',
-      borderColor: dropBefore ? 'primary.main' : 'transparent',
-      borderRadius: dropBefore ? '2px' : 0,
-      transition: 'border-color .12s',
-    }}
-  >
+const EventRow = ({ ev, onDelete, onEdit, onMove, canUp, canDown, mapNumber }) => (
+  <Box sx={{ display: 'flex', gap: { xs: 0.75, sm: 1.5 }, alignItems: 'flex-start', mb: 0.5 }}>
     <Box
       sx={{
         width: { xs: 38, sm: 46 }, pt: 1.5, textAlign: 'left', flexShrink: 0,
@@ -115,28 +103,6 @@ const EventRow = ({ ev, onDelete, onEdit, mapNumber, draggable, dragging, dropBe
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.25 }}>
         {/* הידית היא היחידה שנגררת, ולא הכרטיס כולו: גרירה בטעות תוך
             כדי גלילה בטלפון הייתה משנה שעות בלי שהמשתמש התכוון. */}
-        {draggable && (
-          <Box
-            onPointerDown={onGrab}
-            aria-label="גרור לשינוי השעה"
-            sx={{
-              // ── למה זה נראה ככפתור ולא כקישוט ──
-              // הגרסה הקודמת הייתה שש נקודות בגוון כמעט-לבן, בגודל 19
-              // פיקסל, צמודות לכותרת. היא לא אותרה בשלושה נסיונות
-              // נפרדים — כלומר מבחינת המשתמש היא לא הייתה קיימת.
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 30, height: 30, borderRadius: 2, flexShrink: 0,
-              mt: -0.25, ml: -0.5,
-              color: dragging ? '#fff' : '#7a8194',
-              bgcolor: dragging ? 'primary.main' : '#eef0f5',
-              cursor: 'grab',
-              // בלי זה מגע בידית גולל את הדף במקום לגרור
-              touchAction: 'none', userSelect: 'none',
-            }}
-          >
-            <DragIcon sx={{ fontSize: '1.15rem' }} />
-          </Box>
-        )}
         <Typography
           sx={{
             // בלי minWidth הכותרת אינה מוותרת על רוחב המילה הארוכה בה,
@@ -179,6 +145,19 @@ const EventRow = ({ ev, onDelete, onEdit, mapNumber, draggable, dragging, dropBe
           בכמה פקדים יתווספו בעתיד. */}
       {(onEdit || onDelete) && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, mt: 0.5, mb: -0.75, mr: -0.75 }}>
+          {/* אותם פקדים ובאותו סדר כמו במסך תכנון הטיול. שני מסכים
+              שמציגים יום ומתפעלים אותו אחרת שולחים את המשתמש לחפש
+              במקום הלא נכון — וזה קרה בפועל. */}
+          {onMove && (
+            <>
+              <IconButton size="small" disabled={!canUp} onClick={() => onMove(-1)} sx={{ p: 0.6 }}>
+                <UpIcon sx={{ fontSize: '1rem' }} />
+              </IconButton>
+              <IconButton size="small" disabled={!canDown} onClick={() => onMove(1)} sx={{ p: 0.6 }}>
+                <DownIcon sx={{ fontSize: '1rem' }} />
+              </IconButton>
+            </>
+          )}
           {onEdit && (
             <IconButton size="small" onClick={() => onEdit(ev)} sx={{ p: 0.6 }}>
               <EditIcon sx={{ fontSize: '1rem' }} />
@@ -217,58 +196,9 @@ const GapRow = ({ minutes }) => (
   </Box>
 );
 
-/**
- * רמז חד-פעמי על הגרירה.
- *
- * פקד שאיש אינו מוצא שקול לפקד שאינו קיים. שורה אחת שנעלמת אחרי
- * שקראו אותה עולה פחות מאשר תכונה שלמה שיושבת במסך בלי שידעו עליה.
- */
-const HINT_KEY = 'timelineDragHintSeen';
-
-const DragHint = () => {
-  const [seen, setSeen] = useState(() => {
-    try { return localStorage.getItem(HINT_KEY) === '1'; } catch { return false; }
-  });
-  if (seen) return null;
-
-  const dismiss = () => {
-    try { localStorage.setItem(HINT_KEY, '1'); } catch {}
-    setSeen(true);
-  };
-
-  return (
-    <Box
-      sx={{
-        display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, px: 1.25, py: 1,
-        bgcolor: '#eef0fc', borderRadius: 2.5, color: '#4b5468', fontSize: '0.75rem',
-      }}
-    >
-      <Box
-        sx={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          width: 26, height: 26, borderRadius: 2, bgcolor: '#fff', color: '#7a8194', flexShrink: 0,
-        }}
-      >
-        <DragIcon sx={{ fontSize: '1rem' }} />
-      </Box>
-      <Box sx={{ flex: 1, lineHeight: 1.4 }}>
-        גרור את הידית כדי לשנות שעה או סדר · הכפתורים בתחתית כל כרטיס לעריכה ומחיקה
-      </Box>
-      <IconButton size="small" onClick={dismiss} sx={{ p: 0.4, flexShrink: 0 }}>
-        <CloseIcon sx={{ fontSize: '0.9rem' }} />
-      </IconButton>
-    </Box>
-  );
-};
-
 const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent, onAddItem }) => {
   const [editing, setEditing] = useState(null);
   const [adding, setAdding] = useState(null);
-  const [drag, setDrag] = useState(null);
-
-  // מיקומי השורות על המסך. נדרשים כדי לדעת מעל איזו שורה האצבע נמצאת:
-  // אירועי מצביע מדווחים נקודה, לא יעד.
-  const rows = useRef({});
 
   const days = buildTimeline(bookings);
   if (!days.length) return null;
@@ -283,61 +213,28 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent, onAd
    * 09:00 מתחת לפריט של 14:00 — מסך שסותר את עצמו במסך שכל תפקידו לענות
    * "מה עכשיו".
    */
-  const applyDrop = async (day, from, to) => {
-    if (from === to || to == null) return;
+  /**
+   * הזזת אירוע ביום, בחץ.
+   *
+   * הציר ממוין לפי זמן, ולכן "מעלה" אינו סדר מועדף אלא שעה חדשה: הפריט
+   * מקבל שעה בין שכניו החדשים. סדר ידני שסותר את השעות היה מציג פריט של
+   * 09:00 מתחת לפריט של 14:00, במסך שכל תפקידו לענות "מה עכשיו".
+   */
+  const moveEvent = async (day, from, to) => {
+    if (from === to || to == null || to < 0 || to >= day.events.length) return;
 
     // הרשימה בלי הפריט הנגרר היא זו שקובעת מי יהיו שכניו החדשים.
     const rest = day.events.filter((_, i) => i !== from);
-    const at = from < to ? to - 1 : to;
-    const time = timeBetween(rest[at - 1] || null, rest[at] || null);
+    // ברשימה שבלי הפריט הנגרר, המיקום החדש הוא to עצמו: כשהוא יורד
+    // למטה כל מי שמעליו כבר הוסט באחד בעקבות הסרתו.
+    const time = timeBetween(rest[to - 1] || null, rest[to] || null);
     if (!time) return;
 
     await onEditEvent(day.events[from], { time });
   };
 
-  /**
-   * גרירה באירועי מצביע ולא בגרירת HTML.
-   *
-   * הגרסה הראשונה השתמשה ב-draggable, שאינו מגיב למגע כלל: על הטלפון —
-   * המכשיר היחיד שהמסך הזה נועד לו — הידית פשוט לא עשתה דבר. אירועי
-   * מצביע מכסים עכבר ומגע באותו קוד.
-   */
-  const startDrag = (day, index) => (e) => {
-    e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setDrag({ dayKey: day.dayKey, index, over: index });
-  };
-
-  const onDragMove = (day) => (e) => {
-    if (!drag || drag.dayKey !== day.dayKey) return;
-    const y = e.clientY;
-
-    // היעד הוא השורה הראשונה שמרכזה מתחת לאצבע. שורה שהוסרה מה-DOM
-    // מדולגת במקום להפיל את החישוב.
-    let over = day.events.length;
-    for (let i = 0; i < day.events.length; i += 1) {
-      const el = rows.current[`${day.dayKey}:${i}`];
-      if (!el) continue;
-      const box = el.getBoundingClientRect();
-      if (y < box.top + box.height / 2) { over = i; break; }
-    }
-    if (over !== drag.over) setDrag((d) => ({ ...d, over }));
-  };
-
-  const endDrag = (day) => async () => {
-    if (!drag || drag.dayKey !== day.dayKey) return;
-    const { index, over } = drag;
-    setDrag(null);
-    await applyDrop(day, index, over);
-  };
-
-  // מוצג רק כשיש בכלל מה לגרור
-  const anyDraggable = editable && days.some((d) => d.events.length > 1 && d.events.some((x) => !x.allDay));
-
   return (
     <Box>
-      {anyDraggable && <DragHint />}
-
       {days.map((day, i) => {
         const skipped = i === 0 ? 0 : daysBetween(days[i - 1].date, day.date) - 1;
 
@@ -370,12 +267,7 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent, onAd
             <DayMiniMap events={day.events} />
 
             {/* הקו האנכי נמתח על כל היום ויושב מאחורי העיגולים */}
-            <Box
-              sx={{ position: 'relative' }}
-              onPointerMove={onDragMove(day)}
-              onPointerUp={endDrag(day)}
-              onPointerCancel={() => setDrag(null)}
-            >
+            <Box sx={{ position: 'relative' }}>
               <Box
                 sx={{
                   position: 'absolute', top: 14, bottom: 14, right: 62,
@@ -390,13 +282,15 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent, onAd
                     onDelete={onDelete}
                     onEdit={editable ? setEditing : null}
                     mapNumber={numbers.get(ev)}
-                    rowRef={(el) => { rows.current[`${day.dayKey}:${j}`] = el; }}
-                    // גרירה נדרשת שני אירועים לפחות, ולפחות אחד מהם עם
-                    // שעה — אחרת אין ממה לגזור שעה חדשה.
-                    draggable={editable && day.events.length > 1 && day.events.some((x) => !x.allDay)}
-                    dragging={!!drag && drag.dayKey === day.dayKey && drag.index === j}
-                    dropBefore={!!drag && drag.dayKey === day.dayKey && drag.over === j && drag.index !== j}
-                    onGrab={startDrag(day, j)}
+                    // הזזה דורשת שני אירועים לפחות ולפחות אחד עם שעה,
+                    // אחרת אין ממה לגזור שעה חדשה.
+                    onMove={
+                      editable && day.events.length > 1 && day.events.some((x) => !x.allDay)
+                        ? (dir) => moveEvent(day, j, j + dir)
+                        : null
+                    }
+                    canUp={j > 0}
+                    canDown={j < day.events.length - 1}
                   />
                 </React.Fragment>
               ))}
