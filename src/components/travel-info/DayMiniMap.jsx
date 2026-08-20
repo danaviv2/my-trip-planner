@@ -64,6 +64,14 @@ const DayMiniMap = ({ events = [] }) => {
   // נקודה אחת אינה מסלול, ואין מה ללמוד ממפה שיש בה סימן יחיד.
   if (points.length < 2) return null;
 
+  // גם כמה נקודות באותו מקום אינן מסלול. בלי הבדיקה הזו הן נדחסות
+  // לנקודה אחת, המספרים נערמים זה על זה, וכל קטע מוצג כ-"0 מ׳" —
+  // ציור שנראה כמו מפה ואינו מתאר תנועה כלשהי.
+  const spread = points.some(
+    (p) => Math.abs(p.lat - points[0].lat) > 0.0004 || Math.abs(p.lng - points[0].lng) > 0.0004
+  );
+  if (!spread) return null;
+
   const lats = points.map((p) => p.lat);
   const lngs = points.map((p) => p.lng);
   const minLat = Math.min(...lats);
