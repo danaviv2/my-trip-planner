@@ -13,6 +13,7 @@ import { findDrivingRestrictions } from '../../services/drivingRestrictionsServi
 import { useBookings } from '../../contexts/BookingsContext';
 import TripTimeline from './TripTimeline';
 import NextUpCard from './NextUpCard';
+import AddPlanItemDialog from './AddPlanItemDialog';
 import { geocodeBookings } from '../../services/bookingGeocodeService';
 import FlightAlertsCard from './FlightAlertsCard';
 import FlightRights from './FlightRights';
@@ -73,6 +74,7 @@ const TravelInfoComponent = () => {
     removeBooking, resetAllBookings, addBookings, editEvent, clearEventEdits,
   } = useBookings();
   const [resetOpen, setResetOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const [resetDone, setResetDone] = useState(null);
 
   // נסיעה שהסתיימה אינה רעש: היא נושאת הוצאות, אישורים ולעיתים תביעת
@@ -339,6 +341,28 @@ const TravelInfoComponent = () => {
 
       {/* טיולים שנגזרו מההזמנות שיובאו. אישורים שהגיעו בנפרד —
           טיסה, מלון ורכב — מתאחדים כאן לנסיעה אחת. */}
+      {/* הוספת פריט לכל תאריך, גם כזה שאין בו עדיין שום הזמנה.
+          בלעדיה מסעדה שנסגרה לחודש הבא לא הייתה יכולה להירשם בשום
+          מקום: כפתור ההוספה בתוך הציר קיים רק על ימים שכבר יש בהם
+          הזמנה. */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+        <Button
+          size="small"
+          startIcon={<i className="material-icons" style={{ fontSize: '1.05rem' }}>add</i>}
+          onClick={() => setAddOpen(true)}
+          sx={{ fontWeight: 600 }}
+        >
+          הוסף פריט
+        </Button>
+      </Box>
+
+      <AddPlanItemDialog
+        open={addOpen}
+        pickDate
+        onClose={() => setAddOpen(false)}
+        onAdd={addBookings}
+      />
+
       {/* הדבר הבא בתור. מופיע רק כשהוא קרוב, ולכן הוא בראש המסך: כשאתה
           בדרך זו השאלה היחידה, וגלילה אליה מבטלת את התועלת. */}
       <NextUpCard trips={upcoming} />

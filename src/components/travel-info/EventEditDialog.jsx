@@ -18,7 +18,7 @@ import {
  * שבאישור. לכן יש גם "החזר למקור": המקור לא נמחק, הוא רק מוסתר.
  */
 
-const isTime = (v) => !v || /^([01]?\d|2[0-3]):[0-5]\d$/.test(v.trim());
+const isTime = (v) => !v || /^([01]?\d|2[0-3]):[0-5]\d$/.test(String(v).trim());
 
 const EventEditDialog = ({ open, event, onClose, onSave, onReset }) => {
   const [form, setForm] = useState({ time: '', title: '', place: '', date: '' });
@@ -76,8 +76,12 @@ const EventEditDialog = ({ open, event, onClose, onSave, onReset }) => {
               value={form.date}
               onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
             />
+            {/* בורר, מאותה סיבה כמו בחלון ההוספה. שדה ריק הוא ערך
+                לגיטימי — "לא יודע מתי" — ולכן אינו נחסם. */}
             <TextField
-              label="שעה" size="small" placeholder="16:00" sx={{ width: 120 }}
+              label="שעה" type="time" size="small" sx={{ width: 128 }}
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ step: 300 }}
               value={form.time}
               error={!timeOk}
               helperText={timeOk ? '' : 'שעה לא תקינה'}
