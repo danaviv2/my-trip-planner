@@ -437,6 +437,35 @@ const TripPlanner = () => {
   const mapRef = useRef(null);
   const exportComponentRef = useRef(null);
   
+  /**
+   * תאריך יום בטיול, לפי השעון המקומי.
+   *
+   * שלושת המקומות שחישבו זאת השתמשו ב-toISOString, שמחזיר UTC: חצות
+   * מקומית בישראל היא עדיין אתמול, ולכן יום 1 של טיול שמתחיל ב-26.8
+   * קיבל את התאריך 25.8. הסטייה הייתה בלתי נראית כי התאריך לא הוצג
+   * בשום מקום במסך — ובגללה עוגן של הזמנה מ-26.8 לא נמצא לעולם.
+   */
+  /**
+   * "רביעי · 26.8" — היום והתאריך, כפי שאדם קורא אותם.
+   *
+   * עד כה הימים היו ממוספרים בלבד. "יום 3" אינו אומר מתי, ולכן אי אפשר
+   * היה לדעת אם הפעילות שאתה מתכנן נופלת בשבת, אם המוזיאון סגור באותו
+   * יום, או מול איזה יום בפועל אתה עומד. זו גם הסיבה שסטייה של יום אחד
+   * בחישוב התאריכים לא התגלתה: לא היה על המסך תאריך שיסתור אותה.
+   */
+  const dayLabel = (key) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(key || ''));
+    if (!m) return '';
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    const names = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+    return `${names[d.getDay()]} · ${d.getDate()}.${d.getMonth() + 1}`;
+  };
+
+  const dayDate = (index) => {
+    const d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + index);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
   // רשימת צעדים בתהליך
   const steps = [
     'פרטי הטיול הבסיסיים',
@@ -460,7 +489,7 @@ const TripPlanner = () => {
       if (tripDays > currentLength) {
         const newDays = Array.from({ length: tripDays - currentLength }, (_, i) => ({
           day: currentLength + i + 1,
-          date: new Date(startDate.getTime() + (currentLength + i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          date: dayDate(currentLength + i),
           title: `יום ${currentLength + i + 1}`,
           schedule: []
         }));
@@ -477,7 +506,7 @@ const TripPlanner = () => {
     if (itinerary.length === 0 && tripDays > 0) {
       const initialItinerary = Array.from({ length: tripDays }, (_, i) => ({
         day: i + 1,
-        date: new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        date: dayDate(i),
         title: `יום ${i + 1}`,
         schedule: []
       }));
@@ -491,7 +520,7 @@ const TripPlanner = () => {
     if (itinerary.length > 0 && startDate) {
       const updatedItinerary = itinerary.map((day, index) => ({
         ...day,
-        date: new Date(startDate.getTime() + index * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        date: dayDate(index)
       }));
       
       setItinerary(updatedItinerary);
@@ -560,7 +589,8 @@ const TripPlanner = () => {
       const randomCondition = conditions[Math.floor(Math.random() * 4)];
       
       forecast.push({
-        date: date.toISOString().split('T')[0],
+        // אותה סטייה: תחזית ליום הלא נכון נראית תקינה לחלוטין
+        date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
         day: `יום ${i + 1}`,
         temp: Math.floor(Math.random() * 10) + 20,
         condition: randomCondition,
@@ -1483,7 +1513,16 @@ const TripPlanner = () => {
               {days.map((day, i) => (
                 <Tab
                   key={i}
-                  label={`יום ${day.day}`}
+                  label={
+                    <Box sx={{ lineHeight: 1.25, textAlign: 'center' }}>
+                      <Box sx={{ fontWeight: 700, fontSize: '0.82rem' }}>{`יום ${day.day}`}</Box>
+                      {dayLabel(day.date) && (
+                        <Box sx={{ fontSize: '0.66rem', opacity: 0.7, fontWeight: 500 }}>
+                          {dayLabel(day.date)}
+                        </Box>
+                      )}
+                    </Box>
+                  }
                   sx={{ fontWeight: selectedDayIndex === i ? 700 : 400, minWidth: 80 }}
                 />
               ))}
@@ -1497,6 +1536,11 @@ const TripPlanner = () => {
                     <Typography variant="subtitle1" fontWeight={700}>
                       {currentDay.title}
                     </Typography>
+                    {dayLabel(currentDay.date) && (
+                      <Typography variant="body2" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                        {dayLabel(currentDay.date)}
+                      </Typography>
+                    )}
                     {currentDay.theme && (
                       <Typography variant="body2" color="text.secondary">
                         {currentDay.theme}
