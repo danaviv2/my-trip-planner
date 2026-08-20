@@ -121,13 +121,54 @@ several), insurance never defines a trip, and undated bookings surface in a sepa
 requirements), `itineraryConflictService`, `ticketConflictService` (timed tickets vs
 the daily plan), `tripCostService`, `routeGeometryService`.
 
+## Debugging: never guess
+
+**This is the most expensive lesson in this project. Read it before touching a bug.**
+
+When a screen misbehaves, the temptation is to read the code, form a theory, ship a
+fix, and ask the user to check. That loop has failed here every single time it was
+tried, and each round costs a deploy, a refresh, a screenshot and a reply.
+
+**The rule: if you do not know, measure. Do not guess, and do not ship a fix built on
+an unverified theory.**
+
+Concretely, in order of preference:
+
+1. **Reproduce it.** Run the app (`npm start`), seed `localStorage.importedBookings`
+   with data resembling the user's, drive the real screen in a browser, and measure —
+   element widths, `elementFromPoint`, stored records, computed output. `/travel-info`
+   works without login; `/trip-planner` is behind `ProtectedRoute`.
+2. **Unit-test the suspect function** against the real values from the screenshot,
+   including the boundaries. Expectations are frequently wrong — verify the expected
+   value before calling the code broken.
+3. **Build a diagnostic that ships.** When the data lives only on the user's device,
+   add a tool that reports it. This has found the cause in minutes, repeatedly, after
+   guessing had burned whole rounds. The existing ones: `window.__dedupeReport()`,
+   the trip-bounds report at the bottom of `/travel-info`, `/api/notify-check`,
+   the push test button, and the build stamp.
+4. **Ask one precise question** — but only when a specific observation is missing and
+   cannot be measured locally. Not as a substitute for looking.
+
+Two traps that produced real waste here:
+
+- **A mechanism that reproduces the symptom is not proof it is the cause.** A wide
+  insurance policy was shown to swallow later bookings into a trip; the fix was
+  correct in itself and shipped — and the user's screen did not change, because his
+  data never had one. Confirm the mechanism is present in the actual data first.
+- **A measurement can be broken too.** A grep for Hebrew text in a minified bundle
+  found nothing and "proved" a deploy was stuck; the bundle escapes non-ASCII as
+  `\uXXXX` and there were 35 chunks, not one. Sanity-check the instrument against a
+  known-true case before trusting what it says.
+
+Before claiming a fix works, state what was measured. "Should work" is not a result.
+
 ## Conventions
 
 Comments are in Hebrew and explain **why**, usually by naming the failure the code
 prevents. This is deliberate: nearly every non-obvious branch encodes a bug that
 reached a real user. Match that style — a comment that restates the code adds nothing.
 
-Three failure patterns recur; check for them in any change:
+Four failure patterns recur; check for them in any change:
 
 1. **A fix applied to one type but not its siblings.** Signal-based dedupe, deletion
    tombstones and cancellation tombstones were each written for one booking type and
@@ -139,6 +180,9 @@ Three failure patterns recur; check for them in any change:
 3. **A failure reported as success.** Empty `catch {}` blocks and confirmation
    messages not derived from the actual result. Success text must be computed from
    what happened.
+4. **A fix shipped on an unverified theory.** See "Debugging: never guess" above. The
+   cost is not the wrong code — it is the round trip through deploy, refresh and
+   report that it spends.
 
 Backup files (`*.backup_*`, `*.bak2`, `*_old_backup.js`) sit next to live code in
 `src/pages`; they are dead. `src/bookingAPI.js` and
