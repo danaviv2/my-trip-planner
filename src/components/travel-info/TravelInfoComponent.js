@@ -269,7 +269,6 @@ const TravelInfoComponent = () => {
                   onDelete={removeBooking}
                   onEditEvent={handleEditEvent}
                   onResetEvent={handleResetEvent}
-                  onAddItem={addBookings}
                 />
 
                 {/* זכויות הנוסע לכל טיסה. מוצג גם כשהכול תקין — הידיעה
@@ -342,19 +341,44 @@ const TravelInfoComponent = () => {
 
       {/* טיולים שנגזרו מההזמנות שיובאו. אישורים שהגיעו בנפרד —
           טיסה, מלון ורכב — מתאחדים כאן לנסיעה אחת. */}
-      {/* הוספת פריט לכל תאריך, גם כזה שאין בו עדיין שום הזמנה.
-          בלעדיה מסעדה שנסגרה לחודש הבא לא הייתה יכולה להירשם בשום
-          מקום: כפתור ההוספה בתוך הציר קיים רק על ימים שכבר יש בהם
-          הזמנה. */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-        <Button
-          size="small"
-          startIcon={<i className="material-icons" style={{ fontSize: '1.05rem' }}>add</i>}
-          onClick={() => setAddOpen(true)}
-          sx={{ fontWeight: 600 }}
+      {/* ── נקודת הכניסה היחידה להוספה ──
+          קודם היו שתיים: זו, ועוד כפתור בתוך כל יום בכל נסיעה. השנייה
+          הייתה תת-קבוצה של הראשונה — חסכה בחירת תאריך אחת ובתמורה
+          שכפלה את הפעולה עשר פעמים במסך, ויצרה את המסלול שבו פריט נוצר
+          ליום אחד ואז נערך לאחר.
+          מכיוון שזו נשארה לבדה, היא נראית כמו פעולה ולא כמו הערת
+          שוליים. */}
+      <Box
+        onClick={() => setAddOpen(true)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setAddOpen(true); }}
+        sx={{
+          display: 'flex', alignItems: 'center', gap: 1.25, mb: 2,
+          px: 1.75, py: 1.25, borderRadius: 3, cursor: 'pointer',
+          border: '1px dashed', borderColor: '#c9cdda', color: 'text.secondary',
+          transition: 'all .15s',
+          '&:hover': { borderColor: 'primary.main', color: 'primary.main', bgcolor: '#f7f8fd' },
+        }}
+      >
+        <Box
+          sx={{
+            width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+            bgcolor: '#eef0fc', color: '#5568d3',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.15rem',
+            lineHeight: 1,
+          }}
         >
-          הוסף פריט
-        </Button>
+          +
+        </Box>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography sx={{ fontSize: '0.88rem', fontWeight: 600, lineHeight: 1.3 }}>
+            הוסף פריט לתוכנית
+          </Typography>
+          <Typography sx={{ fontSize: '0.72rem', color: 'text.disabled', lineHeight: 1.3 }}>
+            מסעדה, פגישה או תזכורת — לכל תאריך
+          </Typography>
+        </Box>
       </Box>
 
       <AddPlanItemDialog

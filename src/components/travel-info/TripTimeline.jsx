@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
-import { Box, Typography, IconButton, Chip, Button, Tooltip } from '@mui/material';
+import { Box, Typography, IconButton, Chip, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/EditOutlined';
-import AddIcon from '@mui/icons-material/Add';
 import UpIcon from '@mui/icons-material/ArrowUpward';
 import DownIcon from '@mui/icons-material/ArrowDownward';
 import { buildTimeline, humanGap, timeBetween } from '../../services/tripTimelineService';
 import DayMiniMap, { groundPoints } from './DayMiniMap';
 import EventEditDialog from './EventEditDialog';
-import AddPlanItemDialog from './AddPlanItemDialog';
 
 /**
  * הנסיעה כרצף אירועים לפי זמן.
@@ -196,9 +194,8 @@ const GapRow = ({ minutes }) => (
   </Box>
 );
 
-const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent, onAddItem }) => {
+const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent }) => {
   const [editing, setEditing] = useState(null);
-  const [adding, setAdding] = useState(null);
 
   const days = buildTimeline(bookings);
   if (!days.length) return null;
@@ -295,24 +292,6 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent, onAd
                 </React.Fragment>
               ))}
 
-              {onAddItem && (
-                <Box sx={{ display: 'flex', gap: 1.5, mt: 0.5 }}>
-                  <Box sx={{ width: 46, flexShrink: 0 }} />
-                  <Box sx={{ width: 32, flexShrink: 0 }} />
-                  <Button
-                    size="small"
-                    startIcon={<AddIcon sx={{ fontSize: '1rem' }} />}
-                    onClick={() => setAdding(day.dayKey)}
-                    sx={{
-                      color: 'text.disabled', fontSize: '0.78rem', fontWeight: 500,
-                      justifyContent: 'flex-start', px: 1,
-                      '&:hover': { color: 'primary.main', bgcolor: 'transparent' },
-                    }}
-                  >
-                    הוסף לתוכנית היום
-                  </Button>
-                </Box>
-              )}
             </Box>
           </React.Fragment>
         );
@@ -326,12 +305,6 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent, onAd
         onReset={() => onResetEvent(editing)}
       />
 
-      <AddPlanItemDialog
-        open={!!adding}
-        dayKey={adding}
-        onClose={() => setAdding(null)}
-        onAdd={onAddItem}
-      />
     </Box>
   );
 };
