@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Skeleton } from '@mui/material';
-import { getPlaceMedia } from '../../services/placeMediaService';
+import { getPlacePhotoFast } from '../../services/placeMediaService';
 
 /**
  * תמונה של מקום — או כותרת נקייה כשאין תמונה אמיתית.
@@ -30,14 +30,14 @@ const tintOf = (text) => {
 };
 
 /**
- * @param {string} name   השם המוצג, בעברית
- * @param {string} lookup השם המקומי לחיפוש. מדידה הראתה שזה ההבדל בין
- *   תמונה לכלום: "קתדרלת סנטה מריה דל פיורה" מחזיר אפס תוצאות בשני
- *   המקורות, ו-"Basilica di Santa Maria del Fiore" מחזיר תצלום. בלי שם
- *   מקומי לא מנחשים — הכרטיס פשוט יוצג בלי תמונה.
+ * @param {string} name   השם המוצג, בעברית. זהו גם החיפוש הראשון:
+ *   מדידה הראתה שתשעה מתוך עשרה מקומות ומאכלים נמצאים בוויקיפדיה
+ *   העברית לפי שמם — כולל מגדל אייפל, פונטה וקיו וקרואסון.
+ * @param {string} lookup השם המקומי, לגיבוי כשאין ערך עברי.
  */
-const PlaceImage = ({ name, lookup = '', city = '', country = '', height = 180, icon = '📍', onMedia }) => {
-  const query = String(lookup || '').trim();
+const PlaceImage = ({ name, lookup = '', height = 180, icon = '📍' }) => {
+  const query = String(name || '').trim();
+  const alt = String(lookup || '').trim();
   const [state, setState] = useState({ loading: true, photo: null });
 
   useEffect(() => {
@@ -45,16 +45,13 @@ const PlaceImage = ({ name, lookup = '', city = '', country = '', height = 180, 
     if (!query) { setState({ loading: false, photo: null }); return undefined; }
 
     setState({ loading: true, photo: null });
-    getPlaceMedia(query, city, country).then((media) => {
-      if (!alive) return;
-      setState({ loading: false, photo: media.photo });
-      // הקישור הרשמי נדרש לכרטיס עצמו, ונמסר כאן כדי לא לשלוח בקשה שנייה
-      if (onMedia) onMedia(media);
+    getPlacePhotoFast(query, alt).then((photo) => {
+      if (alive) setState({ loading: false, photo });
     });
 
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, city, country]);
+  }, [query, alt]);
 
   if (state.loading) {
     return <Skeleton variant="rectangular" height={height} animation="wave" />;

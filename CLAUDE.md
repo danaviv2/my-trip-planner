@@ -200,6 +200,36 @@ a passing unit test imply the feature was verified end to end.
 
 Before claiming a fix works, state what was measured. "Should work" is not a result.
 
+## Do not settle for the easy fix
+
+Investigate deeply, then build the solution that is actually right — not the one that
+is quickest to write or that makes the symptom disappear.
+
+The cheap path is seductive because it is indistinguishable from the correct one at the
+moment you take it. It reveals itself later, in the user's hands.
+
+What "easy" looked like on the days it cost the most:
+
+- **Testing a helper with inputs you invented**, because fetching real ones takes
+  longer. The place-photo lookup passed every test with English names and returned
+  nothing on the screen, where the names arrive in Hebrew. The test proved only that
+  the test was easy to write.
+- **Judging a result by its label instead of opening it.** Two photos had generic
+  filenames and were nearly rejected as wrong; looking at them showed the Uffizi
+  colonnade and the Ponte Vecchio. A filename is not evidence of content.
+- **Patching the symptom where it appears.** A booking showed under two different
+  dates; the reachable fix was to read the overrides layer in the second place too.
+  The right one was to derive both from a single function, because two places that
+  compute the same fact drift apart on the next change — which is how the bug was
+  born in the first place.
+- **Filling a gap with something that merely looks like an answer.** Random stock
+  photos under real place names; a plausible URL from a model instead of a maintained
+  one. An empty field is honest and gets corrected; an invented one is trusted.
+
+Before shipping, ask: is this the right answer, or the one that was in reach? If the
+right one is genuinely too large, say so explicitly and name what was traded away —
+do not let a stopgap pass as the solution.
+
 ## Conventions
 
 Comments are in Hebrew and explain **why**, usually by naming the failure the code

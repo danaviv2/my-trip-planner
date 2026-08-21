@@ -15,11 +15,15 @@
  * תמונה אמיתית של המקום, או שום תמונה. אין ממלא מקום שמתחזה לתצלום.
  *
  * ── סדר המקורות, לפי מדידה ולא לפי הנחה ──
- * 1. OpenStreetMap מחזיר לחלק מהמקומות תגית wikipedia מדויקת ("it:Giardino
- *    di Boboli"). זה עדיף על ניחוש שם: חיפוש "Boboli Gardens" באנגלית
- *    לא מצא דבר, בעוד הערך האיטלקי קיים ומאויר.
- * 2. אחרת — חיפוש בוויקיפדיה לפי השם, דרך photoService הקיים.
- * 3. אחרת — null, והכרטיס יוצג בלי תמונה.
+ * 1. ויקיפדיה העברית, לפי השם שמוצג למשתמש. מדידה: תשעה מתוך עשרה
+ *    מקומות ומאכלים נמצאו כך — מגדל אייפל, הקולוסיאום, פונטה וקיו,
+ *    ואפילו קרואסון. זה גם החיפוש הזול ביותר, ולכן הוא ראשון: אין בו
+ *    מגבלת קצב, בניגוד לשירות המפות שמגביל לבקשה בשנייה.
+ * 2. ויקיפדיה הכללית לפי השם המקומי.
+ * 3. תגית wikipedia של OpenStreetMap. אחרונה כי היא היקרה ביותר, אך
+ *    נחוצה: "Boboli Gardens" לא נמצא בשום ויקיפדיה, בעוד OSM מחזיר
+ *    "it:Giardino di Boboli" — הערך המדויק.
+ * 4. אחרת — null, והכרטיס יוצג בלי תמונה.
  *
  * הקישור הרשמי מגיע מתגית website של OpenStreetMap בלבד. כתובת שהמודל
  * מייצר נראית סבירה ומובילה לדף שגיאה, וזה מה שקרה בפועל.
@@ -39,8 +43,22 @@ const LS_TTL = 7 * 24 * 60 * 60 * 1000;
 
 const MEM = {};
 
-const keyOf = (name, city) =>
-  `${name}|${city}`.toLowerCase().replace(/[^a-z0-9|]+/g, '_').slice(0, 120);
+/**
+ * מפתח מטמון יציב לכל שפה.
+ *
+ * הגרסה הראשונה סיננה כל תו שאינו לטיני, ולכן כל שם בעברית הצטמצם
+ * לאותו מפתח: שישה מקומות שונים קיבלו את תמונת מגדל אייפל. הבדיקה
+ * הראתה "7 מתוך 8 נמצאו" ונראתה מוצלחת — הכשל התגלה רק בקריאת שמות
+ * הקבצים שהוחזרו.
+ *
+ * גיבוב על המחרוזת המלאה מטפל בעברית, באיטלקית ובכל שפה אחרת.
+ */
+const keyOf = (name, city) => {
+  const raw = `${name}|${city}`.toLowerCase().trim();
+  let h = 5381;
+  for (let i = 0; i < raw.length; i += 1) h = ((h << 5) + h + raw.charCodeAt(i)) >>> 0;
+  return `${raw.replace(/[^a-z0-9|]+/g, '_').slice(0, 40)}_${h.toString(36)}`;
+};
 
 const cacheGet = (key) => {
   if (MEM[key] !== undefined) return MEM[key];
@@ -66,12 +84,12 @@ const cacheSet = (key, value) => {
   } catch {}
 };
 
-/** תמונה מערך ויקיפדיה מסוים, כפי שהוא מופיע בתגית של OSM. */
-const photoFromWikiTag = async (tag) => {
-  const m = /^([a-z-]{2,10}):(.+)$/.exec(String(tag || '').trim());
-  if (!m) return null;
+/** תמונה מערך ויקיפדיה מסוים. */
+const wikiPhoto = async (lang, title) => {
+  const name = String(title || '').trim();
+  if (!name) return null;
   try {
-    const res = await fetch(WIKI_REST(m[1], m[2]), {
+    const res = await fetch(WIKI_REST(lang, name), {
       headers: { 'Api-User-Agent': 'MyTripPlanner/1.0 (educational)' },
     });
     if (!res.ok) return null;
@@ -80,6 +98,35 @@ const photoFromWikiTag = async (tag) => {
   } catch {
     return null;
   }
+};
+
+/** תמונה מתגית "lang:Title" כפי שהיא מופיעה ב-OpenStreetMap. */
+const photoFromWikiTag = (tag) => {
+  const m = /^([a-z-]{2,10}):(.+)$/.exec(String(tag || '').trim());
+  return m ? wikiPhoto(m[1], m[2]) : Promise.resolve(null);
+};
+
+/**
+ * תמונה של מקום, בלי לגעת בשירות המפות.
+ *
+ * זהו המסלול של הרוב המכריע: שתי בקשות לכל היותר, בלי מגבלת קצב, ולכן
+ * דף עם שש-עשרה אטרקציות מתמלא בשניות ולא בדקה.
+ *
+ * @param {string} displayName השם המוצג, בעברית
+ * @param {string} localName   השם המקומי, אם ידוע
+ */
+export const getPlacePhotoFast = async (displayName, localName = '') => {
+  const key = `photo_${keyOf(displayName, localName)}`;
+  const cached = cacheGet(key);
+  if (cached !== undefined) return cached;
+
+  let photo = await wikiPhoto('he', displayName);
+  if (!photo && localName) photo = await wikiPhoto('en', localName);
+
+  // null נשמר גם הוא: ויקיפדיה החזירה תשובה ברורה שאין ערך כזה, וזו
+  // ידיעה ולא כישלון. חיפוש חוזר בכל טעינה לא היה מוצא יותר.
+  cacheSet(key, photo || null);
+  return photo || null;
 };
 
 /**
@@ -123,8 +170,8 @@ export const getPlaceMedia = async (name, city = '', country = '') => {
 
   const osm = await lookupOsm(city ? `${clean}, ${city}` : clean);
 
-  let photo = null;
-  if (osm && osm.wikipedia) photo = await photoFromWikiTag(osm.wikipedia);
+  let photo = await getPlacePhotoFast(clean, clean);
+  if (!photo && osm && osm.wikipedia) photo = await photoFromWikiTag(osm.wikipedia);
   if (!photo) photo = await getPlacePhoto(clean, country || city);
 
   const result = { photo: photo || null, website: (osm && osm.website) || '' };
