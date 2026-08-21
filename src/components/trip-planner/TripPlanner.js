@@ -279,7 +279,7 @@ const TripPlanner = () => {
   const {
     tripData, tripPlan, updateTripPlan, planTripWithAI, tripLoading,
     selectedDayIndex, setSelectedDayIndex,
-    startFreshFor, restoreStashedTrip, discardStashedTrip,
+    startFreshFor, restoreStashedTrip,
   } = useTripContext();
 
   // ההזמנות נקראות ולא מועתקות — ראה DayAnchors.
@@ -1852,14 +1852,19 @@ const TripPlanner = () => {
           >
             חזור אליו
           </Button>
-          <Button
+          {/* מסתיר את השורה ואינו מוחק דבר.
+              קודם עמד כאן "לא צריך", שמחק את הטיוטה סופית — הדרך היחידה
+              במסך הזה לאבד עבודה, בלחיצה אחת ובלי אישור. השורה נעלמת
+              ממילא כשחוזרים למסלול, והמגירה נדרסת לבד בהחלפת יעד הבאה,
+              ולכן מחיקה מפורשת לא קנתה דבר. */}
+          <IconButton
             size="small"
-            color="inherit"
-            onClick={() => { discardStashedTrip(); setStashedName(null); }}
-            sx={{ opacity: 0.7 }}
+            aria-label="הסתר"
+            onClick={() => setStashedName(null)}
+            sx={{ opacity: 0.6, p: 0.5 }}
           >
-            לא צריך
-          </Button>
+            <CloseIcon fontSize="small" />
+          </IconButton>
         </Box>
       )}
 
