@@ -22,6 +22,32 @@ const readDraft = () => {
   }
 };
 
+/**
+ * הטיוטה שנדחקה הצידה כשהמשתמש פתח תכנון ליעד אחר.
+ *
+ * מגירה נפרדת ולא מחיקה: מי שעבד שעה על מסלול לבולוניה ונכנס לרגע
+ * לרומא אינו אמור לאבד אותו. השחזור הוא לחיצה אחת, ולכן אין צורך
+ * לשאול אותו מראש ולעצור אותו בדרך.
+ */
+const STASH_KEY = 'supersededTripDraft';
+
+export const readStashedTrip = () => {
+  try {
+    const raw = localStorage.getItem(STASH_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed?.dailyItinerary?.length ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeStash = (plan) => {
+  try {
+    if (plan?.dailyItinerary?.length) localStorage.setItem(STASH_KEY, JSON.stringify(plan));
+    else localStorage.removeItem(STASH_KEY);
+  } catch {}
+};
+
 const writeDraft = (plan) => {
   try {
     if (plan?.dailyItinerary?.length) {
@@ -79,6 +105,45 @@ export const TripProvider = ({ children }) => {
 
   const updateTripPlan = (plan) => setTripPlan(plan);
 
+  /**
+   * פתיחת תכנון ליעד אחר מזה שבטיוטה.
+   *
+   * ── הבאג שזה סוגר ──
+   * הגעה מדף הבית עם יעד חדש מילאה את שדה היעד בלבד. המסלול הקודם נשאר
+   * טעון, ולכן שדה היעד אמר "רומא" בעוד הלשוניות הציגו את ימי בולוניה —
+   * מסך שסותר את עצמו, ובחירת יעד שלא עשתה דבר.
+   *
+   * הטיוטה הקודמת נדחקת למגירה במקום להימחק, וניתנת לשחזור בלחיצה.
+   *
+   * @returns {boolean} האם הוחלף בפועל
+   */
+  const startFreshFor = (nextDestination) => {
+    const current = tripPlan;
+    const same =
+      String(current?.destination || '').trim().toLowerCase() ===
+      String(nextDestination || '').trim().toLowerCase();
+
+    if (!current?.dailyItinerary?.length || same) return false;
+
+    writeStash(current);
+    setTripPlan(null);
+    setSelectedDayIndex(0);
+    return true;
+  };
+
+  /** מחזיר את הטיוטה שנדחקה, ומרוקן את המגירה. */
+  const restoreStashedTrip = () => {
+    const stashed = readStashedTrip();
+    if (!stashed) return false;
+    writeStash(null);
+    setTripPlan(stashed);
+    setSelectedDayIndex(0);
+    return true;
+  };
+
+  /** מוותר על הטיוטה שבמגירה. */
+  const discardStashedTrip = () => writeStash(null);
+
   // כל שינוי נשמר מיד. עריכה ידנית של פעילות היא בדיוק המקרה שבו איבוד
   // המסלול מכאיב, שכן היא אינה ניתנת לשחזור על ידי יצירה מחדש.
   useEffect(() => {
@@ -108,6 +173,9 @@ export const TripProvider = ({ children }) => {
     accommodations: tripData.accommodations || [],
     tripPlan,
     updateTripPlan,
+    startFreshFor,
+    restoreStashedTrip,
+    discardStashedTrip,
     saveTrip,
     selectedDayIndex,
     setSelectedDayIndex,
@@ -135,6 +203,9 @@ export const useTripContext = () => {
       accommodations: [],
       tripPlan: null,
       updateTripPlan: () => {},
+      startFreshFor: () => false,
+      restoreStashedTrip: () => false,
+      discardStashedTrip: () => {},
       saveTrip: () => {},
       selectedDayIndex: 0,
       setSelectedDayIndex: () => {},

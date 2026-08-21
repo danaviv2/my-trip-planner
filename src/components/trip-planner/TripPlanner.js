@@ -276,7 +276,11 @@ const TripPlanner = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { tripData, tripPlan, updateTripPlan, planTripWithAI, tripLoading, selectedDayIndex, setSelectedDayIndex } = useTripContext();
+  const {
+    tripData, tripPlan, updateTripPlan, planTripWithAI, tripLoading,
+    selectedDayIndex, setSelectedDayIndex,
+    startFreshFor, restoreStashedTrip, discardStashedTrip,
+  } = useTripContext();
 
   // ההזמנות נקראות ולא מועתקות — ראה DayAnchors.
   const { bookings } = useBookings();
@@ -437,6 +441,28 @@ const TripPlanner = () => {
   const mapRef = useRef(null);
   const exportComponentRef = useRef(null);
   
+  /**
+   * הגעה מדף הבית עם יעד אחר פותחת מסך ריק.
+   *
+   * בלי זה בחירת יעד חדשה מילאה את שדה היעד בלבד, והמסלול הקודם נשאר
+   * על המסך: השדה אמר "רומא" והלשוניות הציגו את ימי בולוניה. הטיוטה
+   * הקודמת נדחקת למגירה ולא נמחקת, ושורה דקה מציעה לחזור אליה — מי
+   * שעבד שעה על מסלול אינו אמור לאבד אותו בגלל סקרנות.
+   *
+   * רץ פעם אחת לכל יעד שמגיע ב-URL, ולא בכל render.
+   */
+  const [stashedName, setStashedName] = useState(null);
+  const handledParam = useRef(null);
+
+  useEffect(() => {
+    if (!destinationParam || handledParam.current === destinationParam) return;
+    handledParam.current = destinationParam;
+
+    const previous = tripPlan?.destination;
+    if (startFreshFor(destinationParam)) setStashedName(previous || 'הקודם');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [destinationParam]);
+
   /**
    * תאריך יום בטיול, לפי השעון המקומי.
    *
@@ -1806,6 +1832,37 @@ const TripPlanner = () => {
   // רינדור ראשי
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
+      {/* שורה דקה ולא חלון: היא מודיעה שהמסלול הקודם לא אבד, בלי לעצור
+          את מי שבא לתכנן משהו אחר. */}
+      {stashedName && (
+        <Box
+          sx={{
+            display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap',
+            mb: 2, px: 1.75, py: 1, borderRadius: 2.5,
+            bgcolor: '#eef0fc', color: '#3f4863', fontSize: '0.85rem',
+          }}
+        >
+          <Box sx={{ flex: 1, minWidth: 180 }}>
+            המסלול הקודם ל<strong>{stashedName}</strong> נשמר.
+          </Box>
+          <Button
+            size="small"
+            onClick={() => { restoreStashedTrip(); setStashedName(null); }}
+            sx={{ fontWeight: 700 }}
+          >
+            חזור אליו
+          </Button>
+          <Button
+            size="small"
+            color="inherit"
+            onClick={() => { discardStashedTrip(); setStashedName(null); }}
+            sx={{ opacity: 0.7 }}
+          >
+            לא צריך
+          </Button>
+        </Box>
+      )}
+
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1">
           {tripName || 'תכנון טיול חדש'}
