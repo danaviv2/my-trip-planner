@@ -347,6 +347,31 @@ const lookupOsm = async (query) => {
 };
 
 /**
+ * האתר הרשמי, כשהמקור החינמי לא ידע.
+ *
+ * ── סדר שנקבע לפי עלות ──
+ * OpenStreetMap ראשון כי הוא חינמי, ומדידה הראתה שהוא מספיק לשלוש מתוך
+ * חמש מסעדות. רק מה שלא נמצא בו מגיע לשרת, ששואל מקור בתשלום — ולכן
+ * החיוב חל על המיעוט ולא על הכול.
+ *
+ * כישלון מוחזר כ-null ולא כמחרוזת ריקה: הקורא לא ישמור מסקנה מתקלה.
+ *
+ * @returns {Promise<string|null>} כתובת · '' כשאין · null כשנכשל
+ */
+const websiteFromServer = async (name, city) => {
+  try {
+    const res = await fetch(
+      `/api/place-website?name=${encodeURIComponent(name)}&city=${encodeURIComponent(city)}`
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return typeof data.website === 'string' ? data.website : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
  * @returns {Promise<{photo: string|null, website: string}>}
  *   photo ריק פירושו שלא נמצאה תמונה של המקום הזה — ואין להציג אחרת
  *   במקומה.
@@ -365,11 +390,21 @@ export const getPlaceMedia = async (name, city = '', country = '') => {
   if (!photo && osm && osm.wikipedia) photo = await photoFromWikiTag(osm.wikipedia);
   if (!photo) photo = await getPlacePhoto(clean, country || city);
 
-  const result = { photo: photo || null, website: (osm && osm.website) || '' };
+  let website = (osm && osm.website) || '';
+  let websiteFailed = false;
 
-  // תוצאה נשמרת רק כשהבדיקה באמת רצה. כישלון רשת שנשמר במטמון היה
+  // המקור בתשלום נשאל רק כשהחינמי לא ידע
+  if (!website) {
+    const fromServer = await websiteFromServer(clean, city);
+    if (fromServer === null) websiteFailed = true;
+    else website = fromServer;
+  }
+
+  const result = { photo: photo || null, website };
+
+  // תוצאה נשמרת רק כשכל הבדיקות באמת רצו. כישלון רשת שנשמר במטמון היה
   // מקבע "אין תמונה ואין אתר" לשבוע, וזו הצגת כישלון כתשובה.
-  if (osm) cacheSet(key, result);
+  if (osm && !websiteFailed) cacheSet(key, result);
 
   return result;
 };
