@@ -1585,6 +1585,7 @@ const DestinationInfoPage = () => {
                             <PlaceImage
                               name={attraction.name}
                               lookup={attraction.nameEn || ''}
+                              city={destinationData?.name || ''}
                               height={180}
                               icon="🏛️"
                             />
@@ -1754,6 +1755,7 @@ const DestinationInfoPage = () => {
                             <PlaceImage
                               name={market.name}
                               lookup={market.nameEn || ''}
+                              city={destinationData?.name || ''}
                               height={140}
                               icon="🧺"
                             />

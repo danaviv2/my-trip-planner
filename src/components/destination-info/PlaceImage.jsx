@@ -34,10 +34,14 @@ const tintOf = (text) => {
  *   מדידה הראתה שתשעה מתוך עשרה מקומות ומאכלים נמצאים בוויקיפדיה
  *   העברית לפי שמם — כולל מגדל אייפל, פונטה וקיו וקרואסון.
  * @param {string} lookup השם המקומי, לגיבוי כשאין ערך עברי.
+ * @param {string} city   העיר, לאימות שהערך שנמצא באמת שם. בלעדיה
+ *   "גלריית האקדמיה" מחזירה את המוזיאון שבוונציה — תצלום אמיתי,
+ *   מאתיים קילומטר מהיעד.
  */
-const PlaceImage = ({ name, lookup = '', height = 180, icon = '📍' }) => {
+const PlaceImage = ({ name, lookup = '', city = '', height = 180, icon = '📍' }) => {
   const query = String(name || '').trim();
   const alt = String(lookup || '').trim();
+  const where = String(city || '').trim();
   const [state, setState] = useState({ loading: true, photo: null });
 
   useEffect(() => {
@@ -45,13 +49,13 @@ const PlaceImage = ({ name, lookup = '', height = 180, icon = '📍' }) => {
     if (!query) { setState({ loading: false, photo: null }); return undefined; }
 
     setState({ loading: true, photo: null });
-    getPlacePhotoFast(query, alt).then((photo) => {
+    getPlacePhotoFast(query, alt, where).then((photo) => {
       if (alive) setState({ loading: false, photo });
     });
 
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, alt]);
+  }, [query, alt, where]);
 
   if (state.loading) {
     return <Skeleton variant="rectangular" height={height} animation="wave" />;

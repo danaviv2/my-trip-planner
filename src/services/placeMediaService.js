@@ -30,6 +30,7 @@
  */
 
 import { getPlacePhoto } from './photoService';
+import { distanceKmExact } from './routeGeometryService';
 
 const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
 const WIKI_REST = (lang, title) =>
@@ -84,8 +85,44 @@ const cacheSet = (key, value) => {
   } catch {}
 };
 
-/** תמונה מערך ויקיפדיה מסוים. */
-const wikiPhoto = async (lang, title) => {
+/**
+ * וריאנטים של שם מקום, מהמלא אל הגרעין.
+ *
+ * ── למה זה נחוץ ──
+ * השמות שמגיעים אינם כותרות ערך אלא תיאורים: "קתדרלת סנטה מריה דל
+ * פיורה (הדואומו)", "גלריית האקדמיה (דוד של מיכלאנג׳לו)", "סיור בהר
+ * וזוב: כרטיס דילוג על התור". כל אחד מהם מחזיר 404 — וכל אחד מהם נמצא
+ * מיד כשמסירים את התוספת. הקתדרלה מפורסמת ומצולמת, והחיפוש נכשל על
+ * סוגריים.
+ *
+ * הסדר הוא מהמדויק למוכלל, כדי שערך ספציפי לא יידרס בכללי.
+ */
+export const nameVariants = (raw = '') => {
+  const base = String(raw).replace(/\s+/g, ' ').trim();
+  if (!base) return [];
+
+  const out = [];
+  const push = (v) => {
+    const t = String(v).replace(/\s+/g, ' ').trim().replace(/[,.;·\-–—]+$/, '').trim();
+    if (t.length > 1 && !out.includes(t)) out.push(t);
+  };
+
+  push(base);
+  // מה שאחרי נקודתיים או מקף הוא תיאור הכרטיס, לא שם המקום
+  push(base.split(/[:|]/)[0]);
+  push(base.replace(/\s*[([][^)\]]*[)\]]\s*/g, ' '));
+  push(base.split(/[:|]/)[0].replace(/\s*[([][^)\]]*[)\]]\s*/g, ' '));
+  // פועל פותח: "סיור בהר וזוב" → "הר וזוב"
+  const stripped = out
+    .map((v) => v.replace(/^(סיור|ביקור|טיול|כניסה|כרטיס(ים)?|הופעה)\s+(ב|ל|ה)?/, ''))
+    .filter(Boolean);
+  stripped.forEach(push);
+
+  return out.slice(0, 5);
+};
+
+/** תקציר ערך: התמונה והמיקום, אם יש. */
+const wikiSummary = async (lang, title) => {
   const name = String(title || '').trim();
   if (!name) return null;
   try {
@@ -94,10 +131,58 @@ const wikiPhoto = async (lang, title) => {
     });
     if (!res.ok) return null;
     const data = await res.json();
-    return data.thumbnail?.source || null;
+    return {
+      photo: data.thumbnail?.source || null,
+      coords: data.coordinates
+        ? { lat: data.coordinates.lat, lng: data.coordinates.lon }
+        : null,
+    };
   } catch {
     return null;
   }
+};
+
+const wikiPhoto = async (lang, title) => {
+  const sum = await wikiSummary(lang, title);
+  return sum ? sum.photo : null;
+};
+
+/**
+ * מיקום העיר, לאימות שהערך שנמצא באמת שם.
+ *
+ * נשלף פעם אחת לעיר ונשמר, ולכן אינו מוסיף עלות מורגשת.
+ */
+const cityCoords = async (city) => {
+  const name = String(city || '').trim();
+  if (!name) return null;
+
+  const key = `city_${keyOf(name, '')}`;
+  const cached = cacheGet(key);
+  if (cached !== undefined) return cached;
+
+  const sum = (await wikiSummary('he', name)) || (await wikiSummary('en', name));
+  const coords = (sum && sum.coords) || null;
+  if (sum) cacheSet(key, coords);
+  return coords;
+};
+
+/**
+ * האם הערך שנמצא נמצא באמת בעיר הנכונה.
+ *
+ * ── למה זה קיים ──
+ * "גלריית האקדמיה" מחזירה בוויקיפדיה את המוזיאון שבוונציה: תצלום
+ * אמיתי, מקום אמיתי, ומאתיים קילומטר מפירנצה. זו בדיוק אותה תקלה
+ * שהתחלנו ממנה — תמונה שאינה של המקום — רק בלבוש משכנע יותר.
+ *
+ * ערך בלי קואורדינטות עובר: מאכל, מנהג או מושג אינם נמצאים בשום מקום,
+ * ופסילתם הייתה מוחקת את "קרואסון" ואת "בף בורגיניון".
+ */
+const MAX_KM_FROM_CITY = 60;
+
+const belongsToCity = (articleCoords, city) => {
+  if (!articleCoords || !city) return true;
+  const km = distanceKmExact(articleCoords, city);
+  return km == null || km <= MAX_KM_FROM_CITY;
 };
 
 /** תמונה מתגית "lang:Title" כפי שהיא מופיעה ב-OpenStreetMap. */
@@ -115,13 +200,26 @@ const photoFromWikiTag = (tag) => {
  * @param {string} displayName השם המוצג, בעברית
  * @param {string} localName   השם המקומי, אם ידוע
  */
-export const getPlacePhotoFast = async (displayName, localName = '') => {
-  const key = `photo_${keyOf(displayName, localName)}`;
+export const getPlacePhotoFast = async (displayName, localName = '', city = '') => {
+  const key = `photo_${keyOf(displayName, `${localName}|${city}`)}`;
   const cached = cacheGet(key);
   if (cached !== undefined) return cached;
 
-  let photo = await wikiPhoto('he', displayName);
-  if (!photo && localName) photo = await wikiPhoto('en', localName);
+  const anchor = await cityCoords(city);
+  let photo = null;
+
+  const tryLang = async (lang, name) => {
+    for (const variant of nameVariants(name)) {
+      const sum = await wikiSummary(lang, variant);
+      if (!sum || !sum.photo) continue;
+      // תמונה של המקום הנכון בלבד. ערך בעיר אחרת נדחה גם כשהוא תקין.
+      if (belongsToCity(sum.coords, anchor)) return sum.photo;
+    }
+    return null;
+  };
+
+  photo = await tryLang('he', displayName);
+  if (!photo && localName) photo = await tryLang('en', localName);
 
   // null נשמר גם הוא: ויקיפדיה החזירה תשובה ברורה שאין ערך כזה, וזו
   // ידיעה ולא כישלון. חיפוש חוזר בכל טעינה לא היה מוצא יותר.
