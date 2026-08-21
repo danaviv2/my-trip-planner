@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**`STATUS.md`** holds what is open right now, the standing design decisions, and the
+traps already paid for. Read it before starting work; update it when the picture
+changes.
+
 ## Commands
 
 ```bash
