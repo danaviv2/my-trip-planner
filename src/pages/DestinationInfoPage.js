@@ -61,6 +61,8 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchDestinationFromAI } from '../services/aiDestinationService';
 import { useTripContext } from '../contexts/TripContext';
+import PlaceImage from '../components/destination-info/PlaceImage';
+import { getPlaceMedia } from '../services/placeMediaService';
 
 const DestinationInfoPage = () => {
   const { t } = useTranslation();
@@ -758,7 +760,20 @@ const DestinationInfoPage = () => {
   );
 
   // חלק כרטיס מסעדה
-  const RestaurantCard = ({ restaurant }) => (
+  const RestaurantCard = ({ restaurant }) => {
+    // הכתובת נמשכת פעם אחת לכל מסעדה, ונשמרת במטמון שבועי בשירות עצמו.
+    const [officialSite, setOfficialSite] = useState('');
+
+    useEffect(() => {
+      let alive = true;
+      // בלי שם מקומי אין מה לחפש, ולכן גם לא יוצג כפתור אתר.
+      if (!restaurant.nameEn) return undefined;
+      getPlaceMedia(restaurant.nameEn, destinationData?.nameEn || destinationData?.name || '', destinationData?.country || '')
+        .then((m) => { if (alive) setOfficialSite(m.website || ''); });
+      return () => { alive = false; };
+    }, [restaurant.nameEn]);
+
+    return (
     <Card sx={{ 
       height: '100%', 
       borderRadius: '16px', 
@@ -819,12 +834,17 @@ const DestinationInfoPage = () => {
             מפה
           </Button>
           
-          {restaurant.website && (
+          {/* ── הקישור מגיע מ-OpenStreetMap ולא מהנתונים ──
+              שדה website שהגיע עם המסעדה נוצר על ידי המודל, ולכן נראה
+              סביר ומוביל לדף שגיאה: "אתר זה לא נתמך". הכתובת שנמשכת
+              כאן נתרמה ומתוחזקת בידי אדם. אין כתובת — אין כפתור, שזה
+              עדיף על כפתור שמאכזב. */}
+          {officialSite && (
             <Button
               variant="contained"
               size="small"
               disableElevation
-              onClick={() => window.open(restaurant.website)}
+              onClick={() => window.open(officialSite, '_blank', 'noopener,noreferrer')}
               sx={{ 
                 borderRadius: '8px', 
                 flex: 1,
@@ -837,8 +857,9 @@ const DestinationInfoPage = () => {
         </Box>
       </CardContent>
     </Card>
-  );
-  
+    );
+  };
+
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
@@ -1558,12 +1579,16 @@ const DestinationInfoPage = () => {
                           }}
                         >
                           <Box sx={{ position: 'relative' }}>
-                            <CardMedia
-                              component="img"
-                              height="180"
-                              image={attraction.image}
-                              alt={attraction.name}
-                              sx={{ objectFit: 'cover' }}
+                            {/* התמונה נמשכת לפי שם המקום. השדה image
+                                שהגיע מהנתונים הוא תצלום אקראי ואינו
+                                בשימוש עוד. */}
+                            <PlaceImage
+                              name={attraction.name}
+                              lookup={attraction.nameEn || ''}
+                              city={destinationData?.nameEn || destinationData?.name || ''}
+                              country={destinationData?.country || ''}
+                              height={180}
+                              icon="🏛️"
                             />
                             <Box 
                               sx={{ 
@@ -1728,11 +1753,13 @@ const DestinationInfoPage = () => {
                               }
                             }}
                           >
-                            <CardMedia
-                              component="img"
-                              height="140"
-                              image={market.image}
-                              alt={market.name}
+                            <PlaceImage
+                              name={market.name}
+                              lookup={market.nameEn || ''}
+                              city={destinationData?.nameEn || destinationData?.name || ''}
+                              country={destinationData?.country || ''}
+                              height={140}
+                              icon="🧺"
                             />
                             <CardContent>
                               <Typography variant="h6" component="h3" fontWeight="600" gutterBottom>

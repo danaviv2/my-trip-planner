@@ -38,6 +38,13 @@ export const fetchDestinationFromAI = async (destinationName) => {
   // פרומפט קצר וממוקד - פחות טוקנים = תגובה מהירה יותר
   const prompt = `You are a travel guide. Return ONLY a valid JSON object (no markdown, no extra text) about "${destinationName}" for Israeli tourists. Use Hebrew for all text values.
 
+CRITICAL: every place also carries "nameEn" — the official name as written locally
+(e.g. "Basilica di Santa Maria del Fiore", "Mercato Centrale"). It is used to look the
+place up in map and encyclopedia sources, which do not recognise Hebrew names, and a
+wrong value there means the place is shown without a photo. Never translate it to
+English if the place is known locally by another language. Do NOT invent website
+addresses — that field was removed.
+
 Required JSON structure:
 {
   "country": "country name in Hebrew",
@@ -51,13 +58,13 @@ Required JSON structure:
   "seasons": {"summer": "summer description with temps", "winter": "winter description with temps"},
   "events": [{"name":"event","date":"month","description":"desc"}],
   "attractions": [
-    {"name":"name","rating":4.5,"description":"desc in Hebrew","recommendedDuration":"X hours","price":"price","tips":"tip"}
+    {"name":"name in Hebrew","nameEn":"official local/English name","rating":4.5,"description":"desc in Hebrew","recommendedDuration":"X hours","price":"price","tips":"tip"}
   ],
   "food": {
     "intro": "cuisine intro in Hebrew",
     "dishes": [{"name":"dish","description":"desc"}],
-    "restaurants": [{"name":"name","rating":4.4,"description":"desc","cuisine":"type","priceRange":"$$","area":"area","website":""}],
-    "markets": [{"name":"name","description":"desc","hours":"hours"}]
+    "restaurants": [{"name":"name in Hebrew","nameEn":"official local name","rating":4.4,"description":"desc","cuisine":"type","priceRange":"$$","area":"area"}],
+    "markets": [{"name":"name in Hebrew","nameEn":"official local name","description":"desc","hours":"hours"}]
   },
   "transportation": {
     "overview": "transport overview",
