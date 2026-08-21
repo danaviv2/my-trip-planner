@@ -226,6 +226,31 @@ What "easy" looked like on the days it cost the most:
   photos under real place names; a plausible URL from a model instead of a maintained
   one. An empty field is honest and gets corrected; an invented one is trusted.
 
+### Survey the whole input set before writing integration code
+
+The costliest habit is not the wrong fix — it is discovering the requirements one
+round at a time, each round costing a deploy, a refresh and a report.
+
+**Before wiring a solution in, run it against every real input the screen will hand
+it, and read the results.** Not one convenient example. Not values typed into a test.
+The actual dataset: every attraction in every city, with the punctuation, the language
+and the context they really carry.
+
+The place-photo work took three rounds that one survey would have collapsed into one:
+
+| Round | What broke | Visible in a full survey? |
+|---|---|---|
+| 1 | Names arrive in Hebrew, tested in English | yes — every name in the data is Hebrew |
+| 2 | `"...(הדואומו)"` returns 404 | yes — most names carry a parenthetical |
+| 3 | "גלריית האקדמיה" resolves to Venice | yes — the coordinates say 200 km away |
+
+Each was found only after the user reported the screen still looked wrong. All three
+sat in plain view in the data the whole time.
+
+So: enumerate the real inputs, run the candidate against all of them, tabulate hits,
+misses and *wrong* hits — a wrong hit is the dangerous column and it never appears in a
+pass/fail count. Only then integrate.
+
 Before shipping, ask: is this the right answer, or the one that was in reach? If the
 right one is genuinely too large, say so explicitly and name what was traded away —
 do not let a stopgap pass as the solution.

@@ -121,7 +121,18 @@ export const nameVariants = (raw = '') => {
   return out.slice(0, 5);
 };
 
-/** תקציר ערך: התמונה והמיקום, אם יש. */
+/**
+ * תקציר ערך: התמונה והמיקום.
+ *
+ * ── שלוש תוצאות ולא שתיים ──
+ * נמצא · אין ערך כזה · הבדיקה נכשלה. ההבחנה בין השניים האחרונים
+ * מכריעה: 404 הוא ידיעה ששווה לשמור, ואילו 429 — ויקיפדיה מגבילה קצב,
+ * ודף עם שש-עשרה אטרקציות מגיע לשם בקלות — הוא כישלון זמני. שמירתו
+ * במטמון הייתה מקבעת "אין תמונה" לשבוע שלם על מקום שיש לו תמונה.
+ *
+ * @returns {{photo, coords}|null|false} אובייקט = נמצא · null = אין
+ *   ערך · false = הבדיקה נכשלה, אין להסיק דבר
+ */
 const wikiSummary = async (lang, title) => {
   const name = String(title || '').trim();
   if (!name) return null;
@@ -129,7 +140,8 @@ const wikiSummary = async (lang, title) => {
     const res = await fetch(WIKI_REST(lang, name), {
       headers: { 'Api-User-Agent': 'MyTripPlanner/1.0 (educational)' },
     });
-    if (!res.ok) return null;
+    if (res.status === 404) return null;
+    if (!res.ok) return false;
     const data = await res.json();
     return {
       photo: data.thumbnail?.source || null,
@@ -138,13 +150,76 @@ const wikiSummary = async (lang, title) => {
         : null,
     };
   } catch {
-    return null;
+    return false;
   }
+};
+
+/**
+ * תור בקשות עם רווח קבוע.
+ *
+ * הדפדפן ירה שש-עשרה בקשות בבת אחת וקיבל 429. הרווח קטן — ויקיפדיה
+ * אינה מגבילה לבקשה בשנייה כמו שירות המפות — אך די בו כדי לא להיראות
+ * כמטח.
+ */
+const GAP_MS = 250;
+let chain = Promise.resolve();
+
+const queued = (fn) => {
+  const run = chain.then(fn);
+  chain = run.then(
+    () => new Promise((r) => setTimeout(r, GAP_MS)),
+    () => new Promise((r) => setTimeout(r, GAP_MS))
+  );
+  return run;
 };
 
 const wikiPhoto = async (lang, title) => {
   const sum = await wikiSummary(lang, title);
   return sum ? sum.photo : null;
+};
+
+const WIKI_SEARCH = (lang, q) =>
+  `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}` +
+  '&srlimit=3&format=json&origin=*';
+
+/**
+ * האם הכותרת שנמצאה מתארת את מה שחיפשנו.
+ *
+ * ── למה שער נוסף על החיפוש ──
+ * החיפוש פותר פירושונים וניסוחים ("קתדרלת נוטרדאם" → "קתדרלת נוטרדאם
+ * (פריז)"), אך גם מחזיר שכנים סבירים למראה: "מקדש סנסו-ג׳י" החזיר
+ * "טאייטו", שהוא הרובע שבו המקדש עומד. יש לו תמונה, הוא בטוקיו, ובדיקת
+ * המרחק הייתה מאשרת אותו — תמונה אמיתית של הדבר הלא נכון.
+ *
+ * לכן נדרשת מילה משמעותית משותפת. זה פוסל את "טאייטו" ומאשר את
+ * "מוזיאוני הוותיקן" מול "הוותיקן ומוזיאוניו".
+ */
+const NOISE_WORDS = /^(ה|ו|של|את|the|of|de|di|la|le|il|and|museum|מוזיאון|קתדרלת|מקדש|גן|שוק|רחוב)$/i;
+
+const meaningfulWords = (text) =>
+  String(text || '')
+    .replace(/[()[\]{}''"״׳,.:;·\-–—]/g, ' ')
+    .split(/\s+/)
+    .map((w) => w.trim())
+    .filter((w) => w.length >= 3 && !NOISE_WORDS.test(w));
+
+const titleMatches = (query, title) => {
+  const a = meaningfulWords(query);
+  const b = meaningfulWords(title);
+  if (!a.length || !b.length) return false;
+  return a.some((w) => b.some((t) => t.includes(w) || w.includes(t)));
+};
+
+/** הכותרת המתאימה ביותר בוויקיפדיה, דרך חיפוש ולא דרך ניחוש כותרת. */
+const searchTitles = async (lang, query) => {
+  try {
+    const res = await fetch(WIKI_SEARCH(lang, query));
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data?.query?.search || []).map((r) => r.title);
+  } catch {
+    return [];
+  }
 };
 
 /**
@@ -160,9 +235,11 @@ const cityCoords = async (city) => {
   const cached = cacheGet(key);
   if (cached !== undefined) return cached;
 
-  const sum = (await wikiSummary('he', name)) || (await wikiSummary('en', name));
+  const he = await queued(() => wikiSummary('he', name));
+  const sum = he || (await queued(() => wikiSummary('en', name)));
+  if (sum === false || sum === null) return null;
   const coords = (sum && sum.coords) || null;
-  if (sum) cacheSet(key, coords);
+  cacheSet(key, coords);
   return coords;
 };
 
@@ -208,9 +285,12 @@ export const getPlacePhotoFast = async (displayName, localName = '', city = '') 
   const anchor = await cityCoords(city);
   let photo = null;
 
+  let failed = false;
+
   const tryLang = async (lang, name) => {
     for (const variant of nameVariants(name)) {
-      const sum = await wikiSummary(lang, variant);
+      const sum = await queued(() => wikiSummary(lang, variant));
+      if (sum === false) { failed = true; continue; }
       if (!sum || !sum.photo) continue;
       // תמונה של המקום הנכון בלבד. ערך בעיר אחרת נדחה גם כשהוא תקין.
       if (belongsToCity(sum.coords, anchor)) return sum.photo;
@@ -219,11 +299,24 @@ export const getPlacePhotoFast = async (displayName, localName = '', city = '') 
   };
 
   photo = await tryLang('he', displayName);
+
+  // חיפוש, כשהכותרת המדויקת לא הספיקה. פותר פירושונים וניסוחים, ולכן
+  // הוא זה שמביא את "קתדרלת נוטרדאם" ואת "מוזיאוני הוותיקן".
+  if (!photo) {
+    const titles = await queued(() => searchTitles('he', city ? `${displayName} ${city}` : displayName));
+    for (const title of titles) {
+      if (!titleMatches(displayName, title)) continue;
+      const sum = await queued(() => wikiSummary('he', title));
+      if (sum === false) { failed = true; continue; }
+      if (sum && sum.photo && belongsToCity(sum.coords, anchor)) { photo = sum.photo; break; }
+    }
+  }
+
   if (!photo && localName) photo = await tryLang('en', localName);
 
-  // null נשמר גם הוא: ויקיפדיה החזירה תשובה ברורה שאין ערך כזה, וזו
-  // ידיעה ולא כישלון. חיפוש חוזר בכל טעינה לא היה מוצא יותר.
-  cacheSet(key, photo || null);
+  // null נשמר רק כשוויקיפדיה ענתה במפורש שאין ערך כזה. אם בקשה כלשהי
+  // נכשלה בדרך, אין מסקנה לשמור — הניסיון הבא יבדוק מחדש.
+  if (photo || !failed) cacheSet(key, photo || null);
   return photo || null;
 };
 
