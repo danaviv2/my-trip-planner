@@ -39,6 +39,15 @@ const WIKI_REST = (lang, title) =>
 /** מדיניות Nominatim מגבילה לבקשה בשנייה. */
 const RATE_MS = 1100;
 
+/**
+ * גרסת המטמון.
+ *
+ * העלאתה מבטלת ערכים שנשמרו לפני תיקון. נדרש עכשיו משום שביקורים
+ * שקדמו להגדרת המפתח שמרו "אין אתר" לשבוע: השרת החזיר ערך ריק עם
+ * הסבר NOT_CONFIGURED, והצד הזה קרא רק את הערך.
+ */
+const CACHE_VERSION = 'v2';
+
 const LS_PREFIX = 'place_media_';
 const LS_TTL = 7 * 24 * 60 * 60 * 1000;
 
@@ -55,7 +64,7 @@ const MEM = {};
  * גיבוב על המחרוזת המלאה מטפל בעברית, באיטלקית ובכל שפה אחרת.
  */
 const keyOf = (name, city) => {
-  const raw = `${name}|${city}`.toLowerCase().trim();
+  const raw = `${CACHE_VERSION}|${name}|${city}`.toLowerCase().trim();
   let h = 5381;
   for (let i = 0; i < raw.length; i += 1) h = ((h << 5) + h + raw.charCodeAt(i)) >>> 0;
   return `${raw.replace(/[^a-z0-9|]+/g, '_').slice(0, 40)}_${h.toString(36)}`;
@@ -365,6 +374,12 @@ const websiteFromServer = async (name, city) => {
     );
     if (!res.ok) return null;
     const data = await res.json();
+
+    // "המפתח אינו מוגדר" הוא היעדר ידיעה ולא תשובה. הוא חוזר כ-200 עם
+    // ערך ריק כדי שהמסך לא ישבר, אך שמירתו במטמון קיבעה "אין אתר"
+    // לשבוע על מסעדות שנבדקו לפני שהמפתח הוגדר — וזה מה שקרה בפועל.
+    if (data.source === 'NOT_CONFIGURED') return null;
+
     return typeof data.website === 'string' ? data.website : null;
   } catch {
     return null;
@@ -384,7 +399,9 @@ export const getPlaceMedia = async (name, city = '', country = '') => {
   const cached = cacheGet(key);
   if (cached !== undefined) return cached;
 
-  const osm = await lookupOsm(city ? `${clean}, ${city}` : clean);
+  // גם קריאות המפות עוברות בתור. כמה כרטיסי מסעדה נטענים יחד, ומטח
+  // בקשות ל-Nominatim גורר חסימה שמוחקת את הכפתור מכולם.
+  const osm = await queued(() => lookupOsm(city ? `${clean}, ${city}` : clean));
 
   let photo = await getPlacePhotoFast(clean, clean);
   if (!photo && osm && osm.wikipedia) photo = await photoFromWikiTag(osm.wikipedia);
