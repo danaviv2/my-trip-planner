@@ -766,12 +766,16 @@ const DestinationInfoPage = () => {
 
     useEffect(() => {
       let alive = true;
-      // בלי שם מקומי אין מה לחפש, ולכן גם לא יוצג כפתור אתר.
-      if (!restaurant.nameEn) return undefined;
-      getPlaceMedia(restaurant.nameEn, destinationData?.nameEn || destinationData?.name || '', destinationData?.country || '')
+      // שם המסעדה עצמו הוא בדרך כלל המקומי — "Da Enzo al 29", "Roscioli"
+      // — ולכן הוא מספיק לחיפוש. הדרישה ל-nameEn בלבד הסתירה את הכפתור
+      // מכל המסעדות בנתונים הקיימים, שאין בהם שדה כזה.
+      const lookup = restaurant.nameEn || restaurant.name;
+      if (!lookup) return undefined;
+
+      getPlaceMedia(lookup, destinationData?.nameEn || destinationData?.name || '', destinationData?.country || '')
         .then((m) => { if (alive) setOfficialSite(m.website || ''); });
       return () => { alive = false; };
-    }, [restaurant.nameEn]);
+    }, [restaurant.nameEn, restaurant.name]);
 
     return (
     <Card sx={{ 
