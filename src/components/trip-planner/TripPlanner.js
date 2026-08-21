@@ -555,10 +555,22 @@ const TripPlanner = () => {
 
   // כשטיול שמור נטען מהקונטקסט — קפוץ ישר לשלב האיטינרריה
   useEffect(() => {
-    if (tripPlan?.dailyItinerary?.length > 0 && activeStep === 0) {
-      if (tripPlan.destination) setDestination(tripPlan.destination);
-      setActiveStep(2);
-    }
+    if (!(tripPlan?.dailyItinerary?.length > 0) || activeStep !== 0) return;
+
+    // ── למה התנאי הזה נדרש ──
+    // הגעה מדף הבית עם יעד חדש דוחקת את הטיוטה הקודמת למגירה, אבל שני
+    // האפקטים רצים באותו render ורואים את אותו tripPlan ישן. בלי
+    // התנאי, השורה שמתחת הייתה דורסת את שדה היעד בחזרה לטיול הקודם
+    // וקופצת לשלב האיטינרריה שלו: המשתמש ביקש יפן וקיבל את גנואה, עם
+    // באנר שמודיע שגנואה נשמרה. רענון "תיקן" את זה רק משום שאז הטיוטה
+    // כבר הייתה ריקה מלכתחילה.
+    const asked = String(destinationParam || '').trim().toLowerCase();
+    const loaded = String(tripPlan.destination || '').trim().toLowerCase();
+    if (asked && asked !== loaded) return;
+
+    if (tripPlan.destination) setDestination(tripPlan.destination);
+    setActiveStep(2);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripPlan]);
 
   // שליפת אטרקציות מומלצות כשהיעד משתנה
