@@ -78,20 +78,41 @@ const TravelInfoComponent = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [resetDone, setResetDone] = useState(null);
 
-  // נסיעה שהסתיימה אינה רעש: היא נושאת הוצאות, אישורים ולעיתים תביעת
-  // פיצוי שטרם הוגשה. אבל נסיעה משנה שעברה כן מטשטשת את השאלה היחידה
-  // שמעניינת במסך — מה קרוב.
+  // ── הגבול הוא היום שבו הנסיעה נגמרה ──
+  // קודם נשארה נסיעה שהסתיימה למעלה תשעים יום, מתוך מחשבה שהגבול הוא
+  // "פתוח מול סגור" ולא "עבר מול עתיד": אחרי החזרה עוד מגישים החזרים
+  // ובודקים חיובים. הכוונה נכונה, המימוש טשטש: נסיעה שהסתיימה לפני
+  // חודש וחצי הופיעה תחת "הנסיעות שלך", כותרת שנקראת כ"הקרובות".
   //
-  // הגבול אינו "עבר מול עתיד" אלא "פתוח מול סגור": בשבועות שאחרי
-  // החזרה עוד מגישים החזרים ובודקים חיובים, ולכן נסיעה טרייה נשארת
-  // למעלה. אחרי כן היא היסטוריה.
+  // לכן ההפרדה חדה — הסתיימה, ירדה למטה — ומה שהיה חשוב באמת נשמר
+  // בדרך אחרת: נסיעה שהסתיימה לאחרונה מסומנת ככזו ברשימת הקודמות,
+  // וכך אינה נבלעת בהיסטוריה.
+  /**
+   * נסיעה שהסתיימה בחודשיים האחרונים.
+   *
+   * בטווח הזה עוד מגישים החזרים, בודקים חיובים ולעיתים תביעת פיצוי.
+   * היא בארכיון, אך אינה קפואה.
+   */
+  const isRecent = (trip) => {
+    if (!trip?.endDate) return false;
+    const [y, m, d] = String(trip.endDate).split('-').map(Number);
+    if (!y || !m || !d) return false;
+    return Date.now() - new Date(y, m - 1, d).getTime() < 60 * 86400000;
+  };
+
   const { upcoming, past } = useMemo(() => {
-    const ACTIVE_DAYS = 90;
-    const cutoff = new Date(Date.now() - ACTIVE_DAYS * 86400000).toISOString().slice(0, 10);
+    // מרכיבי הזמן המקומיים ולא toISOString: חצות בישראל היא אתמול
+    // בשעון UTC, ונסיעה שנגמרת היום הייתה יורדת לארכיון יום מוקדם מדי.
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    const ended = (t) => !t.undated && t.endDate && t.endDate < today;
+
     return {
       // הקבוצה הלא-משויכת אינה ארכיון: היא דורשת טיפול, ולכן נשארת למעלה.
-      upcoming: trips.filter((t) => t.undated || !t.endDate || t.endDate >= cutoff),
-      past: trips.filter((t) => !t.undated && t.endDate && t.endDate < cutoff),
+      upcoming: trips.filter((t) => !ended(t)),
+      // החדשה ביותר ראשונה — אחרי החזרה מסתכלים על מה שזה עתה נגמר.
+      past: trips.filter(ended).sort((a, b) => String(b.endDate).localeCompare(String(a.endDate))),
     };
   }, [trips]);
 
@@ -484,7 +505,14 @@ const TravelInfoComponent = () => {
           >
             נסיעות קודמות ({past.length})
           </Button>
-          {showPast && <Box sx={{ mt: 1 }}>{past.map((trip) => renderTrip(trip, -1))}</Box>}
+          {/* נסיעה שזה עתה נגמרה נפתחת מעצמה. זה מה שנשמר מהכוונה
+              המקורית: בשבועות שאחרי החזרה עוד מגישים החזרים ובודקים
+              חיובים, ואין סיבה שתידרש חפירה בארכיון כדי להגיע אליה. */}
+          {showPast && (
+            <Box sx={{ mt: 1 }}>
+              {past.map((trip, i) => renderTrip(trip, i === 0 && isRecent(trip) ? 0 : -1))}
+            </Box>
+          )}
         </Box>
       )}
 
