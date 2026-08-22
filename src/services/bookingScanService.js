@@ -100,7 +100,14 @@ export const scanMailbox = async (
               ...(result.cancelledReferences || []).map((ref) => ({ confirmationNumber: ref }))
             );
           } else {
-            bookings.push(...toBookings(result, { sourceSubject: email.subject, sourceKind: 'body' }));
+            // מזהה המייל נשמר על ההזמנה. הוא נשלף ממילא בזמן הסריקה — שימש
+            // למשיכת הקובץ המצורף ונזרק — ובלעדיו "לא לרוץ לחפש במייל" אינו
+            // מתקיים: יש פרטים, אין מסמך. בשדה התעופה מבקשים את האישור.
+            bookings.push(...toBookings(result, {
+              sourceSubject: email.subject,
+              sourceKind: 'body',
+              sourceMessageId: email.id,
+            }));
           }
           // "משהו" אינו "מספיק". מייל שגופו מכתב לוואי מניב רשומה שכל
           // תוכנה שם הספק, וזו חסמה את הקובץ המצורף שבו הפוליסה כולה —
@@ -133,7 +140,11 @@ export const scanMailbox = async (
               );
             } else {
               bookings.push(
-                ...toBookings(result, { sourceSubject: email.subject, sourceKind: pdf.filename || 'קובץ מצורף' })
+                ...toBookings(result, {
+                  sourceSubject: email.subject,
+                  sourceKind: pdf.filename || 'קובץ מצורף',
+                  sourceMessageId: email.id,
+                })
               );
             }
             gotSomething = true;

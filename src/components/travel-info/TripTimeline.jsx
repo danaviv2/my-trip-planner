@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Typography, IconButton, Chip, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
+import MailIcon from '@mui/icons-material/MailOutline';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import UpIcon from '@mui/icons-material/ArrowUpward';
 import DownIcon from '@mui/icons-material/ArrowDownward';
@@ -141,6 +142,30 @@ const EventRow = ({ ev, onDelete, onEdit, onMove, canUp, canDown, mapNumber }) =
           בולעים 80 מהם — הכותרת נדחקה ל-15 פיקסל והתרנדרה אות בשורה.
           שורה נפרדת מבטיחה לכותרת את מלוא רוחב הכרטיס תמיד, בלי תלות
           בכמה פקדים יתווספו בעתיד. */}
+      {/* ── האישור המקורי ──
+          עד כה היו כאן הפרטים בלבד. בדלפק הצ'ק-אין מבקשים את המסמך,
+          ופרטים אינם מסמך. מזהה המייל נשלף ממילא בזמן הסריקה — הוא
+          שימש למשיכת הקובץ המצורף ונזרק — ולכן הקישור לא עלה דבר.
+          מוצג רק כשהמזהה קיים: הזמנות שנוספו ידנית ורשומות ישנות אינן
+          מקבלות כפתור שיוביל לשום מקום. */}
+      {ev.booking?.sourceMessageId && (
+        <Box
+          component="a"
+          href={`https://mail.google.com/mail/u/0/#all/${ev.booking.sourceMessageId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          sx={{
+            display: 'inline-flex', alignItems: 'center', gap: 0.5, mt: 0.75,
+            fontSize: '0.72rem', color: 'primary.main', textDecoration: 'none',
+            fontWeight: 600,
+            '&:hover': { textDecoration: 'underline' },
+          }}
+        >
+          <MailIcon sx={{ fontSize: '0.9rem' }} />
+          פתח את האישור המקורי
+        </Box>
+      )}
+
       {(onEdit || onDelete) && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, mt: 0.5, mb: -0.75, mr: -0.75 }}>
           {/* אותם פקדים ובאותו סדר כמו במסך תכנון הטיול. שני מסכים
