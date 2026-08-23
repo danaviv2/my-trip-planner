@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Button, Typography } from '@mui/material';
 import { normalizeBooking } from '../../services/tripGroupingService';
+import { identifyReference, referenceConflict } from '../../services/referenceIdentityService';
 
 /**
  * למה נסיעה מתחילה ונגמרת מתי שהיא נגמרת.
@@ -29,7 +30,8 @@ const TripBoundsReport = ({ trips = [] }) => {
 
   const lines = [];
   trips.forEach((trip) => {
-    const items = (trip.bookings || []).map(normalizeBooking);
+    const raw = trip.bookings || [];
+    const items = raw.map(normalizeBooking);
     const dated = items.filter((x) => x.start);
 
     const first = dated.reduce((min, x) => (!min || x.start < min.start ? x : min), null);
@@ -42,8 +44,17 @@ const TripBoundsReport = ({ trips = [] }) => {
     lines.push(`■ ${trip.destination || '—'}  ${trip.startDate || '—'} → ${trip.endDate || '—'}${trip.undated ? '  [ללא תאריכים]' : ''}`);
     lines.push(`   פותח:  ${first ? `${first.type} · ${fmt(first.start)} · ${String(first.title).slice(0, 24)}` : '—'}`);
     lines.push(`   סוגר:  ${last ? `${last.type} · ${fmt(last.end || last.start)} · ${String(last.title).slice(0, 24)}` : '—'}`);
-    items.forEach((x) => {
+    items.forEach((x, i) => {
       lines.push(`     · ${String(x.type).padEnd(11)} ${fmt(x.start)}–${fmt(x.end || x.start)}  ${String(x.title).slice(0, 26)}`);
+
+      // מה שהאסמכתה מסגירה על עצמה, וסתירה בינה לבין הסוג שנשמר.
+      // רוב האסמכתאות אינן ניתנות לזיהוי — לרוב הספקים אין תבנית
+      // ייחודית — ושתיקה כאן היא התשובה הנכונה, לא פער.
+      const src = raw[i];
+      const id = identifyReference(src && src.confirmationNumber);
+      if (id) lines.push(`         ↳ אסמכתה: ${id.vendor} · ${id.why}`);
+      const clash = referenceConflict(src);
+      if (clash) lines.push(`         ⚠ ${clash}`);
     });
     lines.push('');
   });
