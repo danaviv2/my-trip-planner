@@ -563,7 +563,9 @@
     "errorLoading": "שגיאה בטעינת מידע",
     "errorCheckConnection": "בדוק את חיבור האינטרנט שלך ונסה שוב",
     "errorRetry": "נסה שוב",
-    "errorBackToSearch": "חזור לחיפוש"
+    "errorBackToSearch": "חזור לחיפוש",
+    "map": "מפה",
+    "website_short": "אתר"
   },
   "tripPlanner": {
     "title": "תכנון טיול ל{{location}}",

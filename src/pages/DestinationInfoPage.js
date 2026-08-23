@@ -142,7 +142,13 @@ const DestinationInfoPage = () => {
         attractions: [
           { name: 'מגדל אייפל', rating: 4.7, description: 'סמל פריז, נוף פנורמי מרהיב.', recommendedDuration: '2-3 שעות', price: '€18-28' },
           { name: 'מוזיאון הלובר', rating: 4.8, description: 'המוזיאון הגדול בעולם, בית המונה ליזה.', recommendedDuration: '3-4 שעות', price: '€17' },
-          { name: 'קתדרלת נוטרדאם', rating: 4.7, description: 'קתדרלה גותית אייקונית בלב פריז.', recommendedDuration: '1-2 שעות', price: 'חינם' }
+          { name: 'קתדרלת נוטרדאם', rating: 4.7, description: 'קתדרלה גותית אייקונית בלב פריז.', recommendedDuration: '1-2 שעות', price: 'חינם' },
+          { name: 'מוזיאון אורסיי', nameEn: 'Musée d\'Orsay', description: 'אוסף האימפרסיוניסטים הגדול בעולם, בתוך תחנת רכבת משופצת.', recommendedDuration: '2-3 שעות' },
+          { name: 'שער הניצחון', nameEn: 'Arc de Triomphe', description: 'מרפסת התצפית משקיפה על שתים-עשרה השדרות היוצאות ממנו.', recommendedDuration: 'שעה' },
+          { name: 'ארמון ורסאי', nameEn: 'Palace of Versailles', description: 'ארמון המלוכה והגנים - יום שלם מחוץ לעיר.', recommendedDuration: '4-5 שעות' },
+          { name: 'בזיליקת סקרה-קר', nameEn: 'Sacré-Cœur', description: 'הכיפה הלבנה מעל מונמארטר, והנוף הרחב ביותר על פריז.', recommendedDuration: '1-2 שעות', price: 'חינם' },
+          { name: 'מרכז פומפידו', nameEn: 'Centre Pompidou', description: 'אמנות מודרנית בבניין שכל צנרתו בחוץ.', recommendedDuration: '2-3 שעות' },
+          { name: 'שאנז אליזה', nameEn: 'Champs-Élysées', description: 'השדרה המפורסמת, משער הניצחון עד כיכר קונקורד.', recommendedDuration: '1-2 שעות', price: 'חינם' }
         ],
         food: {
           intro: 'פריז היא גן עדן קולינרי - מבתי קפה קסומים ועד מסעדות כוכבי מישלן.',
@@ -195,7 +201,13 @@ const DestinationInfoPage = () => {
         attractions: [
           { name: 'הקולוסיאום', rating: 4.8, description: 'האמפיתיאטר האייקוני מהמאה הראשונה.', recommendedDuration: '2-3 שעות', price: '€16' },
           { name: 'הוותיקן ומוזיאוניו', rating: 4.9, description: 'בית הפאפה, כולל קפלה הסיסטינית ומוזיאונים עשירים.', recommendedDuration: '4-5 שעות', price: '€17' },
-          { name: 'מזרקת טרווי', rating: 4.6, description: 'המזרקה הבארוקית המפורסמת - זרוק מטבע ותחזור!', recommendedDuration: '30 דקות', price: 'חינם' }
+          { name: 'מזרקת טרווי', rating: 4.6, description: 'המזרקה הבארוקית המפורסמת - זרוק מטבע ותחזור!', recommendedDuration: '30 דקות', price: 'חינם' },
+          { name: 'הפנתיאון', nameEn: 'Pantheon', description: 'כיפת הבטון הגדולה בעולם העתיק, שלמה אחרי אלפיים שנה.', recommendedDuration: 'שעה' },
+          { name: 'פורום רומאנום', nameEn: 'Roman Forum', description: 'לב רומא העתיקה - כיכר, מקדשים ובתי משפט.', recommendedDuration: '2-3 שעות' },
+          { name: 'מדרגות ספרד', nameEn: 'Spanish Steps', description: 'שלוש-מאות שלושים ושמונה מדרגות בין הכיכר לכנסייה.', recommendedDuration: '30 דקות', price: 'חינם' },
+          { name: 'פיאצה נאבונה', nameEn: 'Piazza Navona', description: 'כיכר בארוקית על מתווה אצטדיון עתיק, עם שלוש מזרקות.', recommendedDuration: '45 דקות', price: 'חינם' },
+          { name: 'קסטל סנט אנג\'לו', nameEn: 'Castel Sant\'Angelo', description: 'מאוזוליאום שהפך למבצר, ומעבר סודי אל הוותיקן.', recommendedDuration: '1-2 שעות' },
+          { name: 'טראסטווירה', nameEn: 'Trastevere', description: 'הרובע שמעבר לנהר - סמטאות, טראטוריות וחיי לילה.', recommendedDuration: '2-3 שעות', price: 'חינם' }
         ],
         food: {
           intro: 'רומא היא מקדש הפסטה, הפיצה הג\'לטו. כל שכונה מסתירה מסעדות משפחתיות נסתרות.',
@@ -248,7 +260,13 @@ const DestinationInfoPage = () => {
         attractions: [
           { name: 'מקדש סנסו-ג\'י', rating: 4.7, description: 'המקדש הבודהיסטי הוותיק ביותר בטוקיו, בשכונת אסאקוסה.', recommendedDuration: '1-2 שעות', price: 'חינם' },
           { name: 'מגדל טוקיו', rating: 4.5, description: 'מגדל תקשורת אייקוני עם נוף 360° של העיר.', recommendedDuration: '1-2 שעות', price: '¥1200' },
-          { name: 'שיבויה קרוסינג', rating: 4.6, description: 'מעבר החצייה הצפוף ביותר בעולם - חוויה בלתי נשכחת.', recommendedDuration: '30 דקות', price: 'חינם' }
+          { name: 'שיבויה קרוסינג', rating: 4.6, description: 'מעבר החצייה הצפוף ביותר בעולם - חוויה בלתי נשכחת.', recommendedDuration: '30 דקות', price: 'חינם' },
+          { name: 'מקדש מייג\'י', nameEn: 'Meiji Shrine', description: 'מקדש שינטו ביער שנשתל בידי אדם בלב העיר.', recommendedDuration: '1-2 שעות', price: 'חינם' },
+          { name: 'טוקיו סקייטרי', nameEn: 'Tokyo Skytree', description: 'המגדל הגבוה ביפן, 634 מטר, שתי קומות תצפית.', recommendedDuration: 'שעתיים' },
+          { name: 'גני שינג\'וקו גיוין', nameEn: 'Shinjuku Gyoen National Garden', description: 'גן ענק בשלושה סגנונות - יפני, אנגלי וצרפתי.', recommendedDuration: 'שעתיים' },
+          { name: 'ארמון הקיסר', nameEn: 'Tokyo Imperial Palace', description: 'הגנים המזרחיים פתוחים לקהל, בתוך חפיר טירת אדו.', recommendedDuration: '1-2 שעות', price: 'חינם' },
+          { name: 'אקיהברה', nameEn: 'Akihabara', description: 'רובע האלקטרוניקה, האנימה והמשחקים.', recommendedDuration: '2-3 שעות', price: 'חינם' },
+          { name: 'שוק צוקיג\'י החיצוני', nameEn: 'Tsukiji Outer Market', description: 'דוכני סושי, סכינים וכלי מטבח - בוקר בלבד.', recommendedDuration: 'שעתיים', price: 'חינם' }
         ],
         food: {
           intro: 'טוקיו היא גן עדן קולינרי עם יותר כוכבי מישלן מכל עיר אחרת בעולם.',
@@ -301,7 +319,13 @@ const DestinationInfoPage = () => {
         attractions: [
           { name: 'פסל החירות', rating: 4.7, description: 'סמל האמריקה, נגישה בספינה מהנמל.', recommendedDuration: '3-4 שעות', price: '$24' },
           { name: 'סנטרל פארק', rating: 4.8, description: 'גן הירוק עצום בלב מנהטן - לריצה, פיקניק ושלווה.', recommendedDuration: '2-4 שעות', price: 'חינם' },
-          { name: 'Empire State Building', rating: 4.6, description: 'נוף מדהים של מנהטן מהגג האייקוני.', recommendedDuration: '1-2 שעות', price: '$44' }
+          { name: 'Empire State Building', rating: 4.6, description: 'נוף מדהים של מנהטן מהגג האייקוני.', recommendedDuration: '1-2 שעות', price: '$44' },
+          { name: 'טיימס סקוור', nameEn: 'Times Square', description: 'צומת המסכים - החוויה שיא בלילה.', recommendedDuration: 'שעה', price: 'חינם' },
+          { name: 'מוזיאון המטרופוליטן', nameEn: 'Metropolitan Museum of Art', description: 'שני מיליון פריטים מכל תקופה ויבשת.', recommendedDuration: '3-4 שעות' },
+          { name: 'גשר ברוקלין', nameEn: 'Brooklyn Bridge', description: 'מעבר רגלי מעל האיסט ריבר, עם קו הרקיע מאחור.', recommendedDuration: '1-2 שעות', price: 'חינם' },
+          { name: 'אנדרטת 11 בספטמבר', nameEn: 'National September 11 Memorial', description: 'שתי בריכות במקום המגדלים, ומוזיאון לצידן.', recommendedDuration: '2-3 שעות' },
+          { name: 'הייליין', nameEn: 'High Line', description: 'פארק על מסילת רכבת מוגבהת שיצאה משימוש.', recommendedDuration: '1-2 שעות', price: 'חינם' },
+          { name: 'טופ אוף דה רוק', nameEn: '30 Rockefeller Plaza', description: 'תצפית שממנה רואים גם את האמפייר סטייט.', recommendedDuration: '1-2 שעות' }
         ],
         food: {
           intro: 'ניו יורק היא מלטינג פוט קולינרי - מכל תרבות בעולם ניתן למצוא אוכל אמיתי.',
@@ -354,7 +378,13 @@ const DestinationInfoPage = () => {
         attractions: [
           { name: 'ואט פרא קאו', rating: 4.8, description: 'מקדש בודה אמרלד - הקדוש ביותר בתאילנד.', recommendedDuration: '2 שעות', price: '500 בהט' },
           { name: 'שוק צף', rating: 4.5, description: 'סירות עמוסות פירות וירקות על תעלות עתיקות.', recommendedDuration: '2-3 שעות', price: 'חינם (כניסה)' },
-          { name: 'Chatuchak Weekend Market', rating: 4.6, description: 'השוק הגדול בעולם - 15,000 דוכנים!', recommendedDuration: '3-4 שעות', price: 'חינם' }
+          { name: 'Chatuchak Weekend Market', rating: 4.6, description: 'השוק הגדול בעולם - 15,000 דוכנים!', recommendedDuration: '3-4 שעות', price: 'חינם' },
+          { name: 'הארמון הגדול', nameEn: 'Grand Palace', description: 'מתחם המלוכה ההיסטורי - קוד לבוש מחמיר.', recommendedDuration: '2-3 שעות' },
+          { name: 'ואט פו', nameEn: 'Wat Pho', description: 'הבודהה השוכב באורך 46 מטר, ובית ספר למסאז\' תאי.', recommendedDuration: '1-2 שעות' },
+          { name: 'ואט ארון', nameEn: 'Wat Arun', description: 'מקדש השחר על גדת הנהר, יפה במיוחד בשקיעה.', recommendedDuration: 'שעה' },
+          { name: 'נהר צ\'או פראיה', nameEn: 'Chao Phraya River', description: 'סירת מעבורת בין המקדשים - התחבורה היפה בעיר.', recommendedDuration: '1-2 שעות' },
+          { name: 'כאו סאן רואד', nameEn: 'Khao San Road', description: 'רחוב התרמילאים - אוכל רחוב וחיי לילה.', recommendedDuration: 'שעתיים', price: 'חינם' },
+          { name: 'אסיאטיק', nameEn: 'Asiatique', description: 'שוק לילה על הנהר, עם גלגל ענק.', recommendedDuration: '2-3 שעות', price: 'חינם' }
         ],
         food: {
           intro: 'בנגקוק היא גן עדן של אוכל רחוב - כל פינה מגלה ריחות ומתכונים חדשים.',
@@ -407,7 +437,13 @@ const DestinationInfoPage = () => {
         attractions: [
           { name: 'סגרדה פמיליה', rating: 4.9, description: 'מופת אדריכלי של גאודי - הכנסייה הייחודית בעולם.', recommendedDuration: '2-3 שעות', price: '€26' },
           { name: 'פארק גואל', rating: 4.6, description: 'גן פנטסטי של גאודי עם נוף עצום על הים.', recommendedDuration: '1-2 שעות', price: '€10' },
-          { name: 'לה רמבלה', rating: 4.3, description: 'הרחוב המפורסם של ברצלונה - שוק, מסעדות ואמנים.', recommendedDuration: '1 שעה', price: 'חינם' }
+          { name: 'לה רמבלה', rating: 4.3, description: 'הרחוב המפורסם של ברצלונה - שוק, מסעדות ואמנים.', recommendedDuration: '1 שעה', price: 'חינם' },
+          { name: 'קאסה בטיו', nameEn: 'Casa Batlló', description: 'בית גאודי עם חזית עצמות ודרקון על הגג.', recommendedDuration: '1-2 שעות' },
+          { name: 'קאסה מילה', nameEn: 'Casa Milà', description: 'La Pedrera - הבית שאין בו קו ישר אחד.', recommendedDuration: '1-2 שעות' },
+          { name: 'הרובע הגותי', nameEn: 'Gothic Quarter', description: 'סמטאות ימי-ביניימיות בין הקתדרלה לים.', recommendedDuration: '2-3 שעות', price: 'חינם' },
+          { name: 'מונז\'ואיק', nameEn: 'Montjuïc', description: 'הגבעה שמעל הנמל - טירה, גנים ומזרקה מוזיקלית.', recommendedDuration: '3 שעות', price: 'חינם' },
+          { name: 'מוזיאון פיקאסו', nameEn: 'Picasso Museum', description: 'שנות היצירה המוקדמות, בחמישה ארמונות.', recommendedDuration: 'שעתיים' },
+          { name: 'חוף ברסלונטה', nameEn: 'La Barceloneta', description: 'החוף העירוני, במרחק הליכה מהמרכז.', recommendedDuration: '2-3 שעות', price: 'חינם' }
         ],
         food: {
           intro: 'ברצלונה היא בירת הטאפאס - אוכל חברתי שמבלים עליו שעות.',
@@ -460,7 +496,13 @@ const DestinationInfoPage = () => {
         attractions: [
           { name: 'המוזיאון הבריטי', rating: 4.8, description: 'אחד המוזיאונים הגדולים בעולם - אוצרות מכל התרבויות.', recommendedDuration: '3-4 שעות', price: 'חינם' },
           { name: 'ביג בן ופרלמנט', rating: 4.6, description: 'סמל לונדון - שעון הכינוי הגדול לצד הטמזה.', recommendedDuration: '1 שעה', price: 'חינם (חיצוני)' },
-          { name: 'מוזיאון הלאומי', rating: 4.7, description: 'עצמות דינוזאורים, אמנות ומדע - חינם!', recommendedDuration: '2-3 שעות', price: 'חינם' }
+          { name: 'מוזיאון הלאומי', rating: 4.7, description: 'עצמות דינוזאורים, אמנות ומדע - חינם!', recommendedDuration: '2-3 שעות', price: 'חינם' },
+          { name: 'מגדל לונדון', nameEn: 'Tower of London', description: 'מבצר בן אלף שנה, ובתוכו תכשיטי הכתר.', recommendedDuration: '3 שעות' },
+          { name: 'עין לונדון', nameEn: 'London Eye', description: 'גלגל ענק על הטיימס, סיבוב אחד בחצי שעה.', recommendedDuration: 'שעה' },
+          { name: 'ארמון בקינגהאם', nameEn: 'Buckingham Palace', description: 'חילופי המשמר בחוץ, והאולמות פתוחים בקיץ.', recommendedDuration: 'שעתיים' },
+          { name: 'מנזר וסטמינסטר', nameEn: 'Westminster Abbey', description: 'מקום ההכתרה, וקבריהם של מלכים ומדענים.', recommendedDuration: 'שעתיים' },
+          { name: 'טייט מודרן', nameEn: 'Tate Modern', description: 'אמנות מודרנית בתחנת כוח לשעבר.', recommendedDuration: '2-3 שעות', price: 'חינם' },
+          { name: 'שוק קמדן', nameEn: 'Camden Market', description: 'דוכנים, אוכל מכל העולם ומוזיקה.', recommendedDuration: 'שעתיים', price: 'חינם' }
         ],
         food: {
           intro: 'לונדון מציעה מגוון קולינרי עצום - מ-fish & chips מסורתי ועד מסעדות כוכבי מישלן.',
@@ -513,7 +555,13 @@ const DestinationInfoPage = () => {
         attractions: [
           { name: 'בית אנה פרנק', rating: 4.7, description: 'המחבוא ההיסטורי של משפחת פרנק - מרגש ביותר.', recommendedDuration: '1-2 שעות', price: '€14' },
           { name: 'מוזיאון ואן גוך', rating: 4.8, description: 'אוסף ציורי ואן גוך הגדול בעולם.', recommendedDuration: '2-3 שעות', price: '€22' },
-          { name: 'שדות טוליפים', rating: 4.9, description: 'שטיחי פרחים צבעוניים - חובה באפריל-מאי.', recommendedDuration: 'חצי יום', price: '€20 (כולר)' }
+          { name: 'שדות טוליפים', rating: 4.9, description: 'שטיחי פרחים צבעוניים - חובה באפריל-מאי.', recommendedDuration: 'חצי יום', price: '€20 (כולר)' },
+          { name: 'מוזיאון ריקס', nameEn: 'Rijksmuseum', description: 'רמברנדט וורמיר - אוסף תור הזהב ההולנדי.', recommendedDuration: '3 שעות' },
+          { name: 'שיט בתעלות', nameEn: 'Canals of Amsterdam', description: 'הדרך שממנה העיר נראית כפי שנבנתה.', recommendedDuration: 'שעה' },
+          { name: 'פארק וונדל', nameEn: 'Vondelpark', description: 'הפארק המרכזי, מלא מקומיים על אופניים.', recommendedDuration: '1-2 שעות', price: 'חינם' },
+          { name: 'רובע הג\'ורדאן', nameEn: 'Jordaan', description: 'סמטאות, גלריות וחצרות נסתרות.', recommendedDuration: 'שעתיים', price: 'חינם' },
+          { name: 'זאנסה סחנס', nameEn: 'Zaanse Schans', description: 'טחנות רוח עובדות, במרחק רבע שעה ברכבת.', recommendedDuration: '3 שעות', price: 'חינם' },
+          { name: 'מוזיאון מוקו', nameEn: 'Moco Museum', description: 'בנקסי ואמנות רחוב, מול מוזיאון ואן גוך.', recommendedDuration: '1-2 שעות' }
         ],
         food: {
           intro: 'אמסטרדם מציעה אוכל בינלאומי מגוון ומסורות מקומיות ייחודיות.',
@@ -566,7 +614,13 @@ const DestinationInfoPage = () => {
         attractions: [
           { name: 'בורג׳ ח׳ליפה', rating: 4.7, description: 'הבניין הגבוה בעולם - 828 מטר, נוף בלתי נשכח.', recommendedDuration: '2 שעות', price: 'AED 169' },
           { name: 'דובאי מול', rating: 4.5, description: 'הקניון הגדול בעולם - 1,200 חנויות, מלחייה ומגלשת קרח.', recommendedDuration: '3-5 שעות', price: 'חינם (כניסה)' },
-          { name: 'ספארי מדבר', rating: 4.8, description: 'נסיעה בדיונות, רכיבת גמל וארוחת ערב בדרביה.', recommendedDuration: 'חצי יום', price: 'AED 200-400' }
+          { name: 'ספארי מדבר', rating: 4.8, description: 'נסיעה בדיונות, רכיבת גמל וארוחת ערב בדרביה.', recommendedDuration: 'חצי יום', price: 'AED 200-400' },
+          { name: 'מוזיאון העתיד', nameEn: 'Museum of the Future', description: 'הטבעת הכתובה בקליגרפיה - תערוכות על 2071.', recommendedDuration: 'שעתיים' },
+          { name: 'דובאי פריים', nameEn: 'Dubai Frame', description: 'מסגרת בגובה 150 מטר בין העיר הישנה לחדשה.', recommendedDuration: 'שעה' },
+          { name: 'מזרקת דובאי', nameEn: 'Dubai Fountain', description: 'מופע מים ואור מול הבורג\', כל חצי שעה בערב.', recommendedDuration: '30 דקות', price: 'חינם' },
+          { name: 'פאלם ג\'ומיירה', nameEn: 'Palm Jumeirah', description: 'האי המלאכותי בצורת דקל, עם מונורייל.', recommendedDuration: '2-3 שעות', price: 'חינם' },
+          { name: 'סוק הזהב', nameEn: 'Deira Gold Souk', description: 'שוק מקורה בדיירה, עם מאות חנויות תכשיטים.', recommendedDuration: '1-2 שעות', price: 'חינם' },
+          { name: 'חוף ג\'ומיירה', nameEn: 'Jumeirah Beach', description: 'חוף ציבורי מול הבורג\' אל ערב.', recommendedDuration: '2-3 שעות', price: 'חינם' }
         ],
         food: {
           intro: 'דובאי היא גסטרונומיה עולמית - מאוכל אמירתי מסורתי ועד כל מסעדה בעולם.',
@@ -619,7 +673,13 @@ const DestinationInfoPage = () => {
         attractions: [
           { name: 'טירת פראג', rating: 4.7, description: 'הטירה הגדולה בעולם - קומפלקס עצום מעל העיר.', recommendedDuration: '3-4 שעות', price: 'CZK 250' },
           { name: 'גשר קרלוב', rating: 4.8, description: 'גשר גותי עם 30 פסלי קדושים מהמאה ה-14.', recommendedDuration: '30-60 דקות', price: 'חינם' },
-          { name: 'כיכר העיר העתיקה', rating: 4.7, description: 'לב פראג עם שעון האסטרולוגיה מהמאה ה-15.', recommendedDuration: '1-2 שעות', price: 'חינם' }
+          { name: 'כיכר העיר העתיקה', rating: 4.7, description: 'לב פראג עם שעון האסטרולוגיה מהמאה ה-15.', recommendedDuration: '1-2 שעות', price: 'חינם' },
+          { name: 'השעון האסטרונומי', nameEn: 'Prague Astronomical Clock', description: 'מ-1410, ומדי שעה עוברים בו השליחים.', recommendedDuration: '30 דקות', price: 'חינם' },
+          { name: 'קתדרלת ויטוס הקדוש', nameEn: 'St. Vitus Cathedral', description: 'הקתדרלה הגותית בתוך מתחם הטירה.', recommendedDuration: 'שעה' },
+          { name: 'הרובע היהודי', nameEn: 'Josefov', description: 'שישה בתי כנסת ובית העלמין הישן.', recommendedDuration: '2-3 שעות' },
+          { name: 'גבעת פטרשין', nameEn: 'Petřín', description: 'מגדל תצפית וגנים, ורכבל מהעיר התחתית.', recommendedDuration: 'שעתיים' },
+          { name: 'קיר ג\'ון לנון', nameEn: 'Lennon Wall', description: 'קיר גרפיטי שמשתנה כל הזמן, מאז 1980.', recommendedDuration: '20 דקות', price: 'חינם' },
+          { name: 'כיכר ואצלב', nameEn: 'Wenceslas Square', description: 'השדרה שבה נכתבה ההיסטוריה הצ\'כית המודרנית.', recommendedDuration: 'שעה', price: 'חינם' }
         ],
         food: {
           intro: 'מטבח צ\'כי עשיר ומשביע - בשרים, כרוב ובירה מהטובות בעולם.',
@@ -672,7 +732,13 @@ const DestinationInfoPage = () => {
         attractions: [
           { name: 'Gardens by the Bay', rating: 4.8, description: 'גנים עתידניים עם עצי-על ענקיים - מרהיב בלילה.', recommendedDuration: '2-3 שעות', price: 'SGD 28 (כיפות)' },
           { name: 'Marina Bay Sands', rating: 4.7, description: 'מלון אייקוני עם בריכה ב-200 מטר גובה ונוף עוצר נשימה.', recommendedDuration: '2 שעות', price: 'SGD 23 (SkyPark)' },
-          { name: 'Hawker Centers', rating: 4.9, description: 'מרכזי אוכל רחוב עם מנות כוכבי מישלן ב-SGD 3.', recommendedDuration: '1-2 שעות', price: 'החל מ-SGD 3' }
+          { name: 'Hawker Centers', rating: 4.9, description: 'מרכזי אוכל רחוב עם מנות כוכבי מישלן ב-SGD 3.', recommendedDuration: '1-2 שעות', price: 'החל מ-SGD 3' },
+          { name: 'סנטוסה', nameEn: 'Sentosa', description: 'אי הפנאי - חופים, פארקים ורכבל.', recommendedDuration: '4-5 שעות', price: 'חינם' },
+          { name: 'ג\'ואל צ\'אנגי', nameEn: 'Jewel Changi Airport', description: 'מפל מקורה בגובה 40 מטר, בתוך שדה התעופה.', recommendedDuration: 'שעתיים', price: 'חינם' },
+          { name: 'גן החיות של סינגפור', nameEn: 'Singapore Zoo', description: 'גן פתוח בלי סורגים, מהמוערכים בעולם.', recommendedDuration: '3-4 שעות' },
+          { name: 'צ\'יינטאון של סינגפור', nameEn: 'Chinatown, Singapore', description: 'מקדשים, דוכנים וחנויות בין שיכונים צבעוניים.', recommendedDuration: 'שעתיים', price: 'חינם' },
+          { name: 'מקדש שן הבודהה', nameEn: 'Buddha Tooth Relic Temple', description: 'מקדש בסגנון שושלת טאנג בלב צ\'יינטאון.', recommendedDuration: 'שעה', price: 'חינם' },
+          { name: 'אורצ\'רד רואד', nameEn: 'Orchard Road', description: 'שדרת הקניות המרכזית, קילומטרים של קניונים.', recommendedDuration: '2-3 שעות', price: 'חינם' }
         ],
         food: {
           intro: 'סינגפור היא גן עדן קולינרי - מטבחים סיניים, מאליים, הודים ואירופאים יחד.',
@@ -742,40 +808,108 @@ const DestinationInfoPage = () => {
   };
 
   // חלק תחתון של כרטיס האטרקציה
-  const AttractionCardFooter = ({ attraction }) => (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, pt: 2, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <TimeIcon sx={{ fontSize: 16, color: 'text.secondary', mr: 0.5 }} />
-        <Typography variant="caption" color="text.secondary">
-          {attraction.recommendedDuration}
-        </Typography>
+  /**
+   * שדה חסר אינו מוצג.
+   *
+   * מחיר כניסה משתנה משנה לשנה, וסכום ישן שנראה מוסמך גרוע משורה
+   * שאינה שם: המשתמש מתכנן תקציב לפיו. כשאין מחיר ודאי, הכפתור "אתר"
+   * הוא התשובה — הוא מוביל למקום שבו המחיר תמיד מעודכן.
+   */
+  const AttractionCardFooter = ({ attraction }) => {
+    if (!attraction.recommendedDuration && !attraction.price) return null;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, pt: 2, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+        {attraction.recommendedDuration ? (
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <TimeIcon sx={{ fontSize: 16, color: 'text.secondary', mr: 0.5 }} />
+            <Typography variant="caption" color="text.secondary">
+              {attraction.recommendedDuration}
+            </Typography>
+          </Box>
+        ) : <span />}
+        {attraction.price ? (
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <EuroIcon sx={{ fontSize: 16, color: 'text.secondary', mr: 0.5 }} />
+            <Typography variant="caption" color="text.secondary">
+              {attraction.price}
+            </Typography>
+          </Box>
+        ) : <span />}
       </Box>
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <EuroIcon sx={{ fontSize: 16, color: 'text.secondary', mr: 0.5 }} />
-        <Typography variant="caption" color="text.secondary">
-          {attraction.price}
-        </Typography>
-      </Box>
-    </Box>
-  );
+    );
+  };
 
-  // חלק כרטיס מסעדה
-  const RestaurantCard = ({ restaurant }) => {
-    // הכתובת נמשכת פעם אחת לכל מסעדה, ונשמרת במטמון שבועי בשירות עצמו.
-    const [officialSite, setOfficialSite] = useState('');
+  /**
+   * הכתובת הרשמית של מקום, מ-OpenStreetMap.
+   *
+   * מסעדה ואטרקציה שואלות בדיוק את אותה שאלה, ולכן הן שואלות אותה
+   * במקום אחד: שתי גרסאות של אותו אחזור היו נפרדות בשינוי הבא.
+   * הכתובת נמשכת פעם אחת לכל מקום ונשמרת במטמון שבועי בשירות עצמו.
+   *
+   * השם המוצג מספיק כחיפוש. דרישה ל-nameEn בלבד הסתירה בעבר את
+   * הכפתור מכל המסעדות, משום שאין בנתונים שדה כזה.
+   */
+  const useOfficialSite = (name, nameEn) => {
+    const [site, setSite] = useState('');
 
     useEffect(() => {
       let alive = true;
-      // שם המסעדה עצמו הוא בדרך כלל המקומי — "Da Enzo al 29", "Roscioli"
-      // — ולכן הוא מספיק לחיפוש. הדרישה ל-nameEn בלבד הסתירה את הכפתור
-      // מכל המסעדות בנתונים הקיימים, שאין בהם שדה כזה.
-      const lookup = restaurant.nameEn || restaurant.name;
+      const lookup = nameEn || name;
       if (!lookup) return undefined;
 
       getPlaceMedia(lookup, destinationData?.nameEn || destinationData?.name || '', destinationData?.country || '')
-        .then((m) => { if (alive) setOfficialSite(m.website || ''); });
+        .then((m) => { if (alive) setSite((m && m.website) || ''); });
       return () => { alive = false; };
-    }, [restaurant.nameEn, restaurant.name]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [name, nameEn]);
+
+    return site;
+  };
+
+  /**
+   * הכפתורים בתחתית כרטיס אטרקציה.
+   *
+   * "אתר" נוסף כאן משום שהוא מה שמאפשר להזמין כרטיסים: המפה מראה איפה
+   * זה, והאתר הרשמי הוא המקום שבו קונים. אותו כלל כמו במסעדות — אין
+   * כתובת, אין כפתור. כתובת שהמודל ייצר נראית סבירה ומובילה לדף שגיאה,
+   * ולכן המקור הוא OpenStreetMap בלבד.
+   */
+  const AttractionActions = ({ attraction, cityName }) => {
+    const officialSite = useOfficialSite(attraction.name, attraction.nameEn);
+    const mapQuery = encodeURIComponent(`${attraction.name} ${cityName}`);
+
+    return (
+      <Box sx={{ p: 2, pt: 0, borderTop: '1px solid rgba(0, 0, 0, 0.05)', display: 'flex', gap: 1 }}>
+        <Button
+          fullWidth={!officialSite}
+          variant={officialSite ? 'outlined' : 'contained'}
+          disableElevation
+          size="small"
+          startIcon={officialSite ? <PlaceIcon /> : null}
+          onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${mapQuery}`)}
+          sx={{ borderRadius: '8px', textTransform: 'none', fontSize: '0.9rem', flex: officialSite ? 1 : undefined }}
+        >
+          {officialSite ? t('destInfo.map') : t('destInfo.show_map')}
+        </Button>
+
+        {officialSite && (
+          <Button
+            variant="contained"
+            disableElevation
+            size="small"
+            onClick={() => window.open(officialSite, '_blank', 'noopener,noreferrer')}
+            sx={{ borderRadius: '8px', textTransform: 'none', fontSize: '0.9rem', flex: 1 }}
+          >
+            {t('destInfo.website_short')}
+          </Button>
+        )}
+      </Box>
+    );
+  };
+
+  // חלק כרטיס מסעדה
+  const RestaurantCard = ({ restaurant }) => {
+    const officialSite = useOfficialSite(restaurant.name, restaurant.nameEn);
 
     return (
     <Card sx={{ 
@@ -1586,19 +1720,30 @@ const DestinationInfoPage = () => {
                             {/* התמונה נמשכת לפי שם המקום. השדה image
                                 שהגיע מהנתונים הוא תצלום אקראי ואינו
                                 בשימוש עוד. */}
+                            {/* אטרקציה היא תמיד מקום, ולכן `mustBePlace`:
+                                הוא מקדים את השם הלועזי המדויק לחיפוש
+                                המטושטש. בסקר על 66 האטרקציות החדשות
+                                החיפוש החזיר תחת "עין לונדון" את האצטדיון
+                                האולימפי, ותחת "צ'יינטאון" של סינגפור את
+                                הרובע שבלונדון. */}
                             <PlaceImage
                               name={attraction.name}
                               lookup={attraction.nameEn || ''}
                               city={destinationData?.name || ''}
                               height={180}
                               icon="🏛️"
+                              mustBePlace
                             />
-                            <Box 
-                              sx={{ 
-                                position: 'absolute', 
-                                top: 10, 
-                                right: 10, 
-                                backgroundColor: 'rgba(0,0,0,0.7)', 
+                            {/* דירוג מוצג רק כשהוא קיים באמת. מספר
+                                שהומצא נראה בדיוק כמו מדוד, והמשתמש
+                                בוחר לפיו לאן ללכת. */}
+                            {attraction.rating ? (
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                top: 10,
+                                right: 10,
+                                backgroundColor: 'rgba(0,0,0,0.7)',
                                 borderRadius: '12px',
                                 px: 1,
                                 py: 0.5,
@@ -1612,6 +1757,7 @@ const DestinationInfoPage = () => {
                                 {attraction.rating}
                               </Typography>
                             </Box>
+                            ) : null}
                           </Box>
                           
                           <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
@@ -1626,22 +1772,7 @@ const DestinationInfoPage = () => {
                             <AttractionCardFooter attraction={attraction} />
                           </CardContent>
                           
-                          <Box sx={{ p: 2, pt: 0, borderTop: '1px solid rgba(0, 0, 0, 0.05)' }}>
-                            <Button 
-                              fullWidth
-                              variant="contained"
-                              disableElevation
-                              size="small"
-                              onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${attraction.name} ${destinationData.name}`)}`)}
-                              sx={{
-                                borderRadius: '8px',
-                                textTransform: 'none',
-                                fontSize: '0.9rem'
-                              }}
-                            >
-                              {t('destInfo.show_map')}
-                            </Button>
-                          </Box>
+                          <AttractionActions attraction={attraction} cityName={destinationData.name} />
                         </Card>
                       </Grid>
                     ))}

@@ -318,19 +318,35 @@ export const getPlacePhotoFast = async (
    *
    * ויקיפדיה מגישה לעיתים סמל או מפה כתמונה הראשית: תחת "ואלנסיה"
    * הוחזרה מפת ספרד, ותחת "אוקספורד" שלט העיר. שניהם ערכים נכונים
-   * לגמרי — ותמונה שאינה מראה את המקום. אלה תמיד SVG שהומר ל-PNG,
-   * ולכן הסיומת מזהה אותם.
+   * לגמרי — ותמונה שאינה מראה את המקום. רובם SVG שהומר ל-PNG, אך לא
+   * כולם: "דובאי פריים" ו"ג'ואל צ'אנגי" החזירו לוגו בפורמט רגיל,
+   * ולכן שם הקובץ נבדק גם הוא.
    */
-  const rejected = (sum) =>
-    sum.isDisambiguation
-    || (mustBePlace && !sum.coords)
-    || (mustBePlace && /\.svg\.png$/i.test(String(sum.photo || '').split('?')[0]));
+  const NOT_A_PHOTO = /(^|[_\-.( ])(logo|logotype|coat[_\- ]of[_\- ]arms|seal|flag|emblem|wordmark|icon)([_\-.) ]|$)/i;
+
+  /**
+   * @param {boolean} fuzzy האם הערך הגיע מחיפוש ולא מכותרת מדויקת.
+   *
+   * דרישת הקואורדינטות חלה על תוצאת חיפוש בלבד, ומדידה היא שקבעה זאת:
+   * כשהוחלה גם על כותרת מדויקת היא הפילה ארבעה תצלומים נכונים לגמרי —
+   * הפנתיאון, ההייליין, מוזיאון מוקו ומקדש שן הבודהה — שפשוט אין
+   * בערכם קואורדינטות. כותרת מדויקת אינה מהמרת ולכן אינה זקוקה להוכחה;
+   * חיפוש מתאים מילים ולא נושאים, ומשם הגיעו האצטדיון האולימפי תחת
+   * "עין לונדון" והרובע הלונדוני תחת "צ'יינטאון" של סינגפור.
+   */
+  const rejected = (sum, fuzzy) => {
+    if (sum.isDisambiguation) return true;
+    if (!mustBePlace) return false;
+    if (fuzzy && !sum.coords) return true;
+    const file = decodeURIComponent(String(sum.photo || '').split('?')[0]).split('/').pop();
+    return /\.svg\.png$/i.test(file) || NOT_A_PHOTO.test(file);
+  };
 
   const tryLang = async (lang, name) => {
     for (const variant of nameVariants(name)) {
       const sum = await queued(() => wikiSummary(lang, variant));
       if (sum === false) { failed = true; continue; }
-      if (!sum || !sum.photo || rejected(sum)) continue;
+      if (!sum || !sum.photo || rejected(sum, false)) continue;
       // תמונה של המקום הנכון בלבד. ערך בעיר אחרת נדחה גם כשהוא תקין.
       if (belongsToCity(sum.coords, anchor)) return sum.photo;
     }
@@ -353,7 +369,7 @@ export const getPlacePhotoFast = async (
       if (!titleMatches(displayName, title)) continue;
       const sum = await queued(() => wikiSummary('he', title));
       if (sum === false) { failed = true; continue; }
-      if (!sum || !sum.photo || rejected(sum)) continue;
+      if (!sum || !sum.photo || rejected(sum, true)) continue;
       // כאן נכנסה "פלורנס קלינג הרדינג": הכותרת הכילה את מילת החיפוש,
       // ולכן `titleMatches` אישר אותה. התאמת מילים אינה זהות.
       if (belongsToCity(sum.coords, anchor)) { photo = sum.photo; break; }

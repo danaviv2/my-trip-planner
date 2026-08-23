@@ -563,7 +563,9 @@
     "errorLoading": "Error al cargar la información",
     "errorCheckConnection": "Verifica tu conexión a internet e inténtalo de nuevo",
     "errorRetry": "Intentar de nuevo",
-    "errorBackToSearch": "Volver a la búsqueda"
+    "errorBackToSearch": "Volver a la búsqueda",
+    "map": "Mapa",
+    "website_short": "Sitio web"
   },
   "tripPlanner": {
     "title": "Planificación de viaje a {{location}}",

@@ -563,7 +563,9 @@
     "errorLoading": "Error loading information",
     "errorCheckConnection": "Check your internet connection and try again",
     "errorRetry": "Try again",
-    "errorBackToSearch": "Back to search"
+    "errorBackToSearch": "Back to search",
+    "map": "Map",
+    "website_short": "Website"
   },
   "tripPlanner": {
     "title": "Trip Planning to {{location}}",
