@@ -29,6 +29,8 @@
  * בדיוק הטעות שמנגנון זה בא לתקן. שדה ריק מתוקן; שדה שגוי מטעה.
  */
 
+import { humanGap } from './tripTimelineService';
+
 const OSRM = 'https://router.project-osrm.org/route/v1/driving';
 const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
 
@@ -102,16 +104,16 @@ export const geocode = async (place) => {
 export const formatKm = (km) =>
   km == null ? '' : km < 1 ? `${Math.round(km * 1000)} מ'` : `${Math.round(km)} ק"מ`;
 
-/** "3 שעות 53 דקות" — ובלי "0 שעות" כשהנסיעה קצרה. */
-export const formatMinutes = (mins) => {
-  if (mins == null) return '';
-  const m = Math.round(mins);
-  if (m < 60) return `${m} דקות`;
-  const h = Math.floor(m / 60);
-  const rest = m % 60;
-  const hoursText = h === 1 ? 'שעה' : h === 2 ? 'שעתיים' : `${h} שעות`;
-  return rest ? `${hoursText} ו-${rest} דקות` : hoursText;
-};
+/**
+ * משך הנסיעה, בעברית תקנית.
+ *
+ * הגרסה הראשונה כאן הייתה מעצב זמן שני שכתבתי בעצמי, והיא הציגה על
+ * המסך "4 שעות ו-1 דקות". `humanGap` כבר קיים ומטפל ביחיד ובזוגי —
+ * "דקה", "שעתיים", "יומיים" — ו-`CLAUDE.md` מזהיר במפורש שצורות אלה
+ * אינן קישוט. מעצב אחד בפרויקט, לא שניים שיתפצלו בשינוי הבא.
+ */
+export const formatMinutes = (mins) =>
+  mins == null ? '' : humanGap(Math.round(mins));
 
 /**
  * מסלול נהיגה דרך כל הנקודות, לפי סדרן.
