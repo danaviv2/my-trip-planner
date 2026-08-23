@@ -200,7 +200,7 @@ class WeatherService {
     }
 
     // רוח
-    if (weather.windSpeed > 10) {
+    if (weather.windSpeed > WeatherService.THRESHOLDS.windStrong) {
       recommendations.push({
         type: 'info',
         icon: '💨',
@@ -258,6 +258,27 @@ class WeatherService {
   }
 
   /**
+   * ספי מזג האוויר — הגדרה אחת לשני הצרכנים.
+   *
+   * ── מה שהיה כאן ──
+   * ההמלצה הזהירה מרוח מעל 10 מ"ש, והציון הוריד נקודות רק מעל 15. בליסבון
+   * נמדדו 10.29, ולכן המסך הציג "ציון 100/100 · מעולה" ומיד מתחתיו "רוח
+   * חזקה — שים לב לפעילויות חוץ". אותה עובדה, שני ספים, שתי תשובות
+   * סותרות — וציון מושלם לצד אזהרה אינו אומר דבר.
+   *
+   * זה בדיוק הדפוס שכבר עלה כאן ביוקר: ערך שנגזר בשני מקומות נפרד מעצמו.
+   */
+  static THRESHOLDS = {
+    windStrong: 10,
+    tempIdealMin: 15,
+    tempIdealMax: 30,
+    tempExtremeMin: 5,
+    tempExtremeMax: 35,
+    cloudsHeavy: 80,
+    humidityHigh: 80,
+  };
+
+  /**
    * המלצה האם מזג האוויר מתאים לטיול
    */
   isSuitableForTrip(weather) {
@@ -267,10 +288,11 @@ class WeatherService {
     };
 
     // טמפרטורה
-    if (weather.temperature < 5 || weather.temperature > 35) {
+    const T = WeatherService.THRESHOLDS;
+    if (weather.temperature < T.tempExtremeMin || weather.temperature > T.tempExtremeMax) {
       score.value -= 30;
       score.factors.push('טמפרטורה קיצונית');
-    } else if (weather.temperature < 15 || weather.temperature > 30) {
+    } else if (weather.temperature < T.tempIdealMin || weather.temperature > T.tempIdealMax) {
       score.value -= 15;
       score.factors.push('טמפרטורה לא אידיאלית');
     }
@@ -282,18 +304,21 @@ class WeatherService {
     }
 
     // רוח
-    if (weather.windSpeed > 15) {
+    if (weather.windSpeed > T.windStrong) {
       score.value -= 20;
       score.factors.push('רוח חזקה');
     }
 
     // עננות
-    if (weather.clouds > 80) {
+    if (weather.clouds > T.cloudsHeavy) {
       score.value -= 10;
       score.factors.push('מעונן מאוד');
     }
 
-    let suitability = 'מעולה';
+    // "מעולה" רק כשאין ולו הסתייגות אחת. בבורדו הוצג "85/100 · מעולה"
+    // לצד הגורם "טמפרטורה לא אידיאלית" — תווית שסותרת את מה שכתוב לידה
+    // מלמדת שאין טעם לקרוא אף אחת מהן.
+    let suitability = score.factors.length ? 'טוב' : 'מעולה';
     if (score.value < 50) suitability = 'לא מומלץ';
     else if (score.value < 70) suitability = 'בינוני';
     else if (score.value < 85) suitability = 'טוב';

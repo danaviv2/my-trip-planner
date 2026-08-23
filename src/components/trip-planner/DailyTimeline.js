@@ -278,7 +278,12 @@ const DailyTimeline = ({ dayData, defaultLocation, onEditActivity }) => {
                   חפש מידע
                 </Button>
                 
-                {(activity.type === 'restaurant' || activity.type === 'breakfast' || activity.type === 'lunch' || activity.type === 'dinner') && (
+                {/* ── כפתור שמבטיח מקום מסוים ──
+                    "ביקורות" ו"הזמן שולחן" מניחים שיש עסק אמיתי מאחורי
+                    השם. בפריט מיוצר השם הוא "מסעדה מקומית", והכפתורים
+                    הובילו לחיפוש של המילים האלה — הבטחה שאין מאחוריה
+                    דבר. "חפש מידע" נשאר, כי חיפוש אינו מתיימר לדעת. */}
+                {!activity.isGenerated && (activity.type === 'restaurant' || activity.type === 'breakfast' || activity.type === 'lunch' || activity.type === 'dinner') && (
                   <>
                     <Button
                       variant="outlined"
@@ -301,7 +306,7 @@ const DailyTimeline = ({ dayData, defaultLocation, onEditActivity }) => {
                   </>
                 )}
                 
-                {activity.type === 'accommodation' && (
+                {!activity.isGenerated && activity.type === 'accommodation' && (
                   <Button
                     variant="outlined"
                     size="small"

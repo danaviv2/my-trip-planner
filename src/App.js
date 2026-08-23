@@ -575,7 +575,15 @@ const planTripWithAI = async () => {
       const location = isInCity ? userPreferences.location : 
                      secondaryLocations[i % secondaryLocations.length];
       
-      // יצירת פעילויות ליום
+      // ── מה שהוסר כאן, ולמה ──
+      // לכל פעילות הוצמדו שעות פתיחה, מחיר כניסה, זמן הליכה למקום הבא
+      // וטיפ — כולם מחרוזות קבועות, זהות לכל עיר ולכל יום. הם נראו כמו
+      // מידע שנאסף, והמסך אף הצמיד להם כפתורי "נווט" ו"הזמן שולחן".
+      // ניווט לאן, כשהמקום נקרא "אתר תיירות מרכזי"?
+      //
+      // המסלול המפורט של ה-AI — זה שמחזיר את כיכר רוסיו ואת Solar dos
+      // Presuntos — הוא מקור אמיתי וממשיך לעבוד. כאן נשאר רק מה שידוע
+      // באמת: החלוקה לשעות היום וסוג הפעילות.
       let dailySchedule = [];
       
       // ארוחת בוקר
@@ -583,14 +591,11 @@ const planTripWithAI = async () => {
         timeStart: "08:00",
         timeEnd: "09:30",
         type: "breakfast",
+        isGenerated: true,
         activity: "ארוחת בוקר",
         name: locationsData.breakfasts[i % locationsData.breakfasts.length],
         address: `${location}, אזור מרכזי`,
         description: "ארוחת בוקר מקומית עם מאפים טריים וקפה משובח",
-        reservationNeeded: false,
-        priceRange: "€€",
-        openingHours: "07:00-11:00",
-        travelTimeToNext: isInCity ? "15 דקות הליכה" : "20 דקות נסיעה",
         googleMapsSearchQuery: `${locationsData.breakfasts[i % locationsData.breakfasts.length]} ${location}`
       });
       
@@ -599,15 +604,11 @@ const planTripWithAI = async () => {
         timeStart: "10:00",
         timeEnd: "12:30",
         type: "attraction",
+        isGenerated: true,
         activity: "ביקור באתר",
         name: locationsData.attractions[i % locationsData.attractions.length],
         address: `${location}, אזור מרכזי`,
         description: "אתר תיירות מרכזי באזור",
-        entranceFee: "כניסה חופשית או כ-15€",
-        openingHours: "09:00-17:00",
-        recommendedDuration: "שעתיים וחצי",
-        tips: "מומלץ להגיע בשעות הבוקר המוקדמות",
-        travelTimeToNext: isInCity ? "15 דקות הליכה" : "20 דקות נסיעה",
         googleMapsSearchQuery: `${locationsData.attractions[i % locationsData.attractions.length]} ${location}`
       });
       
@@ -616,14 +617,11 @@ const planTripWithAI = async () => {
         timeStart: "12:45",
         timeEnd: "14:15",
         type: "lunch",
+        isGenerated: true,
         activity: "ארוחת צהריים",
         name: locationsData.lunch[i % locationsData.lunch.length],
         address: `${location}, מרכז העיר`,
         description: "מסעדה מקומית עם תפריט אזורי",
-        reservationNeeded: true,
-        priceRange: "€€-€€€",
-        openingHours: "12:00-14:30",
-        travelTimeToNext: isInCity ? "20 דקות הליכה" : "15 דקות נסיעה",
         googleMapsSearchQuery: `${locationsData.lunch[i % locationsData.lunch.length]} ${location}`
       });
       
@@ -632,15 +630,11 @@ const planTripWithAI = async () => {
         timeStart: "14:45",
         timeEnd: "17:00",
         type: "attraction",
+        isGenerated: true,
         activity: "ביקור באתר",
         name: locationsData.afternoon[i % locationsData.afternoon.length],
         address: `${location}, אזור מרכזי`,
         description: "אתר תרבות או היסטוריה חשוב באזור",
-        entranceFee: "כ-10€",
-        openingHours: "10:00-18:00",
-        recommendedDuration: "שעתיים",
-        tips: "כדאי להשתתף בסיור מודרך",
-        travelTimeToNext: "15-20 דקות נסיעה",
         googleMapsSearchQuery: `${locationsData.afternoon[i % locationsData.afternoon.length]} ${location}`
       });
       
@@ -649,14 +643,11 @@ const planTripWithAI = async () => {
         timeStart: "19:00",
         timeEnd: "21:00",
         type: "dinner",
+        isGenerated: true,
         activity: "ארוחת ערב",
         name: locationsData.dinner[i % locationsData.dinner.length],
         address: `${location}, אזור יוקרתי`,
         description: "מסעדה איכותית עם מטבח מקומי משובח",
-        reservationNeeded: true,
-        priceRange: "€€€",
-        openingHours: "19:00-22:30",
-        travelTimeToNext: "10 דקות נסיעה",
         googleMapsSearchQuery: `${locationsData.dinner[i % locationsData.dinner.length]} ${location}`
       });
       
@@ -675,7 +666,6 @@ const planTripWithAI = async () => {
         accommodation: {
           name: locationsData.accommodations[i % locationsData.accommodations.length],
           address: `${location}, מיקום מרכזי`,
-          priceRange: "€€€",
           description: "מלון איכותי במיקום מרכזי עם שירות מעולה",
           bookingLink: "booking.com",
           googleMapsSearchQuery: `${locationsData.accommodations[i % locationsData.accommodations.length]} ${location}`
@@ -719,6 +709,7 @@ const planTripWithAI = async () => {
             timeStart: "10:00",
             timeEnd: "12:30",
             type: "attraction",
+        isGenerated: true,
             activity: "ביקור באתר",
             name: isInCity ? "אתר תיירות מרכזי" : "אטרקציה מקומית",
             address: `${location}, אזור מרכזי`,
@@ -728,6 +719,7 @@ const planTripWithAI = async () => {
             timeStart: "12:45",
             timeEnd: "14:15",
             type: "lunch",
+        isGenerated: true,
             activity: "ארוחת צהריים",
             name: "מסעדה מקומית",
             address: `${location}, מרכז העיר`,
@@ -737,6 +729,7 @@ const planTripWithAI = async () => {
             timeStart: "14:45",
             timeEnd: "17:00",
             type: "attraction",
+        isGenerated: true,
             activity: "ביקור באתר",
             name: "אתר תרבות",
             address: `${location}, אזור מרכזי`,
@@ -1168,6 +1161,7 @@ const createItineraryForLocation = (location, locationData, days, startingDay, i
         timeStart: "19:30",
         timeEnd: "21:00",
         type: "dinner",
+        isGenerated: true,
         activity: "ארוחת ערב",
         name: `מסעדה מקומית ב${nextStop}`,
         address: `${nextStop}, אזור מרכזי`,
@@ -1185,6 +1179,7 @@ const createItineraryForLocation = (location, locationData, days, startingDay, i
         timeStart: "19:00",
         timeEnd: "21:00",
         type: "dinner",
+        isGenerated: true,
         activity: "ארוחת ערב",
         name: locationData.dinner[i % locationData.dinner.length],
         address: `${location}, אזור יוקרתי`,
