@@ -217,8 +217,13 @@ class WeatherService {
       });
     }
 
-    // מזג אוויר מעולה
-    if (weather.temperature >= 20 && weather.temperature <= 28 && 
+    // ── "מושלם" רק כשאין ולו הסתייגות אחת ──
+    // התנאי בדק טמפרטורה, גשם ועננות בלבד — ולא לחות ולא רוח. לכן
+    // הופיע "מזג אוויר מושלם לטיול!" ישירות מתחת ל"לחות גבוהה — ייתכן
+    // תחושת חנק", באותה רשימה. הבדיקה על אורך המערך מונעת את זה בלי
+    // לשכפל את הספים: כל אזהרה שתתווסף בעתיד תבטל אותו מעצמה.
+    if (recommendations.length === 0 &&
+        weather.temperature >= 20 && weather.temperature <= 28 &&
         !weather.description.includes('גשם') && weather.clouds < 50) {
       recommendations.push({
         type: 'success',

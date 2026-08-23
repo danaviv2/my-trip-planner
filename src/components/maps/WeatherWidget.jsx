@@ -12,7 +12,6 @@ import {
   ListItemText,
   Card,
   CardContent,
-  LinearProgress,
   IconButton,
   Tooltip,
   Alert,
@@ -42,7 +41,6 @@ const WeatherWidget = ({ location, coordinates }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
-  const [suitability, setSuitability] = useState(null);
   const isFetchingRef = useRef(false);
   const lastLocationRef = useRef(null);
 
@@ -82,10 +80,6 @@ const WeatherWidget = ({ location, coordinates }) => {
       // קבלת המלצות
       const recs = weatherService.getWeatherRecommendations(current);
       setRecommendations(recs);
-
-      // בדיקת התאמה לטיול
-      const suit = weatherService.isSuitableForTrip(current);
-      setSuitability(suit);
 
       console.log('✅ מזג אוויר נטען:', current);
     } catch (err) {
@@ -203,54 +197,17 @@ const WeatherWidget = ({ location, coordinates }) => {
         </Box>
       </Paper>
 
-      {/* התאמה לטיול */}
-      {suitability && (
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
-            🎯 התאמה לטיול
-          </Typography>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-            <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                <Typography variant="body2">ציון: {suitability.score}/100</Typography>
-                <Chip 
-                  label={suitability.suitability}
-                  color={
-                    suitability.score >= 85 ? 'success' : 
-                    suitability.score >= 70 ? 'primary' : 
-                    suitability.score >= 50 ? 'warning' : 'error'
-                  }
-                  size="small"
-                />
-              </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={suitability.score}
-                color={
-                  suitability.score >= 85 ? 'success' : 
-                  suitability.score >= 70 ? 'primary' : 
-                  suitability.score >= 50 ? 'warning' : 'error'
-                }
-                sx={{ height: 8, borderRadius: 1 }}
-              />
-            </Box>
-          </Box>
+      {/* ── "התאמה לטיול" הוסר ──
+          ציון בין 0 ל-100 שהורכב מקנסות שנבחרו שרירותית: רוח 20-, עננות
+          10-. הוא לא היה ניתן לפעולה — 85 מול 100 אינו משנה דבר במה
+          שעושים — ולא היה לו בסיס מדיד, אך הוא נראה כמו מדד.
 
-          {suitability.factors.length > 0 && (
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                גורמים:
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                {suitability.factors.map((factor, idx) => (
-                  <Chip key={idx} label={factor} size="small" variant="outlined" />
-                ))}
-              </Box>
-            </Box>
-          )}
-        </Paper>
-      )}
+          ובעיקר: הוא סתר את מה שכתוב לידו. המסך הציג "100/100 · מעולה"
+          מעל האזהרה "לחות גבוהה — ייתכן תחושת חנק". מספר שסותר את
+          הטקסט שמתחתיו מלמד לא לקרוא אף אחד מהם.
+
+          מה שנשאר — טמפרטורה, לחות, רוח, עננות ותחזית — הוא מדידה. */}
+
 
       {/* המלצות */}
       {recommendations.length > 0 && (
