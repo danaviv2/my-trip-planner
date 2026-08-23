@@ -76,6 +76,9 @@ export const scanMailbox = async (
   const unrecognized = [];
   let parsed = 0;
   let fromPdf = 0;
+  // כיסוי הסימון המובנה. נמדד ומוצג, כדי שההחלטה אם להישען עליו תתבסס
+  // על התיבה האמיתית ולא על הנחה.
+  let schemaDeclared = 0;
 
   for (let i = 0; i < emails.length; i++) {
     const email = emails[i];
@@ -103,7 +106,25 @@ export const scanMailbox = async (
     // מספר האסמכתה אינו יכול להחליף אותה — אצל המשתמש שובר הטרקלין
     // ומספר הזמנת מלון אמיתית היו שניהם שש-עשרה ספרות רצופות.
     const hint = senderHint(email.from);
-    const header = [hint, email.subject ? `נושא: ${email.subject}` : ''].filter(Boolean).join('\n');
+
+    // ── הסוג כפי שהשולח הצהיר עליו ──
+    // schema.org במייל הוא הסימן החזק ביותר שיש, והוא גם התשובה לשאלה
+    // "איך אפליקציות אחרות יודעות": הן אינן מנחשות לפי מספר האסמכתה,
+    // הן קוראות הצהרה מפורשת. שובר טרקלין לעולם לא יישא
+    // LodgingReservation.
+    const SCHEMA_HE = {
+      FlightReservation: 'טיסה', LodgingReservation: 'לינה',
+      RentalCarReservation: 'רכב', EventReservation: 'אירוע או אטרקציה',
+      FoodEstablishmentReservation: 'מסעדה', BusReservation: 'אוטובוס',
+      TrainReservation: 'רכבת', TaxiReservation: 'הסעה',
+    };
+    const declared = email.schemaType
+      ? `סוג מוצהר (schema.org): ${email.schemaType} — ${SCHEMA_HE[email.schemaType] || email.schemaType}. השולח הצהיר על כך במפורש; זהו הסימן החזק ביותר במסמך.`
+      : '';
+    if (email.schemaType) schemaDeclared++;
+
+    const header = [declared, hint, email.subject ? `נושא: ${email.subject}` : '']
+      .filter(Boolean).join('\n');
 
     // קודם גוף המייל — זול ומהיר יותר
     try {
@@ -131,6 +152,7 @@ export const scanMailbox = async (
               sourceKind: 'body',
               sourceMessageId: email.id,
               sourceFrom: email.from || '',
+              sourceSchemaType: email.schemaType || '',
             }));
           }
           // "משהו" אינו "מספיק". מייל שגופו מכתב לוואי מניב רשומה שכל
@@ -199,10 +221,11 @@ export const scanMailbox = async (
     cancellations,
     parsed,
     fromPdf,
+    schemaDeclared,
     matched: emails.matched ?? emails.length,
     unrecognized: [
       ...(emails.skipped || []),
-      ...unrecognized.map((e) => ({ subject: e.subject, from: e.from, reason: 'נסרק אך לא זוהו פרטי הזמנה' })),
+      ...unrecognized.map((e) => ({ subject: e.subject, from: e.from, reason: e.reason || 'נסרק אך לא זוהו פרטי הזמנה' })),
     ],
   };
 };

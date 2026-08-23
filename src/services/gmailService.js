@@ -168,6 +168,9 @@ const stripHtml = (html) =>
  *
  * לכן plain נבחר רק כשהוא באמת נושא תוכן; אחרת נלקח הגדול מבין השניים.
  */
+/** ה-HTML של המייל האחרון שנקרא, לחילוץ הסימון המובנה. */
+let lastRawHtml = '';
+
 const extractText = (payload) => {
   if (!payload) return '';
 
@@ -184,6 +187,9 @@ const extractText = (payload) => {
 
   const acc = { plain: [], html: [] };
   collect(payload, acc);
+  // ה-HTML הגולמי נשמר בצד: `stripHtml` מוחק את בלוק הסימון המובנה,
+  // והוא הסימן החזק ביותר שיש במייל.
+  lastRawHtml = acc.html.join('\n');
 
   const plain = acc.plain.join('\n').trim();
   const html = acc.html.length ? stripHtml(acc.html.join('\n')) : '';
@@ -192,6 +198,71 @@ const extractText = (payload) => {
   // מ-HTML מופשט. חלק בלי תאריך הוא כמעט תמיד הודעת "פתח בדפדפן".
   if (plain.length >= 200 && containsDate(plain)) return plain;
   return html.length > plain.length ? html : plain;
+};
+
+/**
+ * הסימון המובנה שגוגל הגדירה למיילים — schema.org.
+ *
+ * ── למה זה הסימן החזק ביותר שיש ──
+ * זו התשובה האמיתית לשאלה "איך אפליקציות אחרות יודעות להבדיל". הן אינן
+ * מנחשות לפי מספר האסמכתה: ספקים גדולים משבצים במייל עצמו בלוק
+ * `application/ld+json` שאומר במפורש `LodgingReservation` או
+ * `FlightReservation`. זה מה שמאפשר ל-Gmail להציג כרטיס טיסה בראש
+ * התיבה, וזה מוצהר בידי השולח ולא מוסק בדיעבד.
+ *
+ * ── ומה זה פותר אצלנו ──
+ * שובר טרקלין לעולם לא יישא `LodgingReservation`. שם הסוג מגיע מהמקור,
+ * ולכן אין כאן ניחוש שאפשר לטעות בו — בניגוד לאורך המספר, ל-Luhn
+ * ולספרת הביקורת, ששלושתם נמדדו ונפלו.
+ *
+ * ── ומה זה לא פותר ──
+ * לא כל שולח משבץ אותו. מייל בלי סימון אינו "לא הזמנה" — הוא פשוט
+ * חוזר למסלול הרגיל.
+ */
+const RESERVATION_TYPES = /^(Flight|Lodging|RentalCar|Event|FoodEstablishment|Bus|Train|Taxi)Reservation$/;
+
+const typeFromNode = (node) => {
+  if (!node || typeof node !== 'object') return '';
+  const t = node['@type'];
+  const one = Array.isArray(t) ? t.find((x) => RESERVATION_TYPES.test(x)) : t;
+  if (typeof one === 'string' && RESERVATION_TYPES.test(one)) return one;
+  // ReservationPackage עוטף כמה הזמנות; הסוג נמצא בתוכן
+  const inner = node.reservationFor || node.subReservation || node['@graph'];
+  if (Array.isArray(inner)) {
+    for (const x of inner) {
+      const found = typeFromNode(x);
+      if (found) return found;
+    }
+  } else if (inner) {
+    return typeFromNode(inner);
+  }
+  return '';
+};
+
+export const extractSchemaType = (html = '') => {
+  const src = String(html);
+
+  // JSON-LD
+  const blocks = src.match(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi) || [];
+  for (const block of blocks) {
+    const json = block.replace(/^<script[^>]*>/i, '').replace(/<\/script>$/i, '').trim();
+    try {
+      const parsed = JSON.parse(json);
+      const nodes = Array.isArray(parsed) ? parsed : [parsed];
+      for (const n of nodes) {
+        const found = typeFromNode(n);
+        if (found) return found;
+      }
+    } catch {
+      // בלוק פגום אינו מפיל את הסריקה; ממשיכים לבא אחריו
+    }
+  }
+
+  // Microdata — הצורה הישנה, עדיין בשימוש אצל חלק מהספקים
+  const micro = src.match(/itemtype=["']https?:\/\/schema\.org\/([A-Za-z]+Reservation)["']/i);
+  if (micro && RESERVATION_TYPES.test(micro[1])) return micro[1];
+
+  return '';
 };
 
 const headerValue = (headers, name) =>
@@ -283,6 +354,7 @@ export const fetchBookingEmails = async (
     msgs.filter(Boolean).forEach((msg) => {
       const headers = msg.payload?.headers;
       const text = extractText(msg.payload);
+      const rawHtml = lastRawHtml;
       const pdfs = collectPdfAttachments(msg.payload);
 
       // מייל שכל פרטיו בקובץ מצורף עשוי להיות דל בגוף. אם יש PDF —
@@ -304,6 +376,8 @@ export const fetchBookingEmails = async (
       results.push({
         id: msg.id,
         subject,
+        // הסוג כפי שהשולח עצמו הצהיר עליו, כשהצהיר
+        schemaType: extractSchemaType(rawHtml),
         from: headerValue(headers, 'From'),
         date: headerValue(headers, 'Date'),
         // חיתוך: הפרסר ממילא קורא רק את ההתחלה, ומייל שיווקי ארוך מבזבז טוקנים

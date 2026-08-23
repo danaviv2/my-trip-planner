@@ -67,7 +67,7 @@ const EmailImportModal = ({ open, onClose }) => {
         result = await scan(await refreshGmailToken());
       }
 
-      const { bookings: collected, cancellations, parsed, fromPdf, matched, unrecognized, alreadyKnown } = result;
+      const { bookings: collected, cancellations, parsed, fromPdf, matched, unrecognized, alreadyKnown, schemaDeclared = 0 } = result;
 
       // מוצג תמיד ולא רק בכישלון: סריקה יכולה להצליח ועדיין להחמיץ את
       // אישור המלון, ובלי הרשימה אין דרך לדעת שהוא הוחמץ.
@@ -98,8 +98,13 @@ const EmailImportModal = ({ open, onClose }) => {
       const cached = alreadyKnown > 0
         ? ` ${alreadyKnown} מיילים נסרקו בעבר ולא פוענחו שוב.`
         : '';
+      // כמה שולחים הצהירו על סוג המסמך בעצמם. נמדד ומוצג, כי ההחלטה
+      // עד כמה להישען על הסימון המובנה חייבת להתבסס על התיבה האמיתית.
+      const declared = schemaDeclared > 0
+        ? ` ${schemaDeclared} מיילים כללו סוג מוצהר (schema.org).`
+        : '';
       setSuccess(
-        `נסרקו ${matched} מיילים, זוהו ${parsed} אישורים${fromPdf ? ` (${fromPdf} מתוך קבצים מצורפים)` : ''}, ויובאו ${added} הזמנות חדשות.${dup}${canc}${cached}${missed}`
+        `נסרקו ${matched} מיילים, זוהו ${parsed} אישורים${fromPdf ? ` (${fromPdf} מתוך קבצים מצורפים)` : ''}, ויובאו ${added} הזמנות חדשות.${declared}${dup}${canc}${cached}${missed}`
       );
     } catch (err) {
       if (err.message === 'GMAIL_TOKEN_EXPIRED') {

@@ -206,6 +206,12 @@ Rules:
   is flight delay or lounge access, and no medical cover is mentioned. Set
   "insurance" to null for these. Presenting such a message as a policy puts a
   wrong emergency number in front of a traveller who needs a real one.
+- The text may begin with a "סוג מוצהר (schema.org)" line. That is the
+  sender's own machine-readable declaration of what the document is, and it
+  outranks every other signal here including your reading of the body: a
+  LodgingReservation is a stay, a FlightReservation is a flight, an
+  EventReservation is an attraction or show. Map it to the matching object and
+  do not second-guess it. Its absence means nothing — most senders omit it.
 - The text may begin with a "שולח:" line naming the sender and what that
   sender sells. Use it, but only as far as it goes. When the line says this is
   the only kind of document that sender sends, trust it over your reading of
