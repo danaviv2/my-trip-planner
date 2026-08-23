@@ -2460,23 +2460,30 @@ const DestinationInfoPage = () => {
                       <Typography variant="h6" fontWeight="bold">
                         {destination.name}
                       </Typography>
-                      <Box
-                        className="destination-distance"
-                        sx={{
-                          position: 'absolute',
-                          top: 10,
-                          right: 10,
-                          px: 1,
-                          py: 0.5,
-                          backgroundColor: 'rgba(0,0,0,0.6)',
-                          borderRadius: '8px',
-                          transition: 'all 0.3s ease',
-                        }}
-                      >
-                        <Typography variant="caption" fontWeight="bold">
-                          {t('destInfo.km', { dist: destination.distance })}
-                        </Typography>
-                      </Box>
+                    </Box>
+                    {/* המרחק יושב על הכרטיס ולא בתוך רצועת הכיתוב.
+                        קודם הוא היה בתוכה עם `top: 10`, אך הרצועה עצמה
+                        עוגנת לתחתית — ולכן "מעלה" שלה הוא בדיוק המקום
+                        שבו יושב שם העיר. נמדד: הצ'יפ כיסה את הטקסט
+                        לחלוטין, ו-`elementFromPoint` על מרכז השם החזיר
+                        את הצ'יפ. השם היה שם כל הזמן, מתחתיו. */}
+                    <Box
+                      className="destination-distance"
+                      sx={{
+                        position: 'absolute',
+                        top: 10,
+                        right: 10,
+                        px: 1,
+                        py: 0.5,
+                        backgroundColor: 'rgba(0,0,0,0.6)',
+                        borderRadius: '8px',
+                        color: 'white',
+                        transition: 'all 0.3s ease',
+                      }}
+                    >
+                      <Typography variant="caption" fontWeight="bold">
+                        {t('destInfo.km', { dist: destination.distance })}
+                      </Typography>
                     </Box>
                   </Card>
                 </Grid>
