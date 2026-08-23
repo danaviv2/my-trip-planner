@@ -1,5 +1,36 @@
 const CACHE_NAME = 'trip-planner-v3';
 const FONTS_CACHE = 'trip-planner-fonts-v1';
+const TILES_CACHE = 'trip-planner-tiles-v1';
+
+/**
+ * מפה שנצפתה נשארת זמינה בלי רשת.
+ *
+ * ── למה זה לא עבד קודם ──
+ * אריחי המפה מגיעים מ-openstreetmap.org, כלומר ממקור חיצוני, וה-fetch
+ * כאן דילג על כל מקור חיצוני פרט לגופנים. לכן המפה — הדבר שהכי נחוץ
+ * דווקא כשאין קליטה, בנסיעה בחו"ל — הייתה ריקה במצב לא-מקוון.
+ *
+ * ── מדוע cache-first ──
+ * אריח של רחוב אינו משתנה בפרק הזמן של נסיעה. הגשה מהמטמון גם חוסכת
+ * תעבורה ברשת סלולרית יקרה, וגם מכבדת את מדיניות השימוש של OSM, שמבקשת
+ * לא להוריד את אותו אריח שוב ושוב.
+ *
+ * ── ולמה יש תקרה ──
+ * אריח שוקל 15–30KB, ומפה שגוללים בה מייצרת מאות אריחים בדקות. בלי
+ * תקרה המטמון היה גדל עד שהדפדפן מוחק אותו כולו — ואז גם מה שנצפה
+ * נעלם. תקרה של 500 אריחים היא כ-10MB, ומספיקה לעיר שלמה בכמה רמות
+ * זום. הפינוי הוא לפי סדר ההגעה: האריחים הישנים ביותר יורדים ראשונים.
+ */
+const TILE_HOSTS = /(^|\.)((tile|tiles)\.openstreetmap\.org|basemaps\.cartocdn\.com|tile\.opentopomap\.org)$/;
+const MAX_TILES = 500;
+
+const trimTiles = async () => {
+  const cache = await caches.open(TILES_CACHE);
+  const keys = await cache.keys();
+  if (keys.length <= MAX_TILES) return;
+  // הישנים ביותר קודם — keys() מחזיר לפי סדר ההוספה
+  await Promise.all(keys.slice(0, keys.length - MAX_TILES).map((k) => cache.delete(k)));
+};
 
 const STATIC_ASSETS = [
   '/',
@@ -25,7 +56,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((k) => k !== CACHE_NAME && k !== FONTS_CACHE)
+          .filter((k) => k !== CACHE_NAME && k !== FONTS_CACHE && k !== TILES_CACHE)
           .map((k) => caches.delete(k))
       )
     ).then(() => {
@@ -57,6 +88,26 @@ self.addEventListener('fetch', (event) => {
             return response;
           });
           return cached || fetchPromise;
+        })
+      )
+    );
+    return;
+  }
+
+  // אריחי מפה — Cache First, כדי שמפה שנצפתה תעבוד בלי רשת
+  if (TILE_HOSTS.test(url.hostname)) {
+    event.respondWith(
+      caches.open(TILES_CACHE).then((cache) =>
+        cache.match(request).then((cached) => {
+          if (cached) return cached;
+          return fetch(request).then((response) => {
+            // רק תשובה תקינה נשמרת. שגיאה שנשמרת הופכת אריח לחור קבוע.
+            if (response && response.ok) {
+              cache.put(request, response.clone());
+              trimTiles();
+            }
+            return response;
+          }).catch(() => cached || Response.error());
         })
       )
     );
