@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Button, Typography } from '@mui/material';
 import { normalizeBooking } from '../../services/tripGroupingService';
 import { identifyReference, referenceConflict } from '../../services/referenceIdentityService';
+import { contradictions, crossContradictions } from '../../services/bookingConsistencyService';
 
 /**
  * למה נסיעה מתחילה ונגמרת מתי שהיא נגמרת.
@@ -55,7 +56,12 @@ const TripBoundsReport = ({ trips = [] }) => {
       if (id) lines.push(`         ↳ אסמכתה: ${id.vendor} · ${id.why}`);
       const clash = referenceConflict(src);
       if (clash) lines.push(`         ⚠ ${clash}`);
+      // סתירה פנימית — השדות אינם מסכימים זה עם זה. זו המחלקה שנעדרה
+      // מכל הבדיקות הקודמות, שכולן שאלו רק "האם השדה קיים".
+      contradictions(src).forEach((c) => lines.push(`         ⚠ ${c}`));
+      if (src && src.contradiction) lines.push(`         ⚠ ${src.contradiction}`);
     });
+    crossContradictions(raw).forEach((c) => lines.push(`   ⚠ ${c}`));
     lines.push('');
   });
 

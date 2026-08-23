@@ -8,6 +8,7 @@ import {
 import { groupBookingsIntoTrips } from '../services/tripGroupingService';
 import { clearLedger } from '../services/scanLedgerService';
 import { useAutoGmailScan } from '../hooks/useAutoGmailScan';
+import { withoutContradictedFields } from '../services/bookingConsistencyService';
 import {
   dateKey, flightKey, sameName, sameFlightNumber, sameAirport, stripInvisible,
 } from '../services/bookingIdentity';
@@ -427,7 +428,12 @@ export const BookingsProvider = ({ children }) => {
    * לשמור רשימה שיש בה כפילות, ולא משנה מי כתב אותה או מתי.
    */
   const applyBookings = useCallback((next) => {
-    const clean = withoutEmptyRecords(dedupe(next || []));
+    // ── ניקוי סתירות קודם לאיחוד ──
+    // רשומה שסותרת את המקור שלה אינה מתאחדת עם התאום הנכון שלה, ולכן
+    // היא נראית ככפילות: שתי טיסות באותו יום בכיוונים הפוכים. ניקוי
+    // השדה הסותר מסיר את המחסום, והשתיים הופכות לאחת. הסדר כאן הוא
+    // העיקר — ניקוי אחרי האיחוד לא היה עוזר לדבר.
+    const clean = withoutEmptyRecords(dedupe((next || []).map(withoutContradictedFields)));
     bookingsRef.current = clean;
     setBookings(clean);
     writeLocal(clean);
