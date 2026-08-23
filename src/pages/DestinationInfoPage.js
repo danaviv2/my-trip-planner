@@ -89,6 +89,36 @@ const DestinationInfoPage = () => {
     }
   }, [destination]);
   
+  /**
+   * השלמת החלקים שהמאגר הסטטי אינו מכיל.
+   *
+   * המידע האנושי גובר תמיד: רק שדה שאינו קיים מתמלא. אחרת תשובת מודל
+   * הייתה דורסת ערך שנבדק בידי אדם, וזה בדיוק הכיוון ההפוך מהנדרש.
+   *
+   * רץ ברקע ואינו חוסם: העמוד כבר מוצג, והלשוניות מתמלאות כשהתשובה
+   * מגיעה. כישלון אינו מוצג כשגיאה — הלשונית פשוט נשארת כפי שהייתה,
+   * כי אין כאן דבר שהמשתמש ביקש ולא קיבל.
+   */
+  const completeFromAI = async (dest, base) => {
+    if (base.itinerary && base.budget && base.practical) return;
+    try {
+      const ai = await fetchDestinationFromAI(dest);
+      if (!ai) return;
+      setDestinationData((cur) => {
+        // בינתיים אולי עברו ליעד אחר; אין להזליג לתוכו תשובה של קודמו.
+        if (!cur || cur.name !== base.name) return cur;
+        const filled = {};
+        ['itinerary', 'budget', 'practical'].forEach((k) => {
+          if (!cur[k] && ai[k]) filled[k] = ai[k];
+        });
+        if (!Object.keys(filled).length) return cur;
+        return { ...cur, ...filled, aiFilledSections: Object.keys(filled) };
+      });
+    } catch {
+      // מודל שאינו זמין אינו שובר עמוד שכבר מוצג במלואו
+    }
+  };
+
   const fetchDestinationData = async (dest) => {
     setIsLoading(true);
     setError('');
@@ -100,6 +130,11 @@ const DestinationInfoPage = () => {
       if (staticData) {
         setDestinationData(staticData);
         setIsLoading(false);
+        // שלוש הלשוניות האחרונות — לוז מומלץ, תקציב ומידע מעשי — אינן
+        // קיימות במאגר הסטטי, ולכן הן הציגו אייקון רובוט לכל אחד-עשר
+        // היעדים המובנים. הן מושלמות ברקע מאותו מקור שמשרת יעד שנטען
+        // בחיפוש, כדי שלא יהיו כאן שני מנגנונים לאותו מידע.
+        completeFromAI(dest, staticData);
         return;
       }
 
@@ -864,6 +899,22 @@ const DestinationInfoPage = () => {
     }, [name, nameEn]);
 
     return site;
+  };
+
+  /**
+   * הערה על מקור התוכן.
+   *
+   * שלוש הלשוניות האלה נכתבות בידי מודל ולא בידי אדם, בעוד שאר העמוד
+   * נכתב ידנית. הקורא אינו יכול להבחין בכך לבד, ומחיר ליום שנראה כמו
+   * עובדה בדוקה נכנס לתקציב אמיתי. אמירה קצרה עדיפה על ודאות מדומה.
+   */
+  const AiFilledNote = ({ section }) => {
+    if (!(destinationData?.aiFilledSections || []).includes(section)) return null;
+    return (
+      <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'text.secondary' }}>
+        ✨ החלק הזה נוצר אוטומטית ועשוי להיות לא מדויק — כדאי לאמת מחירים ושעות מול המקור.
+      </Typography>
+    );
   };
 
   /**
@@ -2236,6 +2287,7 @@ const DestinationInfoPage = () => {
                 ) : (
                   <>
                     <Typography variant="h5" fontWeight="bold" mb={3}>{t('destInfo.itinerary_title')}</Typography>
+                    <AiFilledNote section="itinerary" />
                     {['3days', '5days'].map((plan) => {
                       const days = destinationData.itinerary[plan];
                       if (!days) return null;
@@ -2302,6 +2354,7 @@ const DestinationInfoPage = () => {
                 ) : (
                   <>
                     <Typography variant="h5" fontWeight="bold" mb={1}>{t('destInfo.budget_title')}</Typography>
+                    <AiFilledNote section="budget" />
                     {destinationData.budget.note && (
                       <Typography variant="body2" color="text.secondary" mb={3}>{destinationData.budget.note}</Typography>
                     )}
@@ -2370,6 +2423,8 @@ const DestinationInfoPage = () => {
                     <Typography variant="h6" color="text.secondary">{t('destInfo.ai_required')}</Typography>
                   </Box>
                 ) : (
+                  <>
+                  <AiFilledNote section="practical" />
                   <Grid container spacing={3}>
                     {/* ויזה + בטיחות */}
                     <Grid item xs={12} md={6}>
@@ -2506,6 +2561,7 @@ const DestinationInfoPage = () => {
                       </Grid>
                     )}
                   </Grid>
+                  </>
                 )}
               </Box>
             )}
