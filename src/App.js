@@ -40,6 +40,7 @@ import TravelServicesTab from './components/travel-services/TravelServicesTab';
 import DestinationInfo from './components/DestinationInfo';
 import AppRoutes from './routes';
 import { routeThroughNames } from './services/roadRouteService';
+import { generateItinerary } from './services/aiItineraryService';
 import { TripProvider } from './contexts/TripContext';
 import './assets/css/theme.css'; // קובץ העיצוב החדש
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -494,271 +495,103 @@ const searchRoute = async () => {
   }
 };
 // הפונקציה המעודכנת לתכנון טיול - החלף את זו הקיימת בקוד שלך
+/**
+ * המרת יום מ-`generateItinerary` למבנה שמסך הפירוט צורך.
+ *
+ * שדה שאין לו מקור אינו נוצר: שעת סיום, שעות פתיחה וזמן הליכה למקום
+ * הבא לא מגיעים מהמודל, ולכן הם פשוט אינם. הגרסה הקודמת המציאה אותם —
+ * "07:00-11:00" ו-"15 דקות הליכה" זהים לכל עיר ולכל יום.
+ */
+const toScreenActivity = (act) => {
+  const isFood = ['restaurant', 'food', 'breakfast', 'lunch', 'dinner', 'cafe'].includes(act.type);
+  return {
+    timeStart: act.time || '',
+    type: act.type || 'attraction',
+    activity: act.name,
+    name: act.name,
+    address: act.address || '',
+    description: act.description || '',
+    recommendedDuration: act.duration || '',
+    tips: act.tips || '',
+    // מחיר מגיע מהמודל כסכום עם מטבע או "חינם"; הוא לא נגזר מדרגת תקציב
+    ...(isFood ? { priceRange: act.price || '' } : { entranceFee: act.price || '' }),
+    // הקואורדינטות נשמרות למפה, והניווט הולך לשם ולא לחיפוש מילים
+    coords: Number.isFinite(act.lat) && Number.isFinite(act.lng) ? { lat: act.lat, lng: act.lng } : null,
+    googleMapsSearchQuery: [act.name, act.address].filter(Boolean).join(', '),
+  };
+};
+
+const toScreenDay = (day, destination) => ({
+  day: day.day,
+  date: day.title || `יום ${day.day}`,
+  location: destination,
+  summary: day.theme || day.title || '',
+  schedule: (day.activities || []).map(toScreenActivity),
+  ...(day.hotel && day.hotel.name ? {
+    accommodation: {
+      name: day.hotel.name,
+      address: day.hotel.address || '',
+      description: day.hotel.description || '',
+      priceRange: day.hotel.priceRange || '',
+      googleMapsSearchQuery: [day.hotel.name, day.hotel.address].filter(Boolean).join(', '),
+    },
+  } : {}),
+});
+
+/**
+ * תכנון היום-יום מהמקור האמיתי.
+ *
+ * ── מה היה כאן ──
+ * מאתיים ושבעים שורות שבנו את היום ממערכים קשיחים: "מסעדת בוקר מקומית",
+ * "אתר תיירות מרכזי", "פארק עירוני" — ולוושינגטון ולבורדו היו רשימות
+ * ידניות משלהן. התוצאה נראתה כמו תוכנית ולא הייתה אחת: אי אפשר לנווט
+ * ל"אתר תיירות מרכזי" ואי אפשר להזמין שולחן ב"מסעדה מקומית".
+ *
+ * ── ולמה זה מיותר ──
+ * `generateItinerary` כבר קיים ומשרת את /trip-planner, את הטיול המתגלגל
+ * ואת TripContext. הוא מחזיר Clérigos Tower עם Rua de São Filipe de Nery,
+ * קואורדינטות אמיתיות ומחיר של 8€. שני מימושים לאותה עובדה, אחד טוב
+ * ואחד ממלא מקום — וזה הדפוס שנרדף כאן שוב ושוב.
+ *
+ * הוא גם מקבל את ההזמנות כעוגנים, ולכן לא יתכנן מוזיאון בשעה שהמשתמש
+ * אמור להיות בטרמינל.
+ */
 const planTripWithAI = async () => {
+  const destination = String(userPreferences.location || '').trim();
+  if (!destination) {
+    alert('אנא הזן יעד לטיול.');
+    return;
+  }
+
   setIsLoading(true);
   try {
-    console.log('מתחיל תכנון טיול מותאם ליעד:', userPreferences.location);
-    
-    // בניית רשימת מיקומים המתאימים ליעד הנבחר
-    let secondaryLocations = [];
-    
-    // מיקומים ליד וושינגטון
-    if (userPreferences.location.toLowerCase().includes('washington') || 
-        userPreferences.location.toLowerCase().includes('וושינגטון')) {
-      secondaryLocations = [
-        "Alexandria, Virginia", 
-        "Arlington, Virginia", 
-        "Georgetown", 
-        "Annapolis, Maryland", 
-        "Baltimore, Maryland"
-      ];
-    } 
-    // מיקומים ליד בורדו
-    else if (userPreferences.location.toLowerCase().includes('bordeaux') || 
-             userPreferences.location.toLowerCase().includes('בורדו')) {
-      secondaryLocations = [
-        "Saint-Émilion", 
-        "Médoc", 
-        "Arcachon", 
-        "Cognac", 
-        "Bergerac"
-      ];
-    } 
-    // ברירת מחדל למיקומים כלליים
-    else {
-      secondaryLocations = [
-        `Areas near ${userPreferences.location}`, 
-        `Suburbs of ${userPreferences.location}`, 
-        `Day trip from ${userPreferences.location}`, 
-        `Attractions around ${userPreferences.location}`, 
-        `${userPreferences.location} region`
-      ];
-    }
-    
-    // יצירת מידע מותאם ליעד
-    let locationsData = {};
-    
-    // נתונים עבור וושינגטון
-    if (userPreferences.location.toLowerCase().includes('washington') || 
-        userPreferences.location.toLowerCase().includes('וושינגטון')) {
-      locationsData = {
-        breakfasts: ["Lincoln's Waffle Shop", "Founding Farmers", "Busboys and Poets", "Ted's Bulletin"],
-        attractions: ["Smithsonian National Air and Space Museum", "National Mall", "Capitol Building", "Lincoln Memorial"],
-        lunch: ["Old Ebbitt Grill", "District Commons", "Ben's Chili Bowl", "The Hamilton"],
-        afternoon: ["National Gallery of Art", "Washington Monument", "Tidal Basin", "Georgetown Historic District"],
-        dinner: ["Rasika", "Oyamel", "Le Diplomate", "Zaytinya"],
-        accommodations: ["The Hay-Adams", "Hotel Washington", "The Willard InterContinental", "Kimpton Hotel Monaco"]
-      };
-    }
-    // נתונים עבור בורדו
-    else if (userPreferences.location.toLowerCase().includes('bordeaux') || 
-             userPreferences.location.toLowerCase().includes('בורדו')) {
-      locationsData = {
-        breakfasts: ["Café Français", "Karl Pâtisserie", "Plume Bakery & Coffee", "Horace"],
-        attractions: ["La Cité du Vin", "Place de la Bourse", "Cathédrale Saint-André", "Grand Théâtre de Bordeaux"],
-        lunch: ["Le Bistro du Musée", "La Brasserie Bordelaise", "Le Pressoir d'Argent", "Le Gabriel"],
-        afternoon: ["Musée d'Aquitaine", "Jardin Public", "Rue Sainte-Catherine", "Basilique Saint-Michel"],
-        dinner: ["Le Chapon Fin", "Le Pressoir d'Argent", "La Tupina", "Le Bistrot des Vignes"],
-        accommodations: ["Hôtel de Sèze", "InterContinental Bordeaux", "Yndo Hôtel", "Les Sources de Caudalie"]
-      };
-    }
-    // נתונים כלליים
-    else {
-      locationsData = {
-        breakfasts: ["Local Café", "Breakfast House", "Morning Bakery", "Brunch Place"],
-        attractions: ["Main Museum", "City Center", "Historic Site", "Cultural Center"],
-        lunch: ["Local Bistro", "Traditional Restaurant", "City Grill", "Market Eatery"],
-        afternoon: ["City Park", "Shopping District", "Art Gallery", "Cultural Experience"],
-        dinner: ["Fine Dining Restaurant", "Local Cuisine Restaurant", "Popular Eatery", "Chef's Table"],
-        accommodations: ["City Center Hotel", "Boutique Hotel", "Luxury Stay", "Historic Hotel"]
-      };
-    }
-    
-    // יצירת תוכנית טיול דינמית בהתאם ליעד
-    const tripItinerary = [];
-    
-    for (let i = 0; i < userPreferences.days; i++) {
-      // בימים הראשונים בעיר המרכזית, אח"כ במקומות אחרים
-      const isInCity = i < 3;
-      const location = isInCity ? userPreferences.location : 
-                     secondaryLocations[i % secondaryLocations.length];
-      
-      // ── מה שהוסר כאן, ולמה ──
-      // לכל פעילות הוצמדו שעות פתיחה, מחיר כניסה, זמן הליכה למקום הבא
-      // וטיפ — כולם מחרוזות קבועות, זהות לכל עיר ולכל יום. הם נראו כמו
-      // מידע שנאסף, והמסך אף הצמיד להם כפתורי "נווט" ו"הזמן שולחן".
-      // ניווט לאן, כשהמקום נקרא "אתר תיירות מרכזי"?
-      //
-      // המסלול המפורט של ה-AI — זה שמחזיר את כיכר רוסיו ואת Solar dos
-      // Presuntos — הוא מקור אמיתי וממשיך לעבוד. כאן נשאר רק מה שידוע
-      // באמת: החלוקה לשעות היום וסוג הפעילות.
-      let dailySchedule = [];
-      
-      // ארוחת בוקר
-      dailySchedule.push({
-        timeStart: "08:00",
-        timeEnd: "09:30",
-        type: "breakfast",
-        isGenerated: true,
-        activity: "ארוחת בוקר",
-        name: locationsData.breakfasts[i % locationsData.breakfasts.length],
-        address: `${location}, אזור מרכזי`,
-        description: "ארוחת בוקר מקומית עם מאפים טריים וקפה משובח",
-        googleMapsSearchQuery: `${locationsData.breakfasts[i % locationsData.breakfasts.length]} ${location}`
-      });
-      
-      // אטרקציה בוקר
-      dailySchedule.push({
-        timeStart: "10:00",
-        timeEnd: "12:30",
-        type: "attraction",
-        isGenerated: true,
-        activity: "ביקור באתר",
-        name: locationsData.attractions[i % locationsData.attractions.length],
-        address: `${location}, אזור מרכזי`,
-        description: "אתר תיירות מרכזי באזור",
-        googleMapsSearchQuery: `${locationsData.attractions[i % locationsData.attractions.length]} ${location}`
-      });
-      
-      // ארוחת צהריים
-      dailySchedule.push({
-        timeStart: "12:45",
-        timeEnd: "14:15",
-        type: "lunch",
-        isGenerated: true,
-        activity: "ארוחת צהריים",
-        name: locationsData.lunch[i % locationsData.lunch.length],
-        address: `${location}, מרכז העיר`,
-        description: "מסעדה מקומית עם תפריט אזורי",
-        googleMapsSearchQuery: `${locationsData.lunch[i % locationsData.lunch.length]} ${location}`
-      });
-      
-      // אטרקציה אחה"צ
-      dailySchedule.push({
-        timeStart: "14:45",
-        timeEnd: "17:00",
-        type: "attraction",
-        isGenerated: true,
-        activity: "ביקור באתר",
-        name: locationsData.afternoon[i % locationsData.afternoon.length],
-        address: `${location}, אזור מרכזי`,
-        description: "אתר תרבות או היסטוריה חשוב באזור",
-        googleMapsSearchQuery: `${locationsData.afternoon[i % locationsData.afternoon.length]} ${location}`
-      });
-      
-      // ארוחת ערב
-      dailySchedule.push({
-        timeStart: "19:00",
-        timeEnd: "21:00",
-        type: "dinner",
-        isGenerated: true,
-        activity: "ארוחת ערב",
-        name: locationsData.dinner[i % locationsData.dinner.length],
-        address: `${location}, אזור יוקרתי`,
-        description: "מסעדה איכותית עם מטבח מקומי משובח",
-        googleMapsSearchQuery: `${locationsData.dinner[i % locationsData.dinner.length]} ${location}`
-      });
-      
-      // יצירת יום טיול שלם
-      tripItinerary.push({
-        day: i + 1,
-        date: `יום ${getDayName(i)}`,
-        location: location,
-        summary: isInCity ? `יום גילוי ${userPreferences.location}` : `יום טיול באזור ${location}`,
-        schedule: dailySchedule,
-        transportation: {
-          morning: isInCity ? "הליכה רגלית או תחבורה ציבורית" : "נסיעה ברכב שכור",
-          afternoon: isInCity ? "תחבורה ציבורית או הליכה" : "המשך עם הרכב השכור",
-          evening: "מומלץ להזמין מונית לחזרה למלון"
-        },
-        accommodation: {
-          name: locationsData.accommodations[i % locationsData.accommodations.length],
-          address: `${location}, מיקום מרכזי`,
-          description: "מלון איכותי במיקום מרכזי עם שירות מעולה",
-          bookingLink: "booking.com",
-          googleMapsSearchQuery: `${locationsData.accommodations[i % locationsData.accommodations.length]} ${location}`
-        }
-      });
-    }
+    const days = Math.max(1, Number(userPreferences.days) || 3);
+    const itinerary = await generateItinerary({
+      destination,
+      days,
+      interests: userPreferences.themes || [],
+      budget: userPreferences.budget || 'medium',
+      advancedPreferences: userPreferences.advancedPreferences || {},
+    });
 
-    // עדכון מסלול הטיול
-    console.log('מסלול טיול מלא ומפורט נוצר בהצלחה:', tripItinerary.length, 'ימים');
-    setTripPlan(prev => ({ ...prev, dailyItinerary: tripItinerary, location: userPreferences.location }));
+    if (!itinerary || !itinerary.length) throw new Error('EMPTY');
 
+    setTripPlan(prev => ({
+      ...prev,
+      dailyItinerary: itinerary.map(d => toScreenDay(d, destination)),
+      location: destination,
+    }));
   } catch (error) {
     console.error('שגיאה בתכנון הטיול:', error);
-    alert('התרחשה שגיאה בתכנון הטיול. נוצר מסלול בסיסי.');
-    
-    // יצירת מסלול בסיסי במקרה של כישלון - בלי להשתמש בפונקציות עזר נוספות
-    const basicItinerary = [];
-    
-    for (let i = 0; i < userPreferences.days; i++) {
-      const isInCity = i < 2;
-      
-      let location = userPreferences.location;
-      if (!isInCity) {
-        if (userPreferences.location.toLowerCase().includes('washington')) {
-          location = ["Alexandria", "Arlington", "Georgetown"][i % 3];
-        } else if (userPreferences.location.toLowerCase().includes('bordeaux') || 
-                  userPreferences.location.toLowerCase().includes('בורדו')) {
-          location = ["Saint-Émilion", "Médoc", "Arcachon"][i % 3];
-        } else {
-          location = `${userPreferences.location} surroundings`;
-        }
-      }
-      
-      basicItinerary.push({
-        day: i + 1,
-        date: `יום ${getDayName(i)}`,
-        location: location,
-        summary: isInCity ? `יום גילוי ${userPreferences.location}` : `יום טיול באזור ${location}`,
-        schedule: [
-          {
-            timeStart: "10:00",
-            timeEnd: "12:30",
-            type: "attraction",
-        isGenerated: true,
-            activity: "ביקור באתר",
-            name: isInCity ? "אתר תיירות מרכזי" : "אטרקציה מקומית",
-            address: `${location}, אזור מרכזי`,
-            description: "אתר תיירות פופולרי"
-          },
-          {
-            timeStart: "12:45",
-            timeEnd: "14:15",
-            type: "lunch",
-        isGenerated: true,
-            activity: "ארוחת צהריים",
-            name: "מסעדה מקומית",
-            address: `${location}, מרכז העיר`,
-            description: "מסעדה אותנטית עם מאכלים מקומיים"
-          },
-          {
-            timeStart: "14:45",
-            timeEnd: "17:00",
-            type: "attraction",
-        isGenerated: true,
-            activity: "ביקור באתר",
-            name: "אתר תרבות",
-            address: `${location}, אזור מרכזי`,
-            description: "אתר תרבות או היסטוריה מרכזי"
-          }
-        ],
-        transportation: {
-          morning: "תחבורה מקומית",
-          afternoon: "תחבורה מקומית",
-          evening: "מונית"
-        },
-        accommodation: {
-          name: "מלון מרכזי",
-          address: `${location}, מיקום מרכזי`,
-          priceRange: "€€€",
-          description: "מלון איכותי"
-        }
-      });
-    }
-    
-    setTripPlan(prev => ({ ...prev, dailyItinerary: basicItinerary, location: userPreferences.location }));
+    // ── אין שלד גנרי כתחליף ──
+    // מסלול נבנה מראש ונשמר, ולכן כישלון כאן הוא כמעט תמיד ניתוק רשת.
+    // אמירה מפורשת עדיפה על תוכנית ממלאת מקום שנראית אמיתית: את
+    // הראשונה מנסים שוב, השנייה נלקחת לנסיעה.
+    alert(
+      navigator.onLine === false
+        ? 'אין תקשורת — לא ניתן לבנות את המסלול כעת. המסלולים שכבר נשמרו זמינים כרגיל.'
+        : 'לא הצלחנו לבנות את המסלול כרגע. נסה שוב בעוד רגע.'
+    );
   } finally {
     setIsLoading(false);
   }
@@ -819,20 +652,37 @@ const planRoadTrip = async () => {
     let fullItinerary = [];
     let currentDay = 1;
     
+    // ── כל תחנה מתוכננת מהמקור האמיתי ──
+    // כאן ישבו `getLocationData` ו-`createItineraryForLocation`, עותק שני
+    // של אותם מערכים קשיחים: רשימות ידניות לטוקיו, לברצלונה ולבורדו,
+    // ו"מסעדת בוקר מקומית" לכל שאר העולם. הטיול המתגלגל — הפיצ'ר הכי
+    // מובחן כאן — הציג בזכותם ימים שנראים כמו תוכנית ואי אפשר להשתמש
+    // בהם: אין לאן לנווט ואין איפה להזמין.
+    //
+    // התחנות מתוכננות בטור ולא במקביל, כדי לא לירות ארבע בקשות מודל
+    // בבת אחת. תחנה שנכשלה מפילה את כולן במכוון — מסלול שחציו אמיתי
+    // וחציו ריק מטעה יותר ממסלול שלא נבנה.
     for (let stopIndex = 0; stopIndex < allStops.length; stopIndex++) {
       const location = allStops[stopIndex];
       const daysHere = daysPerStop[stopIndex];
-      
-      // יצירת תוכן ספציפי ליעד הנוכחי
-      const locationData = getLocationData(location);
-      
-      // יצירת תכנית ליעד נוכחי
-      const stopItinerary = createItineraryForLocation(location, locationData, daysHere, currentDay, stopIndex === allStops.length - 1, stopIndex < allStops.length - 1 ? allStops[stopIndex + 1] : null);
-      
-      // הוספה למסלול המלא
-      fullItinerary = [...fullItinerary, ...stopItinerary];
-      
-      // עדכון מספר היום הבא
+
+      // eslint-disable-next-line no-await-in-loop
+      const stopDays = await generateItinerary({
+        destination: location,
+        days: daysHere,
+        interests: userPreferences.themes || [],
+        budget: userPreferences.budget || 'medium',
+        advancedPreferences: userPreferences.advancedPreferences || {},
+      });
+
+      if (!stopDays || !stopDays.length) throw new Error('EMPTY_STOP');
+
+      // מספור הימים רץ לאורך כל המסלול, לא מתאפס בכל תחנה
+      fullItinerary = [
+        ...fullItinerary,
+        ...stopDays.map((d, i) => ({ ...toScreenDay(d, location), day: currentDay + i })),
+      ];
+
       currentDay += daysHere;
     }
     
@@ -862,370 +712,10 @@ const planRoadTrip = async () => {
 };
 
 // פונקציה להחזרת מידע ספציפי ליעד
-const getLocationData = (location) => {
-  // פריז
-  if (location.toLowerCase().includes('paris') || 
-      location.toLowerCase().includes('פריז')) {
-    return {
-      breakfasts: ["Café de Flore", "Du Pain et des Idées", "Ladurée", "Angelina"],
-      attractions: ["מגדל אייפל", "מוזיאון הלובר", "שאנז אליזה", "נוטרדאם"],
-      lunch: ["Chez Janou", "Le Comptoir du Relais", "Le Relais de l'Entrecôte", "L'As du Fallafel"],
-      afternoon: ["גני לוקסמבורג", "מונמארטר", "מוזיאון אורסיי", "קרוסל דו לובר"],
-      dinner: ["L'Atelier de Joël Robuchon", "Le Jules Verne", "Septime", "Frenchie"],
-      accommodations: ["מלון ריץ פריז", "פארק חיות", "הוטל קוסטס", "מלון קריון"],
-      photos: ["https://via.placeholder.com/300x200?text=Paris"],
-      localTips: "התחבורה הציבורית בפריז מצוינת. כדאי לרכוש כרטיסיות למטרו.",
-      bestTime: "אביב (אפריל-יוני) וסתיו (ספטמבר-אוקטובר)",
-      language: "צרפתית, אך אנגלית מדוברת במקומות תיירותיים",
-      currency: "אירו (€)",
-      festivals: [
-        { name: "פסטיבל הג'אז בפריז", date: "יוני-יולי" },
-        { name: "יום הבסטיליה", date: "14 ביולי" },
-        { name: "נשף לבן", date: "יוני" }
-      ]
-    };
-  }
-  
-  // לונדון
-  else if (location.toLowerCase().includes('london') || 
-           location.toLowerCase().includes('לונדון')) {
-    return {
-      breakfasts: ["The Breakfast Club", "Dishoom", "Granger & Co.", "Duck & Waffle"],
-      attractions: ["ארמון בקינגהאם", "לונדון איי", "מוזיאון הבריטי", "טאואר ברידג'"],
-      lunch: ["Borough Market", "The Wolseley", "Ottolenghi", "Sketch"],
-      afternoon: ["פארק הייד", "מוזיאון ויקטוריה ואלברט", "קובנט גארדן", "גריניץ'"],
-      dinner: ["The Ledbury", "Gordon Ramsay", "The Ivy", "Dinner by Heston Blumenthal"],
-      accommodations: ["The Savoy", "The Ritz London", "Claridge's", "Shangri-La at The Shard"],
-      photos: ["https://via.placeholder.com/300x200?text=London"],
-      localTips: "כרטיס האויסטר חוסך כסף בתחבורה ציבורית. זכרו שמנהגים כמו לעמוד בצד ימין במדרגות נעות נחשבים לחשובים.",
-      bestTime: "מאי עד ספטמבר",
-      language: "אנגלית",
-      currency: "ליש״ט (£)",
-      festivals: [
-        { name: "קרנבל נוטינג היל", date: "סוף אוגוסט" },
-        { name: "פסטיבל תמזה", date: "ספטמבר" },
-        { name: "לונדון פילם פסטיבל", date: "אוקטובר" }
-      ]
-    };
-  }
-  
-  // ברצלונה
-  else if (location.toLowerCase().includes('barcelona') || 
-           location.toLowerCase().includes('ברצלונה')) {
-    return {
-      breakfasts: ["La Boqueria Market", "Café de l'Òpera", "Milk Bar & Bistro", "Chök"],
-      attractions: ["סגרדה פמיליה", "פארק גואל", "לה רמבלה", "קמפ נואו"],
-      lunch: ["El Quim de la Boqueria", "Tickets", "La Cova Fumada", "Bar Cañete"],
-      afternoon: ["חוף ברצלונטה", "מוזיאון פיקאסו", "הרובע הגותי", "מונז'ואיק"],
-      dinner: ["Disfrutar", "Enigma", "ABaC", "El Celler de Can Roca"],
-      accommodations: ["W Barcelona", "Hotel Arts", "Mandarin Oriental Barcelona", "Cotton House Hotel"],
-      photos: ["https://via.placeholder.com/300x200?text=Barcelona"],
-      localTips: "שעות האוכל בספרד שונות - ארוחת הערב מתחילה לרוב ב-21:00 ומאוחר יותר.",
-      bestTime: "אפריל עד יוני, ספטמבר עד נובמבר",
-      language: "ספרדית וקטלאנית",
-      currency: "אירו (€)",
-      festivals: [
-        { name: "פסטה מאג'ור דה לה מרסה", date: "ספטמבר" },
-        { name: "פסטיבל סונאר", date: "יוני" },
-        { name: "פרימברה סאונד", date: "מאי-יוני" }
-      ]
-    };
-  }
+// שתי הפונקציות שישבו כאן — getLocationData ו-createItineraryForLocation —
+// הוסרו. הן בנו ימים ממערכים קשיחים, והוחלפו ב-generateItinerary שכבר
+// משרת את שאר האפליקציה. 340 שורות של תוכן ממלא מקום ירדו איתן.
 
-  // טוקיו
-  else if (location.toLowerCase().includes('tokyo') || 
-           location.toLowerCase().includes('טוקיו')) {
-    return {
-      breakfasts: ["Tsukiji Fish Market", "Eggs 'n Things", "Café de l'Ambre", "Bills"],
-      attractions: ["מקדש מייג'י", "טוקיו סקייטרי", "שינג'וקו גיואן", "מקדש סנסו-ג'י"],
-      lunch: ["מסעדות ראמן באיבושו", "Tonkatsu Maisen", "Sushi Dai", "Ichiran"],
-      afternoon: ["אזור שיבויה", "אזור הרפובה", "חנויות באקיהברה", "אודאיבה"],
-      dinner: ["Sukiyabashi Jiro", "Narisawa", "Nihonryori RyuGin", "Ginza Kyubey"],
-      accommodations: ["Park Hyatt Tokyo", "Mandarin Oriental Tokyo", "Aman Tokyo", "The Ritz-Carlton Tokyo"],
-      photos: ["https://via.placeholder.com/300x200?text=Tokyo"],
-      localTips: "שימו לב לכללי הנימוס המקומיים. תיפים אינם מקובלים.",
-      bestTime: "מרץ-מאי (פריחת הדובדבן) או אוקטובר-נובמבר (סתיו)",
-      language: "יפנית, אנגלית מוגבלת במקומות תיירותיים",
-      currency: "ין (¥)",
-      festivals: [
-        { name: "פסטיבל סנג'ה", date: "מאי" },
-        { name: "פסטיבל קנדה מטסורי", date: "יולי" },
-        { name: "פסטיבל סומידה", date: "יולי" }
-      ]
-    };
-  }
-  
-  // בדיקה עבור וושינגטון
-  if (location.toLowerCase().includes('washington') || 
-      location.toLowerCase().includes('וושינגטון')) {
-    return {
-      breakfasts: ["Lincoln's Waffle Shop", "Founding Farmers", "Busboys and Poets", "Ted's Bulletin"],
-      attractions: ["Smithsonian National Air and Space Museum", "National Mall", "Capitol Building", "Lincoln Memorial"],
-      lunch: ["Old Ebbitt Grill", "District Commons", "Ben's Chili Bowl", "The Hamilton"],
-      afternoon: ["National Gallery of Art", "Washington Monument", "Tidal Basin", "Georgetown Historic District"],
-      dinner: ["Rasika", "Oyamel", "Le Diplomate", "Zaytinya"],
-      accommodations: ["The Hay-Adams", "Hotel Washington", "The Willard InterContinental", "Kimpton Hotel Monaco"],
-      photos: ["https://via.placeholder.com/300x200?text=Washington+DC"]
-    };
-  } 
-  // בדיקה עבור לוס אנג'לס
-  else if (location.toLowerCase().includes('los angeles') || 
-           location.toLowerCase().includes('לוס אנג\'לס')) {
-    return {
-      breakfasts: ["Blu Jam Café", "Republique", "Eggslut", "Urth Caffé"],
-      attractions: ["Hollywood Walk of Fame", "Griffith Observatory", "Santa Monica Pier", "Getty Center"],
-      lunch: ["Grand Central Market", "In-N-Out Burger", "Bestia", "Langer's Deli"],
-      afternoon: ["Venice Beach", "Universal Studios", "LACMA", "The Grove"],
-      dinner: ["Nobu", "Providence", "Animal", "Jon & Vinny's"],
-      accommodations: ["The Beverly Hills Hotel", "Chateau Marmont", "The Standard", "Ace Hotel Downtown"],
-      photos: ["https://via.placeholder.com/300x200?text=Los+Angeles"]
-    };
-  }
-  // בדיקה עבור ניו יורק
-  else if (location.toLowerCase().includes('new york') || 
-           location.toLowerCase().includes('ניו יורק')) {
-    return {
-      breakfasts: ["Russ & Daughters", "Clinton St. Baking Company", "Balthazar", "Sarabeth's"],
-      attractions: ["Empire State Building", "Central Park", "Statue of Liberty", "Times Square"],
-      lunch: ["Katz's Delicatessen", "Shake Shack", "Eataly", "Chelsea Market"],
-      afternoon: ["MoMA", "High Line", "Brooklyn Bridge", "Metropolitan Museum of Art"],
-      dinner: ["Peter Luger", "Le Bernardin", "Momofuku Ko", "Gramercy Tavern"],
-      accommodations: ["The Plaza", "The Standard High Line", "Ace Hotel", "The NoMad Hotel"],
-      photos: ["https://via.placeholder.com/300x200?text=New+York"]
-    };
-  }
-  // בדיקה עבור בורדו
-  else if (location.toLowerCase().includes('bordeaux') || 
-           location.toLowerCase().includes('בורדו')) {
-    return {
-      breakfasts: ["Café Français", "Karl Pâtisserie", "Plume Bakery & Coffee", "Horace"],
-      attractions: ["La Cité du Vin", "Place de la Bourse", "Cathédrale Saint-André", "Grand Théâtre de Bordeaux"],
-      lunch: ["Le Bistro du Musée", "La Brasserie Bordelaise", "Le Pressoir d'Argent", "Le Gabriel"],
-      afternoon: ["Musée d'Aquitaine", "Jardin Public", "Rue Sainte-Catherine", "Basilique Saint-Michel"],
-      dinner: ["Le Chapon Fin", "Le Pressoir d'Argent", "La Tupina", "Le Bistrot des Vignes"],
-      accommodations: ["Hôtel de Sèze", "InterContinental Bordeaux", "Yndo Hôtel", "Les Sources de Caudalie"],
-      photos: ["https://via.placeholder.com/300x200?text=Bordeaux"]
-    };
-  }
-  // בדיקה עבור רומא
-  else if (location.toLowerCase().includes('rome') || 
-           location.toLowerCase().includes('roma') || 
-           location.toLowerCase().includes('רומא')) {
-    return {
-      breakfasts: ["Roscioli Caffè", "Sant'Eustachio Il Caffè", "Panella", "Coromandel"],
-      attractions: ["Colosseum", "Vatican Museums", "Trevi Fountain", "Roman Forum"],
-      lunch: ["Da Enzo al 29", "Roscioli", "Pizzarium", "Armando al Pantheon"],
-      afternoon: ["Pantheon", "Galleria Borghese", "Spanish Steps", "Castel Sant'Angelo"],
-      dinner: ["Pierluigi", "Cesare al Casaletto", "La Pergola", "Checchino dal 1887"],
-      accommodations: ["Hotel Hassler", "Hotel de Russie", "The St. Regis Rome", "Hotel Eden"],
-      photos: ["https://via.placeholder.com/300x200?text=Rome"]
-    };
-  }
-  // בדיקה עבור פירנצה
-  else if (location.toLowerCase().includes('florence') || 
-           location.toLowerCase().includes('firenze') || 
-           location.toLowerCase().includes('פירנצה')) {
-    return {
-      breakfasts: ["Ditta Artigianale", "La Ménagère", "S.forno", "Caffè Gilli"],
-      attractions: ["Uffizi Gallery", "Duomo", "Ponte Vecchio", "Galleria dell'Accademia"],
-      lunch: ["All'Antico Vinaio", "Trattoria Mario", "Osteria Santo Spirito", "Il Latini"],
-      afternoon: ["Pitti Palace", "Boboli Gardens", "Piazzale Michelangelo", "Basilica of Santa Croce"],
-      dinner: ["Enoteca Pinchiorri", "La Giostra", "Il Palagio", "Osteria Francescana"],
-      accommodations: ["Four Seasons Hotel Firenze", "Hotel Savoy", "The St. Regis Florence", "Portrait Firenze"],
-      photos: ["https://via.placeholder.com/300x200?text=Florence"]
-    };
-  }
-  // בדיקה עבור סיאטל
-  else if (location.toLowerCase().includes('seattle') || 
-           location.toLowerCase().includes('סיאטל')) {
-    return {
-      breakfasts: ["Biscuit Bitch", "The Crumpet Shop", "Portage Bay Cafe", "General Porpoise"],
-      attractions: ["Space Needle", "Pike Place Market", "Chihuly Garden and Glass", "Museum of Pop Culture"],
-      lunch: ["Pike Place Chowder", "Salumi", "Serious Pie", "Ivar's Acres of Clams"],
-      afternoon: ["Olympic Sculpture Park", "Kerry Park", "Seattle Aquarium", "Gas Works Park"],
-      dinner: ["Canlis", "The Walrus and the Carpenter", "Altura", "Spinasse"],
-      accommodations: ["Fairmont Olympic Hotel", "Thompson Seattle", "Four Seasons Hotel Seattle", "The Edgewater"],
-      photos: ["https://via.placeholder.com/300x200?text=Seattle"]
-    };
-  }
-  
-  // ברירת מחדל למיקום לא מוכר
-  return {
-    breakfasts: ["מסעדת בוקר מקומית", "בית קפה פופולרי", "קונדיטוריה מומלצת", "מאפייה מקומית"],
-    attractions: ["אתר תיירות מרכזי", "מוזיאון מקומי", "אתר היסטורי", "מרכז תרבות"],
-    lunch: ["מסעדה מקומית", "ביסטרו מומלץ", "מסעדת שף", "מזנון מקומי"],
-    afternoon: ["פארק עירוני", "אזור קניות", "גלריה לאמנות", "אזור בילויים"],
-    dinner: ["מסעדה יוקרתית", "מסעדה מקומית", "מסעדת שף", "ביסטרו ערב"],
-    accommodations: ["מלון מרכזי", "מלון בוטיק", "מלון יוקרה", "אכסניה מומלצת"],
-    photos: ["https://via.placeholder.com/300x200?text=" + encodeURIComponent(location)]
-  };
-};
-
-// פונקציה ליצירת תכנית יומית ליעד מסוים
-const createItineraryForLocation = (location, locationData, days, startingDay, isLastStop, nextStop) => {
-  // יצירת תכנית יומית לפי יעד
-  const itinerary = [];
-  
-  for (let i = 0; i < days; i++) {
-    const dayNumber = startingDay + i;
-    const isLastDay = i === days - 1 && !isLastStop;
-    
-    // יצירת סיכום מותאם למיקום ביום
-    let summary = '';
-    if (i === 0 && startingDay === 1) {
-      summary = `הגעה ל${location} והתמקמות`;
-    } else if (isLastDay && nextStop) {
-      summary = `יום אחרון ב${location} ונסיעה ל${nextStop}`;
-    } else if (i === 0) {
-      summary = `הגעה ל${location}`;
-    } else {
-      summary = `יום ${i+1} ב${location}`;
-    }
-    
-    // יצירת לוח זמנים מותאם ליום
-    const dailySchedule = [];
-    
-    // ארוחת בוקר
-    dailySchedule.push({
-      timeStart: "08:00",
-      timeEnd: "09:30",
-      type: "breakfast",
-      activity: "ארוחת בוקר",
-      name: locationData.breakfasts[i % locationData.breakfasts.length],
-      address: `${location}, אזור מרכזי`,
-      description: "ארוחת בוקר מקומית עם מאפים טריים וקפה משובח",
-      reservationNeeded: false,
-      priceRange: "€€",
-      openingHours: "07:00-11:00",
-      travelTimeToNext: "15 דקות הליכה",
-      googleMapsSearchQuery: `${locationData.breakfasts[i % locationData.breakfasts.length]} ${location}`
-    });
-    
-    // אטרקציה בוקר
-    dailySchedule.push({
-      timeStart: "10:00",
-      timeEnd: "12:30",
-      type: "attraction",
-      activity: "ביקור באתר",
-      name: locationData.attractions[i % locationData.attractions.length],
-      address: `${location}, אזור מרכזי`,
-      description: "אתר תיירות מרכזי באזור",
-      entranceFee: "כניסה חופשית או כ-15€",
-      openingHours: "09:00-17:00",
-      recommendedDuration: "שעתיים וחצי",
-      tips: "מומלץ להגיע בשעות הבוקר המוקדמות",
-      travelTimeToNext: "15 דקות הליכה",
-      googleMapsSearchQuery: `${locationData.attractions[i % locationData.attractions.length]} ${location}`
-    });
-    
-    // ארוחת צהריים
-    dailySchedule.push({
-      timeStart: "12:45",
-      timeEnd: "14:15",
-      type: "lunch",
-      activity: "ארוחת צהריים",
-      name: locationData.lunch[i % locationData.lunch.length],
-      address: `${location}, מרכז העיר`,
-      description: "מסעדה מקומית עם תפריט אזורי",
-      reservationNeeded: true,
-      priceRange: "€€-€€€",
-      openingHours: "12:00-14:30",
-      travelTimeToNext: "20 דקות הליכה",
-      googleMapsSearchQuery: `${locationData.lunch[i % locationData.lunch.length]} ${location}`
-    });
-    
-    // אטרקציה אחה"צ
-    dailySchedule.push({
-      timeStart: "14:45",
-      timeEnd: "17:00",
-      type: "attraction",
-      activity: "ביקור באתר",
-      name: locationData.afternoon[i % locationData.afternoon.length],
-      address: `${location}, אזור מרכזי`,
-      description: "אתר תרבות או היסטוריה חשוב באזור",
-      entranceFee: "כ-10€",
-      openingHours: "10:00-18:00",
-      recommendedDuration: "שעתיים",
-      tips: "כדאי להשתתף בסיור מודרך",
-      travelTimeToNext: "15-20 דקות נסיעה",
-      googleMapsSearchQuery: `${locationData.afternoon[i % locationData.afternoon.length]} ${location}`
-    });
-    
-    // אם זה היום האחרון במיקום והמיקום הבא קיים, נוסיף נסיעה למיקום הבא
-    if (isLastDay && nextStop) {
-      dailySchedule.push({
-        timeStart: "17:30",
-        timeEnd: "19:00",
-        type: "transport",
-        activity: "נסיעה ליעד הבא",
-        name: `נסיעה מ${location} ל${nextStop}`,
-        description: `נסיעה ליעד הבא במסלול: ${nextStop}`,
-        tips: "וודא שאספת את כל החפצים מהמלון לפני העזיבה",
-        googleMapsSearchQuery: `from:${location} to:${nextStop}`
-      });
-      
-      // נוסיף ארוחת ערב ביעד החדש
-      dailySchedule.push({
-        timeStart: "19:30",
-        timeEnd: "21:00",
-        type: "dinner",
-        isGenerated: true,
-        activity: "ארוחת ערב",
-        name: `מסעדה מקומית ב${nextStop}`,
-        address: `${nextStop}, אזור מרכזי`,
-        description: `ארוחת ערב ראשונה ב${nextStop} לאחר ההגעה`,
-        reservationNeeded: true,
-        priceRange: "€€€",
-        openingHours: "19:00-22:30",
-        travelTimeToNext: "10 דקות נסיעה",
-        googleMapsSearchQuery: `restaurant ${nextStop}`
-      });
-      
-    } else {
-      // ארוחת ערב רגילה אם זה לא יום מעבר
-      dailySchedule.push({
-        timeStart: "19:00",
-        timeEnd: "21:00",
-        type: "dinner",
-        isGenerated: true,
-        activity: "ארוחת ערב",
-        name: locationData.dinner[i % locationData.dinner.length],
-        address: `${location}, אזור יוקרתי`,
-        description: "מסעדה איכותית עם מטבח מקומי משובח",
-        reservationNeeded: true,
-        priceRange: "€€€",
-        openingHours: "19:00-22:30",
-        travelTimeToNext: "10 דקות נסיעה",
-        googleMapsSearchQuery: `${locationData.dinner[i % locationData.dinner.length]} ${location}`
-      });
-    }
-    
-    // הוספת היום לתכנית
-    itinerary.push({
-      day: dayNumber,
-      date: `יום ${getDayName(dayNumber - 1)}`,
-      location: location,
-      summary: summary,
-      schedule: dailySchedule,
-      transportation: {
-        morning: "הליכה רגלית או תחבורה מקומית",
-        afternoon: "תחבורה מקומית",
-        evening: isLastDay && nextStop ? `נסיעה ל${nextStop}` : "מונית או תחבורה מקומית"
-      },
-      accommodation: {
-        name: isLastDay && nextStop ? `מלון ב${nextStop}` : locationData.accommodations[i % locationData.accommodations.length],
-        address: isLastDay && nextStop ? `${nextStop}, מיקום מרכזי` : `${location}, מיקום מרכזי`,
-        priceRange: "€€€",
-        description: isLastDay && nextStop ? `לינה ראשונה ב${nextStop}` : "מלון איכותי במיקום מרכזי",
-        bookingLink: "booking.com",
-        googleMapsSearchQuery: isLastDay && nextStop ? `hotel ${nextStop}` : `${locationData.accommodations[i % locationData.accommodations.length]} ${location}`
-      },
-      stopIndex: startingDay === 1 ? 0 : Math.floor((startingDay - 1) / days) + 1
-    });
-  }
-  
-  return itinerary;
-};
 
 // פונקציה לצביעת המסלול במפה לפי חלוקת הימים
 const colorRouteByDays = (directions, daysPerStop) => {
