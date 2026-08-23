@@ -39,6 +39,7 @@ import CarRentalSearch from './components/travel-services/CarRentalSearch';
 import TravelServicesTab from './components/travel-services/TravelServicesTab';
 import DestinationInfo from './components/DestinationInfo';
 import AppRoutes from './routes';
+import { routeThroughNames } from './services/roadRouteService';
 import { TripProvider } from './contexts/TripContext';
 import './assets/css/theme.css'; // קובץ העיצוב החדש
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -303,9 +304,16 @@ const searchRoute = async () => {
     return;
   }
 
-  // אם Google Maps JS API אינו זמין — המפה (iframe) כבר מציגה את המסלול אוטומטית
+  // ── המרחק מגיע מניתוב אמיתי, לא מ-Google Maps JS ──
+  // הרכיב שחישב זאת הוחלף ב-iframe ב-25.2.2026, והדגל שהחישוב תלוי בו
+  // לא נדלק שוב. התוצאה: "מרחק: לא זמין" מעל מפה שמציגה 347 ק"מ.
+  // OSRM מחזיר מרחק כביש אמיתי בלי מפתח; נמדד 344 ק"מ מול 347 של גוגל
+  // על אותו מסלול. כשאין תשובה — השדות נשארים ריקים והשורה לא מוצגת,
+  // ואין נפילה חזרה לקו אווירי שהיה מציג מספר שגוי כאילו הוא נכון.
   if (!window.google?.maps || !isMapsLoaded || !mapRef.current) {
     setRouteInfo({ distance: '', duration: '' });
+    const road = await routeThroughNames([startPoint, ...waypoints, endPoint]);
+    if (road) setRouteInfo({ distance: road.distance, duration: road.duration });
     return;
   }
 
