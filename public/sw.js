@@ -101,8 +101,14 @@ self.addEventListener('fetch', (event) => {
         cache.match(request).then((cached) => {
           if (cached) return cached;
           return fetch(request).then((response) => {
-            // רק תשובה תקינה נשמרת. שגיאה שנשמרת הופכת אריח לחור קבוע.
-            if (response && response.ok) {
+            // ── תשובה אטומה היא המקרה הרגיל כאן, לא החריג ──
+            // אריח נטען כ-<img>, כלומר בקשת no-cors, ולכן התשובה אטומה:
+            // status 0 ו-ok=false. תנאי `response.ok` בלבד נראה זהיר
+            // ואינו שומר אף אריח אמיתי — נמדד בדפדפן מול אריח חי לפני
+            // שהגיע למשתמש. תשובה אטומה עובדת מצוין כמקור ל-<img>,
+            // ולכן היא נשמרת; המחיר הוא שאי אפשר להבחין בה בין אריח
+            // לשגיאה, ועל כך עונה תקרת הפינוי.
+            if (response && (response.ok || response.type === 'opaque')) {
               cache.put(request, response.clone());
               trimTiles();
             }
