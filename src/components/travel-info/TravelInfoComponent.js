@@ -116,6 +116,9 @@ const TravelInfoComponent = () => {
     };
   }, [trips]);
 
+  /** נסיעות ממש, בלי הקבוצה הלא-משויכת — זה מה שהכותרת מבטיחה. */
+  const upcomingCount = useMemo(() => upcoming.filter((t) => !t.undated).length, [upcoming]);
+
 
   /**
    * הנסיעה הראשונה נפתחת מעצמה.
@@ -424,7 +427,13 @@ const TravelInfoComponent = () => {
         <Box sx={{ mb: 3 }}>
           <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
             <i className="material-icons" style={{ marginRight: '8px' }}>luggage</i>
-            הנסיעות שלך ({upcoming.length})
+            {/* ── הספירה מונה נסיעות, לא כרטיסים ──
+                הקבוצה הלא-משויכת מוצגת כאן בכוונה, כי היא דורשת טיפול —
+                אבל היא אינה נסיעה, ולכן אינה נספרת. כשהיא נספרה, הכותרת
+                הכריזה "הנסיעות שלך (1)" בזמן שהתוכן היחיד היה פוליסה
+                שפגה בנובמבר 2025. כותרת שמבטיחה נסיעה שאינה קיימת גרועה
+                מכותרת בלי מספר. */}
+            {upcomingCount > 0 ? `הנסיעות שלך (${upcomingCount})` : 'פריטים שדורשים טיפול'}
           </Typography>
           {upcoming.map((trip, i) => renderTrip(trip, i))}
         </Box>
