@@ -206,6 +206,15 @@ Rules:
   is flight delay or lounge access, and no medical cover is mentioned. Set
   "insurance" to null for these. Presenting such a message as a policy puts a
   wrong emergency number in front of a traveller who needs a real one.
+- The text may begin with a "שולח:" line naming the sender and what that
+  sender sells. Use it, but only as far as it goes. When the line says this is
+  the only kind of document that sender sends, trust it over your reading of
+  the body — a GetYourGuide message is an activity even when the wording is
+  unusual. When it says the sender ships several kinds, the line narrows
+  nothing on its own: the same insurer emails both a policy and a lounge
+  voucher, and treating every message from that address as a policy is exactly
+  the error this line exists to prevent. If no "שולח:" line appears, decide
+  from the document alone.
 - "activities" covers attractions, guided tours, shows, museum entry and event
   tickets. The entry time matters even more than the date, because a timed
   ticket constrains the whole day. If no time is stated, use null rather than

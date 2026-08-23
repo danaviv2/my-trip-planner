@@ -1,6 +1,7 @@
 import { fetchBookingEmails, fetchAttachment } from './gmailService';
 import { parseTravelDocument, parseTravelDocumentFromPdf } from './bookingParserService';
 import { processedIds, markProcessed } from './scanLedgerService';
+import { senderHint, isEntitlementSender, identifySender } from './senderIdentityService';
 
 /**
  * סריקת תיבת הדואר ופענוח האישורים שנמצאו.
@@ -82,6 +83,28 @@ export const scanMailbox = async (
 
     let gotSomething = false;
 
+    // ── זכאות אינה הזמנה ──
+    // שובר כניסה לטרקלין נכנס למאגר כאטרקציה ובנה נסיעה בשם "יעד לא
+    // ידוע". אין בו מועד, מקום או טווח — רק תוקף. הכתובת מכריעה כאן
+    // לבדה רק כשכל תוצרתו של הספק היא זכאויות; חברת ביטוח ששולחת גם
+    // שובר טרקלין אינה נחסמת כאן, שם ההכרעה נשארת בקריאת המסמך.
+    if (isEntitlementSender(email.from)) {
+      unrecognized.push({
+        subject: email.subject,
+        from: email.from,
+        reason: `${identifySender(email.from).vendor} — זכאות ולא הזמנה`,
+      });
+      markProcessed(email.id);
+      continue;
+    }
+
+    // כתובת השולח היא הסימן הדטרמיניסטי היחיד בצינור: היא נשלפת ממילא
+    // ב-gmailService ונזרקה כאן, בדיוק כפי שקרה ל-messageId. המבנה של
+    // מספר האסמכתה אינו יכול להחליף אותה — אצל המשתמש שובר הטרקלין
+    // ומספר הזמנת מלון אמיתית היו שניהם שש-עשרה ספרות רצופות.
+    const hint = senderHint(email.from);
+    const header = [hint, email.subject ? `נושא: ${email.subject}` : ''].filter(Boolean).join('\n');
+
     // קודם גוף המייל — זול ומהיר יותר
     try {
       if (email.text) {
@@ -89,7 +112,7 @@ export const scanMailbox = async (
         // פרטי פוליסה מס׳ 310558317". היא שימשה לסינון ונזרקה לפני
         // הפענוח, כך שדווקא המזהה לא הגיע למודל.
         const result = await parseTravelDocument(
-          email.subject ? `נושא: ${email.subject}\n\n${email.text}` : email.text
+          header ? `${header}\n\n${email.text}` : email.text
         );
         if (result.isBooking) {
           if (result.cancelled) {
@@ -107,6 +130,7 @@ export const scanMailbox = async (
               sourceSubject: email.subject,
               sourceKind: 'body',
               sourceMessageId: email.id,
+              sourceFrom: email.from || '',
             }));
           }
           // "משהו" אינו "מספיק". מייל שגופו מכתב לוואי מניב רשומה שכל
@@ -144,6 +168,7 @@ export const scanMailbox = async (
                   sourceSubject: email.subject,
                   sourceKind: pdf.filename || 'קובץ מצורף',
                   sourceMessageId: email.id,
+                  sourceFrom: email.from || '',
                 })
               );
             }
