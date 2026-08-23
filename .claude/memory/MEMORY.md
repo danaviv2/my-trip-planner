@@ -3,3 +3,4 @@
 - [Auto push to main](auto-push-to-main.md) — לדחוף בלי לשאול, לאמת שנחת, ולומר מה נפרס
 - [VS Code setup](vscode-setup.md) — שתי התקנות, איזו היא הנכונה, ומאיפה בא `code`
 - [Booking reference formats](booking-reference-formats.md) — למה מבנה מספר אסמכתה אינו מפריד בין הזמנה לפוליסה, ומה כן
+- [Coherence not presence](coherence-not-presence.md) — הבאג שנראה ככפילות, ולמה בדיקות נוכחות לא תפסו אותו

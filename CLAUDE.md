@@ -285,6 +285,20 @@ Five failure patterns recur; check for them in any change:
 5. **A helper verified while its wiring is not.** The unit test passes, the screen
    stays empty, because nothing ever calls the helper with real data. See "Verify
    before shipping, not after".
+6. **A wrong value sitting in a full field.** Every guard here asks *is the field
+   present* — `isSubstantial`, `PURGEABLE`, `withoutEmptyRecords`. None asks
+   *do the fields agree with each other*, so a populated but incorrect value
+   passes all of them unopposed. El Al sent two emails both titled "check-in for
+   your flight to Naples"; the PDF was parsed reversed, arriving in Tel Aviv.
+   The two records contradicted each other, so dedupe correctly refused to merge
+   them — and the symptom looked exactly like a duplicate bug. Rounds were spent
+   in the merge engine, which was never at fault. It also named the trip "Tel
+   Aviv Ben Gurion", since the destination comes from the outbound arrival.
+   `bookingConsistencyService` checks coherence, not presence. When a record
+   contradicts its own source, the contradicting field is **cleared, never
+   flipped**: flipping is a guess wearing the costume of knowledge, which is the
+   very thing that caused this. Cleared, the record stops contradicting its twin,
+   the two merge, and each supplies the field the other lacks.
 
 Backup files (`*.backup_*`, `*.bak2`, `*_old_backup.js`) sit next to live code in
 `src/pages`; they are dead. `src/bookingAPI.js` and
