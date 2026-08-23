@@ -35,6 +35,10 @@
 const DOMAINS = {
   // ── חברות תעופה ──
   'elal.co.il': { kind: 'flight', vendor: 'אל על', sole: true },
+  // אל על שולחת את הצ'ק-אין מדומיין נפרד לגמרי. הטבלה נכתבה מתוך ידע
+  // כללי ולא מתוך השולחים האמיתיים בתיבה, ולכן החמיצה אותו — בדיוק
+  // הטעות שהתחקיר עצמו מזהיר מפניה.
+  'elal-check-in.com': { kind: 'flight', vendor: 'אל על', sole: true },
   'arkia.co.il': { kind: 'flight', vendor: 'ארקיע', sole: true },
   'israir.co.il': { kind: 'flight', vendor: 'ישראייר', sole: true },
   'ryanair.com': { kind: 'flight', vendor: 'Ryanair', sole: true },
@@ -62,6 +66,8 @@ const DOMAINS = {
   'fattal.co.il': { kind: 'hotel', vendor: 'פתאל', sole: true },
   'isrotel.co.il': { kind: 'hotel', vendor: 'ישרוטל', sole: true },
   'dan.co.il': { kind: 'hotel', vendor: 'מלונות דן', sole: true },
+  // מנוע הזמנות שמלונות רבים שולחים דרכו; השם בכותרת הוא שם המלון.
+  'simplebooking.it': { kind: 'hotel', vendor: 'SimpleBooking', sole: true },
 
   // ── השכרת רכב ──
   'hertz.com': { kind: 'car_rental', vendor: 'Hertz', sole: true },
@@ -72,6 +78,7 @@ const DOMAINS = {
   'enterprise.com': { kind: 'car_rental', vendor: 'Enterprise', sole: true },
   'rentalcars.com': { kind: 'car_rental', vendor: 'Rentalcars', sole: true },
   'noleggiare.it': { kind: 'car_rental', vendor: 'Noleggiare', sole: true },
+  'discovercars.com': { kind: 'car_rental', vendor: 'DiscoverCars', sole: true },
 
   // ── אטרקציות וסיורים ──
   'getyourguide.com': { kind: 'activity', vendor: 'GetYourGuide', sole: true },
