@@ -38,7 +38,9 @@ const tintOf = (text) => {
  *   "גלריית האקדמיה" מחזירה את המוזיאון שבוונציה — תצלום אמיתי,
  *   מאתיים קילומטר מהיעד.
  */
-const PlaceImage = ({ name, lookup = '', city = '', height = 180, icon = '📍' }) => {
+const PlaceImage = ({
+  name, lookup = '', city = '', height = 180, icon = '📍', mustBePlace = false,
+}) => {
   const query = String(name || '').trim();
   const alt = String(lookup || '').trim();
   const where = String(city || '').trim();
@@ -49,13 +51,13 @@ const PlaceImage = ({ name, lookup = '', city = '', height = 180, icon = '📍' 
     if (!query) { setState({ loading: false, photo: null }); return undefined; }
 
     setState({ loading: true, photo: null });
-    getPlacePhotoFast(query, alt, where).then((photo) => {
+    getPlacePhotoFast(query, alt, where, { mustBePlace }).then((photo) => {
       if (alive) setState({ loading: false, photo });
     });
 
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, alt, where]);
+  }, [query, alt, where, mustBePlace]);
 
   if (state.loading) {
     return <Skeleton variant="rectangular" height={height} animation="wave" />;

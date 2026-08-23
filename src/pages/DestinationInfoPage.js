@@ -176,8 +176,8 @@ const DestinationInfoPage = () => {
           ]
         },
         nearbyDestinations: [
-          { name: 'ורסאי', distance: '20' },
-          { name: 'דיסנילנד פריז', distance: '40' }
+          { name: 'ורסאי', lookup: 'Versailles', distance: '20' },
+          { name: 'דיסנילנד פריז', lookup: 'Disneyland Paris', distance: '40' }
         ]
       },
       'רומא': {
@@ -229,8 +229,8 @@ const DestinationInfoPage = () => {
           ]
         },
         nearbyDestinations: [
-          { name: 'פלורנס', distance: '280' },
-          { name: 'נאפולי', distance: '225' }
+          { name: 'פלורנס', lookup: 'Florence', distance: '280' },
+          { name: 'נאפולי', lookup: 'Naples', distance: '225' }
         ]
       },
       'טוקיו': {
@@ -282,8 +282,8 @@ const DestinationInfoPage = () => {
           ]
         },
         nearbyDestinations: [
-          { name: 'קיוטו', distance: '450' },
-          { name: 'הר פוג\'י', distance: '100' }
+          { name: 'קיוטו', lookup: 'Kyoto', distance: '450' },
+          { name: 'הר פוג\'י', lookup: 'Mount Fuji', distance: '100' }
         ]
       },
       'ניו יורק': {
@@ -335,8 +335,8 @@ const DestinationInfoPage = () => {
           ]
         },
         nearbyDestinations: [
-          { name: 'וושינגטון DC', distance: '360' },
-          { name: 'בוסטון', distance: '350' }
+          { name: 'וושינגטון DC', lookup: 'Washington, D.C.', distance: '360' },
+          { name: 'בוסטון', lookup: 'Boston', distance: '350' }
         ]
       },
       'בנגקוק': {
@@ -388,8 +388,8 @@ const DestinationInfoPage = () => {
           ]
         },
         nearbyDestinations: [
-          { name: 'פוקט', distance: '860' },
-          { name: 'צ\'יאנג מאי', distance: '700' }
+          { name: 'פוקט', lookup: 'Phuket Province', distance: '860' },
+          { name: 'צ\'יאנג מאי', lookup: 'Chiang Mai', distance: '700' }
         ]
       },
       'ברצלונה': {
@@ -441,8 +441,8 @@ const DestinationInfoPage = () => {
           ]
         },
         nearbyDestinations: [
-          { name: 'מדריד', distance: '620' },
-          { name: 'ואלנסיה', distance: '350' }
+          { name: 'מדריד', lookup: 'Madrid', distance: '620' },
+          { name: 'ואלנסיה', lookup: 'Valencia', distance: '350' }
         ]
       },
       'לונדון': {
@@ -494,8 +494,8 @@ const DestinationInfoPage = () => {
           ]
         },
         nearbyDestinations: [
-          { name: 'אוקספורד', distance: '90' },
-          { name: 'קיימברידג\'', distance: '100' }
+          { name: 'אוקספורד', lookup: 'Oxford', distance: '90' },
+          { name: 'קיימברידג\'', lookup: 'Cambridge', distance: '100' }
         ]
       },
       'אמסטרדם': {
@@ -547,8 +547,8 @@ const DestinationInfoPage = () => {
           ]
         },
         nearbyDestinations: [
-          { name: 'כולר (שדות טוליפים)', distance: '35' },
-          { name: 'האג', distance: '55' }
+          { name: 'כולר (שדות טוליפים)', lookup: 'Keukenhof', distance: '35' },
+          { name: 'האג', lookup: 'The Hague', distance: '55' }
         ]
       },
       'דובאי': {
@@ -600,8 +600,8 @@ const DestinationInfoPage = () => {
           ]
         },
         nearbyDestinations: [
-          { name: 'אבו דאבי', distance: '140' },
-          { name: 'מסאפי', distance: '120' }
+          { name: 'אבו דאבי', lookup: 'Abu Dhabi', distance: '140' },
+          { name: 'מסאפי', lookup: 'Masafi', distance: '120' }
         ]
       },
       'פראג': {
@@ -653,8 +653,8 @@ const DestinationInfoPage = () => {
           ]
         },
         nearbyDestinations: [
-          { name: 'וינה', distance: '330' },
-          { name: 'בודפשט', distance: '525' }
+          { name: 'וינה', lookup: 'Vienna', distance: '330' },
+          { name: 'בודפשט', lookup: 'Budapest', distance: '525' }
         ]
       },
       'סינגפור': {
@@ -706,8 +706,8 @@ const DestinationInfoPage = () => {
           ]
         },
         nearbyDestinations: [
-          { name: 'באלי', distance: '1500' },
-          { name: 'קואלה לומפור', distance: '350' }
+          { name: 'באלי', lookup: 'Bali', distance: '1500' },
+          { name: 'קואלה לומפור', lookup: 'Kuala Lumpur', distance: '350' }
         ]
       }
     };
@@ -2425,9 +2425,22 @@ const DestinationInfoPage = () => {
                   >
                     {/* כאן ישבו תמונות picsum אקראיות: תחת "סיינה"
                         הופיע תצלום שרירותי. עיר נמצאת בוויקיפדיה
-                        העברית כמעט תמיד. */}
+                        העברית כמעט תמיד.
+
+                        `mustBePlace` ו-`lookup` נוספו אחרי שתחת "פלורנס"
+                        הופיע דיוקנה של פלורנס קלינג הרדינג: בעברית זהו
+                        דף פירושונים, והחיפוש שאחריו בחר את הכותרת
+                        הראשונה שהכילה את המילה. יעד הוא תמיד מקום, ולכן
+                        ערך בלי קואורדינטות נפסל, והשם הלועזי מביא את
+                        הערך הנכון. */}
                     <Box sx={{ filter: 'brightness(0.8)' }}>
-                      <PlaceImage name={destination.name} height={200} icon="🏙️" />
+                      <PlaceImage
+                        name={destination.name}
+                        lookup={destination.lookup || ''}
+                        height={200}
+                        icon="🏙️"
+                        mustBePlace
+                      />
                     </Box>
                     <Box
                       className="destination-card-content"

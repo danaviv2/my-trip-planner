@@ -157,6 +157,10 @@ const wikiSummary = async (lang, title) => {
       coords: data.coordinates
         ? { lat: data.coordinates.lat, lng: data.coordinates.lon }
         : null,
+      // "פלורנס" בוויקיפדיה העברית הוא דף פירושונים. בלי לדעת זאת,
+      // החיפוש שאחריו בחר את הכותרת הראשונה שהכילה את המילה — והיא
+      // הייתה אשתו של נשיא ארצות הברית.
+      isDisambiguation: data.type === 'disambiguation',
     };
   } catch {
     return false;
@@ -285,9 +289,22 @@ const photoFromWikiTag = (tag) => {
  *
  * @param {string} displayName השם המוצג, בעברית
  * @param {string} localName   השם המקומי, אם ידוע
+ * @param {string} city        העיר, לעיגון גאוגרפי
+ * @param {{mustBePlace?: boolean}} opts
+ *   `mustBePlace` — לערך שחייב להיות מקום על פני כדור הארץ, כמו עיר או
+ *   הר. ערך כזה נושא קואורדינטות תמיד, ולכן היעדרן פוסל. זה מה שמפריד
+ *   בין העיר פלורנס לבין פלורנס קלינג הרדינג, שגם לה יש תצלום יפה.
+ *
+ *   ברירת המחדל היא `false` דווקא משום שהבדיקה הזו הרסנית במקום הלא
+ *   נכון: "קרואסון" ו"בף בורגיניון" אינם נמצאים בשום מקום, ופסילתם
+ *   הייתה מוחקת תמונות תקינות לגמרי.
  */
-export const getPlacePhotoFast = async (displayName, localName = '', city = '') => {
-  const key = `photo_${keyOf(displayName, `${localName}|${city}`)}`;
+export const getPlacePhotoFast = async (
+  displayName, localName = '', city = '', { mustBePlace = false } = {}
+) => {
+  // הדגל נכנס למפתח: בלעדיו ערך שגוי שנשמר לפני התיקון היה ממשיך
+  // לחזור מהמטמון שבוע, והתיקון לא היה מגיע למסך.
+  const key = `photo_${keyOf(displayName, `${localName}|${city}|${mustBePlace ? 'place' : 'any'}`)}`;
   const cached = cacheGet(key);
   if (cached !== undefined) return cached;
 
@@ -296,11 +313,24 @@ export const getPlacePhotoFast = async (displayName, localName = '', city = '') 
 
   let failed = false;
 
+  /**
+   * ערך שאינו יכול להיות המקום המבוקש, או תמונה שאינה תצלום שלו.
+   *
+   * ויקיפדיה מגישה לעיתים סמל או מפה כתמונה הראשית: תחת "ואלנסיה"
+   * הוחזרה מפת ספרד, ותחת "אוקספורד" שלט העיר. שניהם ערכים נכונים
+   * לגמרי — ותמונה שאינה מראה את המקום. אלה תמיד SVG שהומר ל-PNG,
+   * ולכן הסיומת מזהה אותם.
+   */
+  const rejected = (sum) =>
+    sum.isDisambiguation
+    || (mustBePlace && !sum.coords)
+    || (mustBePlace && /\.svg\.png$/i.test(String(sum.photo || '').split('?')[0]));
+
   const tryLang = async (lang, name) => {
     for (const variant of nameVariants(name)) {
       const sum = await queued(() => wikiSummary(lang, variant));
       if (sum === false) { failed = true; continue; }
-      if (!sum || !sum.photo) continue;
+      if (!sum || !sum.photo || rejected(sum)) continue;
       // תמונה של המקום הנכון בלבד. ערך בעיר אחרת נדחה גם כשהוא תקין.
       if (belongsToCity(sum.coords, anchor)) return sum.photo;
     }
@@ -308,6 +338,12 @@ export const getPlacePhotoFast = async (displayName, localName = '', city = '') 
   };
 
   photo = await tryLang('he', displayName);
+
+  // כותרת מדויקת קודמת לחיפוש מטושטש, כשהשם הלועזי ידוע ומדובר במקום.
+  // החיפוש מתאים מילים ולא נושאים: תחת "אוקספורד" הוא החזיר את סמל
+  // האוניברסיטה, ותחת "פלורנס" את הזמרת. הערך הלועזי המדויק אינו
+  // מהמר.
+  if (!photo && mustBePlace && localName) photo = await tryLang('en', localName);
 
   // חיפוש, כשהכותרת המדויקת לא הספיקה. פותר פירושונים וניסוחים, ולכן
   // הוא זה שמביא את "קתדרלת נוטרדאם" ואת "מוזיאוני הוותיקן".
@@ -317,7 +353,10 @@ export const getPlacePhotoFast = async (displayName, localName = '', city = '') 
       if (!titleMatches(displayName, title)) continue;
       const sum = await queued(() => wikiSummary('he', title));
       if (sum === false) { failed = true; continue; }
-      if (sum && sum.photo && belongsToCity(sum.coords, anchor)) { photo = sum.photo; break; }
+      if (!sum || !sum.photo || rejected(sum)) continue;
+      // כאן נכנסה "פלורנס קלינג הרדינג": הכותרת הכילה את מילת החיפוש,
+      // ולכן `titleMatches` אישר אותה. התאמת מילים אינה זהות.
+      if (belongsToCity(sum.coords, anchor)) { photo = sum.photo; break; }
     }
   }
 
