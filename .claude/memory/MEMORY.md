@@ -1,0 +1,2 @@
+- [Project location](project-location.md) — היכן הפרויקט חי, אילו תיקיות מטעות, ומה חסר אחרי שכפול
+- [Memory lives in git](memory-lives-in-git.md) — למה תיקיית הזיכרון היא קישור לריפו, ומה לעשות אם היא נראית ריקה

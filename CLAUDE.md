@@ -6,6 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 traps already paid for. Read it before starting work; update it when the picture
 changes.
 
+**`.claude/memory/`** is the Claude Code memory directory, kept in git on purpose and
+reached through a symlink from `~/.claude/projects/<key>/memory`. That key is derived
+from the working-directory path, so moving the project silently orphans the memory —
+which already happened twice. Anything worth surviving a folder move, a new machine or
+a fresh clone belongs in git: here, in `STATUS.md`, or in the code.
+
 ## Commands
 
 ```bash

@@ -32,4 +32,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # Claude Code session data (worktrees, launch config)
-.claude/
+# חריג ל-.claude/memory: תיקיית הזיכרון של Claude Code ממופתחת לפי נתיב
+# התיקייה, ולכן היא מתרוקנת בשקט כשהפרויקט זז — כפי שקרה ב-18.8 ושוב ב-23.8.
+# המקור נשמר כאן ב-git, ותיקיית הזיכרון היא קישור סימבולי אליו.
+.claude/*
+!.claude/memory/
