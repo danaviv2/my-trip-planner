@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Button } from '@mui/material';
-import { buildTimeline, nextEvent, humanGap } from '../../services/tripTimelineService';
+import { buildTimeline, humanGap, hasPassed } from '../../services/tripTimelineService';
+import { readActivePlan, nextFromBoth } from '../../services/plannedTimelineService';
 
 /**
  * הדבר הבא בתור.
@@ -22,9 +23,12 @@ const HORIZON_MS = 48 * 3600 * 1000;
  * גם לפי משמעות האירוע ולא רק לפי שעה, והשוואה בין רשימות נפרדות הייתה
  * מאבדת אותו.
  */
-const findNext = (trips, now) => {
+const findNext = (trips, now, plan) => {
   const all = trips.flatMap((t) => t.bookings || []);
-  return nextEvent(buildTimeline(all), now);
+  // גם התוכנית נקראת: ביום שיש בו כרטיס ופעילות מתוכננת, "הבא בתור"
+  // שקרא הזמנות בלבד ענה על חצי מהשאלה — והחצי החסר היה לרוב המוקדם
+  // מבין השניים.
+  return nextFromBoth(buildTimeline(all), plan, now, hasPassed);
 };
 
 /**
@@ -53,7 +57,9 @@ const NextUpCard = ({ trips = [] }) => {
     return () => clearInterval(id);
   }, []);
 
-  const ev = findNext(trips, now);
+  // נקראת בכל דקה יחד עם השעון: התוכנית נערכת במסך אחר, ופריט שנוסף
+  // שם אמור להופיע כאן בלי רענון.
+  const ev = findNext(trips, now, readActivePlan());
   if (!ev || ev.at - now > HORIZON_MS) return null;
 
   const target = ev.place || ev.detail || ev.title;
@@ -77,6 +83,19 @@ const NextUpCard = ({ trips = [] }) => {
           <path d="M12 7v5l3 2" />
         </svg>
         הבא בתור · {whenText(ev, now)}
+        {/* כוונה אינה התחייבות. פעילות מהתכנון מסומנת, כדי שלא תיקרא
+            כהזמנה ששולם עליה. */}
+        {ev.planned && (
+          <Box
+            component="span"
+            sx={{
+              ml: 0.6, px: 0.75, py: 0.15, borderRadius: 1,
+              bgcolor: 'rgba(255,255,255,.22)', fontSize: '0.66rem', fontWeight: 600,
+            }}
+          >
+            בתוכנית
+          </Box>
+        )}
       </Box>
 
       <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'flex-start', gap: 1.6 }}>

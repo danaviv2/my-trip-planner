@@ -298,7 +298,7 @@ export const spanningItems = (bookings = []) =>
  * בתחילת היום: הכניסה למלון "עברה" בשש בבוקר, לפני שהגעת. אירוע כזה
  * נחשב עתידי עד סוף היום שלו — זה מה שידוע, ולא יותר.
  */
-const hasPassed = (ev, now) => {
+export const hasPassed = (ev, now) => {
   if (!ev.allDay) return ev.at < now;
   const endOfDay = new Date(ev.at);
   endOfDay.setHours(23, 59, 59, 999);
