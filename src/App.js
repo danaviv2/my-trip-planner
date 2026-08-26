@@ -202,13 +202,17 @@ function App() {
   const [isMapsLoaded, setIsMapsLoaded] = useState(false); // מצב לטעינת Google Maps
   const [tripLogs, setTripLogs] = useState(JSON.parse(localStorage.getItem('tripLogs')) || []); // יומן טיולים
   const [tripPlan, setTripPlan] = useState({
-    location: 'בורדו, צרפת',
+    location: '',
     duration: 7, // ימים
     theme: ['nature', 'winery', 'culinary'],
     dailyItinerary: [],
   });
   const [userPreferences, setUserPreferences] = useState({
-    location: 'בורדו, צרפת',
+    // ריק בכוונה. ערך התחלתי אמיתי כאן נקרא בשלושה מקומות בבת אחת —
+    // הכותרת, תחזית מזג האוויר ושדה היעד בטופס — ולכן משתמש חדש קיבל
+    // "המדריך האישי שלך לבורדו, צרפת" ותחזית לעיר שלא ביקש. יעד נכנס
+    // רק ממעשה של המשתמש (חיפוש מסלול או הטופס), ועד אז השדה ריק.
+    location: '',
     themes: ['nature', 'winery', 'culinary', 'touristAttraction', 'museum', 'restaurant', 'hotel', 'cafe', 'hospital', 'pharmacy', 'amusementPark', 'beach', 'historicalSite', 'nationalPark', 'localMarket', 'festival', 'spa'],
     budget: 'medium',
     days: 7,

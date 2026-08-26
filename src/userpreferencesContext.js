@@ -16,7 +16,7 @@ export const useUserPreferences = () => {
 // ספק הקונטקסט
 export const UserPreferencesProvider = ({ children }) => {
   const [userPreferences, setUserPreferences] = useState({
-    location: 'בורדו, צרפת',
+    location: '',
     themes: ['nature', 'winery', 'culinary', 'touristAttraction', 'museum', 'restaurant', 'hotel', 'cafe', 'hospital', 'pharmacy', 'amusementPark', 'beach', 'historicalSite', 'nationalPark', 'localMarket', 'festival', 'spa'],
     budget: 'medium',
     days: 7,
