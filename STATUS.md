@@ -153,6 +153,11 @@
 
 ## הפעלה ובדיקה
 
+**תיקיית העבודה היא `~/Developer/my-trip-planner`.** היא הועברה לשם
+ב-27.8.2026 משולחן העבודה, שמסונכרן ל-iCloud ורוקן את תוכן הקבצים
+(`dataless`) — מה שהפיל את הזיכרון ומנע מ-`npm start` לעלות. הפירוט
+ב-`.claude/memory/project-location.md`. אין להחזיר לשולחן העבודה.
+
 ```bash
 npm start                 # http://localhost:3000
 ```
