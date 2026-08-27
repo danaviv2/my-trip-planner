@@ -41,20 +41,30 @@ import {
 } from '../services/journalService';
 import { geminiEndpoint } from '../services/geminiClient';
 
+const MAX_PHOTOS = 5;
+
 // ─── Resize photo via canvas ──────────────────────────────────────────────────
 
+// מחזירה null על קובץ שלא ניתן לפענח, ולעולם לא נשארת תלויה. בגרסה
+// הקודמת `img.onload` פשוט לא נקרא על קובץ פגום, וההבטחה לא הוכרעה
+// לעולם — המסך נשאר כמו שהיה בלי הודעה ובלי שגיאה. עם גרירה והדבקה
+// אפשר להגיש לכאן HEIC, שכרום אינו מפענח, ולכן זה הפסיק להיות תיאורטי.
 async function resizeBase64(file, maxPx = 400) {
   return new Promise((resolve) => {
     const reader = new FileReader();
+    reader.onerror = () => resolve(null);
     reader.onload = (e) => {
       const img = new Image();
+      img.onerror = () => resolve(null);
       img.onload = () => {
-        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
-        const canvas = document.createElement('canvas');
-        canvas.width  = Math.round(img.width  * scale);
-        canvas.height = Math.round(img.height * scale);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.75));
+        try {
+          const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width  = Math.round(img.width  * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.75));
+        } catch { resolve(null); }
       };
       img.src = e.target.result;
     };
@@ -135,6 +145,12 @@ const TravelJournalPage = () => {
   const [checkinNote, setCheckinNote] = useState('');
   const [checkinPhotos, setCheckinPhotos] = useState([]); // base64[]
   const [saving, setSaving] = useState(false);
+  const [encoding, setEncoding] = useState(false);   // תמונה בעיבוד — חוסם שמירה מוקדמת
+  const [dragOver, setDragOver] = useState(false);
+  // הפניה חיה לתקרה: `addPhotoFiles` נבנית פעם אחת, ובלי זה היא הייתה
+  // בודקת את המספר כפי שהיה ברינדור שבו נוצרה.
+  const checkinPhotosRef = useRef([]);
+  useEffect(() => { checkinPhotosRef.current = checkinPhotos; }, [checkinPhotos]);
 
   // gallery / lightbox
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -233,14 +249,87 @@ const TravelJournalPage = () => {
     setCheckinRating(4);
     setCheckinNote('');
     setCheckinPhotos([]);
+    setDragOver(false);
+    setEncoding(false);
   };
 
+  // שלוש דרכים להוסיף תמונה — בחירת קובץ, גרירה והדבקה — נגזרות מפונקציה
+  // אחת. שלושה מקומות שמחשבים את אותו דבר נפרדים זה מזה בשינוי הבא, וזו
+  // כבר הייתה כאן הסיבה לרשומה שישבה בשני תאריכים.
+  const addPhotoFiles = useCallback(async (fileList) => {
+    const all = Array.from(fileList || []);
+    if (!all.length) return;
+
+    const images = all.filter(f => (f.type || '').startsWith('image/'));
+    const notImages = all.length - images.length;
+    if (!images.length) {
+      showSnack('אפשר להוסיף תמונות בלבד', 'warning');
+      return;
+    }
+
+    // התקרה נמדדת מול המצב הנוכחי ולא מול מספר שנלכד מראש: גרירה של חמש
+    // תמונות בבת אחת הייתה עוקפת בדיקה שנעשית פעם אחת לפני הלולאה.
+    const room = Math.max(0, MAX_PHOTOS - checkinPhotosRef.current.length);
+    if (room === 0) {
+      showSnack(`הגעת למקסימום של ${MAX_PHOTOS} תמונות`, 'warning');
+      return;
+    }
+
+    setEncoding(true);
+    const encoded = [];
+    for (const file of images.slice(0, room)) {
+      const b64 = await resizeBase64(file);
+      if (b64) encoded.push(b64);
+    }
+    setEncoding(false);
+
+    const unreadable = Math.min(images.length, room) - encoded.length;
+    const overflow = Math.max(0, images.length - room);
+
+    if (encoded.length) setCheckinPhotos(prev => [...prev, ...encoded].slice(0, MAX_PHOTOS));
+
+    // ההודעה נגזרת ממה שקרה בפועל ולא מהכוונה — קובץ שלא נקרא חייב
+    // להיאמר, אחרת כישלון שקט נראה בדיוק כמו הצלחה.
+    const parts = [];
+    if (encoded.length) parts.push(`נוספו ${encoded.length}`);
+    if (overflow)   parts.push(`${overflow} מעבר לתקרה של ${MAX_PHOTOS}`);
+    if (unreadable) parts.push(`${unreadable} לא ניתנות לפענוח`);
+    if (notImages)  parts.push(`${notImages} אינם תמונה`);
+    if (parts.length) showSnack(parts.join(' · '), encoded.length ? 'success' : 'warning');
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handlePhotoUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const b64 = await resizeBase64(file);
-    setCheckinPhotos(prev => prev.length < 5 ? [...prev, b64] : prev);
+    await addPhotoFiles(e.target.files);
+    // בלי האיפוס, בחירה חוזרת של אותו קובץ אינה מפעילה `change` כלל,
+    // והמסך נראה כאילו הלחיצה לא נקלטה.
+    e.target.value = '';
   };
+
+  // הדבקה (⌘V) בזמן שהדיאלוג פתוח. במאק התמונות סגורות בתוך
+  // `Photos Library`, שחלון בחירת קבצים אינו נכנס אליה — הדבקה וגרירה הן
+  // הדרכים היחידות שמוציאות משם קובץ בלי לחפש אותו בסרגל הצדדי.
+  useEffect(() => {
+    if (!checkinAct) return undefined;
+    const onPaste = (e) => {
+      const files = e.clipboardData?.files;
+      // הדבקת טקסט להערות חייבת להמשיך לעבוד כרגיל, ולכן נוגעים רק כשיש קובץ
+      if (files && files.length) {
+        e.preventDefault();
+        addPhotoFiles(files);
+      }
+    };
+    // גרירה שמפספסת את אזור השחרור גורמת לדפדפן לנווט אל קובץ התמונה,
+    // והצ׳ק-אין שנכתב עד כה נמחק. החוץ נחסם כדי שפספוס לא יעלה דבר.
+    const swallow = (e) => { e.preventDefault(); };
+    window.addEventListener('paste', onPaste);
+    window.addEventListener('dragover', swallow);
+    window.addEventListener('drop', swallow);
+    return () => {
+      window.removeEventListener('paste', onPaste);
+      window.removeEventListener('dragover', swallow);
+      window.removeEventListener('drop', swallow);
+    };
+  }, [checkinAct, addPhotoFiles]);
 
   const handleSaveCheckin = async () => {
     if (!checkinAct || !selectedTripId) return;
@@ -1247,7 +1336,19 @@ ${summary}
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
+        <DialogContent
+          sx={{
+            pt: 3,
+            // המסגרת מופיעה רק בזמן גרירה, כדי שיהיה ברור לאן לשחרר
+            outline: dragOver ? '2px dashed #667eea' : 'none',
+            outlineOffset: -8,
+            bgcolor: dragOver ? 'rgba(102,126,234,0.06)' : 'transparent',
+            transition: 'background-color .15s',
+          }}
+          onDragOver={(e) => { e.preventDefault(); if (!dragOver) setDragOver(true); }}
+          onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(false); }}
+          onDrop={(e) => { e.preventDefault(); setDragOver(false); addPhotoFiles(e.dataTransfer?.files); }}
+        >
           <Stack spacing={2.5}>
             <Box>
               <Typography fontWeight={600} mb={0.5}>דירוג</Typography>
@@ -1268,17 +1369,26 @@ ${summary}
               fullWidth
             />
             <Box>
-              <Typography fontWeight={600} mb={1}>תמונות (עד 5, אופציונלי)</Typography>
+              <Typography fontWeight={600} mb={1}>
+                תמונות (עד {MAX_PHOTOS}, אופציונלי)
+              </Typography>
               <Button
                 variant="outlined"
                 component="label"
-                startIcon={<PhotoIcon />}
-                disabled={checkinPhotos.length >= 5}
+                startIcon={encoding ? <CircularProgress size={18} /> : <PhotoIcon />}
+                disabled={checkinPhotos.length >= MAX_PHOTOS || encoding}
                 sx={{ borderColor: '#667eea', color: '#667eea' }}
               >
-                {checkinPhotos.length >= 5 ? 'הגעת למקסימום' : 'הוסף תמונה'}
-                <input type="file" accept="image/*" hidden onChange={handlePhotoUpload} />
+                {checkinPhotos.length >= MAX_PHOTOS ? 'הגעת למקסימום'
+                  : encoding ? 'מעבד…' : 'הוסף תמונה'}
+                <input type="file" accept="image/*" multiple hidden onChange={handlePhotoUpload} />
               </Button>
+              {/* במאק חלון בחירת הקבצים אינו נכנס אל Photos Library, ולכן
+                  הוא נראה ריק. הגרירה וההדבקה הן המסלול שכן עובד, וללא
+                  השורה הזו הן קיימות בלי שאיש יידע עליהן. */}
+              <Typography variant="caption" color="text.secondary" display="block" mt={0.75}>
+                אפשר גם לגרור תמונה לכאן, או להעתיק מ״תמונות״ ולהדביק ב-⌘V
+              </Typography>
               {checkinPhotos.length > 0 && (
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1.5 }}>
                   {checkinPhotos.map((src, i) => (
@@ -1303,8 +1413,9 @@ ${summary}
           <Button
             onClick={handleSaveCheckin}
             variant="contained"
-            disabled={saving}
-            startIcon={saving ? <CircularProgress size={16} /> : <CheckIcon />}
+            // שמירה בזמן שתמונה עדיין מקודדת הייתה שומרת בלעדיה, בלי סימן
+            disabled={saving || encoding}
+            startIcon={saving || encoding ? <CircularProgress size={16} /> : <CheckIcon />}
             sx={{ background: 'linear-gradient(135deg,#667eea,#764ba2)' }}
           >
             שמור צ׳ק-אין
