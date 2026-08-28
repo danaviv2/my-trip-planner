@@ -108,9 +108,18 @@ export const plannedEvents = (plan) => {
  */
 export const nextFromBoth = (bookingDays = [], plan = null, now = new Date(), hasPassed) => {
   const fromBookings = bookingDays.flatMap((d) => d.events || []);
+  // המיון הוא לפי היום ואז לפי `order` — בדיוק כמו ב-`buildTimeline` —
+  // ולא לפי `at`. אירוע בלי שעה מקבל חצות ב-`at`, ולכן מיון לפי `at`
+  // מקפיץ אותו לראש היום: כניסה למלון הופיעה לפני טיסת 06:20 של אותו
+  // בוקר. `order` קיים בדיוק בשביל זה (`DAY_ANCHOR` נותן לכניסה 1441),
+  // והוא היה כאן רק שובר-שוויון ולכן לא קיבל הזדמנות. שני מקומות שגזרו
+  // את אותו סדר, ואחד מהם נשבר.
   const all = [...fromBookings, ...plannedEvents(plan)]
     .filter((ev) => (hasPassed ? !hasPassed(ev, now) : ev.at > now))
-    .sort((a, b) => a.at - b.at || (a.order || 0) - (b.order || 0));
+    .sort((a, b) =>
+      String(a.dayKey || '').localeCompare(String(b.dayKey || '')) ||
+      (a.order || 0) - (b.order || 0) ||
+      a.at - b.at);
 
   return all[0] || null;
 };
