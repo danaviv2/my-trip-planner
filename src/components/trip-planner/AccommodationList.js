@@ -29,7 +29,7 @@ const AccommodationList = ({ accommodations, onAddHotel }) => {
                   variant="outlined"
                   size="small"
                   startIcon={<i className="material-icons">directions</i>}
-                  onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&location=${encodeURIComponent(hotel.address)}`)}
+                  onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(hotel.address)}`)}
                 >
                   נווט
                 </Button>
