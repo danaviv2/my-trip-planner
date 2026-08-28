@@ -12,6 +12,44 @@ from the working-directory path, so moving the project silently orphans the memo
 which already happened twice. Anything worth surviving a folder move, a new machine or
 a fresh clone belongs in git: here, in `STATUS.md`, or in the code.
 
+## Research before acting — this rule outranks the others
+
+Before any consequential action that rests on a belief you have not verified — a
+deletion, a settings change, a diagnosis of software you did not write, a fix built on
+*"this is probably why"* — **search the web first.** Read the vendor's own docs and bug
+reports, find people who hit the same symptom, cross-reference at least two independent
+sources, and only then act. Investigating locally is not a substitute: it tells you what
+your machine is doing, never whether it is a known bug with a known fix.
+
+This rule exists because of a specific, expensive day.
+
+`fileproviderd` sat at 100% CPU for hours. Three causes were named in sequence, each
+plausible, each from reading the system rather than the literature: `node_modules` in
+the iCloud Drive root, then a 38,000-file photo library, then 23,436 backup files on
+the Desktop. The third was acted on — 62% of the Desktop's files removed — and the CPU
+did not move. Every one of those three was a guess wearing the costume of a measurement.
+
+**A five-minute search, done afterwards, produced what the whole day had not:** Apple's
+own bug report (FB20943098) describing the exact symptom pair — Open/Save panel lag plus
+`fileproviderd`/`cloudd`/`bird` CPU — naming a different trigger, and fixed in a later
+build. And a documented cause never once considered: `fileproviderd` hosts **every**
+cloud provider, not just iCloud, and OneDrive is a well-known offender. It was installed
+and running the entire time.
+
+The cost was not the wrong theory. It was that the answer was already written down,
+publicly, and nobody looked.
+
+Three corollaries:
+
+- **Symptoms belong to software, not to this machine.** If a system process misbehaves,
+  assume someone has already filed it. Search the symptom, the process name and the OS
+  version before forming any theory of your own.
+- **Two sources, not one.** A single forum post is an anecdote. The vendor's tracker plus
+  an independent report is a finding. Note when a source's OS version differs from the one
+  in front of you, and say so instead of quietly assuming it transfers.
+- **Name the confidence.** "Apple documents this trigger" and "this seemed likely from the
+  file counts" are not the same claim and must never be reported in the same voice.
+
 ## Commands
 
 ```bash
@@ -141,6 +179,11 @@ tried, and each round costs a deploy, a refresh, a screenshot and a reply.
 
 **The rule: if you do not know, measure. Do not guess, and do not ship a fix built on
 an unverified theory.**
+
+**And before measuring, search** — see "Research before acting" above. Measurement tells
+you what your machine does; the literature tells you whether it is a known bug someone
+already fixed. Skipping that step turned one day's `fileproviderd` investigation into
+three wrong theories and a 23,436-file deletion that changed nothing.
 
 Concretely, in order of preference:
 
