@@ -140,6 +140,15 @@ const InteractiveMap = ({
     }
 
     const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_API_KEY;
+
+    // בלי מפתח, גוגל מחזירה ריבוע אפור עם "אופס! משהו השתבש" — הודעה
+    // ששייכת לה ולא לנו, ושאינה אומרת למשתמש דבר. מפתח חסר הוא מצב
+    // תצורה ידוע, ולכן הוא נאמר במפורש במקום להיראות כתקלה אקראית.
+    if (!GOOGLE_MAPS_API_KEY) {
+      setError('המפה אינה זמינה — מפתח Google Maps אינו מוגדר בסביבה הזאת');
+      return;
+    }
+
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
     script.async = true;
