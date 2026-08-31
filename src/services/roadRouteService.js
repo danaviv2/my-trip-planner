@@ -35,7 +35,10 @@ const OSRM = 'https://router.project-osrm.org/route/v1/driving';
 const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
 
 const GEO_PREFIX = 'road_geo_';
-const ROUTE_PREFIX = 'road_route_';
+// v2: ערכים שנשמרו לפני שהגיאומטריה נוספה אינם מכילים `path`. בלי החלפת
+// הקידומת הם היו מוחזרים מהמטמון כתקינים, והמפה הייתה נשארת ריקה בלי
+// שדבר ייכשל — בדיוק סוג הערך החסר שעובר כל בדיקת נוכחות.
+const ROUTE_PREFIX = 'road_route_v2_';
 const TTL = 30 * 24 * 60 * 60 * 1000; // קואורדינטות של עיר אינן זזות
 
 /** פסק זמן קצר: מסך שממתין לשרת הדגמה גרוע ממסך בלי השורה. */
@@ -116,10 +119,31 @@ export const formatMinutes = (mins) =>
   mins == null ? '' : humanGap(Math.round(mins));
 
 /**
+ * דילול צורת המסלול לפני שמירה.
+ *
+ * OSRM מחזיר 2,930 נקודות לפירנצה–רומא, שהן 68KB במטמון לכל מסלול —
+ * `localStorage` היה מתמלא אחרי כמה מסלולים ו-`cacheSet` נכשל בשקט.
+ * `overview=simplified` נותן 28 נקודות בלבד, והמסלול נראה כקווים ישרים
+ * שחותכים פניות. דילול לכ-300 נקודות הוא נקודה לכל קילומטר, מדויק בכל
+ * זום סביר ושוקל כ-7KB. הקצוות נשמרים תמיד, אחרת המסלול לא נוגע בערים.
+ */
+const thinPath = (coords, max = 300) => {
+  if (!Array.isArray(coords) || coords.length === 0) return [];
+  const step = Math.max(1, Math.ceil(coords.length / max));
+  const out = [];
+  for (let i = 0; i < coords.length; i += step) out.push(coords[i]);
+  const last = coords[coords.length - 1];
+  if (out[out.length - 1] !== last) out.push(last);
+  // OSRM מחזיר [lng, lat]; גוגל מצפה ל-{lat, lng}. היפוך שקט כאן היה
+  // מציב את המסלול בסומליה.
+  return out.map(([lng, lat]) => ({ lat: Number(lat.toFixed(5)), lng: Number(lng.toFixed(5)) }));
+};
+
+/**
  * מסלול נהיגה דרך כל הנקודות, לפי סדרן.
  *
  * @param {Array<{lat:number,lng:number}>} points שתי נקודות לפחות
- * @returns {Promise<{km:number, minutes:number, distance:string, duration:string}|null>}
+ * @returns {Promise<{km:number, minutes:number, distance:string, duration:string, path:Array<{lat:number,lng:number}>}|null>}
  */
 export const routeThrough = async (points = []) => {
   const valid = points.filter(
@@ -132,7 +156,7 @@ export const routeThrough = async (points = []) => {
   const cached = cacheGet(key);
   if (cached !== undefined) return cached;
 
-  const res = await fetchWithTimeout(`${OSRM}/${path}?overview=false`);
+  const res = await fetchWithTimeout(`${OSRM}/${path}?overview=full&geometries=geojson`);
   if (!res) return null;
 
   try {
@@ -147,6 +171,7 @@ export const routeThrough = async (points = []) => {
       minutes,
       distance: formatKm(km),
       duration: formatMinutes(minutes),
+      path: thinPath(route.geometry && route.geometry.coordinates),
     };
     cacheSet(key, value);
     return value;
