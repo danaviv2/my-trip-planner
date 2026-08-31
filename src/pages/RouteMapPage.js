@@ -10,6 +10,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import FlagIcon from '@mui/icons-material/Flag';
 import { useTranslation } from 'react-i18next';
+import RouteOnMap from '../components/maps/RouteOnMap';
 
 const popularRoutes = [
   { from: 'Tel Aviv', to: 'Jerusalem' },
@@ -210,6 +211,17 @@ const RouteMapPage = () => {
             </Box>
           </Box>
         </Paper>
+
+        {searched && origin && destination && (
+          <Paper elevation={4} sx={{ borderRadius: 3, p: 2, mb: 3 }}>
+            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
+              המסלול על מפה — צורת הכביש האמיתית
+            </Typography>
+            {/* בניגוד ל-iframe שמתחת, כאן המסלול הוא Polyline משלנו ולכן
+                אפשר להניח עליו סמנים. זו התשתית להחזרת המסננים. */}
+            <RouteOnMap stops={[origin, destination]} height="55vh" />
+          </Paper>
+        )}
 
         {searched && (
           <Paper elevation={4} sx={{ borderRadius: 3, overflow: 'hidden' }}>

@@ -159,6 +159,61 @@ const InteractiveMap = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ציור מחדש כשהנתונים משתנים.
+  //
+  // `initializeMap` צייר פעם אחת בלבד, בטעינה. מסלול שנשלף מהרשת מגיע
+  // שניות אחרי שהמפה כבר עלתה, ולכן הוא פשוט לא הופיע — המפה נראתה
+  // תקינה לגמרי וריקה. גם כיבוי קטגוריה לא הסיר סמנים קיימים.
+  useEffect(() => {
+    if (!isMapLoaded || !mapInstanceRef.current) return;
+    addMarkersToMap(markers);
+    addRoutesToMap(routes);
+
+    // התאמת המפה לגבולות המסלול. זום קבוע אינו יכול להיות נכון לשני
+    // המקרים: 7 הוא נכון לפירנצה–רומא ומבליע לגמרי את תל אביב–ירושלים,
+    // שהם 66 ק"מ. הגבולות נגזרים מהנתונים במקום להינחש.
+    const pts = [];
+    routes.forEach((r) => (r.path || []).forEach((p) => pts.push(p)));
+    markers.forEach((m) => {
+      if (Number.isFinite(m.lat) && Number.isFinite(m.lng)) pts.push({ lat: m.lat, lng: m.lng });
+    });
+    if (pts.length > 1 && window.google) {
+      const bounds = new window.google.maps.LatLngBounds();
+      pts.forEach((p) => bounds.extend(p));
+      mapInstanceRef.current.fitBounds(bounds, 48);
+    }
+
+    // אבחון שנשלח עם הקוד, כמו `window.__dedupeReport`.
+    //
+    // המפה מרנדרת ב-canvas ולא ב-SVG, ולכן אי אפשר לבדוק מה-DOM אם קו
+    // צויר — בדיקה כזו מחזירה "אין קו" גם כשהוא שם. זה המקום היחיד
+    // שיודע את האמת, ולכן הוא מדווח אותה.
+    if (typeof window !== 'undefined') {
+      window.__mapReport = () => {
+        const m = mapInstanceRef.current;
+        const c = m && m.getCenter && m.getCenter();
+        return {
+          zoom: m && m.getZoom ? m.getZoom() : null,
+          center: c ? { lat: +c.lat().toFixed(4), lng: +c.lng().toFixed(4) } : null,
+          routesDrawn: Object.keys(routesRef.current).length,
+          routePoints: Object.values(routesRef.current)
+            .map((r) => (r.data && r.data.path ? r.data.path.length : 0)),
+          routeOnMap: Object.values(routesRef.current)
+            .map((r) => !!(r.instance && r.instance.getMap && r.instance.getMap())),
+          markersDrawn: Object.keys(markersRef.current).length,
+          containerSize: (() => {
+            const el = mapRef.current;
+            if (!el) return null;
+            const r = el.getBoundingClientRect();
+            return { w: Math.round(r.width), h: Math.round(r.height) };
+          })(),
+        };
+      };
+
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMapLoaded, markers, routes, visibleCategories]);
+
   // הוספת סמנים למפה
   const addMarkersToMap = (markersData) => {
     if (!mapInstanceRef.current || !window.google) return;
@@ -167,8 +222,10 @@ const InteractiveMap = ({
     clearMarkers();
     
     markersData.forEach((marker, index) => {
-      // בדוק אם הקטגוריה של הסמן גלויה
-      if (!visibleCategories.includes(marker.category)) return;
+      // סמן בלי קטגוריה אינו מסונן החוצה. הסינון נועד להסתיר סוגים
+      // שהמשתמש כיבה, ולא לבלוע סמן שלא שייך לאף סוג — נקודת מסלול
+      // הייתה נעלמת כך בשקט, בלי שדבר ייכשל.
+      if (marker.category && !visibleCategories.includes(marker.category)) return;
       
       // צור סמן חדש
       const markerIcon = {
