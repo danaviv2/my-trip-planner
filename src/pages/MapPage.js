@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import InteractiveMap from '../components/maps/InteractiveMap';
 import AttractionsPanel from '../components/maps/AttractionsPanel';
 import { geocode } from '../services/roadRouteService';
+import { markerIconFor } from '../services/placeCategories';
 
 const popularDestinations = [
   'Paris, France',
@@ -77,15 +78,12 @@ const MapPage = () => {
 
   // סמן יחיד למקום שנבחר בפאנל.
   //
-  // `category` נמסר רק כשהמפה מכירה אותו. קניות ובידור אינם ברשימת
-  // הקטגוריות שלה, וסמן עם קטגוריה שאינה מוכרת מסונן החוצה בשקט —
-  // אותה מלכודת שהעלימה נקודת מסלול ב-203e6cd.
+  // `category` **אינו** נמסר בכוונה: `InteractiveMap` מסנן החוצה סמן
+  // שקטגוריתו אינה ברשימה שלו, והיא מכירה חמש בלבד מתוך 17. סמן
+  // שנבלע בשקט הוא בדיוק מה שקרה לנקודת מסלול לפני `203e6cd`.
+  // הצבע נמסר כאייקון מפורש, שאינו עובר דרך אותו מסנן.
   const markers = useMemo(() => {
     if (!selectedPlace) return [];
-    const known = ['restaurant', 'museum', 'tourist_attraction'];
-    const asMapCategory = { tourist_attraction: 'attraction', restaurant: 'restaurant', museum: 'museum' };
-    const hit = (selectedPlace.types || []).find((tp) => known.includes(tp));
-
     return [{
       id: selectedPlace.id,
       lat: selectedPlace.location.lat,
@@ -93,7 +91,7 @@ const MapPage = () => {
       title: selectedPlace.name,
       description: selectedPlace.address,
       image: selectedPlace.photos?.[0]?.url,
-      ...(hit ? { category: asMapCategory[hit] } : {})
+      icon: markerIconFor(selectedPlace.categoryKey)
     }];
   }, [selectedPlace]);
 

@@ -686,6 +686,10 @@
     "windSpeed": "מהירות רוח"
   },
   "attractionsPanel": {
+    "partial": "חלק מהקטגוריות לא נבדקו. נסה שוב.",
+    "group": {"outdoors": "טבע ופתוח", "foodDrink": "אוכל ושתייה", "culture": "תרבות והיסטוריה", "services": "שירות ונוחות"},
+    "cat": {"nature": "טבע", "beach": "חופים", "nationalPark": "פארקים לאומיים", "amusementPark": "פארקי שעשועים", "restaurant": "מסעדות", "cafe": "בתי קפה", "winery": "יקבים", "nightlife": "חיי לילה", "touristAttraction": "אטרקציות", "museum": "מוזיאונים", "historicalSite": "אתרים היסטוריים", "festival": "פסטיבלים", "localMarket": "שווקים וקניות", "hotel": "מלונות", "hospital": "בתי חולים", "pharmacy": "בתי מרקחת", "spa": "ספא"},
+    "noCategorySelected": "לא נבחרה אף קטגוריה",
     "loading": "מחפש מקומות…",
     "noPlaces": "אין מקומות מסוג זה באזור הזה",
     "errorMaps": "המפה לא נטענה, ולכן לא בדקנו. נסה שוב.",

@@ -686,6 +686,10 @@
     "windSpeed": "Vitesse du vent"
   },
   "attractionsPanel": {
+    "partial": "Certaines catégories n'ont pas été vérifiées. Réessayez.",
+    "group": {"outdoors": "Nature et plein air", "foodDrink": "Restauration", "culture": "Culture et histoire", "services": "Services"},
+    "cat": {"nature": "Nature", "beach": "Plages", "nationalPark": "Parcs nationaux", "amusementPark": "Parcs d'attractions", "restaurant": "Restaurants", "cafe": "Cafés", "winery": "Vignobles", "nightlife": "Vie nocturne", "touristAttraction": "Attractions", "museum": "Musées", "historicalSite": "Sites historiques", "festival": "Festivals", "localMarket": "Marchés et shopping", "hotel": "Hôtels", "hospital": "Hôpitaux", "pharmacy": "Pharmacies", "spa": "Spas"},
+    "noCategorySelected": "Aucune catégorie sélectionnée",
     "loading": "Recherche de lieux…",
     "noPlaces": "Aucun lieu de ce type à proximité",
     "errorMaps": "La carte ne s'est pas chargée, donc rien n'a été vérifié. Réessayez.",

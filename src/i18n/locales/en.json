@@ -686,6 +686,10 @@
     "windSpeed": "Wind Speed"
   },
   "attractionsPanel": {
+    "partial": "Some categories were not checked. Try again.",
+    "group": {"outdoors": "Outdoors", "foodDrink": "Food & drink", "culture": "Culture & history", "services": "Services"},
+    "cat": {"nature": "Nature", "beach": "Beaches", "nationalPark": "National parks", "amusementPark": "Amusement parks", "restaurant": "Restaurants", "cafe": "Cafés", "winery": "Wineries", "nightlife": "Nightlife", "touristAttraction": "Attractions", "museum": "Museums", "historicalSite": "Historic sites", "festival": "Festivals", "localMarket": "Markets & shopping", "hotel": "Hotels", "hospital": "Hospitals", "pharmacy": "Pharmacies", "spa": "Spas"},
+    "noCategorySelected": "No category selected",
     "loading": "Searching for places…",
     "noPlaces": "No places of this kind nearby",
     "errorMaps": "The map did not load, so nothing was checked. Try again.",
