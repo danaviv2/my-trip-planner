@@ -58,6 +58,29 @@ const toBookings = (result, source = {}) => [
  * @param {(msg:string, i:number, total:number)=>void} opts.onProgress
  * @returns {Promise<{emails:Array, bookings:Array, parsed:number, fromPdf:number}>}
  */
+/**
+ * ניסוח הסיבה שמייל לא הניב הזמנה, כשהסיבה היא כשל ולא היעדר תוכן.
+ *
+ * הרשימה `unrecognized` מוגדרת בקוד כ"זו שמסבירה אישור חסר", אך כל כשל
+ * הוצג בה כ"נסרק ולא זוהו פרטי הזמנה" — בדיוק כמו מייל שבאמת אין בו
+ * הזמנה. מכסת בקשות שנגמרה, שירות שלא הגיב או תשובה לא קריאה נראו
+ * זהים לחלוטין לפסק דין על תוכן המייל.
+ *
+ * ההבחנה הקריטית: כשל הוא "לא בדקנו", לא "אין כאן". לכן כל ניסוח כאן
+ * מסתיים בהזמנה לנסות שוב — אחרת המשתמש יקרא זאת כתשובה סופית.
+ */
+const describeFailure = (err) => {
+  const msg = String((err && err.message) || err || '');
+  if (msg.includes('429')) return 'מכסת הבקשות ל-AI נגמרה — נסה שוב בעוד דקה';
+  if (msg.startsWith('Gemini API error')) {
+    const code = msg.match(/\d{3}/);
+    return `שירות ה-AI לא הגיב${code ? ` (${code[0]})` : ''} — נסה שוב`;
+  }
+  if (msg === 'PARSE_FAILED') return 'התשובה מהמודל לא הייתה קריאה — נסה שוב';
+  if (msg === 'NO_PDF') return 'הקובץ המצורף לא נקרא — נסה שוב';
+  return 'הפענוח נכשל — נסה שוב';
+};
+
 export const scanMailbox = async (
   token,
   { maxResults = 60, monthsBack = 12, maxPdfsPerEmail = 3, onProgress = () => {} } = {}
@@ -84,6 +107,7 @@ export const scanMailbox = async (
     const email = emails[i];
     onProgress(`מפענח ${i + 1} מתוך ${emails.length}...`, i + 1, emails.length);
 
+    let failure = null;
     let gotSomething = false;
 
     // ── זכאות אינה הזמנה ──
@@ -161,8 +185,10 @@ export const scanMailbox = async (
           gotSomething = toBookings(result).some(isSubstantial);
         }
       }
-    } catch {
-      // מייל בודד שנכשל אינו מפיל את הסריקה כולה
+    } catch (err) {
+      // מייל בודד שנכשל אינו מפיל את הסריקה כולה — אבל הכשל נשמר, כדי
+      // שלא יוצג בהמשך כ"אין כאן הזמנה".
+      failure = err;
     }
 
     // ספקים רבים שמים את הפרטים רק בקובץ המצורף. ניגשים אליו כשגוף
@@ -198,14 +224,16 @@ export const scanMailbox = async (
             fromPdf++;
             break;
           }
-        } catch {
-          // קובץ פגום או חסום אינו מפיל את הסריקה
+        } catch (err) {
+          // קובץ פגום או חסום אינו מפיל את הסריקה. הכשל נשמר רק אם גוף
+          // המייל לא נכשל כבר — השגיאה הראשונה היא המסבירה.
+          failure = failure || err;
         }
       }
     }
 
     if (gotSomething) parsed++;
-    else unrecognized.push(email);
+    else unrecognized.push(failure ? { ...email, reason: describeFailure(failure) } : email);
   }
 
   // הסימון נעשה בסוף ורק על מיילים שהמעבר עליהם הושלם. סימון מוקדם היה
