@@ -683,7 +683,13 @@ export const BookingsProvider = ({ children }) => {
       fresh.forEach((r) => marked.add(r));
       writeCancelled(marked);
       if (user && fresh.length) {
-        await Promise.all(fresh.map((r) => markCancelledRef(user.uid, r).catch(() => {})));
+        // סימון ביטול שלא הגיע לענן מחזיר את ההזמנה בסריקה הבאה במכשיר
+        // אחר. המחיקה שמתחת כבר מסמנת `cloudError`; הסימון לא — ולכן
+        // הכשל שמחזיר את ההזמנה היה דווקא זה שנבלע בשקט.
+        const failed = await Promise.all(
+          fresh.map((r) => markCancelledRef(user.uid, r).then(() => false).catch(() => true))
+        );
+        if (failed.some(Boolean)) setCloudError(true);
       }
       if (!doomed.length) return 0;
 
@@ -714,10 +720,14 @@ export const BookingsProvider = ({ children }) => {
       // אישור שעדיין יושב בתיבה — וההזמנה שמחקת תחזור.
       if (gone) writeDismissed([...readDismissed(), gone]);
       if (user) {
-        await Promise.all([
-          deleteBooking(user.uid, id).catch(() => {}),
-          gone ? saveDismissed(user.uid, gone).catch(() => {}) : Promise.resolve(),
+        // ההערה שמעל מסבירה שהסימון חייב להגיע לענן, אחרת ההזמנה חוזרת.
+        // בליעת הכשל סתרה בדיוק את זה: המשתמש מחק, לא ראה שגיאה, וההזמנה
+        // שבה במכשיר אחר.
+        const failed = await Promise.all([
+          deleteBooking(user.uid, id).then(() => false).catch(() => true),
+          gone ? saveDismissed(user.uid, gone).then(() => false).catch(() => true) : Promise.resolve(false),
         ]);
+        if (failed.some(Boolean)) setCloudError(true);
       }
     },
     [bookings, user]
@@ -742,11 +752,15 @@ export const BookingsProvider = ({ children }) => {
     clearLedger();
 
     if (user) {
-      await Promise.all(
+      // איפוס שנכשל באחת האוספים משאיר נתונים בענן, והמשתמש מאמין שהכל
+      // נמחק. בבדיקה נקייה זה הכי מטעה: הסריקה הבאה מושכת חזרה בדיוק את
+      // מה שאמור היה להיעלם.
+      const failed = await Promise.all(
         ['bookings', 'cancelledBookings', 'dismissedBookings'].map((name) =>
-          clearCollection(user.uid, name).catch(() => {})
+          clearCollection(user.uid, name).then(() => false).catch(() => true)
         )
       );
+      if (failed.some(Boolean)) setCloudError(true);
     }
 
     return { bookings: count };
