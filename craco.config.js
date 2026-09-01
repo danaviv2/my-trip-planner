@@ -17,7 +17,12 @@ try {
     path.join(__dirname, 'public', 'version.json'),
     JSON.stringify({ buildTime: BUILD_TIME }) + '\n'
   );
-} catch {}
+} catch (err) {
+  // כתיבה שנכשלת בשקט משאירה חותמת ישנה על השרת מול חדשה בקוד, כלומר
+  // "יש גרסה חדשה" לנצח — או ההפך, ולעולם לא. שני הכיוונים נראים
+  // כמו תקלה באפליקציה ולא ככשל של שלב הבנייה, ולכן הוא נאמר.
+  console.error('[craco] כתיבת public/version.json נכשלה:', err.message);
+}
 
 module.exports = {
   webpack: {
