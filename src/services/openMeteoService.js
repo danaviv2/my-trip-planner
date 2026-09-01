@@ -2,23 +2,53 @@ const GEOCODE_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 
 /**
+ * תאריך בפורמט שהשרת מבין, מכל צורה שהקורא מחזיק.
+ *
+ * `TripPlanner` מחזיק `startDate` כאובייקט `Date`, ו-`fetchTripWeather`
+ * שרשר אותו כמו שהוא: `start_date=Tue Sep 01 2026 23:58:17 GMT+0300 (...)`.
+ * Open-Meteo החזיר 400, השירות החזיר רשימה ריקה, והמסך אמר "תחזית אינה
+ * זמינה" — כשל שנראה בדיוק כמו היעדר נתונים.
+ *
+ * הפורמט נבנה מרכיבי הזמן המקומיים ולא מ-`toISOString`, שמחזיר UTC:
+ * חצות בישראל היא אתמול, ומלכודת זו נשרפה כאן ארבע פעמים ביום אחד.
+ */
+/** חצות מקומית מתוך `YYYY-MM-DD`. `new Date('2026-09-01')` הוא UTC. */
+const localMidnight = (iso) => {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
+
+const toLocalISODate = (value) => {
+  if (!value) return null;
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+/**
  * תחזית מסוכמת לעצירה לפי קואורדינטות — חינמי, ללא API key
  * מחזיר null אם הטיול מחוץ לחלון התחזית (16 יום)
  */
 export async function getStopWeatherSummary(lat, lng, startDateStr, days) {
-  if (!lat || !lng || !startDateStr) return null;
+  const isoDate = toLocalISODate(startDateStr);
+  if (!lat || !lng || !isoDate) return null;
 
-  const start = new Date(startDateStr);
+  const start = localMidnight(isoDate);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const daysOut = Math.floor((start - today) / 86400000);
+  const daysOut = Math.round((start - today) / 86400000);
   if (daysOut < 0 || daysOut > 14) return null;
 
+  // `start_date` בלי `end_date` מוחזר כ-400 ("must have the same number of
+  // elements"), ו-`forecast_days` מתנגש בשניהם. הקוד שלח את הראשון בלבד,
+  // ולכן תחזית העצירות החזירה `null` בשקט — כשל שנראה כמו "אין תחזית".
   const forecastDays = Math.min(days, Math.max(1, 16 - daysOut));
+  const end = new Date(start);
+  end.setDate(start.getDate() + forecastDays - 1);
   const url =
     `${FORECAST_URL}?latitude=${lat}&longitude=${lng}` +
     `&daily=temperature_2m_max,temperature_2m_min,weathercode` +
-    `&forecast_days=${forecastDays}&timezone=auto&start_date=${startDateStr}`;
+    `&timezone=auto&start_date=${isoDate}&end_date=${toLocalISODate(end)}`;
 
   try {
     const res = await fetch(url);
@@ -169,7 +199,8 @@ async function geocodeCity(name) {
 export async function fetchTripWeather(cityName, startDate, days) {
   if (!cityName) return [];
 
-  const cacheKey = `om_weather_${cityName}_${startDate || 'none'}`;
+  const isoStart = toLocalISODate(startDate);
+  const cacheKey = `om_weather_${cityName}_${isoStart || 'none'}`;
   try {
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
@@ -186,18 +217,21 @@ export async function fetchTripWeather(cityName, startDate, days) {
   const forecastDays = Math.min(days || 7, 16);
 
   // Only pass start_date if it's within the next 16 days
-  let startDateParam = '';
-  if (startDate) {
-    const start = new Date(startDate);
+  // או טווח מפורש (`start_date`+`end_date`), או `forecast_days` — לא שניהם.
+  let rangeParam = `&forecast_days=${forecastDays}`;
+  if (isoStart) {
+    const start = localMidnight(isoStart);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const diffDays = Math.floor((start - today) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.round((start - today) / 86400000);
     if (diffDays >= 0 && diffDays < 16) {
-      startDateParam = `&start_date=${startDate}`;
+      const end = new Date(start);
+      end.setDate(start.getDate() + forecastDays - 1);
+      rangeParam = `&start_date=${isoStart}&end_date=${toLocalISODate(end)}`;
     }
   }
 
-  const url = `${FORECAST_URL}?latitude=${coords.lat}&longitude=${coords.lng}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&forecast_days=${forecastDays}&timezone=auto${startDateParam}`;
+  const url = `${FORECAST_URL}?latitude=${coords.lat}&longitude=${coords.lng}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&timezone=auto${rangeParam}`;
 
   try {
     const res = await fetch(url);
@@ -216,6 +250,9 @@ export async function fetchTripWeather(cityName, startDate, days) {
         rainProb,
         code,
         emoji: getWeatherEmoji(code),
+        // הקורא לא ימפה את הקוד בעצמו: מיפוי שני היה נפרד מהראשון
+        // בשינוי הבא, וזו המלכודת שרשומה ב-STATUS.
+        conditionKey: conditionKeyFor(code),
         isRainy: rainProb > 60 || RAINY_CODES.has(code),
       };
     });

@@ -677,6 +677,7 @@
     "transCarRental": "Location de voiture"
   },
   "weather": {
+    "dayNumber": "Jour {{n}}",
     "conditions": {"clear": "Dégagé", "partlyCloudy": "Partiellement nuageux", "fog": "Brouillard", "drizzle": "Bruine", "rain": "Pluie", "snow": "Neige", "showers": "Averses", "thunderstorm": "Orage"},
     "unavailable": "Les prévisions ne sont pas disponibles pour le moment",
     "loadError": "Erreur de chargement météo",

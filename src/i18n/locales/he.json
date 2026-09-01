@@ -677,6 +677,7 @@
     "transCarRental": "השכרת רכב"
   },
   "weather": {
+    "dayNumber": "יום {{n}}",
     "conditions": {"clear": "בהיר", "partlyCloudy": "מעונן חלקית", "fog": "ערפל", "drizzle": "טפטוף", "rain": "גשם", "snow": "שלג", "showers": "ממטרים", "thunderstorm": "סופת רעמים"},
     "unavailable": "תחזית אינה זמינה כרגע",
     "loadError": "שגיאה בטעינת מזג אוויר",

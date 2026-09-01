@@ -17,6 +17,8 @@ import {
   Save as SaveIcon,
   AutoAwesome as AIIcon
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+import { fetchTripWeather } from '../../services/openMeteoService';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
@@ -126,7 +128,6 @@ import { optimizeDayOrder } from '../../services/dayOptimizerService';
 import ReactApexChart from 'react-apexcharts';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import WeatherForecast from '../../components/WeatherForecast';
 import BudgetMeter from '../budget/BudgetMeter';
 import { generateAttractions } from '../../services/aiAttractionsService';
 import DayAnchors from './DayAnchors';
@@ -389,7 +390,10 @@ const TripPlanner = () => {
 
   // מצבים חדשים
   const [showWeatherForecast, setShowWeatherForecast] = useState(false);
+  const { t } = useTranslation();
   const [weatherData, setWeatherData] = useState(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState('');
   const [budgetData, setBudgetData] = useState({
     total: 0,
     categories: {
@@ -580,10 +584,54 @@ const TripPlanner = () => {
     }
   }, [destination]);
 
-  // תוספת - הבאת תחזית מזג אוויר
+  // שינוי יעד מבטל תחזית שכבר מוצגת.
+  //
+  // בלי זה, מספרי רומא נשארו על המסך תחת הכותרת "תחזית מזג אוויר ב<יעד
+  // החדש>", והכפתור נשאר מושבת (`disabled={showWeatherForecast}`) ולכן
+  // לא היה אפשר לרענן. שדה מלא בערך של מקום אחר — בדיוק סוג הבאג שאף
+  // בדיקת נוכחות אינה תופסת.
+  useEffect(() => {
+    setShowWeatherForecast(false);
+    setWeatherData(null);
+    setWeatherError('');
+  }, [destination, startDate, tripDays]);
+
+  // תחזית אמיתית ליעד ולתאריכי הטיול.
+  //
+  // עד 01.09.2026 ישב כאן `getMockWeatherData()` — `Math.floor(Math.random()*10)+20`
+  // לטמפרטורה ומצב אקראי מתוך ארבעה. "תחזית" שהשתנתה בכל לחיצה, ושמישהו
+  // תכנן לפיה מה ללבוש. Open-Meteo, בלי מפתח.
   const fetchWeatherForecast = async () => {
-    setWeatherData(getMockWeatherData());
     setShowWeatherForecast(true);
+    setWeatherLoading(true);
+    setWeatherError('');
+
+    const days = await fetchTripWeather(destination, startDate, tripDays);
+    setWeatherLoading(false);
+
+    // רשימה ריקה היא "לא הצלחנו לבדוק", ולא "אין מזג אוויר". היא נאמרת
+    // במפורש במקום להשאיר אזור ריק שנראה כאילו הכפתור לא עבד.
+    if (!days.length) {
+      setWeatherData(null);
+      setWeatherError(t('weather.unavailable'));
+      return;
+    }
+
+    const start = new Date(startDate);
+    setWeatherData(days.map((d, i) => {
+      const date = new Date(start);
+      date.setDate(start.getDate() + i);
+      return {
+        // התאריך נבנה מרכיבי זמן מקומיים. `toISOString` מחזיר UTC,
+        // וחצות בישראל היא אתמול — מלכודת שנשרפה כאן ארבע פעמים ביום אחד.
+        date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+        day: t('weather.dayNumber', { n: i + 1 }),
+        temp: d.maxTemp,
+        minTemp: d.minTemp,
+        conditionKey: d.conditionKey,
+        emoji: d.emoji
+      };
+    }));
   };
 
   // פונקציה להבאת אטרקציות מומלצות
@@ -614,31 +662,6 @@ const TripPlanner = () => {
   };
 
 
-  // נתונים לדוגמה עבור מזג אוויר
-  const getMockWeatherData = () => {
-    const startDateObj = new Date(startDate);
-    const forecast = [];
-    
-    for (let i = 0; i < tripDays; i++) {
-      const date = new Date(startDateObj);
-      date.setDate(startDateObj.getDate() + i);
-      
-      const conditions = ['שמשי', 'מעונן חלקית', 'מעונן', 'גשום'];
-      const randomCondition = conditions[Math.floor(Math.random() * 4)];
-      
-      forecast.push({
-        // אותה סטייה: תחזית ליום הלא נכון נראית תקינה לחלוטין
-        date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
-        day: `יום ${i + 1}`,
-        temp: Math.floor(Math.random() * 10) + 20,
-        condition: randomCondition,
-        iconType: randomCondition
-      });
-    }
-    
-    return forecast;
-  };
-  
   // פונקציה להוספת פעילות ליום
   const addActivityToDay = (dayIndex, activity) => {
     const updatedItinerary = [...itinerary];
@@ -1266,7 +1289,19 @@ const TripPlanner = () => {
           </Button>
         </Grid>
         
-        {showWeatherForecast && weatherData && weatherData.length > 0 && (
+        {showWeatherForecast && weatherLoading && (
+          <Grid item xs={12}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}><CircularProgress size={28} /></Box>
+          </Grid>
+        )}
+
+        {showWeatherForecast && weatherError && (
+          <Grid item xs={12}>
+            <Typography variant="body2" color="error" align="center">{weatherError}</Typography>
+          </Grid>
+        )}
+
+        {showWeatherForecast && !weatherLoading && weatherData && weatherData.length > 0 && (
           <Grid item xs={12}>
             <WeatherWidget>
               <Typography variant="h6" gutterBottom>
@@ -1278,13 +1313,16 @@ const TripPlanner = () => {
                     <Box sx={{ textAlign: 'center', p: 1 }}>
                       <Typography variant="subtitle2">{day.day}</Typography>
                       <Box sx={{ my: 1 }}>
-                        {day.iconType === 'שמשי' && <WeatherIcon />}
-                        {day.iconType === 'מעונן חלקית' && <FilterDrama />}
-                        {day.iconType === 'מעונן' && <Cloud />}
-                        {day.iconType === 'גשום' && <Grain />}
+                        {day.conditionKey === 'clear' && <WeatherIcon />}
+                        {day.conditionKey === 'partlyCloudy' && <FilterDrama />}
+                        {(day.conditionKey === 'fog' || day.conditionKey === 'drizzle') && <Cloud />}
+                        {['rain', 'showers', 'snow', 'thunderstorm'].includes(day.conditionKey) && <Grain />}
                       </Box>
                       <Typography variant="h6">{day.temp}°C</Typography>
-                      <Typography variant="body2">{day.condition}</Typography>
+                      <Typography variant="caption" display="block" color="text.secondary">
+                        {day.minTemp}°C
+                      </Typography>
+                      <Typography variant="body2">{t(`weather.conditions.${day.conditionKey}`)}</Typography>
                     </Box>
                   </Grid>
                 ))}

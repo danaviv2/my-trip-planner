@@ -677,6 +677,7 @@
     "transCarRental": "Aluguel de carro"
   },
   "weather": {
+    "dayNumber": "Dia {{n}}",
     "conditions": {"clear": "Céu limpo", "partlyCloudy": "Parcialmente nublado", "fog": "Nevoeiro", "drizzle": "Chuvisco", "rain": "Chuva", "snow": "Neve", "showers": "Aguaceiros", "thunderstorm": "Trovoada"},
     "unavailable": "A previsão não está disponível neste momento",
     "loadError": "Erro ao carregar clima",
