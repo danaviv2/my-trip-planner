@@ -75,8 +75,14 @@ Return ONLY valid JSON (no markdown):
   try {
     result = JSON.parse(cleaned);
   } catch {
+    // חילוץ JSON מתוך טקסט עוטף הוא התאוששות לגיטימית ונשאר.
+    // מה שהוסר: נפילה למבנה ריק. היא נשמרה ב-`setCache` ל-24 שעות,
+    // ולכן תקלה רגעית של Gemini גרמה ליעד שלם להיראות בלי רכבים ליום
+    // שלם — בלי שגיאה בשום מקום, וללא דרך להבדיל מתוצאה ריקה אמיתית.
+    // `aiAttractionsService` כבר זורק כאן, והקוראים מטפלים בזריקה.
     const match = cleaned.match(/\{[\s\S]*\}/);
-    result = match ? JSON.parse(match[0]) : { cars: [], drivingTips: [], localInfo: null };
+    if (!match) throw new Error('INVALID_RESPONSE');
+    result = JSON.parse(match[0]);
   }
 
   setCache(key, result);

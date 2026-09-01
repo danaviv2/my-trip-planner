@@ -60,8 +60,12 @@ CRITICAL: Include accurate lat/lng coordinates for each hotel's real location. U
   try {
     hotels = JSON.parse(cleaned);
   } catch {
+    // ראה ההסבר המקביל ב-`aiCarRentalService`: החילוץ מטקסט עוטף נשאר,
+    // הנפילה למערך ריק הוסרה. היא נשמרה במטמון ל-24 שעות והציגה "אין
+    // מלונות" ליעד שלם, בלי שגיאה ובלי דרך להבדיל מתוצאה ריקה אמיתית.
     const match = cleaned.match(/\[[\s\S]*\]/);
-    hotels = match ? JSON.parse(match[0]) : [];
+    if (!match) throw new Error('INVALID_RESPONSE');
+    hotels = JSON.parse(match[0]);
   }
 
   setCache(key, hotels);
