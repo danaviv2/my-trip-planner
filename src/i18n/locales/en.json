@@ -677,6 +677,8 @@
     "transCarRental": "Car Rental"
   },
   "weather": {
+    "conditions": {"clear": "Clear", "partlyCloudy": "Partly cloudy", "fog": "Fog", "drizzle": "Drizzle", "rain": "Rain", "snow": "Snow", "showers": "Showers", "thunderstorm": "Thunderstorm"},
+    "unavailable": "Forecast is not available right now",
     "loadError": "Error loading weather",
     "title": "Weather in {{location}}",
     "temperature": "Temperature",

@@ -211,12 +211,10 @@ Required JSON structure:
         airport: parsed.airport,
         bestTimeToVisit: parsed.bestTimeToVisit,
         seasons: parsed.seasons
-      },
-      currentWeather: {
-        temperature: 22, feelsLike: 24, description: 'בהיר',
-        icon: 'https://openweathermap.org/img/wn/01d@2x.png',
-        humidity: 70, windSpeed: 3
       }
+      // `currentWeather` קבוע — 22°C ו"בהיר" לכל יעד בעולם — הוסר.
+      // המסך מביא מזג אוויר חי מ-`openMeteoService`, וכשאין תשובה אינו
+      // מציג דבר. מספר שהומצא זוכה לאמון; שדה ריק מתוקן.
     };
 
     setCache(destinationName, result);

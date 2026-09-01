@@ -10,7 +10,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
-import { fetchWeatherForecast } from '../services/weatherAPI';
+import { getCurrentWeather } from '../services/openMeteoService';
 
 const WeatherForecast = ({ destination }) => {
   const { t } = useTranslation();
@@ -18,22 +18,27 @@ const WeatherForecast = ({ destination }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // עד 01.09.2026 המקור כאן היה `weatherAPI.js` — סימולציה מוצהרת
+  // שהחזירה 22° ו"שמיים בהירים" לכל יעד, אחרי `setTimeout(500)` שגרם
+  // לזה להיראות כמו קריאת רשת. עכשיו Open-Meteo, בלי מפתח.
   useEffect(() => {
-    if (destination) {
-      setLoading(true);
-      setError(null);
-      
-      fetchWeatherForecast(destination)
-        .then(data => {
-          setWeatherData(data);
-          setLoading(false);
-        })
-        .catch(err => {
-          setError(t('weather.loadError'));
-          setLoading(false);
-          console.error(err);
-        });
-    }
+    if (!destination) return;
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    getCurrentWeather(destination).then((data) => {
+      if (cancelled) return;
+      setLoading(false);
+      // `null` הוא "לא הצלחנו לבדוק", ולא "אין מזג אוויר". אין נפילה
+      // חזרה למספר קבוע: ערך שהומצא זוכה לאמון, ושדה ריק מתוקן.
+      if (!data) { setError(t('weather.unavailable')); return; }
+      setWeatherData(data);
+    });
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [destination]);
 
   if (loading) {
@@ -71,10 +76,10 @@ const WeatherForecast = ({ destination }) => {
                 {t('weather.temperature')}
               </Typography>
               <Typography variant="h4">
-                {weatherData.temp}°C
+                {weatherData.temperature}°C
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {t('weather.feelsLike', { temp: weatherData.feels_like })}
+                {t('weather.feelsLike', { temp: weatherData.feelsLike })}
               </Typography>
             </CardContent>
           </Card>
@@ -87,7 +92,7 @@ const WeatherForecast = ({ destination }) => {
                 {t('weather.description')}
               </Typography>
               <Typography variant="h6">
-                {weatherData.description}
+                {weatherData.emoji} {t(`weather.conditions.${weatherData.conditionKey}`)}
               </Typography>
             </CardContent>
           </Card>

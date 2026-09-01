@@ -63,6 +63,7 @@ import { fetchDestinationFromAI } from '../services/aiDestinationService';
 import { useTripContext } from '../contexts/TripContext';
 import PlaceImage from '../components/destination-info/PlaceImage';
 import { getPlaceMedia } from '../services/placeMediaService';
+import { getCurrentWeather } from '../services/openMeteoService';
 
 const DestinationInfoPage = () => {
   const { t } = useTranslation();
@@ -77,6 +78,9 @@ const DestinationInfoPage = () => {
   const [error, setError] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  // מזג אוויר חי. עד 01.09.2026 ישב כאן קבוע — 22°C ו"בהיר" —
+  // שהוצג זהה לרומא, ללונדון ולבנגקוק. נמדד על המסך בשלושתם.
+  const [liveWeather, setLiveWeather] = useState(null);
 
   const handleSearch = () => {
     const trimmed = searchQuery.trim();
@@ -88,6 +92,21 @@ const DestinationInfoPage = () => {
       fetchDestinationData(destination);
     }
   }, [destination]);
+
+  // Open-Meteo, בלי מפתח. `null` נשאר `null`: כשאין תשובה הכרטיס אינו
+  // מוצג כלל, במקום ליפול חזרה למספר קבוע שנראה כמו מדידה.
+  useEffect(() => {
+    let cancelled = false;
+    setLiveWeather(null);
+    const name = destinationData?.nameEn || destinationData?.name || destination;
+    if (!name) return;
+
+    getCurrentWeather(name).then((data) => {
+      if (!cancelled) setLiveWeather(data);
+    });
+
+    return () => { cancelled = true; };
+  }, [destination, destinationData?.nameEn, destinationData?.name]);
   
   /**
    * השלמת החלקים שהמאגר הסטטי אינו מכיל.
@@ -832,7 +851,6 @@ const DestinationInfoPage = () => {
         bestTimeToVisit: d.bestTimeToVisit,
         seasons: d.seasons
       },
-      currentWeather: { temperature: 22, feelsLike: 24, description: 'בהיר', icon: 'https://openweathermap.org/img/wn/01d@2x.png', humidity: 75, windSpeed: 3.5 },
       events: d.events,
       attractions: d.attractions,
       food: d.food,
@@ -1353,7 +1371,7 @@ const DestinationInfoPage = () => {
             }}
           >
             {/* מזג אוויר נוכחי */}
-            {destinationData.currentWeather && (
+            {liveWeather && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: { xs: '45%', md: 'auto' } }}>
                 <Box
                   sx={{
@@ -1366,16 +1384,14 @@ const DestinationInfoPage = () => {
                     alignItems: 'center'
                   }}
                 >
-                  <img
-                    src={destinationData.currentWeather.icon}
-                    alt={t('destInfo.quick_weather')}
-                    style={{ width: 32, height: 32 }}
-                  />
+                  <Typography component="span" sx={{ fontSize: 26, lineHeight: 1 }} role="img" aria-label={t('destInfo.quick_weather')}>
+                    {liveWeather.emoji}
+                  </Typography>
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">{t('destInfo.quick_weather')}</Typography>
                   <Typography variant="subtitle1" fontWeight="bold">
-                    {destinationData.currentWeather.temperature}°C, {destinationData.currentWeather.description}
+                    {liveWeather.temperature}°C, {t(`weather.conditions.${liveWeather.conditionKey}`)}
                   </Typography>
                 </Box>
               </Box>

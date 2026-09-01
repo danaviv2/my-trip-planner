@@ -53,9 +53,110 @@ function getWeatherEmoji(code) {
 
 const RAINY_CODES = new Set([61, 63, 65, 80, 81, 82, 95, 96, 99]);
 
+/**
+ * קוד WMO ⟵ מפתח תרגום. שמונה מצבים ולא ארבעים: תיאור מדויק מדי הוא
+ * הבטחה שהתחזית אינה יכולה לקיים, וקצר מדי מאבד את ההבדל בין גשם לשלג.
+ */
+function conditionKeyFor(code) {
+  if (code === 0) return 'clear';
+  if (code <= 3) return 'partlyCloudy';
+  if (code === 45 || code === 48) return 'fog';
+  if (code >= 51 && code <= 57) return 'drizzle';
+  if (code >= 61 && code <= 67) return 'rain';
+  if (code >= 71 && code <= 77) return 'snow';
+  if (code >= 80 && code <= 86) return 'showers';
+  if (code >= 95) return 'thunderstorm';
+  return 'partlyCloudy';
+}
+
+const CURRENT_TTL_MS = 30 * 60 * 1000; // חצי שעה: מזג אוויר עכשווי מתיישן
+
+/**
+ * מזג האוויר עכשיו בעיר, לפי שם.
+ *
+ * ── למה זה נכתב ──
+ * שני מסכים הציגו עד 01.09.2026 ערך קשיח: `/destination-info` הראה
+ * "22°C, בהיר" לרומא, ללונדון ולבנגקוק כאחד, ו-`weatherAPI.js` היה
+ * סימולציה מוצהרת שהחזירה 22° אחרי `setTimeout(500)` — השהיה מזויפת
+ * שגרמה לזה להיראות כמו קריאת רשת. נמדד מול Open-Meteo באותו רגע:
+ * רומא 26.1°, אוסלו 16.9°, בנגקוק 25.8°.
+ *
+ * ── למה `null` ולא ברירת מחדל ──
+ * מספר שהומצא זוכה לאמון, ושדה ריק מתוקן. כשאין תשובה המסך אינו מציג
+ * מזג אוויר כלל — הוא אינו נופל חזרה ל-22°.
+ *
+ * Open-Meteo אינו דורש מפתח, ולכן אין כאן מפתח שיכול להתייתם.
+ */
+export async function getCurrentWeather(cityName) {
+  if (!cityName) return null;
+
+  const cacheKey = `om_current_${cityName}`;
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const { ts, data } = JSON.parse(cached);
+      if (Date.now() - ts < CURRENT_TTL_MS) return data;
+    }
+  } catch {
+    // מטמון פגום אינו סיבה לא לשאול
+  }
+
+  const coords = await geocodeCity(cityName);
+  if (!coords) return null;
+
+  // `wind_speed_unit=ms` — המסך כותב "m/s", וברירת המחדל של Open-Meteo
+  // היא קמ"ש. יחידה שגויה בשדה מלא היא בדיוק הבאג שאין שומר נוכחות שיתפוס.
+  const url =
+    `${FORECAST_URL}?latitude=${coords.lat}&longitude=${coords.lng}` +
+    `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code` +
+    `&wind_speed_unit=ms&timezone=auto`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const { current } = await res.json();
+    if (!current || typeof current.temperature_2m !== 'number') return null;
+
+    const code = current.weather_code ?? 0;
+    const data = {
+      temperature: Math.round(current.temperature_2m),
+      feelsLike: Math.round(current.apparent_temperature ?? current.temperature_2m),
+      humidity: Math.round(current.relative_humidity_2m ?? 0),
+      windSpeed: Math.round((current.wind_speed_10m ?? 0) * 10) / 10,
+      code,
+      emoji: getWeatherEmoji(code),
+      conditionKey: conditionKeyFor(code)
+    };
+
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
+    } catch {
+      // ignore storage errors
+    }
+
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * שפת החיפוש נגזרת מכתב השם, ולא נקבעת מראש.
+ *
+ * נמדד על 18 ערים: `language=en` מצא 8 בלבד — **כל** שם עברי נכשל,
+ * וזו הסיבה ש-"רומא" לא החזיר מזג אוויר. `language=he` מצא 18 מ-18,
+ * אבל הכניס טעות גרועה יותר: `"New York"` נפתר ל-40.9,-97.6 — נברסקה,
+ * לא ניו יורק. פגיעה שגויה אינה נספרת בשום מונה הצלחות.
+ *
+ * לכן: שם בעברית נשאל בעברית, שם לטיני נשאל באנגלית. בשני הכיוונים
+ * נמדד מלא — 10/10 ו-8/8 בהתאמה.
+ */
+const searchLanguageFor = (name) => (/[\u0590-\u05FF]/.test(name) ? 'he' : 'en');
+
 async function geocodeCity(name) {
   try {
-    const res = await fetch(`${GEOCODE_URL}?name=${encodeURIComponent(name)}&count=1&language=en&format=json`);
+    const language = searchLanguageFor(name);
+    const res = await fetch(`${GEOCODE_URL}?name=${encodeURIComponent(name)}&count=1&language=${language}&format=json`);
     const data = await res.json();
     if (!data.results?.length) return null;
     const { latitude, longitude } = data.results[0];
