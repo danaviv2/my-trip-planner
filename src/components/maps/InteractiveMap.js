@@ -223,6 +223,21 @@ const InteractiveMap = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMapLoaded, markers, routes, visibleCategories]);
 
+  // מרכז חדש אחרי שהמפה כבר עלתה.
+  //
+  // `initializeMap` קורא ל-`center` פעם אחת בלבד, באתחול. כשהמשתמש
+  // מחליף יעד — רומא ⟵ פריז — המפה נשארה ברומא ושום דבר לא נכשל:
+  // בדיוק אותו דפוס שהשאיר מסלול שנשלף מהרשת בלתי נראה.
+  //
+  // כשיש מסלול, `fitBounds` הוא שקובע את המבט, ולכן אין להתערב בו.
+  useEffect(() => {
+    if (!isMapLoaded || !mapInstanceRef.current) return;
+    if (routes.length) return;
+    if (!Number.isFinite(initialCenter?.lat) || !Number.isFinite(initialCenter?.lng)) return;
+    mapInstanceRef.current.panTo({ lat: initialCenter.lat, lng: initialCenter.lng });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMapLoaded, initialCenter?.lat, initialCenter?.lng, routes.length]);
+
   // הוספת סמנים למפה
   const addMarkersToMap = (markersData) => {
     if (!mapInstanceRef.current || !window.google) return;

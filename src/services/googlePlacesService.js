@@ -4,21 +4,89 @@ import { API_KEYS } from './apiManager';
  * שירות Google Places - חיפוש אטרקציות, מסעדות, מלונות ועוד
  */
 
+// שלושת הכשלים שנמדדו כשהפאנל הורץ על מסך לראשונה, וכולם נגמרו כאן
+// ברשימה ריקה שאין דרך להבדיל בינה לבין "אין מקומות כאן":
+//
+// 1. סקריפט Maps נטען אחרי שהפאנל כבר שאל. `window.google` עדיין לא קיים,
+//    התשובה הייתה `[]`, ואיש לא שאל שוב לעולם.
+// 2. סטטוס שגיאה מהשירות דווח כ-`[]` — ואז נכתב "✅ נמצאו 0".
+// 3. כשהמפתח נכשל באימות (`RefererNotAllowedMapError`) הקולבק של
+//    `nearbySearch` פשוט אינו נקרא. בלי תקציב זמן, הספינר מסתובב לנצח.
+//
+// לכן: המתנה במקום הנחה, שגיאה מסוּוגת במקום רשימה ריקה, ותקרת זמן על
+// כל קריאה. `ZERO_RESULTS` הוא היחיד שנשאר רשימה ריקה — הוא באמת אומר
+// "אין כאן", וזו תשובה ולא כשל.
+export const PLACES_ERRORS = {
+  MAPS_UNAVAILABLE: 'MAPS_UNAVAILABLE',
+  TIMEOUT: 'TIMEOUT',
+  REQUEST_FAILED: 'REQUEST_FAILED'
+};
+
+const MAPS_WAIT_MS = 15000;
+const REQUEST_TIMEOUT_MS = 12000;
+
+class PlacesError extends Error {
+  constructor(kind, detail) {
+    super(detail ? `${kind}: ${detail}` : kind);
+    this.name = 'PlacesError';
+    this.kind = kind;
+    this.detail = detail || null;
+  }
+}
+
 class GooglePlacesService {
   constructor() {
     this.apiKey = API_KEYS.googleMaps;
   }
 
   /**
+   * ממתין לסקריפט של Maps במקום להניח שהוא כבר כאן.
+   * מחזיר `true` כשהוא זמין, ו-`false` אם לא הגיע בזמן.
+   */
+  waitForMaps(timeoutMs = MAPS_WAIT_MS) {
+    if (window.google?.maps?.places) return Promise.resolve(true);
+
+    return new Promise((resolve) => {
+      const startedAt = Date.now();
+      const timer = setInterval(() => {
+        if (window.google?.maps?.places) {
+          clearInterval(timer);
+          resolve(true);
+        } else if (Date.now() - startedAt > timeoutMs) {
+          clearInterval(timer);
+          resolve(false);
+        }
+      }, 200);
+    });
+  }
+
+  /**
+   * עוטף קריאה לשירות בתקציב זמן. בלי זה, קולבק שלא נקרא הוא ספינר נצחי.
+   */
+  withTimeout(executor, timeoutMs = REQUEST_TIMEOUT_MS) {
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        reject(new PlacesError(PLACES_ERRORS.TIMEOUT));
+      }, timeoutMs);
+
+      executor(
+        (value) => { if (!settled) { settled = true; clearTimeout(timer); resolve(value); } },
+        (error) => { if (!settled) { settled = true; clearTimeout(timer); reject(error); } }
+      );
+    });
+  }
+
+  /**
    * חיפוש אטרקציות ומקומות מעניינים
    */
   async searchNearbyPlaces(location, radius = 5000, type = 'tourist_attraction') {
-    if (!window.google || !window.google.maps) {
-      console.error('Google Maps לא זמין');
-      return [];
-    }
+    const ready = await this.waitForMaps();
+    if (!ready) throw new PlacesError(PLACES_ERRORS.MAPS_UNAVAILABLE);
 
-    return new Promise((resolve, reject) => {
+    return this.withTimeout((resolve, reject) => {
       const service = new window.google.maps.places.PlacesService(
         document.createElement('div')
       );
@@ -30,12 +98,13 @@ class GooglePlacesService {
       };
 
       service.nearbySearch(request, (results, status) => {
-        if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-          console.log(`✅ נמצאו ${results.length} מקומות מסוג ${type}`);
+        const statuses = window.google.maps.places.PlacesServiceStatus;
+        if (status === statuses.OK) {
           resolve(this.formatPlaces(results));
-        } else {
-          console.error('שגיאה בחיפוש מקומות:', status);
+        } else if (status === statuses.ZERO_RESULTS) {
           resolve([]);
+        } else {
+          reject(new PlacesError(PLACES_ERRORS.REQUEST_FAILED, status));
         }
       });
     });
@@ -83,12 +152,10 @@ class GooglePlacesService {
    * חיפוש טקסט חופשי
    */
   async textSearch(query, location = null) {
-    if (!window.google || !window.google.maps) {
-      console.error('Google Maps לא זמין');
-      return [];
-    }
+    const ready = await this.waitForMaps();
+    if (!ready) throw new PlacesError(PLACES_ERRORS.MAPS_UNAVAILABLE);
 
-    return new Promise((resolve, reject) => {
+    return this.withTimeout((resolve, reject) => {
       const service = new window.google.maps.places.PlacesService(
         document.createElement('div')
       );
@@ -102,12 +169,13 @@ class GooglePlacesService {
       };
 
       service.textSearch(request, (results, status) => {
-        if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-          console.log(`✅ נמצאו ${results.length} תוצאות עבור "${query}"`);
+        const statuses = window.google.maps.places.PlacesServiceStatus;
+        if (status === statuses.OK) {
           resolve(this.formatPlaces(results));
-        } else {
-          console.error('שגיאה בחיפוש טקסט:', status);
+        } else if (status === statuses.ZERO_RESULTS) {
           resolve([]);
+        } else {
+          reject(new PlacesError(PLACES_ERRORS.REQUEST_FAILED, status));
         }
       });
     });
@@ -117,10 +185,10 @@ class GooglePlacesService {
    * פרטים מלאים על מקום
    */
   async getPlaceDetails(placeId) {
-    if (!window.google || !window.google.maps) {
-      console.error('Google Maps לא זמין');
-      return null;
-    }
+    // כאן `null` נשאר תשובה סבירה: הפרטים המורחבים הם תוספת על שורה
+    // שכבר מוצגת, ולא המסך עצמו. אין מה להחליף בהודעת שגיאה.
+    const ready = await this.waitForMaps();
+    if (!ready) return null;
 
     return new Promise((resolve, reject) => {
       const service = new window.google.maps.places.PlacesService(

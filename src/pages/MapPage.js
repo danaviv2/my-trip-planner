@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Container, Box, Paper, Typography, Button, Chip, InputAdornment,
-  TextField, useTheme, useMediaQuery,
+  TextField, useTheme, useMediaQuery, CircularProgress, Alert,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import HistoryIcon from '@mui/icons-material/History';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { useTranslation } from 'react-i18next';
+import InteractiveMap from '../components/maps/InteractiveMap';
+import AttractionsPanel from '../components/maps/AttractionsPanel';
+import { geocode } from '../services/roadRouteService';
 
 const popularDestinations = [
   'Paris, France',
@@ -35,6 +38,12 @@ const MapPage = () => {
   const [searchInput, setSearchInput] = useState('');
   const [mapQuery, setMapQuery] = useState('Tel Aviv, Israel');
   const [recentSearches, setRecentSearches] = useState([]);
+  // ה-iframe קיבל שם מקום; מפה אמיתית צריכה קואורדינטות. `center` מוחזק
+  // במצב ולא נגזר בכל רינדור, משום ש-`AttractionsPanel` מחפש מחדש בכל
+  // שינוי של `center` — אובייקט חדש בכל רינדור היה לולאת חיפושים.
+  const [center, setCenter] = useState(null);
+  const [centerStatus, setCenterStatus] = useState('loading');
+  const [selectedPlace, setSelectedPlace] = useState(null);
 
   useEffect(() => {
     try {
@@ -42,6 +51,51 @@ const MapPage = () => {
       if (saved) setRecentSearches(JSON.parse(saved));
     } catch {}
   }, []);
+
+  // שם היעד ⟵ קואורדינטות. Nominatim שומר תוצאה לחודש, ולכן החלפת
+  // יעדים הלוך ושוב אינה עולה פנייה בכל פעם.
+  useEffect(() => {
+    let cancelled = false;
+    setCenterStatus('loading');
+    setSelectedPlace(null);
+
+    (async () => {
+      const point = await geocode(mapQuery);
+      if (cancelled) return;
+      if (!point) {
+        // בלי זה המפה הייתה נשארת על היעד הקודם והמסך היה נראה תקין —
+        // כשל שנקרא כתשובה, בדיוק מה שתוקן בפאנל.
+        setCenterStatus('failed');
+        return;
+      }
+      setCenter(point);
+      setCenterStatus('ready');
+    })();
+
+    return () => { cancelled = true; };
+  }, [mapQuery]);
+
+  // סמן יחיד למקום שנבחר בפאנל.
+  //
+  // `category` נמסר רק כשהמפה מכירה אותו. קניות ובידור אינם ברשימת
+  // הקטגוריות שלה, וסמן עם קטגוריה שאינה מוכרת מסונן החוצה בשקט —
+  // אותה מלכודת שהעלימה נקודת מסלול ב-203e6cd.
+  const markers = useMemo(() => {
+    if (!selectedPlace) return [];
+    const known = ['restaurant', 'museum', 'tourist_attraction'];
+    const asMapCategory = { tourist_attraction: 'attraction', restaurant: 'restaurant', museum: 'museum' };
+    const hit = (selectedPlace.types || []).find((tp) => known.includes(tp));
+
+    return [{
+      id: selectedPlace.id,
+      lat: selectedPlace.location.lat,
+      lng: selectedPlace.location.lng,
+      title: selectedPlace.name,
+      description: selectedPlace.address,
+      image: selectedPlace.photos?.[0]?.url,
+      ...(hit ? { category: asMapCategory[hit] } : {})
+    }];
+  }, [selectedPlace]);
 
   const handleSearch = () => {
     const q = searchInput.trim();
@@ -59,8 +113,6 @@ const MapPage = () => {
     setRecentSearches(updated);
     localStorage.setItem('mapRecentSearches', JSON.stringify(updated));
   };
-
-  const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9ff', pt: '64px', pb: 4 }}>
@@ -181,19 +233,44 @@ const MapPage = () => {
             </Button>
           </Box>
 
-          <Box sx={{ position: 'relative', width: '100%', height: { xs: '55vh', md: '65vh' } }}>
-            <iframe
-              key={mapQuery}
-              src={mapSrc}
-              width="100%"
-              height="100%"
-              style={{ border: 0, display: 'block' }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title={mapQuery}
-            />
-          </Box>
+          {/* ה-iframe שהיה כאן מ-25.2.2026 אינו יכול לשאת סמנים משלנו,
+              ולכן 17 מסנני הקטגוריות מתו באותו יום. מפה אמיתית יכולה. */}
+          {centerStatus === 'loading' ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, py: 8 }}>
+              <CircularProgress />
+              <Typography variant="body2" color="text.secondary">{t('map.locating')}</Typography>
+            </Box>
+          ) : centerStatus === 'failed' ? (
+            <Box sx={{ p: 3 }}>
+              <Alert severity="warning">{t('map.geocodeFailed')}</Alert>
+            </Box>
+          ) : (
+            <Box sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              alignItems: 'stretch'
+            }}>
+              <Box sx={{ flex: { md: 2 }, minWidth: 0 }}>
+                <InteractiveMap
+                  initialCenter={center}
+                  initialZoom={13}
+                  markers={markers}
+                  height={isMobile ? '50vh' : '65vh'}
+                  onMarkerClick={(m) => window.open(
+                    `https://maps.google.com/maps?q=${encodeURIComponent(m.title)}`, '_blank'
+                  )}
+                />
+              </Box>
+              <Box sx={{
+                flex: { md: 1 },
+                minWidth: { md: 340 },
+                height: { xs: '60vh', md: '65vh' },
+                borderInlineStart: { md: '1px solid rgba(0,0,0,0.08)' }
+              }}>
+                <AttractionsPanel center={center} onPlaceSelect={setSelectedPlace} />
+              </Box>
+            </Box>
+          )}
         </Paper>
       </Container>
     </Box>

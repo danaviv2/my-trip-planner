@@ -330,6 +330,8 @@
     "tip": "💡 For turn-by-turn navigation — open the route in Google Maps using the button above"
   },
   "map": {
+    "locating": "Locating destination…",
+    "geocodeFailed": "We could not locate this destination on the map. Check the spelling, or try again.",
     "title": "🗺️ Interactive Map",
     "subtitle": "Search any destination in the world and view on map",
     "search_placeholder": "Search city, destination, attraction...",
@@ -684,6 +686,13 @@
     "windSpeed": "Wind Speed"
   },
   "attractionsPanel": {
+    "loading": "Searching for places…",
+    "noPlaces": "No places of this kind nearby",
+    "errorMaps": "The map did not load, so nothing was checked. Try again.",
+    "errorTimeout": "The search did not return in time. Nothing was checked — try again.",
+    "errorFailed": "The search failed ({{status}}). Nothing was checked — try again.",
+    "retry": "Try again",
+    "noRating": "No rating",
     "catAttractions": "Attractions",
     "catRestaurants": "Restaurants",
     "catHotels": "Hotels",

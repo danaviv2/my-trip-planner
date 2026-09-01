@@ -330,6 +330,8 @@
     "tip": "💡 Pour la navigation pas à pas — ouvrez l'itinéraire dans Google Maps avec le bouton ci-dessus"
   },
   "map": {
+    "locating": "Localisation de la destination…",
+    "geocodeFailed": "Nous n'avons pas pu localiser cette destination sur la carte. Vérifiez l'orthographe ou réessayez.",
     "title": "🗺️ Carte interactive",
     "subtitle": "Recherchez n'importe quelle destination dans le monde",
     "search_placeholder": "Rechercher une ville, destination, attraction...",
@@ -684,6 +686,13 @@
     "windSpeed": "Vitesse du vent"
   },
   "attractionsPanel": {
+    "loading": "Recherche de lieux…",
+    "noPlaces": "Aucun lieu de ce type à proximité",
+    "errorMaps": "La carte ne s'est pas chargée, donc rien n'a été vérifié. Réessayez.",
+    "errorTimeout": "La recherche n'a pas répondu à temps. Rien n'a été vérifié — réessayez.",
+    "errorFailed": "La recherche a échoué ({{status}}). Rien n'a été vérifié — réessayez.",
+    "retry": "Réessayer",
+    "noRating": "Pas de note",
     "catAttractions": "Attractions",
     "catRestaurants": "Restaurants",
     "catHotels": "Hôtels",
