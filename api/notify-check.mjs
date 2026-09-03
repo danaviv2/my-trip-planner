@@ -40,6 +40,25 @@ const fingerprint = (raw) => {
 };
 
 export default async function handler(req, res) {
+  // עד 04.09.2026 לא היה כאן שום שומר — אפילו לא בדיקת method — והבדיקה
+  // רצה בהרשאות אדמין בכל פנייה. נמדד חי: בקשה אנונימית החזירה את מזהה
+  // הפרויקט ואת מספרי המשתמשים, ההרשמות והטיסות. זהו כלי אבחון של בעל
+  // האתר ולא משטח ציבורי, ולכן הסוד שכבר משמש את הקרון מתאים גם כאן.
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET');
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    return res.status(503).json({ error: 'CRON_SECRET אינו מוגדר בשרת.' });
+  }
+  const provided =
+    (req.headers.authorization || '').replace(/^Bearer\s+/i, '') || req.query?.token || '';
+  if (provided !== secret) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+
   const report = {
     vapidPrivateKey: !!process.env.VAPID_PRIVATE_KEY,
     vapidSubject: !!process.env.VAPID_SUBJECT,

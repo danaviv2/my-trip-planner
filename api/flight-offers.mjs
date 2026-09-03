@@ -23,6 +23,8 @@
  *   DUFFEL_TOKEN — אסימון מהלוח, מתחיל ב-duffel_test או duffel_live
  */
 
+import { rejectForeign } from './_lib/guard.mjs';
+
 const API = 'https://api.duffel.com/air/offer_requests?return_offers=true';
 const VERSION = 'v2';
 
@@ -95,6 +97,12 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'GET');
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // השומר נוסף **לפני** שהאסימון קיים, ובכוונה. כל עוד `DUFFEL_TOKEN`
+  // ריק ה-endpoint מחזיר רשימה ריקה ונראה לא מזיק — אבל ביום שהאסימון
+  // יוגדר הוא הופך לפרוקסי חיפוש טיסות פתוח, בלי ששורת קוד תשתנה.
+  // הפנייה ל-Duffel נשלחה ב-03.09.2026, כלומר זה עשוי לקרות בקרוב.
+  if (rejectForeign(req, res)) return;
 
   const token = (process.env.DUFFEL_TOKEN || '').trim();
   if (!token) {

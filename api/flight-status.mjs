@@ -13,6 +13,8 @@
  * זה בדיוק הליקוי שתוקן בקריאות ל-Gemini.
  */
 
+import { rejectForeign } from './_lib/guard.mjs';
+
 const HOST = 'aerodatabox.p.rapidapi.com';
 
 /** מונע העברת פרמטרים שרירותיים ל-API החיצוני. */
@@ -24,6 +26,10 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'GET');
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // מנוי RapidAPI בתשלום. `isValidFlight` מגביל *מה* אפשר לשאול, ולא
+  // *מי* רשאי לשאול — עד כאן כל אחד היה יכול לצרוך את המכסה.
+  if (rejectForeign(req, res)) return;
 
   // הדבקה של מפתח לממשק ניהול גוררת לעיתים רווח או שורה חדשה נסתרים,
   // והשרת שולח מפתח פסול בעוד הערך נראה תקין לעין.

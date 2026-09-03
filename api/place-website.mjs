@@ -22,6 +22,8 @@
  * ולכן אותה מסעדה אינה נשאלת פעמיים.
  */
 
+import { rejectForeign } from './_lib/guard.mjs';
+
 const SEARCH = 'https://places.googleapis.com/v1/places:searchText';
 
 /**
@@ -37,6 +39,10 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'GET');
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // נמדד חי: GET אנונימי החזיר תוצאה, כלומר בקשה בתשלום ($20 לאלף)
+  // בוצעה על חשבון בעל האתר בלי שום זהות.
+  if (rejectForeign(req, res)) return;
 
   const key = (process.env.GOOGLE_PLACES_KEY || '').trim();
   if (!key) {

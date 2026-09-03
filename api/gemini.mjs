@@ -5,6 +5,8 @@
  * הגדר אותו ב-Vercel כמשתנה סביבה בשם GEMINI_API_KEY (בלי הקידומת REACT_APP_).
  */
 
+import { rejectForeign, rejectOversized } from './_lib/guard.mjs';
+
 // רשימת היתר — מונע ממישהו לשלוח model שרירותי דרך ה-query string
 const ALLOWED_MODELS = new Set([
   'gemini-2.5-flash',
@@ -21,6 +23,12 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: { message: 'Method not allowed' } });
   }
+
+  // נמדד חי ב-04.09.2026: POST אנונימי מ-curl החזיר תשובה מלאה מ-Gemini,
+  // על חשבון בעל האתר. אימות זהות אינו אפשרי כאן — שמונה מסכים ציבוריים
+  // קוראים ל-Gemini, ראה ההסבר ב-`_lib/guard.mjs`.
+  if (rejectForeign(req, res)) return;
+  if (rejectOversized(req, res)) return;
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
