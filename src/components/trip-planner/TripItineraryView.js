@@ -12,7 +12,6 @@ import {
   TableHead,
   TableRow
 } from '@mui/material';
-import WeatherWidget from '../maps/WeatherWidget';
 import DailyTimeline from './DailyTimeline';
 import RouteInfo from './RouteInfo';
 import RoadTripInfo from './RoadTripInfo';
@@ -85,20 +84,6 @@ const TripItineraryView = ({ tripPlan, userPreferences, startPoint, endPoint, ro
       {tripPlan.isRoadTrip && <RoadTripInfo tripPlan={tripPlan} startPoint={startPoint} endPoint={endPoint} />}
 
       <RouteInfo routeInfo={routeInfo} />
-      {/* הוספת קומפוננט מזג אוויר */}
-<Paper sx={{ p: 2, mt: 1, mb: 1, bgcolor: '#f9f9f9', borderRadius: '8px', boxShadow: 1 }}>
-<Typography variant="h6" sx={{ 
-  color: '#2c3e50', 
-  fontWeight: 'bold',
-  display: 'flex',
-  alignItems: 'center',
-  mb: 2
-}}>
-  <i className="material-icons" style={{ marginRight: '8px' }}>wb_sunny</i>
-  תחזית מזג אוויר
-</Typography>
-<WeatherWidget location={userPreferences.location} />
-</Paper>
 
               {tripPlan.dailyItinerary.length > 0 ? (
         viewMode === 'detailed' ? (

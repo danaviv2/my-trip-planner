@@ -1,7 +1,6 @@
 // API Types
 export interface APIKeys {
   googleMaps: string;
-  weather: string;
   openai: string;
   rapidapi: string;
 }
@@ -10,7 +9,6 @@ export interface APIEndpoints {
   googleMaps: string;
   googlePlaces: string;
   googleDirections: string;
-  weather: string;
   flights: string;
   hotels: string;
   carRental: string;
