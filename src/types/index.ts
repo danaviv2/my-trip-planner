@@ -1,17 +1,12 @@
 // API Types
 export interface APIKeys {
   googleMaps: string;
-  rapidapi: string;
 }
 
 export interface APIEndpoints {
   googleMaps: string;
   googlePlaces: string;
   googleDirections: string;
-  flights: string;
-  hotels: string;
-  carRental: string;
-  attractions: string;
 }
 
 // Trip Types

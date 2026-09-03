@@ -9,7 +9,13 @@ export const API_KEYS: APIKeys = {
   // `openai` הוסר ב-04.09.2026: הוא היה קבוע `''`, כלומר `validateApiKeys`
   // דיווח עליו כחסר תמיד. `REACT_APP_OPENAI_API_KEY` שב-.env לא נקרא
   // מאף מקום ואינו מופיע ב-bundle החי — נמדד, 0 מתוך 45 צ'אנקים.
-  rapidapi: process.env.REACT_APP_RAPIDAPI_KEY || ''
+  //
+  // `rapidapi` הוסר באותו יום, והוא המסוכן מבין השלושה: RapidAPI עוברת
+  // דרך `api/flight-status.mjs` השרתי כדי שהדפדפן לא יחזיק מפתח — אבל
+  // השדה הזה *ניסה* לקרוא `REACT_APP_RAPIDAPI_KEY` בצד הלקוח. הוא לא
+  // דלף רק משום שהמשתנה מעולם לא הוגדר ב-Vercel: בצ'אנק החי נראה
+  // `rapidapi:{NODE_ENV:"production",…}`, כלומר webpack לא מצא מה
+  // להחליף. ההגנה הייתה מקרית, ומי שהיה מגדיר את המשתנה היה מדליף בשקט.
 };
 
 /**
@@ -19,7 +25,6 @@ export const validateApiKeys = (): boolean => {
   const missing: string[] = [];
   
   if (!API_KEYS.googleMaps) missing.push('Google Maps');
-  if (!API_KEYS.rapidapi) missing.push('RapidAPI');
   
   if (missing.length > 0) {
     console.warn(`⚠️ Missing API keys: ${missing.join(', ')}`);
@@ -34,11 +39,10 @@ export const validateApiKeys = (): boolean => {
 export const API_ENDPOINTS: APIEndpoints = {
   googleMaps: 'https://maps.googleapis.com/maps/api',
   googlePlaces: 'https://maps.googleapis.com/maps/api/place',
-  googleDirections: 'https://maps.googleapis.com/maps/api/directions',
-  flights: 'https://booking-com.p.rapidapi.com/v1/flights',
-  hotels: 'https://booking-com.p.rapidapi.com/v1/hotels',
-  carRental: 'https://booking-com.p.rapidapi.com/v1/car-rentals',
-  attractions: 'https://travel-advisor.p.rapidapi.com'
+  googleDirections: 'https://maps.googleapis.com/maps/api/directions'
+  // ארבע כתובות RapidAPI (flights, hotels, carRental, attractions) הוסרו
+  // ב-04.09.2026: `googleMapsService` הוא הצרכן היחיד של האובייקט הזה,
+  // והוא קורא רק את `googleDirections` ואת `googlePlaces`.
 };
 
 interface FetchOptions extends RequestInit {
