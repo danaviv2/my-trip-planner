@@ -1,7 +1,6 @@
 // API Types
 export interface APIKeys {
   googleMaps: string;
-  openai: string;
   rapidapi: string;
 }
 

@@ -5,8 +5,10 @@ export const API_KEYS: APIKeys = {
   googleMaps: process.env.REACT_APP_GOOGLE_API_KEY || '',
   // מזג האוויר עבר ל-Open-Meteo, שאינו דורש מפתח. `weather` הוסר כאן
   // ב-04.09.2026 אחרי שנמדד ששרשרת הצרכנים שלו מתה עד הסוף.
-  // Gemini עובר דרך /api/gemini — אין מפתח בצד הלקוח
-  openai: '',
+  // Gemini עובר דרך /api/gemini — אין מפתח בצד הלקוח, ולכן אין כאן שדה.
+  // `openai` הוסר ב-04.09.2026: הוא היה קבוע `''`, כלומר `validateApiKeys`
+  // דיווח עליו כחסר תמיד. `REACT_APP_OPENAI_API_KEY` שב-.env לא נקרא
+  // מאף מקום ואינו מופיע ב-bundle החי — נמדד, 0 מתוך 45 צ'אנקים.
   rapidapi: process.env.REACT_APP_RAPIDAPI_KEY || ''
 };
 
@@ -17,7 +19,6 @@ export const validateApiKeys = (): boolean => {
   const missing: string[] = [];
   
   if (!API_KEYS.googleMaps) missing.push('Google Maps');
-  if (!API_KEYS.openai) missing.push('Gemini');
   if (!API_KEYS.rapidapi) missing.push('RapidAPI');
   
   if (missing.length > 0) {
