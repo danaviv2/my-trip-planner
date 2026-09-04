@@ -194,6 +194,10 @@ const PURGEABLE = {
   // הסף נשאר נמוך: די בשדה אחד מהשלושה, ורשומה עם מספר אישור אינה
   // נמחקת לעולם — התנאי הזה נבדק לפני הרשימה.
   activity: ['date', 'time', 'location'],
+  // מסעדה היא אותה צורה בדיוק כמו פעילות — שם, תאריך, שעה ומקום.
+  // בלי הרשומה הזו סוג חדש חומק מכל השומרים בשקט, וזה בדיוק דפוס
+  // הכשל שהפרויקט מתעד: תיקון שיושם בסוג אחד ולא באחיו.
+  restaurant: ['date', 'time', 'location'],
 };
 
 const isEmptyRecord = (b) => {
@@ -259,6 +263,7 @@ const IDENTITY = {
   car_rental: { id: [], name: ['company'], time: ['pickupDate', 'returnDate'] },
   transfer: { id: [], name: ['company'], time: ['pickupDate', 'pickupTime'] },
   activity: { id: [], name: ['name'], time: ['date'] },
+  restaurant: { id: [], name: ['name'], time: ['date'] },
   // פריט שהמשתמש הוסיף. הושמט תחילה במכוון, מתוך מחשבה ששני פריטים
   // זהים הם בחירה מודעת — וזו הייתה טעות: לחיצה חוזרת על "הוסף", או
   // הוספה מחדש אחרי שלא היה ברור אם נשמר, ייצרו חמישה עותקים של אותה

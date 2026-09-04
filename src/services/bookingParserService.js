@@ -17,7 +17,7 @@ Content: ${body.slice(0, 3500)}
 
 Return this exact JSON structure if it IS a booking:
 {
-  "type": "hotel" | "flight" | "car_rental" | "activity",
+  "type": "hotel" | "flight" | "car_rental" | "activity" | "restaurant",
   "status": "confirmed" | "pending" | "cancelled",
   "confirmationNumber": "booking/confirmation reference number",
   "name": "Hotel name / Airline + flight number / Car company",
@@ -31,8 +31,26 @@ Return this exact JSON structure if it IS a booking:
   "price": "total price with currency symbol",
   "nights": 3,
   "passengers": 2,
-  "notes": "any important notes like breakfast included, free cancellation etc"
-}`;
+  "notes": "any important notes like breakfast included, free cancellation etc",
+  "time": "HH:MM — שעת ההזמנה, למסעדה או לפעילות בשעה קבועה",
+  "guests": 2
+}
+
+RESTAURANT RULES — added 05.09.2026 after measuring two real confirmations
+in the user's own mailbox rather than guessing the format:
+
+• Google Reserve writes "Your reservation at <NAME> is confirmed" and puts
+  the address, party size and local time in the body. Tabit writes
+  "הזמנתך ל<NAME> אושרה". Both already pass the subject filter, which is
+  why no keyword was added — they were fetched all along and simply had
+  no type to be recognised as.
+• "name" is the restaurant, "address" its street address, "checkIn" the
+  date, "time" the hour, "guests" the party size. There is no checkOut.
+• A restaurant newsletter is NOT a booking. Ontopo sends only marketing —
+  13 such mails were measured, all ending in "| פרסומת" — and a mail that
+  merely recommends a restaurant must return isBooking:false. A "booking"
+  invented from a newsletter would put a table that nobody reserved into
+  the itinerary, which is worse than missing it.`;
 
   const response = await fetch(GEMINI_URL, {
     method: 'POST',

@@ -86,7 +86,7 @@ export const normalizeBooking = (b) => {
     end = start;
     location = b.location || '';
     title = b.title || 'פריט בתוכנית';
-  } else if (type === 'activity') {
+  } else if (type === 'activity' || type === 'restaurant') {
     start = parseDate(b.date);
     end = start;
     location = b.location || '';
@@ -169,7 +169,7 @@ const undatedTrip = (group) => ({
     hotels: group.filter((x) => x.type === 'hotel').length,
     cars: group.filter((x) => x.type === 'car_rental').length,
     transfers: group.filter((x) => x.type === 'transfer').length,
-    activities: group.filter((x) => x.type === 'activity').length,
+    activities: group.filter((x) => x.type === 'activity' || x.type === 'restaurant').length,
     insurance: group.filter((x) => x.type === 'insurance').length,
   },
 });
@@ -421,7 +421,7 @@ export const groupBookingsIntoTrips = (bookings = []) => {
         hotels: group.filter((x) => x.type === 'hotel').length,
         cars: group.filter((x) => x.type === 'car_rental').length,
         transfers: group.filter((x) => x.type === 'transfer').length,
-        activities: group.filter((x) => x.type === 'activity').length,
+        activities: group.filter((x) => x.type === 'activity' || x.type === 'restaurant').length,
         insurance: group.filter((x) => x.type === 'insurance').length,
       },
     };
