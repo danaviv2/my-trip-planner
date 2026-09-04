@@ -2,6 +2,7 @@
 import React from 'react';
 import { Box, Typography, Button, Paper } from '@mui/material';
 import HotelModal from './HotelModal';
+import bookingLinks from '../../utils/bookingLinks';
 
 /**
  * תכנון לינה לאורך המסלול.
@@ -76,7 +77,7 @@ const AccommodationPlanner = ({
                   color="primary"
                   startIcon={<i className="material-icons">bookmark</i>}
                   onClick={() => window.open(
-                    `https://www.booking.com/search.he.html?ss=${encodeURIComponent(hotel.address)}`,
+                    bookingLinks.hotelSearch(`${hotel.name || ''} ${hotel.address || ''}`),
                     '_blank'
                   )}
                 >

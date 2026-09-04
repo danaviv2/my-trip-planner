@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Paper, Button } from '@mui/material';
+import bookingLinks from '../../utils/bookingLinks';
 
 /**
  * תצוגת לוח הזמנים היומי.
@@ -310,7 +311,7 @@ const DailyTimeline = ({ dayData, defaultLocation, onEditActivity }) => {
                   <Button
                     variant="outlined"
                     size="small"
-                    onClick={() => window.open(`https://www.booking.com/search.he.html?ss=${encodeURIComponent(activity.name)}`)}
+                    onClick={() => window.open(bookingLinks.hotelSearch(activity.name))}
                     startIcon={<i className="material-icons">hotel</i>}
                     sx={{ borderRadius: '20px', fontSize: '12px' }}
                   >
@@ -385,7 +386,7 @@ const DailyTimeline = ({ dayData, defaultLocation, onEditActivity }) => {
               <Button
                 variant="outlined"
                 size="small"
-                onClick={() => window.open(`https://www.booking.com/search.he.html?ss=${encodeURIComponent(dayData.accommodation.name)}`)}
+                onClick={() => window.open(bookingLinks.hotelSearch(dayData.accommodation.name))}
                 startIcon={<i className="material-icons">book_online</i>}
                 sx={{ borderRadius: '20px', fontSize: '12px' }}
               >

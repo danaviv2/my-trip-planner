@@ -34,6 +34,7 @@ import { analyzeItinerary, summarizeAnalysis, autoOptimize } from '../services/d
 import RouteShapeMap from '../components/rolling/RouteShapeMap';
 import { analyzeRoute, formatDuration } from '../services/routeGeometryService';
 import { geminiEndpoint } from '../services/geminiClient';
+import bookingLinks from '../utils/bookingLinks';
 
 // ─── קבועים ────────────────────────────────────────────────────
 
@@ -943,7 +944,7 @@ export default function RollingTripPage() {
                             </Typography>
                           )}
                           <Button size="small" endIcon={<OpenInNewIcon fontSize="small" />}
-                            href={`https://www.booking.com/search.html?ss=${encodeURIComponent(day.hotel.name + ' ' + stop.name)}`}
+                            href={bookingLinks.hotelSearch(`${day.hotel.name} ${stop.name}`)}
                             target="_blank" rel="noopener noreferrer"
                             sx={{ mt: 0.5, fontSize: '0.7rem', p: '2px 8px', color: '#667eea' }}>
                             חפש ב-Booking.com

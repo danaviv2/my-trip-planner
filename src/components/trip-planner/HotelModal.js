@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Box, Typography, TextField, Button } from '@mui/material';
+import bookingLinks from '../../utils/bookingLinks';
 
 /**
  * חלון הוספת מלון למסלול.
@@ -24,12 +25,14 @@ const HotelModal = ({ open, onClose, onSave, defaultLocation }) => {
   };
 
   const searchHotel = (site) => {
-    const query = encodeURIComponent(`${hotel.name || ''} ${hotel.address || defaultLocation}`);
+    // הרווח המוביל כשאין שם הגיע ל-URL כ-%20 ופגע בתוצאות
+    const raw = `${hotel.name || ''} ${hotel.address || defaultLocation}`.trim();
+    const query = encodeURIComponent(raw);
     let url = '';
 
     switch (site) {
       case 'booking':
-        url = `https://www.booking.com/search.he.html?ss=${query}`;
+        url = bookingLinks.hotelSearch(raw);
         break;
       case 'hotels':
         url = `https://he.hotels.com/search.do?q-location=${query}`;
@@ -41,7 +44,7 @@ const HotelModal = ({ open, onClose, onSave, defaultLocation }) => {
         url = `https://www.expedia.com/Hotel-Search?location=${query}`;
         break;
       default:
-        url = `https://www.booking.com/search.he.html?ss=${query}`;
+        url = bookingLinks.hotelSearch(raw);
     }
 
     window.open(url, '_blank');

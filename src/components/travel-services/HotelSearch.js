@@ -10,6 +10,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import MapIcon from '@mui/icons-material/Map';
 import { generateHotelRecommendations } from '../../services/aiHotelService';
+import bookingLinks from '../../utils/bookingLinks';
 
 const CATEGORY_LABELS = {
   budget: { label: '💰 חסכוני', color: '#4CAF50', bg: '#E8F5E9' },
@@ -23,7 +24,9 @@ const BOOKING_SITES = [
     logo: '🏨',
     color: '#003580',
     getUrl: ({ destination, checkIn, checkOut, guests }) =>
-      `https://www.booking.com/search.html?ss=${encodeURIComponent(destination)}&checkin=${checkIn || ''}&checkout=${checkOut || ''}&group_adults=${guests}&no_rooms=1&lang=he`,
+      // `search.html` החזיר 404 (נמדד 04.09.2026). הנתיב התקין יושב
+      // ב-`bookingLinks`, מקור אמת אחד לכל הקישורים ל-Booking.
+      bookingLinks.hotel(destination, checkIn, checkOut, guests),
   },
   {
     name: 'Airbnb',
