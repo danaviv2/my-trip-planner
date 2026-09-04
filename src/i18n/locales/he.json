@@ -19,7 +19,6 @@
     "hero": {
       "title": "תכנן את הטיול המושלם שלך",
       "subtitle": "מסלולים מותאמים אישית • טיפים מקומיים • מידע מקיף",
-      "chip1": "מעל 10,000 יעדים",
       "chip2": "מסלולים מותאמים",
       "chip3": "ניווט חכם"
     },
@@ -678,7 +677,16 @@
   },
   "weather": {
     "dayNumber": "יום {{n}}",
-    "conditions": {"clear": "בהיר", "partlyCloudy": "מעונן חלקית", "fog": "ערפל", "drizzle": "טפטוף", "rain": "גשם", "snow": "שלג", "showers": "ממטרים", "thunderstorm": "סופת רעמים"},
+    "conditions": {
+      "clear": "בהיר",
+      "partlyCloudy": "מעונן חלקית",
+      "fog": "ערפל",
+      "drizzle": "טפטוף",
+      "rain": "גשם",
+      "snow": "שלג",
+      "showers": "ממטרים",
+      "thunderstorm": "סופת רעמים"
+    },
     "unavailable": "תחזית אינה זמינה כרגע",
     "loadError": "שגיאה בטעינת מזג אוויר",
     "title": "מזג אוויר ב{{location}}",
@@ -690,8 +698,31 @@
   },
   "attractionsPanel": {
     "partial": "חלק מהקטגוריות לא נבדקו. נסה שוב.",
-    "group": {"outdoors": "טבע ופתוח", "foodDrink": "אוכל ושתייה", "culture": "תרבות והיסטוריה", "services": "שירות ונוחות"},
-    "cat": {"nature": "טבע", "beach": "חופים", "nationalPark": "פארקים לאומיים", "amusementPark": "פארקי שעשועים", "restaurant": "מסעדות", "cafe": "בתי קפה", "winery": "יקבים", "nightlife": "חיי לילה", "touristAttraction": "אטרקציות", "museum": "מוזיאונים", "historicalSite": "אתרים היסטוריים", "festival": "פסטיבלים", "localMarket": "שווקים וקניות", "hotel": "מלונות", "hospital": "בתי חולים", "pharmacy": "בתי מרקחת", "spa": "ספא"},
+    "group": {
+      "outdoors": "טבע ופתוח",
+      "foodDrink": "אוכל ושתייה",
+      "culture": "תרבות והיסטוריה",
+      "services": "שירות ונוחות"
+    },
+    "cat": {
+      "nature": "טבע",
+      "beach": "חופים",
+      "nationalPark": "פארקים לאומיים",
+      "amusementPark": "פארקי שעשועים",
+      "restaurant": "מסעדות",
+      "cafe": "בתי קפה",
+      "winery": "יקבים",
+      "nightlife": "חיי לילה",
+      "touristAttraction": "אטרקציות",
+      "museum": "מוזיאונים",
+      "historicalSite": "אתרים היסטוריים",
+      "festival": "פסטיבלים",
+      "localMarket": "שווקים וקניות",
+      "hotel": "מלונות",
+      "hospital": "בתי חולים",
+      "pharmacy": "בתי מרקחת",
+      "spa": "ספא"
+    },
     "noCategorySelected": "לא נבחרה אף קטגוריה",
     "loading": "מחפש מקומות…",
     "noPlaces": "אין מקומות מסוג זה באזור הזה",

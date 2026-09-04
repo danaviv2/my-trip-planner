@@ -19,7 +19,6 @@
     "hero": {
       "title": "Planeje a viagem perfeita",
       "subtitle": "Roteiros personalizados • Dicas locais • Informações completas",
-      "chip1": "Mais de 10.000 destinos",
       "chip2": "Roteiros sob medida",
       "chip3": "Navegação inteligente"
     },
@@ -678,7 +677,16 @@
   },
   "weather": {
     "dayNumber": "Dia {{n}}",
-    "conditions": {"clear": "Céu limpo", "partlyCloudy": "Parcialmente nublado", "fog": "Nevoeiro", "drizzle": "Chuvisco", "rain": "Chuva", "snow": "Neve", "showers": "Aguaceiros", "thunderstorm": "Trovoada"},
+    "conditions": {
+      "clear": "Céu limpo",
+      "partlyCloudy": "Parcialmente nublado",
+      "fog": "Nevoeiro",
+      "drizzle": "Chuvisco",
+      "rain": "Chuva",
+      "snow": "Neve",
+      "showers": "Aguaceiros",
+      "thunderstorm": "Trovoada"
+    },
     "unavailable": "A previsão não está disponível neste momento",
     "loadError": "Erro ao carregar clima",
     "title": "Clima em {{location}}",
@@ -690,8 +698,31 @@
   },
   "attractionsPanel": {
     "partial": "Algumas categorias não foram verificadas. Tente novamente.",
-    "group": {"outdoors": "Natureza e ar livre", "foodDrink": "Comida e bebida", "culture": "Cultura e história", "services": "Serviços"},
-    "cat": {"nature": "Natureza", "beach": "Praias", "nationalPark": "Parques nacionais", "amusementPark": "Parques de diversões", "restaurant": "Restaurantes", "cafe": "Cafés", "winery": "Vinícolas", "nightlife": "Vida noturna", "touristAttraction": "Atrações", "museum": "Museus", "historicalSite": "Locais históricos", "festival": "Festivais", "localMarket": "Mercados e compras", "hotel": "Hotéis", "hospital": "Hospitais", "pharmacy": "Farmácias", "spa": "Spas"},
+    "group": {
+      "outdoors": "Natureza e ar livre",
+      "foodDrink": "Comida e bebida",
+      "culture": "Cultura e história",
+      "services": "Serviços"
+    },
+    "cat": {
+      "nature": "Natureza",
+      "beach": "Praias",
+      "nationalPark": "Parques nacionais",
+      "amusementPark": "Parques de diversões",
+      "restaurant": "Restaurantes",
+      "cafe": "Cafés",
+      "winery": "Vinícolas",
+      "nightlife": "Vida noturna",
+      "touristAttraction": "Atrações",
+      "museum": "Museus",
+      "historicalSite": "Locais históricos",
+      "festival": "Festivais",
+      "localMarket": "Mercados e compras",
+      "hotel": "Hotéis",
+      "hospital": "Hospitais",
+      "pharmacy": "Farmácias",
+      "spa": "Spas"
+    },
     "noCategorySelected": "Nenhuma categoria selecionada",
     "loading": "A procurar locais…",
     "noPlaces": "Não há locais deste tipo por perto",

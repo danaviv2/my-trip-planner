@@ -34,6 +34,13 @@ const HomePage = () => {
   const [shareTarget, setShareTarget] = useState(null);
   const [shareFeature, setShareFeature] = useState(null);
 
+  // מקור אמת אחד לניווט לתכנון. קודם אותה מחרוזת הופיעה פעמיים —
+  // ב-onKeyDown וב-onClick — וזו הדרך שבה שתי התנהגויות נפרדות.
+  const goPlan = () => {
+    const q = searchQuery.trim();
+    navigate(`/trip-planner${q ? `?destination=${encodeURIComponent(q)}` : ''}`);
+  };
+
   const mainFeatures = [
     {
       title: t('home.features.planner.title'),
@@ -153,8 +160,10 @@ const HomePage = () => {
           </Typography>
 
           <Stack direction="row" justifyContent="center" flexWrap="wrap" sx={{ gap: 2 }}>
+            {/* `chip1` הוסר ב-04.09.2026: הוא הכריז "מעל 10,000 יעדים",
+                מחרוזת קשיחה שאין מאחוריה מקור — במאגר 69 רשומות. מספר
+                מומצא במסך הראשון מטיל צל על כל מספר אמיתי באפליקציה. */}
             {[
-              { icon: <StarIcon />, label: t('home.hero.chip1') },
               { icon: <TrendingIcon />, label: t('home.hero.chip2') },
               { icon: <LocationIcon />, label: t('home.hero.chip3') },
             ].map((chip) => (
@@ -173,70 +182,64 @@ const HomePage = () => {
               />
             ))}
           </Stack>
+
+          {/* שדה החיפוש עלה לכאן ב-04.09.2026. קודם הוא ישב בכרטיס CTA
+              נפרד מתחת ל-hero, כלומר שני גושי גרדיאנט שהבטיחו אותו דבר
+              ודחפו לאותה פעולה. נמדד: הפעולה השימושית הראשונה התחילה
+              ב-938px גלילה במובייל — מסך שלם של סיסמאות לפניה. */}
+          <Box sx={{
+            display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' },
+            maxWidth: 620, mx: 'auto', mt: { xs: 3, md: 4 }
+          }}>
+            <TextField
+              fullWidth
+              placeholder={t('home.search.placeholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && goPlan()}
+              inputProps={{ 'aria-label': t('home.search.placeholder') }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: 'rgba(255,255,255,0.15)',
+                  backdropFilter: 'blur(10px)',
+                  borderRadius: 2,
+                  fontSize: '1.05rem',
+                  color: 'white',
+                  minHeight: 52,
+                  '& fieldset': { borderColor: 'rgba(255,255,255,0.55)' },
+                  '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.85)' },
+                  '&.Mui-focused fieldset': { borderColor: 'white', borderWidth: 2 },
+                  '& input::placeholder': { color: 'rgba(255,255,255,0.85)', opacity: 1 },
+                }
+              }}
+            />
+            <Button
+              variant="contained" size="large"
+              startIcon={<FlightIcon />}
+              onClick={goPlan}
+              sx={{
+                background: 'rgba(255,255,255,0.25)',
+                backdropFilter: 'blur(8px)',
+                border: '2px solid rgba(255,255,255,0.85)',
+                color: 'white',
+                px: { xs: 4, md: 5 }, minHeight: 52,
+                fontSize: '1.05rem', fontWeight: 800, borderRadius: 2,
+                whiteSpace: 'nowrap', transition: 'all 0.25s ease',
+                '&:hover': { background: 'rgba(255,255,255,0.35)' },
+              }}
+            >
+              {t('home.cta.button')}
+            </Button>
+          </Box>
         </Container>
       </Box>
 
       <Container maxWidth="lg" sx={{ mt: { xs: 3, md: 4 }, position: 'relative', zIndex: 2, px: { xs: 2, md: 3 } }}>
 
-        {/* CTA */}
-        <Box sx={{
-          mb: { xs: 3, md: 6 }, p: { xs: 3, md: 6 }, borderRadius: 4,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f5576c 100%)',
-          textAlign: 'center', color: 'white', position: 'relative', overflow: 'hidden'
-        }}>
-          <Box sx={{
-            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)',
-            backgroundSize: '40px 40px',
-          }} />
-          <Box sx={{ position: 'relative', zIndex: 1 }}>
-            <Typography variant="h3" fontWeight="bold" mb={1.5} sx={{ fontSize: { xs: '1.4rem', md: '3rem' } }}>
-              {t('home.cta.title')}
-            </Typography>
-            <Typography variant="h6" mb={3} sx={{ opacity: 0.9, fontSize: { xs: '0.9rem', md: '1.25rem' } }}>
-              {t('home.cta.subtitle')}
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' }, maxWidth: 560, mx: 'auto', mb: 2 }}>
-              <TextField
-                fullWidth
-                placeholder={t('home.search.placeholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && navigate(`/trip-planner${searchQuery.trim() ? `?destination=${encodeURIComponent(searchQuery.trim())}` : ''}`)}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    bgcolor: 'rgba(255,255,255,0.15)',
-                    backdropFilter: 'blur(10px)',
-                    borderRadius: 2,
-                    fontSize: '1.1rem',
-                    color: 'white',
-                    '& fieldset': { borderColor: 'rgba(255,255,255,0.4)' },
-                    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.8)' },
-                    '&.Mui-focused fieldset': { borderColor: 'white' },
-                    '& input::placeholder': { color: 'rgba(255,255,255,0.7)', opacity: 1 },
-                  }
-                }}
-              />
-              <Button
-                variant="contained" size="large"
-                startIcon={<FlightIcon />}
-                onClick={() => navigate(`/trip-planner${searchQuery.trim() ? `?destination=${encodeURIComponent(searchQuery.trim())}` : ''}`)}
-                sx={{
-                  background: 'rgba(255,255,255,0.25)',
-                  backdropFilter: 'blur(8px)',
-                  border: '2px solid rgba(255,255,255,0.8)',
-                  color: 'white',
-                  px: { xs: 4, md: 5 }, py: 1.5,
-                  fontSize: '1.1rem', fontWeight: 800, borderRadius: 2,
-                  whiteSpace: 'nowrap', transition: 'all 0.25s ease',
-                  '&:hover': { background: 'rgba(255,255,255,0.35)', transform: 'scale(1.05)', boxShadow: '0 12px 40px rgba(0,0,0,0.2)' },
-                }}
-              >
-                {t('home.cta.button')}
-              </Button>
-            </Box>
-          </Box>
-        </Box>
+        {/* כרטיס ה-CTA שישב כאן נמחק ב-04.09.2026 והתמזג ל-hero.
+            הוא היה גוש גרדיאנט שני שחזר על אותה הבטחה, ובתוכו ישב שדה
+            החיפוש היחיד בדף — כלומר הפעולה החשובה ביותר הוסתרה מתחת
+            למסך שלם של סיסמאות. */}
 
         {/* כרטיסי ניווט ראשיים */}
         <Grid container spacing={{ xs: 2, md: 4 }} mb={{ xs: 3, md: 8 }}>

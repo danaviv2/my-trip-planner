@@ -19,7 +19,6 @@
     "hero": {
       "title": "Planifiez le voyage parfait",
       "subtitle": "Itinéraires personnalisés • Conseils locaux • Infos complètes",
-      "chip1": "Plus de 10 000 destinations",
       "chip2": "Itinéraires sur mesure",
       "chip3": "Navigation intelligente"
     },
@@ -678,7 +677,16 @@
   },
   "weather": {
     "dayNumber": "Jour {{n}}",
-    "conditions": {"clear": "Dégagé", "partlyCloudy": "Partiellement nuageux", "fog": "Brouillard", "drizzle": "Bruine", "rain": "Pluie", "snow": "Neige", "showers": "Averses", "thunderstorm": "Orage"},
+    "conditions": {
+      "clear": "Dégagé",
+      "partlyCloudy": "Partiellement nuageux",
+      "fog": "Brouillard",
+      "drizzle": "Bruine",
+      "rain": "Pluie",
+      "snow": "Neige",
+      "showers": "Averses",
+      "thunderstorm": "Orage"
+    },
     "unavailable": "Les prévisions ne sont pas disponibles pour le moment",
     "loadError": "Erreur de chargement météo",
     "title": "Météo à {{location}}",
@@ -690,8 +698,31 @@
   },
   "attractionsPanel": {
     "partial": "Certaines catégories n'ont pas été vérifiées. Réessayez.",
-    "group": {"outdoors": "Nature et plein air", "foodDrink": "Restauration", "culture": "Culture et histoire", "services": "Services"},
-    "cat": {"nature": "Nature", "beach": "Plages", "nationalPark": "Parcs nationaux", "amusementPark": "Parcs d'attractions", "restaurant": "Restaurants", "cafe": "Cafés", "winery": "Vignobles", "nightlife": "Vie nocturne", "touristAttraction": "Attractions", "museum": "Musées", "historicalSite": "Sites historiques", "festival": "Festivals", "localMarket": "Marchés et shopping", "hotel": "Hôtels", "hospital": "Hôpitaux", "pharmacy": "Pharmacies", "spa": "Spas"},
+    "group": {
+      "outdoors": "Nature et plein air",
+      "foodDrink": "Restauration",
+      "culture": "Culture et histoire",
+      "services": "Services"
+    },
+    "cat": {
+      "nature": "Nature",
+      "beach": "Plages",
+      "nationalPark": "Parcs nationaux",
+      "amusementPark": "Parcs d'attractions",
+      "restaurant": "Restaurants",
+      "cafe": "Cafés",
+      "winery": "Vignobles",
+      "nightlife": "Vie nocturne",
+      "touristAttraction": "Attractions",
+      "museum": "Musées",
+      "historicalSite": "Sites historiques",
+      "festival": "Festivals",
+      "localMarket": "Marchés et shopping",
+      "hotel": "Hôtels",
+      "hospital": "Hôpitaux",
+      "pharmacy": "Pharmacies",
+      "spa": "Spas"
+    },
     "noCategorySelected": "Aucune catégorie sélectionnée",
     "loading": "Recherche de lieux…",
     "noPlaces": "Aucun lieu de ce type à proximité",

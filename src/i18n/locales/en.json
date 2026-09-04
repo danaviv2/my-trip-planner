@@ -19,7 +19,6 @@
     "hero": {
       "title": "Plan Your Perfect Trip",
       "subtitle": "Personalized itineraries • Local tips • Comprehensive info",
-      "chip1": "Over 10,000 destinations",
       "chip2": "Custom itineraries",
       "chip3": "Smart navigation"
     },
@@ -678,7 +677,16 @@
   },
   "weather": {
     "dayNumber": "Day {{n}}",
-    "conditions": {"clear": "Clear", "partlyCloudy": "Partly cloudy", "fog": "Fog", "drizzle": "Drizzle", "rain": "Rain", "snow": "Snow", "showers": "Showers", "thunderstorm": "Thunderstorm"},
+    "conditions": {
+      "clear": "Clear",
+      "partlyCloudy": "Partly cloudy",
+      "fog": "Fog",
+      "drizzle": "Drizzle",
+      "rain": "Rain",
+      "snow": "Snow",
+      "showers": "Showers",
+      "thunderstorm": "Thunderstorm"
+    },
     "unavailable": "Forecast is not available right now",
     "loadError": "Error loading weather",
     "title": "Weather in {{location}}",
@@ -690,8 +698,31 @@
   },
   "attractionsPanel": {
     "partial": "Some categories were not checked. Try again.",
-    "group": {"outdoors": "Outdoors", "foodDrink": "Food & drink", "culture": "Culture & history", "services": "Services"},
-    "cat": {"nature": "Nature", "beach": "Beaches", "nationalPark": "National parks", "amusementPark": "Amusement parks", "restaurant": "Restaurants", "cafe": "Cafés", "winery": "Wineries", "nightlife": "Nightlife", "touristAttraction": "Attractions", "museum": "Museums", "historicalSite": "Historic sites", "festival": "Festivals", "localMarket": "Markets & shopping", "hotel": "Hotels", "hospital": "Hospitals", "pharmacy": "Pharmacies", "spa": "Spas"},
+    "group": {
+      "outdoors": "Outdoors",
+      "foodDrink": "Food & drink",
+      "culture": "Culture & history",
+      "services": "Services"
+    },
+    "cat": {
+      "nature": "Nature",
+      "beach": "Beaches",
+      "nationalPark": "National parks",
+      "amusementPark": "Amusement parks",
+      "restaurant": "Restaurants",
+      "cafe": "Cafés",
+      "winery": "Wineries",
+      "nightlife": "Nightlife",
+      "touristAttraction": "Attractions",
+      "museum": "Museums",
+      "historicalSite": "Historic sites",
+      "festival": "Festivals",
+      "localMarket": "Markets & shopping",
+      "hotel": "Hotels",
+      "hospital": "Hospitals",
+      "pharmacy": "Pharmacies",
+      "spa": "Spas"
+    },
     "noCategorySelected": "No category selected",
     "loading": "Searching for places…",
     "noPlaces": "No places of this kind nearby",
