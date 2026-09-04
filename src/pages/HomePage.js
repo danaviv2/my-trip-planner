@@ -9,7 +9,6 @@ import {
   Explore as ExploreIcon,
   Search as SearchIcon,
   Map as MapIcon,
-  Star as StarIcon,
   TrendingUp as TrendingIcon,
   LocationOn as LocationIcon,
   Casino as CasinoIcon,
@@ -20,6 +19,9 @@ import {
   Route as RouteIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { useBookings } from '../contexts/BookingsContext';
+import NextUpCard from '../components/travel-info/NextUpCard';
+import PlaceImage from '../components/destination-info/PlaceImage';
 import SurpriseTripModal from '../components/surprise/SurpriseTripModal';
 import VibeMatcher from '../components/vibe/VibeMatcher';
 import PackingListModal from '../components/packing/PackingListModal';
@@ -33,6 +35,11 @@ const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [shareTarget, setShareTarget] = useState(null);
   const [shareFeature, setShareFeature] = useState(null);
+
+  // הנסיעות של המשתמש. עד 04.09.2026 דף הבית לא קרא ולו נתון אחד עליו —
+  // אפס הפניות ל-useAuth, useBookings או savedTrips — ולכן מי שיש לו
+  // 63 הזמנות שיובאו מהמייל ראה בדיוק את המסך שרואה זר שנחת לראשונה.
+  const { trips } = useBookings();
 
   // מקור אמת אחד לניווט לתכנון. קודם אותה מחרוזת הופיעה פעמיים —
   // ב-onKeyDown וב-onClick — וזו הדרך שבה שתי התנהגויות נפרדות.
@@ -48,8 +55,9 @@ const HomePage = () => {
       icon: <FlightIcon sx={{ fontSize: 60 }} />,
       color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       path: '/trip-planner',
-      emoji: '✈️',
-      delay: '0s'
+      primary: true,
+      accent: '#5A5FC7',
+      emoji: '✈️'
     },
     {
       title: t('home.features.destination.title'),
@@ -57,8 +65,8 @@ const HomePage = () => {
       icon: <ExploreIcon sx={{ fontSize: 60 }} />,
       color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
       path: '/destination-info',
-      emoji: '🏙️',
-      delay: '0.2s'
+      accent: '#C2557A',
+      emoji: '🏙️'
     },
     {
       title: t('home.features.search.title'),
@@ -66,8 +74,8 @@ const HomePage = () => {
       icon: <SearchIcon sx={{ fontSize: 60 }} />,
       color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
       path: '/advanced-search',
-      emoji: '🔍',
-      delay: '0.4s'
+      accent: '#1E88A8',
+      emoji: '🔍'
     },
     {
       title: t('home.features.map.title'),
@@ -75,8 +83,8 @@ const HomePage = () => {
       icon: <MapIcon sx={{ fontSize: 60 }} />,
       color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
       path: '/map',
-      emoji: '🗺️',
-      delay: '0.6s'
+      accent: '#2E9E6B',
+      emoji: '🗺️'
     },
     {
       title: t('home.features.myTrips.title'),
@@ -84,8 +92,9 @@ const HomePage = () => {
       icon: <MyTripsIcon sx={{ fontSize: 60 }} />,
       color: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
       path: '/my-trips',
-      emoji: '📋',
-      delay: '0.8s'
+      primary: true,
+      accent: '#C2557A',
+      emoji: '📋'
     },
     {
       title: 'טיול מתגלגל',
@@ -93,8 +102,8 @@ const HomePage = () => {
       icon: <RouteIcon sx={{ fontSize: 60 }} />,
       color: 'linear-gradient(135deg, #f7971e 0%, #e74c3c 100%)',
       path: '/rolling-trip',
-      emoji: '🛣️',
-      delay: '1s'
+      accent: '#C2622A',
+      emoji: '🛣️'
     },
     {
       title: "מצ'קמייקר יעדים",
@@ -102,18 +111,21 @@ const HomePage = () => {
       icon: <CasinoIcon sx={{ fontSize: 60 }} />,
       color: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
       path: '/matchmaker',
-      emoji: '🎯',
-      delay: '1.2s'
+      accent: '#7E5BB5',
+      emoji: '🎯'
     }
   ];
 
+  // `he` אינו קישוט: `PlaceImage` מחפש קודם בוויקיפדיה העברית, ושם
+  // נמצאים תשעה מתוך עשרה מקומות לפי שמם העברי. `name` נשאר באנגלית
+  // כי הוא הפרמטר בנתיב /destination-info/:destination.
   const popularDestinations = [
-    { name: 'Paris', emoji: '🗼', color: '#667eea' },
-    { name: 'Rome', emoji: '🏛️', color: '#f5576c' },
-    { name: 'Barcelona', emoji: '🏖️', color: '#4facfe' },
-    { name: 'London', emoji: '🎡', color: '#43e97b' },
-    { name: 'Amsterdam', emoji: '🚲', color: '#f093fb' },
-    { name: 'Dubai', emoji: '🏙️', color: '#fa709a' }
+    { name: 'Paris', he: 'פריז', color: '#5A5FC7' },
+    { name: 'Rome', he: 'רומא', color: '#C2557A' },
+    { name: 'Barcelona', he: 'ברצלונה', color: '#1E88A8' },
+    { name: 'London', he: 'לונדון', color: '#2E9E6B' },
+    { name: 'Amsterdam', he: 'אמסטרדם', color: '#7E5BB5' },
+    { name: 'Dubai', he: 'דובאי', color: '#C2622A' }
   ];
 
 
@@ -124,6 +136,18 @@ const HomePage = () => {
       pb: { xs: 4, md: 8 },
       pt: 'calc(64px + env(safe-area-inset-top))'
     }}>
+      {/* "הבא בתור" — הדבר האמיתי היחיד בדף.
+          `NextUpCard` מחזיר null כשאין אירוע בטווח, ולכן אורח או מי
+          שאין לו נסיעה קרובה לא רואה כאן דבר והדף נשאר כשהיה. הרכיב
+          הזה כבר מוצג ב-/travel-info; הוא **לא שוכפל** — אותה פונקציה
+          מחשבת את אותה עובדה בשני המסכים, וזה מונע את הסטייה שהפרויקט
+          כבר שילם עליה פעמיים. */}
+      {trips?.length > 0 && (
+        <Container maxWidth="lg" sx={{ px: { xs: 2, md: 3 }, pt: 2 }}>
+          <NextUpCard trips={trips} />
+        </Container>
+      )}
+
       {/* Hero Section */}
       <Box sx={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
@@ -241,52 +265,100 @@ const HomePage = () => {
             החיפוש היחיד בדף — כלומר הפעולה החשובה ביותר הוסתרה מתחת
             למסך שלם של סיסמאות. */}
 
-        {/* כרטיסי ניווט ראשיים */}
-        <Grid container spacing={{ xs: 2, md: 4 }} mb={{ xs: 3, md: 8 }}>
-          {mainFeatures.map((feature, index) => (
-            <Grid item xs={12} sm={6} md={6} key={index}>
+        {/* ── כרטיסי הניווט ──
+            עד 04.09.2026 היו כאן שבעה כרטיסים, כל אחד בגרדיאנט רווי
+            אחר ועם אמוג'י שקופץ ללא הפסק. כשהכול מודגש שום דבר לא
+            מודגש, ואי אפשר היה לדעת מהי הפעולה העיקרית.
+
+            עכשיו שתי שכבות: שתי הפעולות שבאמת מתחילות משהו נשארות
+            צבעוניות ומורמות, וחמש האחרות הפכו לרשימה שקטה ואחידה על
+            נייר. הצבע נשאר רק כאייקון — סימון, לא רעש.
+
+            האייקונים היו כבר מיובאים בקובץ ולא שימשו לתצוגה: `feature.icon`
+            הוגדר ונזנח לטובת אמוג'י. עכשיו הוא בשימוש.
+
+            האנימציה האינסופית הוסרה — היא גם רעש וגם התעלמה מהעדפת
+            המשתמש להפחתת תנועה. */}
+        <Grid container spacing={{ xs: 2, md: 3 }} mb={{ xs: 2, md: 3 }}>
+          {mainFeatures.filter((f) => f.primary).map((feature) => (
+            <Grid item xs={12} md={6} key={feature.path}>
               <Card
                 onClick={() => navigate(feature.path)}
                 sx={{
                   height: '100%', cursor: 'pointer', borderRadius: 4,
                   background: feature.color, color: 'white',
-                  transition: 'all 0.3s ease', position: 'relative',
-                  '&:hover': { transform: 'translateY(-10px)', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }
+                  position: 'relative', overflow: 'hidden',
+                  boxShadow: '0 10px 30px -12px rgba(76,79,160,.5)',
+                  transition: 'transform .25s ease, box-shadow .25s ease',
+                  '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 18px 40px -14px rgba(76,79,160,.6)' },
+                  '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover': { transform: 'none' } },
                 }}
               >
                 <Tooltip title={`${t('share.title')} — ${feature.title}`}>
                   <IconButton
-                    size="small"
+                    aria-label={`${t('share.title')} — ${feature.title}`}
                     onClick={(e) => { e.stopPropagation(); setShareFeature(feature); }}
                     sx={{
-                      position: 'absolute', top: 10, right: 10,
-                      bgcolor: 'rgba(255,255,255,0.2)', color: 'white',
-                      width: 30, height: 30, backdropFilter: 'blur(4px)',
-                      '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' },
-                      transition: 'all 0.2s',
+                      position: 'absolute', top: 6, right: 6,
+                      color: 'rgba(255,255,255,.85)', width: 44, height: 44,
+                      '&:hover': { bgcolor: 'rgba(255,255,255,0.18)' },
                     }}
                   >
-                    <ShareIcon sx={{ fontSize: 16 }} />
+                    <ShareIcon sx={{ fontSize: 18 }} />
                   </IconButton>
                 </Tooltip>
 
-                <CardContent sx={{ p: { xs: 2.5, md: 4 }, textAlign: 'center' }}>
-                  <Box sx={{
-                    fontSize: { xs: '2rem', md: '3rem' }, mb: 1,
-                    display: 'inline-block',
-                    animation: 'bounce 2.5s ease-in-out infinite',
-                    animationDelay: feature.delay
-                  }}>
-                    {feature.emoji}
+                <CardContent sx={{ p: { xs: 3, md: 3.5 }, display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                  <Box sx={{ display: 'grid', placeItems: 'center', flexShrink: 0, opacity: .95, mt: .25 }}>
+                    {React.cloneElement(feature.icon, { sx: { fontSize: 38 } })}
                   </Box>
-                  <Typography variant="h5" fontWeight="bold" mb={0.5}
-                    sx={{ textShadow: '0 2px 10px rgba(0,0,0,0.2)', fontSize: { xs: '1.1rem', md: '1.5rem' } }}>
-                    {feature.title}
-                  </Typography>
-                  <Typography variant="body2"
-                    sx={{ opacity: 0.95, fontSize: { xs: '0.85rem', md: '1rem' }, display: { xs: 'none', sm: 'block' } }}>
-                    {feature.description}
-                  </Typography>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="h5" fontWeight={800} mb={.5}
+                      sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' }, lineHeight: 1.25 }}>
+                      {feature.title}
+                    </Typography>
+                    <Typography variant="body2" sx={{ opacity: .92, fontSize: { xs: '.9rem', md: '1rem' } }}>
+                      {feature.description}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+
+        <Grid container spacing={{ xs: 1.5, md: 2 }} mb={{ xs: 3, md: 6 }}>
+          {mainFeatures.filter((f) => !f.primary).map((feature) => (
+            <Grid item xs={12} sm={6} md={4} key={feature.path}>
+              <Card
+                onClick={() => navigate(feature.path)}
+                sx={{
+                  height: '100%', minHeight: 88, cursor: 'pointer', borderRadius: 3,
+                  bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider',
+                  boxShadow: 'none', position: 'relative',
+                  transition: 'border-color .2s ease, box-shadow .2s ease',
+                  '&:hover': { borderColor: feature.accent, boxShadow: '0 6px 18px -10px rgba(0,0,0,.35)' },
+                  '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+                }}
+              >
+                <CardContent sx={{ p: 2, display: 'flex', gap: 1.5, alignItems: 'center', '&:last-child': { pb: 2 } }}>
+                  <Box sx={{
+                    width: 40, height: 40, borderRadius: 2, flexShrink: 0,
+                    display: 'grid', placeItems: 'center',
+                    bgcolor: `${feature.accent}1A`, color: feature.accent,
+                  }}>
+                    {React.cloneElement(feature.icon, { sx: { fontSize: 22 } })}
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography fontWeight={700} sx={{ fontSize: '1rem', lineHeight: 1.3 }}>
+                      {feature.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary"
+                      sx={{ fontSize: '.83rem', display: { xs: 'none', sm: '-webkit-box' },
+                            WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {feature.description}
+                    </Typography>
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
@@ -357,40 +429,51 @@ const HomePage = () => {
             {t('home.popular.title')}
           </Typography>
 
-          <Grid container spacing={{ xs: 1.5, md: 3 }}>
-            {popularDestinations.map((dest, index) => (
-              <Grid item xs={6} sm={4} md={2} key={index}>
-                <Box sx={{ position: 'relative' }}>
-                  <Button
-                    fullWidth
-                    onClick={() => navigate(`/destination-info/${dest.name}`)}
-                    sx={{
-                      background: `linear-gradient(135deg, ${dest.color} 0%, ${dest.color}cc 100%)`,
-                      color: 'white', py: { xs: 2, md: 3 }, px: { xs: 1, md: 2 },
-                      borderRadius: '50%', aspectRatio: '1', minWidth: 0,
-                      fontSize: { xs: '0.75rem', md: '1rem' }, fontWeight: 700,
-                      flexDirection: 'column', gap: 0.5,
-                      boxShadow: `0 4px 15px ${dest.color}55`,
-                      transition: 'all 0.25s ease',
-                      '&:hover': { transform: 'translateY(-4px) scale(1.08)', boxShadow: `0 10px 30px ${dest.color}77` }
-                    }}
-                  >
-                    <Box sx={{ fontSize: { xs: '1.8rem', md: '3rem' } }}>{dest.emoji}</Box>
-                    {dest.name}
-                  </Button>
-                  <Tooltip title={`${t('share.title')} — ${dest.name}`}>
+          {/* ── תמונות אמיתיות במקום אמוג'י ──
+              עד 04.09.2026 היו כאן שישה עיגולי גרדיאנט עם אמוג'י. נמדד
+              שבכל הדף הייתה **תמונה אחת** — באפליקציית טיולים, שבה
+              אנשים בוחרים יעד בעין.
+
+              `PlaceImage` כבר קיים ומביא תצלום מוויקיפדיה עם `city`
+              כעוגן גאוגרפי. הוא גם הכתובת הנכונה מבחינת יושרה: כשאין
+              תצלום אמיתי הוא מציג שדה צבע עם אייקון, ולא תמונת סטוק
+              תחת שם מקום — הטעות שכבר נעשתה כאן ומתועדת. */}
+          <Grid container spacing={{ xs: 1.5, md: 2.5 }}>
+            {popularDestinations.map((dest) => (
+              <Grid item xs={6} sm={4} md={2} key={dest.name}>
+                <Box
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/destination-info/${dest.name}`)}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate(`/destination-info/${dest.name}`)}
+                  sx={{
+                    position: 'relative', cursor: 'pointer', borderRadius: 3,
+                    overflow: 'hidden', bgcolor: 'background.paper',
+                    border: '1px solid', borderColor: 'divider',
+                    transition: 'transform .2s ease, box-shadow .2s ease',
+                    '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 10px 24px -12px rgba(0,0,0,.45)' },
+                    '&:focus-visible': { outline: '2px solid', outlineColor: dest.color, outlineOffset: 2 },
+                    '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover': { transform: 'none' } },
+                  }}
+                >
+                  <PlaceImage name={dest.he} lookup={dest.name} city={dest.he} height={110} icon="📍" />
+                  <Box sx={{ px: 1, py: 1.1, textAlign: 'center' }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: { xs: '.85rem', md: '.95rem' }, lineHeight: 1.2 }}>
+                      {dest.he}
+                    </Typography>
+                  </Box>
+                  <Tooltip title={`${t('share.title')} — ${dest.he}`}>
                     <IconButton
-                      size="small"
+                      aria-label={`${t('share.title')} — ${dest.he}`}
                       onClick={(e) => { e.stopPropagation(); setShareTarget(dest.name); }}
                       sx={{
-                        position: 'absolute', top: 4, right: 4,
-                        bgcolor: 'rgba(255,255,255,0.9)', color: dest.color,
-                        width: 26, height: 26,
-                        '&:hover': { bgcolor: 'white', transform: 'scale(1.15)' },
-                        transition: 'all 0.2s', boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                        position: 'absolute', top: 2, right: 2,
+                        width: 44, height: 44, color: 'white',
+                        textShadow: '0 1px 3px rgba(0,0,0,.6)',
+                        '&:hover': { bgcolor: 'rgba(0,0,0,0.25)' },
                       }}
                     >
-                      <ShareIcon sx={{ fontSize: 14 }} />
+                      <ShareIcon sx={{ fontSize: 17, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.6))' }} />
                     </IconButton>
                   </Tooltip>
                 </Box>
