@@ -168,18 +168,45 @@ export const watchShare = (code, onChange) => {
 };
 
 /**
- * כתיבת עריכה ממוקדת.
+ * כתיבת עריכה.
  *
- * `updateDoc` עם נתיב שדה ולא כתיבה מלאה: שני אנשים שעורכים ימים
- * שונים לא דורסים זה את זה, וגם החוק דורש שרק `snapshot` ישתנה.
+ * ── הטעות שהייתה כאן, ותוקנה תוך כדי בדיקה ──
+ * הגרסה הראשונה כתבה נתיב מנוקד: `snapshot.dailyItinerary.0.activities.0.name`.
+ * **Firestore אינו תומך באינדקס מערך בנתיב שדה** — הוא מפרש `0`
+ * כמפתח במפה, ולכן המיר את המערך כולו למפה. המסך של הצופה קרס עם
+ * `dailyItinerary.map is not a function`, והמסמך נהרס.
  *
- * @param {string} path נתיב יחסי בתוך snapshot, למשל
- *   `dailyItinerary.2.activities.0.name`
+ * זו הייתה גם טענה שגויה בתיעוד: נכתב שכתיבה ממוקדת מונעת התנגשות
+ * בין שני עורכים בימים שונים. **היא אינה אפשרית על מערכים.**
+ *
+ * מה שנעשה במקום: קריאה, שינוי במקום, וכתיבה של `dailyItinerary`
+ * כמערך שלם. המשמעות הכנה: **ההתנגשות היא ברמת המסלול ולא ברמת
+ * השדה** — שניים שכותבים באותה שנייה, האחרון מנצח על כל המסלול.
+ * זה עדיין סביר בזכות ההאזנה החיה, שמצמצמת את החלון לשנייה — אבל
+ * זה לא מה שהובטח קודם, וההבדל נרשם כאן ולא מוסתר.
  */
-export const editShared = async (code, path, value) => {
-  if (!code || !path) throw new Error('INVALID_EDIT');
+export const editShared = async (code, dayIndex, actIndex, field, value) => {
+  if (!code) throw new Error('INVALID_EDIT');
+  const current = await getShare(code);
+  if (!current) return null;
+
+  const days = Array.isArray(current.snapshot?.dailyItinerary)
+    ? current.snapshot.dailyItinerary
+    : [];
+  if (!days[dayIndex]) return null;
+
+  const next = days.map((d, di) => {
+    if (di !== dayIndex) return d;
+    const acts = Array.isArray(d.activities) ? d.activities : [];
+    if (actIndex == null) return { ...d, [field]: value };
+    return {
+      ...d,
+      activities: acts.map((a, ai) => (ai === actIndex ? { ...a, [field]: value } : a)),
+    };
+  });
+
   await updateDoc(tripRef(code), {
-    [`snapshot.${path}`]: value,
+    'snapshot.dailyItinerary': next,
     updatedAt: new Date().toISOString(),
   });
   return true;

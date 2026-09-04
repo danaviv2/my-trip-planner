@@ -90,9 +90,9 @@ const SharedTripPage = () => {
   }, [code]);
 
   /** עריכה ממוקדת בשדה אחד. */
-  const saveEdit = async (path, value) => {
+  const saveEdit = async (dayIndex, actIndex, field, value) => {
     try {
-      await editShared(code, path, value);
+      await editShared(code, dayIndex, actIndex, field, value);
       // אין setState כאן: המאזין מחזיר את הערך שבאמת נשמר. עדכון
       // מקומי היה מראה שינוי שהחוקים אולי דחו.
     } catch {
@@ -123,7 +123,12 @@ const SharedTripPage = () => {
   }
 
   const { snapshot = {}, expiresAt } = state.share;
-  const days = snapshot.dailyItinerary || [];
+  // ── קריאה עמידה ──
+  // מסמך שנהרס בגרסה קודמת מחזיק `dailyItinerary` כמפה ולא כמערך,
+  // ואז `.map` נופל והמסך מציג "אירעה שגיאה". מסמך פגום צריך להיראות
+  // חלקית ולא להפיל את הדף.
+  const raw = snapshot.dailyItinerary;
+  const days = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? Object.values(raw) : []);
 
   return (
     <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
@@ -191,7 +196,7 @@ const SharedTripPage = () => {
                     fullWidth
                     defaultValue={act.name}
                     onBlur={(e) => e.target.value !== act.name
-                      && saveEdit(`dailyItinerary.${i}.activities.${j}.name`, e.target.value)}
+                      && saveEdit(i, j, 'name', e.target.value)}
                     InputProps={{ disableUnderline: false, sx: { fontWeight: 600, fontSize: '1rem' } }}
                   />
                 ) : (
@@ -203,7 +208,7 @@ const SharedTripPage = () => {
                     defaultValue={act.description || ''}
                     placeholder="תיאור"
                     onBlur={(e) => e.target.value !== (act.description || '')
-                      && saveEdit(`dailyItinerary.${i}.activities.${j}.description`, e.target.value)}
+                      && saveEdit(i, j, 'description', e.target.value)}
                     InputProps={{ sx: { fontSize: '.875rem' } }}
                   />
                 ) : act.description ? (
