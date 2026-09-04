@@ -126,7 +126,10 @@ import { he } from 'date-fns/locale';
 import ActivityEditorDialog from './ActivityEditorDialog';
 import { optimizeDayOrder } from '../../services/dayOptimizerService';
 import ReactApexChart from 'react-apexcharts';
-import jsPDF from 'jspdf';
+// `jspdf` הוסר ב-04.09.2026. הוא היה מיובא כאן ולא נקרא ולו פעם אחת —
+// אבל ייבוא לבדו מספיק ל-webpack, ולכן ספרייה עם פרצה קריטית
+// (GHSA-wfv2-pwc8-crg5, CVSS 9.6) נשלחה לכל מבקר. אם אי פעם יידרש
+// ייצוא ל-PDF, יש להתקין מחדש בגרסה מתוקנת ולייבא במקום שקורא לה.
 import html2canvas from 'html2canvas';
 import BudgetMeter from '../budget/BudgetMeter';
 import { generateAttractions } from '../../services/aiAttractionsService';
