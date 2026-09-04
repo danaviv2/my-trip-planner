@@ -33,11 +33,40 @@ export const bookingLinks = {
   },
 
   /**
-   * קישור להזמנת טיסה ב-Booking.com
+   * חיפוש מלונות ב-Hotels.com.
+   *
+   * `search.do?q-location=` ו-`search.do?q-destination=` נזרקו שניהם לדף
+   * הבית — לא 404, פשוט בלי תוצאות. נמדד בדפדפן 04.09.2026: הנתיב
+   * `Hotel-Search?destination=` מחזיר "Rome, Lazio, Italy Hotel Search".
+   */
+  hotelsCom: (query) =>
+    `https://www.hotels.com/Hotel-Search?destination=${encodeURIComponent(String(query || '').trim())}`,
+
+  /**
+   * חיפוש מלונות ב-Expedia.
+   *
+   * **הבאג המסוכן מכולם.** `Hotel-Search?location=Rome` נטען יפה והציג
+   * "Rishon LeTsiyon, Central District, Israel": Expedia התעלמה מהפרמטר
+   * ונפלה למיקום המכשיר. קישור שעובד ולוקח לעיר הלא נכונה גרוע מ-404 —
+   * 404 מתקן את עצמו, וזה נראה תקין. `destination=` נמדד ומחזיר
+   * "Rome, Italy (ROM-All Airports) Hotel Search Results".
+   */
+  expedia: (query) =>
+    `https://www.expedia.com/Hotel-Search?destination=${encodeURIComponent(String(query || '').trim())}`,
+
+  /**
+   * חיפוש טיסות — לא דרך Booking.
+   *
+   * `booking.com/flights/index.html?from=&to=` הופנה לדף הבית והפרמטרים
+   * נבלעו; `flights.booking.com/flights/TLV.AIRPORT-FCO.AIRPORT/` הגיע
+   * ל-`/not-available`. שתיהן נמדדו בדפדפן. Google Flights נמדד ומחזיר
+   * "מתל אביב-יפו לרומא", כלומר המסלול באמת עובר.
    */
   flight: (origin, destination, date) => {
     const formattedDate = date ? new Date(date).toISOString().split('T')[0] : '';
-    return `https://www.booking.com/flights/index.html?from=${encodeURIComponent(origin)}&to=${encodeURIComponent(destination)}&depart=${formattedDate}`;
+    const q = `Flights from ${origin || ''} to ${destination || ''}`
+      + (formattedDate ? ` on ${formattedDate}` : '');
+    return `https://www.google.com/travel/flights?q=${encodeURIComponent(q.replace(/\s+/g, ' ').trim())}`;
   },
 
   /**

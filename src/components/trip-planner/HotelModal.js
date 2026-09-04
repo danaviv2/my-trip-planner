@@ -35,13 +35,13 @@ const HotelModal = ({ open, onClose, onSave, defaultLocation }) => {
         url = bookingLinks.hotelSearch(raw);
         break;
       case 'hotels':
-        url = `https://he.hotels.com/search.do?q-location=${query}`;
+        url = bookingLinks.hotelsCom(raw);
         break;
       case 'airbnb':
         url = `https://www.airbnb.com/s/${query}/homes`;
         break;
       case 'expedia':
-        url = `https://www.expedia.com/Hotel-Search?location=${query}`;
+        url = bookingLinks.expedia(raw);
         break;
       default:
         url = bookingLinks.hotelSearch(raw);

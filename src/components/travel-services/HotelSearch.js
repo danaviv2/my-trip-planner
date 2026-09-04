@@ -40,7 +40,8 @@ const BOOKING_SITES = [
     logo: '🌟',
     color: '#D4111E',
     getUrl: ({ destination, checkIn, checkOut, guests }) =>
-      `https://www.hotels.com/search.do?q-destination=${encodeURIComponent(destination)}&q-check-in=${checkIn || ''}&q-check-out=${checkOut || ''}&q-rooms=1&q-room-0-adults=${guests}`,
+      // search.do נזרק לדף הבית. Hotel-Search?destination= נמדד ועובד.
+      bookingLinks.hotelsCom(destination),
   },
 ];
 

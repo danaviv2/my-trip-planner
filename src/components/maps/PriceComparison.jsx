@@ -68,7 +68,7 @@ const PriceComparison = ({ origin, destination }) => {
           { 
             provider: 'Hotels.com', 
             price: 135, 
-            url: `https://www.hotels.com/search.do?destination=${encodeURIComponent(destination)}`
+            url: bookingLinks.hotelsCom(destination)
           },
           { 
             provider: 'Agoda', 
