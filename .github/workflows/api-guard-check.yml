@@ -1,0 +1,75 @@
+# אימות שהשומרים על ה-API עובדים — בשני הכיוונים.
+#
+# ── למה זה כאן ולא ב-curl מקומי ──
+# `notify-check` מוגן ב-CRON_SECRET, והסוד הזה לכתיבה בלבד: Vercel אינו
+# חושף ערכי משתני סביבה, ו-`gh secret list` מחזיר שם ותאריך בלבד. כלומר
+# אי אפשר לבדוק מהמחשב שהכיוון *המורשה* עובד — רק שהחסימה עובדת.
+#
+# בדיקה חד-כיוונית כזו היא מלכודת: שומר שחוסם את **כולם** עובר אותה
+# בהצטיינות, ומשאיר את כלי האבחון שבור בלי שאיש ידע.
+#
+# ה-runner כאן מחזיק את הסוד ממילא. הוא יכול לבדוק את שני הכיוונים בלי
+# שהסוד ייצא החוצה ובלי שמישהו יצטרך לדעת אותו.
+#
+# ── למה זה קובץ נפרד מ-check-flights ──
+# `check-flights` **שולח התראות אמיתיות למכשירים**. הרצה שלו כדי לבדוק
+# תצורה הייתה מציפה את המשתמש בהודעות. כאן רק נמדד, לא נשלח דבר.
+name: api-guard-check
+
+on:
+  workflow_dispatch:
+  # אחרי שינוי בשומרים או ב-endpoints — שם הרגרסיה נולדת
+  push:
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-guard-check.yml'
+
+jobs:
+  guards:
+    runs-on: ubuntu-latest
+    env:
+      BASE: https://my-trip-planner-ten.vercel.app
+    steps:
+      - name: הכיוון המורשה של הסוד — חייב לעבור
+        run: |
+          # 200 בלבד. כל דבר אחר פירושו שכלי האבחון של בעל האתר שבור,
+          # וזו תקלה שמתגלה בדרך כלל רק כשצריך אותו.
+          code=$(curl -sS -o /tmp/body -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "$BASE/api/notify-check")
+          echo "notify-check עם סוד: $code"
+          if [ "$code" != "200" ]; then
+            echo "::error::notify-check דחה בקשה מורשה ($code) — השומר חוסם יותר מדי"
+            # הגוף מודפס לאבחון. ה-endpoint מחזיר מצב בלבד, לא ערכי סוד.
+            cat /tmp/body || true
+            exit 1
+          fi
+
+      - name: הכיוון החסום — חייב להידחות
+        run: |
+          fail=0
+          check() {
+            code=$(curl -sS -o /dev/null -w "%{http_code}" "$2")
+            echo "$1: $code (ציפייה $3)"
+            [ "$code" = "$3" ] || { echo "::error::$1 החזיר $code במקום $3"; fail=1; }
+          }
+          # בלי סוד ובלי כותרת מקור — כלומר בדיוק מה שסקריפט זר שולח
+          check "notify-check בלי סוד" "$BASE/api/notify-check" 401
+          check "place-website מזר"    "$BASE/api/place-website?name=Roscioli&city=Rome" 403
+          check "flight-status מזר"    "$BASE/api/flight-status?flight=LY381&date=2026-09-10" 403
+          check "flight-offers מזר"    "$BASE/api/flight-offers?from=TLV&to=FCO&date=2026-10-01" 403
+          exit $fail
+
+      - name: הכיוון המורשה של השומר — חייב לעבור
+        run: |
+          # בלי הבדיקה הזו, שומר שחוסם את כולם היה נראה מוצלח לחלוטין
+          fail=0
+          check() {
+            code=$(curl -sS -o /dev/null -w "%{http_code}" -H "Referer: $BASE/" "$2")
+            echo "$1: $code (ציפייה $3)"
+            [ "$code" = "$3" ] || { echo "::error::$1 החזיר $code במקום $3"; fail=1; }
+          }
+          check "place-website מהאתר" "$BASE/api/place-website?name=Roscioli&city=Rome" 200
+          check "flight-status מהאתר" "$BASE/api/flight-status?flight=LY381&date=2026-09-10" 200
+          check "flight-offers מהאתר" "$BASE/api/flight-offers?from=TLV&to=FCO&date=2026-10-01" 200
+          exit $fail
