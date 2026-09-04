@@ -16,7 +16,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import PinterestIcon from '@mui/icons-material/Pinterest';
 import SvgIcon from '@mui/material/SvgIcon';
-import { createShare, refreshShare, setShareMode } from '../../services/sharedTripService';
+import { createShare, refreshShare, setShareMode, revokeShare } from '../../services/sharedTripService';
 import { useAuth } from '../../contexts/AuthContext';
 
 const TikTokIcon = (props) => (
@@ -76,6 +76,27 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
   const [refreshed, setRefreshed] = useState(false);
   const [mode, setMode] = useState('comment');
   const [modeSaving, setModeSaving] = useState(false);
+  const [revoking, setRevoking] = useState(false);
+
+  /** ביטול מיידי של הקישור. */
+  const handleRevoke = async () => {
+    const code = sharedUrl.split('/trip/')[1];
+    if (!code) return;
+    setRevoking(true);
+    try {
+      await revokeShare(code);
+      // הקישור נמחק מהמסך ולא רק מהשרת: להשאיר כתובת שכבר אינה
+      // עובדת זו הזמנה לשלוח אותה.
+      setSharedUrl('');
+      createdFor.current = null;
+      showSnackbar('השיתוף בוטל. הקישור כבר לא יעבוד.');
+    } catch {
+      showSnackbar('הביטול נכשל. נסה שוב.', 'error');
+    } finally {
+      setRevoking(false);
+    }
+  };
+
 
   /** שינוי רמת ההרשאה של שיתוף קיים. */
   const handleModeChange = async (next) => {
@@ -321,6 +342,18 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
                 {mode === 'edit' && 'כל מי שמחזיק בקישור ומחובר יוכל לשנות את המסלול. השינויים מופיעים אצל כולם מיד. אפשר לסגור את העריכה בכל רגע.'}
               </Typography>
 
+              {/* אזהרה במצב עריכה.
+                  לא שורה אפורה מתחת לבורר: מצב עריכה נותן לכל מי
+                  שמחזיק בקישור **ומחובר** לשנות את המסלול, וקישור
+                  שנשלח בוואטסאפ מועבר הלאה בקלות. ההחלטה צריכה
+                  להיראות ברגע שמקבלים אותה, לא להתגלות אחר כך. */}
+              {mode === 'edit' && (
+                <Alert severity="warning" sx={{ mb: 1.5, py: .5 }}>
+                  מתאים לשותף אחד, לא לקבוצה. כל מי שיקבל את הקישור
+                  ויתחבר יוכל לשנות את המסלול — וקישורים עוברים הלאה.
+                </Alert>
+              )}
+
               {/* "עדכן את השיתוף" — הצד השני של ההחלטה על תמונת מצב.
                   הקישור אינו מראה חיה בכוונה, ולכן חייבת להיות דרך
                   מפורשת לרענן אותו. בלעדיה תמונת המצב הייתה הופכת
@@ -332,6 +365,18 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
                 sx={{ mt: .5 }}
               >
                 {refreshing ? 'מעדכן…' : refreshed ? 'עודכן ✓' : 'עדכן את השיתוף למסלול הנוכחי'}
+              </Button>
+
+              {/* ביטול שיתוף. `revokeShare` היה כתוב בשירות מאז שלב 1
+                  ולא היה לו ממשק — כלומר לא הייתה דרך לסגור קישור
+                  שיצא. תפוגה אוטומטית אינה תחליף לשליטה מיידית. */}
+              <Button
+                size="small" color="error"
+                onClick={handleRevoke}
+                disabled={revoking}
+                sx={{ mt: .5, ml: 1 }}
+              >
+                {revoking ? 'מבטל…' : 'בטל את השיתוף'}
               </Button>
             </Box>
           )}
