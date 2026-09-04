@@ -20,7 +20,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Container, Box, Typography, Paper, Chip, Button, CircularProgress, Divider,
+  Container, Box, Typography, Paper, Chip, Button, CircularProgress, Divider, TextField,
 } from '@mui/material';
 import {
   CalendarMonth as CalendarIcon,
@@ -28,7 +28,8 @@ import {
   Place as PlaceIcon,
   Visibility as ViewIcon,
 } from '@mui/icons-material';
-import { getShare } from '../services/sharedTripService';
+import { getShare, addComment } from '../services/sharedTripService';
+import { useAuth } from '../contexts/AuthContext';
 
 /** תאריך יום במסלול, נגזר מתאריך ההתחלה. */
 const dayDate = (startDate, index) => {
@@ -43,6 +44,36 @@ const SharedTripPage = () => {
   const { code } = useParams();
   const navigate = useNavigate();
   const [state, setState] = useState({ loading: true, share: null });
+  const { user } = useAuth();
+  const [draft, setDraft] = useState('');
+  const [posting, setPosting] = useState(false);
+  const [commentError, setCommentError] = useState('');
+
+  const comments = state.share?.comments || {};
+  const commentList = Object.entries(comments)
+    .sort((a, b) => String(b[1]?.at || '').localeCompare(String(a[1]?.at || '')));
+  const myComment = user ? comments[user.uid] : null;
+
+  const handleComment = async () => {
+    if (!user || !draft.trim()) return;
+    setPosting(true);
+    setCommentError('');
+    try {
+      await addComment(code, user.uid, user.displayName || user.email || 'אורח', draft);
+      // המסמך נקרא מחדש ולא מעודכן בזיכרון: התצוגה חייבת לשקף את מה
+      // שבאמת נשמר, אחרת הערה שנדחתה בחוקים הייתה נראית כאילו עלתה.
+      const fresh = await getShare(code);
+      setState({ loading: false, share: fresh });
+      setDraft('');
+    } catch (err) {
+      setCommentError(err?.code === 'permission-denied'
+        ? 'אין הרשאה להעיר על השיתוף הזה.'
+        : 'שליחת ההערה נכשלה. נסה שוב.');
+    } finally {
+      setPosting(false);
+    }
+  };
+
 
   useEffect(() => {
     let alive = true;
@@ -84,7 +115,9 @@ const SharedTripPage = () => {
       <Box sx={{ mb: 3 }}>
         <Chip
           icon={<ViewIcon sx={{ fontSize: 17 }} />}
-          label="מסלול משותף — לצפייה בלבד"
+          label={state.share.mode === 'comment'
+            ? 'מסלול משותף — אפשר להעיר'
+            : 'מסלול משותף — לצפייה בלבד'}
           size="small"
           sx={{ mb: 1.5, fontWeight: 600 }}
         />
@@ -169,6 +202,76 @@ const SharedTripPage = () => {
           )}
         </Paper>
       ))}
+
+      {/* ── הערות ──
+          הפידבק חוזר לתוך הטיול במקום להתפזר בצ׳אטים.
+
+          **קריאה אינה דורשת התחברות, הערה כן.** ההערות ממופתחות לפי
+          מזהה הכותב, וזה מה שמאפשר לחוק לאכוף "כל אחד נוגע רק בשלו".
+          בלי זהות אין למי לשייך את ההערה, וכל מי שמחזיק בקישור היה
+          יכול למחוק הערה של אחר.
+
+          כל אדם מחזיק הערה אחת, והוספה חוזרת מחליפה אותה. זו תוצאה
+          של מבנה ההרשאות, והיא גם מונעת שרשור בלי סוף. */}
+      {state.share.mode === 'comment' && (
+        <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
+          <Typography variant="h6" fontWeight={700} mb={2}>
+            הערות{commentList.length ? ` (${commentList.length})` : ''}
+          </Typography>
+
+          {commentList.length === 0 && (
+            <Typography color="text.secondary" variant="body2" mb={2}>
+              עדיין אין הערות. תהיה הראשון.
+            </Typography>
+          )}
+
+          {commentList.map(([uid, c]) => (
+            <Paper key={uid} elevation={0}
+              sx={{ p: 2, mb: 1.5, borderRadius: 2, bgcolor: 'action.hover' }}>
+              <Typography fontWeight={700} variant="body2">{c.name}</Typography>
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{c.text}</Typography>
+              {c.at && (
+                <Typography variant="caption" color="text.secondary">
+                  {new Date(c.at).toLocaleString('he-IL')}
+                </Typography>
+              )}
+            </Paper>
+          ))}
+
+          {user ? (
+            <Box sx={{ mt: 2 }}>
+              <TextField
+                fullWidth multiline rows={3}
+                placeholder="מה דעתך על המסלול?"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                inputProps={{ maxLength: 1000 }}
+                sx={{ mb: 1 }}
+              />
+              <Button
+                variant="contained"
+                onClick={handleComment}
+                disabled={posting || !draft.trim()}
+              >
+                {posting ? 'שולח…' : myComment ? 'עדכן את ההערה שלי' : 'הוסף הערה'}
+              </Button>
+              {commentError && (
+                <Typography color="error" variant="body2" sx={{ mt: 1 }}>{commentError}</Typography>
+              )}
+            </Box>
+          ) : (
+            <Paper elevation={0} sx={{ p: 2, borderRadius: 2, bgcolor: 'action.hover', mt: 2 }}>
+              <Typography variant="body2" mb={1.5}>
+                כדי להוסיף הערה צריך להתחבר — כך אפשר לדעת ממי היא, ורק אתה
+                תוכל לערוך אותה. הצפייה במסלול אינה דורשת התחברות.
+              </Typography>
+              <Button variant="outlined" size="small" onClick={() => navigate('/login')}>
+                התחבר
+              </Button>
+            </Paper>
+          )}
+        </Box>
+      )}
 
       <Box sx={{ mt: 4, textAlign: 'center' }}>
         {expiresAt && (

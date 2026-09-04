@@ -24,7 +24,7 @@
  * אך כן מגלה כמה הוא מתכנן להוציא.
  */
 
-import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { generateRoomCode } from './groupTripService';
 
@@ -78,9 +78,15 @@ export const snapshotOf = (trip = {}) => {
  *
  * @param {object} trip הטיול השמור
  * @param {string} uid  מזהה הבעלים
- * @param {'view'|'comment'} mode כרגע `view` בלבד; `comment` בשלב הבא
+ * @param {'view'|'comment'} mode ברירת המחדל היא `comment`.
+ *
+ * ── למה ברירת המחדל פתוחה להערות ──
+ * שיתוף שנוצר תמיד כ-`view` היה הופך את כל מנגנון ההערות לקוד מת:
+ * אי אפשר היה להגיע אליו משום מסך. בורר ההרשאות (שלב 3) יאפשר
+ * **לצמצם** ל-`view`, ולא להרחיב — הכיוון הנכון, כי התרחיש שביקש
+ * המשתמש היה קבלת פידבק.
  */
-export const createShare = async (trip, uid, mode = 'view') => {
+export const createShare = async (trip, uid, mode = 'comment') => {
   const snapshot = snapshotOf(trip);
   // טיול בלי מסלול אינו שווה שיתוף, והקישור היה מוביל למסך ריק —
   // בדיוק התקלה שהאוסף הזה נועד לתקן.
@@ -97,6 +103,10 @@ export const createShare = async (trip, uid, mode = 'view') => {
     createdAt: now.toISOString(),
     expiresAt: expiryFor(trip, now).toISOString(),
     snapshot,
+    // נוצר ריק מראש ולא בהוספה הראשונה: חוק האבטחה משווה מול
+    // `resource.data.comments`, ושדה שאינו קיים היה מפיל את ההשוואה
+    // ומונע את ההערה הראשונה — תקלה שהייתה נראית כבאג הרשאות.
+    comments: {},
   };
 
   await setDoc(tripRef(code), shared);
@@ -133,6 +143,30 @@ export const refreshShare = async (code, trip) => {
   return updated;
 };
 
+/**
+ * מוסיף או מעדכן את ההערה של הכותב.
+ *
+ * ── מדוע הערה אחת לכל אדם ──
+ * ההערות ממופתחות לפי מזהה הכותב, וזה מה שמאפשר לחוק לאכוף "כל אחד
+ * נוגע רק בשלו". המחיר: אדם מחזיק הערה אחת, והוספה חוזרת מחליפה
+ * אותה. זה גם היתרון — אין שרשור בלי סוף, ומי שהעיר יכול לתקן.
+ *
+ * `updateDoc` ולא `setDoc`: כתיבה מלאה הייתה נוגעת בכל השדות, והחוק
+ * דורש ששדה ההערות יהיה היחיד שמשתנה.
+ */
+export const addComment = async (code, uid, name, text) => {
+  const body = String(text || '').trim();
+  if (!code || !uid || !body) throw new Error('INVALID_COMMENT');
+  await updateDoc(tripRef(code), {
+    [`comments.${uid}`]: {
+      name: String(name || 'אורח').slice(0, 40),
+      text: body.slice(0, 1000),
+      at: new Date().toISOString(),
+    },
+  });
+  return true;
+};
+
 /** ביטול מיידי. תפוגה שאי אפשר לעצור היא הפתעה, לא הגנה. */
 export const revokeShare = async (code) => {
   if (!code) return false;
@@ -140,4 +174,4 @@ export const revokeShare = async (code) => {
   return true;
 };
 
-export default { createShare, getShare, refreshShare, revokeShare, snapshotOf, expiryFor };
+export default { createShare, getShare, refreshShare, revokeShare, addComment, snapshotOf, expiryFor };

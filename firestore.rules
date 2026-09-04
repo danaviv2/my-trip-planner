@@ -116,10 +116,36 @@ service cloud.firestore {
       // כל ולידציה שנעשית בדפדפן.
       function shapeValid() {
         return request.resource.data.keys().hasOnly(
-                 ['code', 'ownerUid', 'mode', 'createdAt', 'expiresAt', 'snapshot', 'updatedAt'])
+                 ['code', 'ownerUid', 'mode', 'createdAt', 'expiresAt', 'snapshot',
+                  'updatedAt', 'comments'])
           && request.resource.data.code == code
           && request.resource.data.mode in ['view', 'comment']
           && request.resource.data.snapshot is map;
+      }
+
+      // ── הערה של הכותב עצמו ──
+      //
+      // זהו אותו מודל שכבר מוכח ב-groupTrips: ההערות ממופתחות לפי
+      // מזהה הכותב, ולכן החוק יכול לאכוף "כל אחד נוגע רק בשלו".
+      // בלי זה כל מי שמחזיק בקישור היה יכול למחוק הערה של אחר.
+      //
+      // המשמעות: **קריאה אינה דורשת התחברות, הערה כן.** אין דרך לאכוף
+      // בעלות על הערה בלי זהות, וזהות אנונימית שאפשר לזייף הופכת את
+      // הכלל להצגה בלבד.
+      function ownCommentOnly() {
+        return request.auth != null
+          && resource.data.mode == 'comment'
+          // רק שדה ההערות משתנה: בלי זה אפשר היה לשנות את המסלול
+          // עצמו תוך כדי הוספת הערה.
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments'])
+          && request.resource.data.comments.diff(resource.data.comments)
+               .affectedKeys().hasOnly([request.auth.uid])
+          && request.resource.data.comments[request.auth.uid].keys().hasOnly(['name', 'text', 'at'])
+          && request.resource.data.comments[request.auth.uid].name is string
+          && request.resource.data.comments[request.auth.uid].name.size() <= 40
+          && request.resource.data.comments[request.auth.uid].text is string
+          && request.resource.data.comments[request.auth.uid].text.size() > 0
+          && request.resource.data.comments[request.auth.uid].text.size() <= 1000;
       }
 
       allow get: if true;
@@ -129,12 +155,15 @@ service cloud.firestore {
         && shapeValid()
         && request.resource.data.ownerUid == request.auth.uid;
 
-      // הבעלות והקוד אינם ניתנים לשינוי לאחר היצירה: בלי זה אפשר היה
-      // להשתלט על שיתוף קיים או להפנות קוד ידוע לתוכן אחר.
-      allow update: if isOwner()
-        && shapeValid()
-        && request.resource.data.ownerUid == resource.data.ownerUid
-        && request.resource.data.code == resource.data.code;
+      // שני נתיבי עדכון: הבעלים מרענן את תמונת המצב, ומעיר כותב הערה
+      // אחת — שלו. הבעלות והקוד אינם ניתנים לשינוי בשום מקרה, אחרת
+      // אפשר היה להשתלט על שיתוף קיים או להפנות קוד ידוע לתוכן אחר.
+      allow update: if (
+          isOwner()
+          && shapeValid()
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.code == resource.data.code
+        ) || ownCommentOnly();
 
       allow delete: if isOwner();
     }
