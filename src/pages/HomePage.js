@@ -34,7 +34,6 @@ const HomePage = () => {
   const [packingOpen, setPackingOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [shareTarget, setShareTarget] = useState(null);
-  const [shareFeature, setShareFeature] = useState(null);
 
   // הנסיעות של המשתמש. עד 04.09.2026 דף הבית לא קרא ולו נתון אחד עליו —
   // אפס הפניות ל-useAuth, useBookings או savedTrips — ולכן מי שיש לו
@@ -294,19 +293,12 @@ const HomePage = () => {
                   '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover': { transform: 'none' } },
                 }}
               >
-                <Tooltip title={`${t('share.title')} — ${feature.title}`}>
-                  <IconButton
-                    aria-label={`${t('share.title')} — ${feature.title}`}
-                    onClick={(e) => { e.stopPropagation(); setShareFeature(feature); }}
-                    sx={{
-                      position: 'absolute', top: 6, right: 6,
-                      color: 'rgba(255,255,255,.85)', width: 44, height: 44,
-                      '&:hover': { bgcolor: 'rgba(255,255,255,0.18)' },
-                    }}
-                  >
-                    <ShareIcon sx={{ fontSize: 18 }} />
-                  </IconButton>
-                </Tooltip>
+                {/* כפתור השיתוף הוסר ב-04.09.2026. נמדד שהוא בנה
+                    `origin + feature.path` — כלומר כתובת הדף, ריקה:
+                    שווה־ערך להעתקת שורת הכתובת. שיתוף אמיתי של טיול
+                    כבר קיים במקום הנכון, ב-TripPlannerPage וב-MyTripsPage,
+                    על האובייקט עצמו. זה היה עותק מיותר שגם התחרה
+                    בלחיצה על הכרטיס כולו. */}
 
                 <CardContent sx={{ p: { xs: 3, md: 3.5 }, display: 'flex', gap: 2, alignItems: 'flex-start' }}>
                   <Box sx={{ display: 'grid', placeItems: 'center', flexShrink: 0, opacity: .95, mt: .25 }}>
@@ -491,12 +483,6 @@ const HomePage = () => {
         open={shareTarget !== null}
         onClose={() => setShareTarget(null)}
         trip={{ destination: shareTarget }}
-      />
-      <ShareTripDialog
-        open={shareFeature !== null}
-        onClose={() => setShareFeature(null)}
-        shareUrl={shareFeature ? `${window.location.origin}${shareFeature.path}` : ''}
-        label={shareFeature?.title}
       />
 
       <style>{`
