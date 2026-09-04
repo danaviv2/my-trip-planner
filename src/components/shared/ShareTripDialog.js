@@ -311,15 +311,14 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
                 <ToggleButton value="comment" disabled={modeSaving} sx={{ flex: 1, minHeight: 40 }}>
                   לצפייה ולהערות
                 </ToggleButton>
-                <ToggleButton value="edit" disabled sx={{ flex: 1, minHeight: 40 }}>
+                <ToggleButton value="edit" disabled={modeSaving} sx={{ flex: 1, minHeight: 40 }}>
                   לעריכה
                 </ToggleButton>
               </ToggleButtonGroup>
               <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-                {mode === 'view'
-                  ? 'מי שמקבל את הקישור יראה את המסלול ולא יוכל להעיר.'
-                  : 'מי שמקבל את הקישור יוכל להעיר. הצפייה אינה דורשת התחברות, הערה כן.'}
-                {' '}עריכה משותפת עדיין לא נבנתה.
+                {mode === 'view' && 'מי שמקבל את הקישור יראה את המסלול ולא יוכל להעיר.'}
+                {mode === 'comment' && 'מי שמקבל את הקישור יוכל להעיר. הצפייה אינה דורשת התחברות, הערה כן.'}
+                {mode === 'edit' && 'כל מי שמחזיק בקישור ומחובר יוכל לשנות את המסלול. השינויים מופיעים אצל כולם מיד. אפשר לסגור את העריכה בכל רגע.'}
               </Typography>
 
               {/* "עדכן את השיתוף" — הצד השני של ההחלטה על תמונת מצב.

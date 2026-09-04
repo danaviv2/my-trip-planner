@@ -119,7 +119,7 @@ service cloud.firestore {
                  ['code', 'ownerUid', 'mode', 'createdAt', 'expiresAt', 'snapshot',
                   'updatedAt', 'comments'])
           && request.resource.data.code == code
-          && request.resource.data.mode in ['view', 'comment']
+          && request.resource.data.mode in ['view', 'comment', 'edit']
           && request.resource.data.snapshot is map;
       }
 
@@ -148,6 +148,26 @@ service cloud.firestore {
           && request.resource.data.comments[request.auth.uid].text.size() <= 1000;
       }
 
+      // ── עריכה משותפת ──
+      //
+      // מותרת רק כש-mode הוא 'edit', ורק למשתמש מחובר. הצפייה נשארת
+      // פתוחה לכל, אבל **עריכה בלי זהות אינה אפשרית**: קישור שדולף
+      // היה נותן לכל אחד למחוק מסלול שלם בלי שאפשר לדעת מי.
+      //
+      // רק `snapshot` ו-`updatedAt` ניתנים לשינוי. הבעלות, הקוד,
+      // התפוגה, המצב וההערות נעולים — אחרת עורך היה יכול להפוך את
+      // עצמו לבעלים, או להשאיר את הקישור פתוח לנצח.
+      //
+      // **המצב עצמו נשלט בידי הבעלים בלבד**, ולכן הוא יכול לסגור את
+      // העריכה בכל רגע וזה נאכף מיד.
+      function collaboratorEdit() {
+        return request.auth != null
+          && resource.data.mode == 'edit'
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['snapshot', 'updatedAt'])
+          && request.resource.data.snapshot is map;
+      }
+
       allow get: if true;
       allow list: if false;
 
@@ -163,7 +183,7 @@ service cloud.firestore {
           && shapeValid()
           && request.resource.data.ownerUid == resource.data.ownerUid
           && request.resource.data.code == resource.data.code
-        ) || ownCommentOnly();
+        ) || ownCommentOnly() || collaboratorEdit();
 
       allow delete: if isOwner();
     }

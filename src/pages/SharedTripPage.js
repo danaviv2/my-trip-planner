@@ -28,7 +28,7 @@ import {
   Place as PlaceIcon,
   Visibility as ViewIcon,
 } from '@mui/icons-material';
-import { getShare, addComment } from '../services/sharedTripService';
+import { getShare, addComment, watchShare, editShared } from '../services/sharedTripService';
 import { useAuth } from '../contexts/AuthContext';
 
 /** תאריך יום במסלול, נגזר מתאריך ההתחלה. */
@@ -54,6 +54,10 @@ const SharedTripPage = () => {
     .sort((a, b) => String(b[1]?.at || '').localeCompare(String(a[1]?.at || '')));
   const myComment = user ? comments[user.uid] : null;
 
+  // עריכה דורשת מצב 'edit' **וגם** זהות. שני התנאים נאכפים גם בחוקי
+  // האבטחה; כאן הם רק קובעים מה מוצג, ולא מה מותר.
+  const canEdit = state.share?.mode === 'edit' && Boolean(user);
+
   const handleComment = async () => {
     if (!user || !draft.trim()) return;
     setPosting(true);
@@ -75,15 +79,26 @@ const SharedTripPage = () => {
   };
 
 
+  // ── האזנה חיה ולא קריאה חד-פעמית ──
+  // זה מה שהופך את "האחרון מנצח" מאיבוד נתונים לשיחה: השותף רואה
+  // את השינוי שלך תוך שנייה, ולכן שניכם כמעט אף פעם לא עורכים את
+  // אותו שדה בו-זמנית. גם צופה רגיל מרוויח — הערה חדשה או עדכון
+  // מהבעלים מופיעים בלי רענון.
   useEffect(() => {
-    let alive = true;
-    getShare(code)
-      .then((share) => alive && setState({ loading: false, share }))
-      // כשל רשת ומסמך שאינו קיים מובילים לאותו מסך, כי אין למבקר מה
-      // לעשות עם ההבדל.
-      .catch(() => alive && setState({ loading: false, share: null }));
-    return () => { alive = false; };
+    const stop = watchShare(code, (share) => setState({ loading: false, share }));
+    return stop;
   }, [code]);
+
+  /** עריכה ממוקדת בשדה אחד. */
+  const saveEdit = async (path, value) => {
+    try {
+      await editShared(code, path, value);
+      // אין setState כאן: המאזין מחזיר את הערך שבאמת נשמר. עדכון
+      // מקומי היה מראה שינוי שהחוקים אולי דחו.
+    } catch {
+      setCommentError('העריכה נכשלה. ייתכן שההרשאה נסגרה.');
+    }
+  };
 
   if (state.loading) {
     return (
@@ -115,9 +130,14 @@ const SharedTripPage = () => {
       <Box sx={{ mb: 3 }}>
         <Chip
           icon={<ViewIcon sx={{ fontSize: 17 }} />}
-          label={state.share.mode === 'comment'
-            ? 'מסלול משותף — אפשר להעיר'
-            : 'מסלול משותף — לצפייה בלבד'}
+          label={
+            state.share.mode === 'edit'
+              ? (user ? 'מסלול משותף — אפשר לערוך' : 'מסלול משותף — התחבר כדי לערוך')
+              : state.share.mode === 'comment'
+                ? 'מסלול משותף — אפשר להעיר'
+                : 'מסלול משותף — לצפייה בלבד'
+          }
+          color={state.share.mode === 'edit' ? 'primary' : 'default'}
           size="small"
           sx={{ mb: 1.5, fontWeight: 600 }}
         />
@@ -165,10 +185,30 @@ const SharedTripPage = () => {
                 {act.time || '—'}
               </Typography>
               <Box sx={{ minWidth: 0 }}>
-                <Typography fontWeight={600} sx={{ lineHeight: 1.35 }}>{act.name}</Typography>
-                {act.description && (
-                  <Typography variant="body2" color="text.secondary">{act.description}</Typography>
+                {canEdit ? (
+                  <TextField
+                    variant="standard"
+                    fullWidth
+                    defaultValue={act.name}
+                    onBlur={(e) => e.target.value !== act.name
+                      && saveEdit(`dailyItinerary.${i}.activities.${j}.name`, e.target.value)}
+                    InputProps={{ disableUnderline: false, sx: { fontWeight: 600, fontSize: '1rem' } }}
+                  />
+                ) : (
+                  <Typography fontWeight={600} sx={{ lineHeight: 1.35 }}>{act.name}</Typography>
                 )}
+                {canEdit ? (
+                  <TextField
+                    variant="standard" fullWidth multiline
+                    defaultValue={act.description || ''}
+                    placeholder="תיאור"
+                    onBlur={(e) => e.target.value !== (act.description || '')
+                      && saveEdit(`dailyItinerary.${i}.activities.${j}.description`, e.target.value)}
+                    InputProps={{ sx: { fontSize: '.875rem' } }}
+                  />
+                ) : act.description ? (
+                  <Typography variant="body2" color="text.secondary">{act.description}</Typography>
+                ) : null}
                 {act.address && (
                   <Typography variant="caption" color="text.secondary"
                     sx={{ display: 'flex', alignItems: 'center', gap: .4, mt: .4 }}>

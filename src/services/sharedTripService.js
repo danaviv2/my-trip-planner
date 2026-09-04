@@ -24,7 +24,7 @@
  * אך כן מגלה כמה הוא מתכנן להוציא.
  */
 
-import { doc, getDoc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { generateRoomCode } from './groupTripService';
 
@@ -144,6 +144,48 @@ export const refreshShare = async (code, trip) => {
 };
 
 /**
+ * מאזין לשינויים בזמן אמת.
+ *
+ * ── זה מה שמחליף מנוע מיזוג ──
+ * שני אנשים שעורכים ימים שונים לא מתנגשים ממילא, כי הכתיבה ממוקדת
+ * לשדה. מי שעורך את אותו שדה — האחרון מנצח, וזה מקובל בקנה מידה של
+ * שניים-שלושה מתכננים.
+ *
+ * המאזין הוא שהופך את זה לסביר: השותף רואה את השינוי שלך תוך שנייה,
+ * ולכן שניכם כמעט אף פעם לא עורכים את אותו שדה בו-זמנית. **בלי
+ * זמן אמת, "האחרון מנצח" הוא איבוד נתונים; איתו, זו שיחה.**
+ *
+ * @returns {function} ביטול ההאזנה. חובה לקרוא לו בפירוק הרכיב.
+ */
+export const watchShare = (code, onChange) => {
+  if (!code) return () => {};
+  return onSnapshot(tripRef(code), (snap) => {
+    if (!snap.exists()) { onChange(null); return; }
+    const data = snap.data();
+    if (data.expiresAt && new Date(data.expiresAt) < new Date()) { onChange(null); return; }
+    onChange(data);
+  }, () => onChange(null));
+};
+
+/**
+ * כתיבת עריכה ממוקדת.
+ *
+ * `updateDoc` עם נתיב שדה ולא כתיבה מלאה: שני אנשים שעורכים ימים
+ * שונים לא דורסים זה את זה, וגם החוק דורש שרק `snapshot` ישתנה.
+ *
+ * @param {string} path נתיב יחסי בתוך snapshot, למשל
+ *   `dailyItinerary.2.activities.0.name`
+ */
+export const editShared = async (code, path, value) => {
+  if (!code || !path) throw new Error('INVALID_EDIT');
+  await updateDoc(tripRef(code), {
+    [`snapshot.${path}`]: value,
+    updatedAt: new Date().toISOString(),
+  });
+  return true;
+};
+
+/**
  * משנה את רמת ההרשאה של שיתוף קיים.
  *
  * הבעלים בלבד, לפי החוקים. השינוי מיידי: קישור שהיה פתוח להערות
@@ -152,7 +194,7 @@ export const refreshShare = async (code, trip) => {
  * לא ביקש, ולמחוק דעות של אנשים בלי שביקשו זה לא "צמצום הרשאה".
  */
 export const setShareMode = async (code, mode) => {
-  if (!['view', 'comment'].includes(mode)) throw new Error('INVALID_MODE');
+  if (!['view', 'comment', 'edit'].includes(mode)) throw new Error('INVALID_MODE');
   const existing = await getShare(code);
   if (!existing) return null;
   const updated = { ...existing, mode, updatedAt: new Date().toISOString() };
@@ -191,4 +233,4 @@ export const revokeShare = async (code) => {
   return true;
 };
 
-export default { createShare, getShare, refreshShare, revokeShare, addComment, setShareMode, snapshotOf, expiryFor };
+export default { createShare, getShare, watchShare, editShared, refreshShare, revokeShare, addComment, setShareMode, snapshotOf, expiryFor };
