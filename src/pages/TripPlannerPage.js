@@ -53,7 +53,12 @@ const TripPlannerPage = () => {
   const [mainTab, setMainTab] = useState('plan');
   const [servicesTab, setServicesTab] = useState(0);
   const [tripLogs, setTripLogs] = useState(JSON.parse(localStorage.getItem('tripLogs')) || []);
-  const [accommodations, setAccommodations] = useState([]);
+  // נשמר ב-localStorage כמו `syncedBookings` ו-`tripLogs` שלידו. עד
+  // 04.09.2026 זה היה `useState([])` בלבד, ולכן מלון שנוסף נעלם ברענון —
+  // מה שהיה הופך את תיקון הכפתור להצלחה מדומה.
+  const [accommodations, setAccommodations] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('accommodations') || '[]'); } catch { return []; }
+  });
   const [hotelModalOpen, setHotelModalOpen] = useState(false);
   const [mapFocus, setMapFocus] = useState(null);
   const [hotelRecommendations, setHotelRecommendations] = useState([]);
@@ -136,6 +141,18 @@ const TripPlannerPage = () => {
     return [span, b.price].filter(Boolean).join(' · ');
   };
   const restoredRef = useRef(false);
+
+  // כתיבה בכל שינוי, ולא בתוך הצרכן: `AccommodationPlanner` מוסיף ומוחק,
+  // ואם כל אחד מהם היה שומר בעצמו היה נוצר נתיב שני שאפשר לשכוח לעדכן —
+  // בדיוק הדרך שבה נולד הבאג המקורי.
+  useEffect(() => {
+    try {
+      localStorage.setItem('accommodations', JSON.stringify(accommodations));
+    } catch {
+      // מכסת האחסון מלאה או מצב פרטי. הרשימה עדיין עובדת בזיכרון,
+      // ואין ערך בהודעת שגיאה על פעולה שהמשתמש לא ביקש.
+    }
+  }, [accommodations]);
 
   // טען הזמנות מ-Firestore כשמשתמש מתחבר
   useEffect(() => {
@@ -404,6 +421,7 @@ const TripPlannerPage = () => {
               setAccommodations={setAccommodations}
               hotelModalOpen={hotelModalOpen}
               setHotelModalOpen={setHotelModalOpen}
+              defaultLocation={plannerDestination}
             />
 
             {/* כרטיסים שכבר שולמו מול התכנון. מוצג ראשון: זו ההתנגשות
