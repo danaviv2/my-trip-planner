@@ -144,6 +144,23 @@ export const refreshShare = async (code, trip) => {
 };
 
 /**
+ * משנה את רמת ההרשאה של שיתוף קיים.
+ *
+ * הבעלים בלבד, לפי החוקים. השינוי מיידי: קישור שהיה פתוח להערות
+ * ועבר ל-`view` מפסיק לקבל הערות ברגע זה — וזו הנקודה של הבורר.
+ * ההערות שכבר נכתבו נשארות ומוצגות; מחיקתן היא פעולה אחרת שהמשתמש
+ * לא ביקש, ולמחוק דעות של אנשים בלי שביקשו זה לא "צמצום הרשאה".
+ */
+export const setShareMode = async (code, mode) => {
+  if (!['view', 'comment'].includes(mode)) throw new Error('INVALID_MODE');
+  const existing = await getShare(code);
+  if (!existing) return null;
+  const updated = { ...existing, mode, updatedAt: new Date().toISOString() };
+  await setDoc(tripRef(code), updated);
+  return updated;
+};
+
+/**
  * מוסיף או מעדכן את ההערה של הכותב.
  *
  * ── מדוע הערה אחת לכל אדם ──
@@ -174,4 +191,4 @@ export const revokeShare = async (code) => {
   return true;
 };
 
-export default { createShare, getShare, refreshShare, revokeShare, addComment, snapshotOf, expiryFor };
+export default { createShare, getShare, refreshShare, revokeShare, addComment, setShareMode, snapshotOf, expiryFor };

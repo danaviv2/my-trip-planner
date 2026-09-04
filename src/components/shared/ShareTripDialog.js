@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Box, Typography, IconButton, Snackbar, Alert,
-  Divider,
+  Divider, ToggleButton, ToggleButtonGroup,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
@@ -16,7 +16,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import PinterestIcon from '@mui/icons-material/Pinterest';
 import SvgIcon from '@mui/material/SvgIcon';
-import { createShare, refreshShare } from '../../services/sharedTripService';
+import { createShare, refreshShare, setShareMode } from '../../services/sharedTripService';
 import { useAuth } from '../../contexts/AuthContext';
 
 const TikTokIcon = (props) => (
@@ -74,6 +74,30 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
   const createdFor = useRef(null);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshed, setRefreshed] = useState(false);
+  const [mode, setMode] = useState('comment');
+  const [modeSaving, setModeSaving] = useState(false);
+
+  /** שינוי רמת ההרשאה של שיתוף קיים. */
+  const handleModeChange = async (next) => {
+    const code = sharedUrl.split('/trip/')[1];
+    if (!code || next === mode) return;
+    const prev = mode;
+    setMode(next);           // תגובה מיידית למגע
+    setModeSaving(true);
+    try {
+      const res = await setShareMode(code, next);
+      // חזרה למצב הקודם כשהשמירה נכשלה: בורר שמראה מצב שלא נשמר
+      // הוא שקר על המסך, ומכאן ועד לשיתוף עם הרשאה לא נכונה קצר.
+      if (!res) { setMode(prev); showSnackbar('השיתוף כבר אינו קיים.', 'warning'); }
+      else showSnackbar(next === 'view' ? 'הועבר לצפייה בלבד' : 'הערות נפתחו');
+    } catch {
+      setMode(prev);
+      showSnackbar('שינוי ההרשאה נכשל.', 'error');
+    } finally {
+      setModeSaving(false);
+    }
+  };
+
 
   /** מרענן את תמונת המצב לקוד שכבר נוצר. */
   const handleRefresh = async () => {
@@ -116,6 +140,7 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
       .then((share) => {
         if (!alive) return;
         createdFor.current = key;
+        setMode(share.mode || 'comment');
         setSharedUrl(`${window.location.origin}/trip/${share.code}`);
       })
       .catch((err) => {
@@ -262,6 +287,39 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
                 }}
               >
                 {sharedUrl}
+              </Typography>
+
+              {/* ── בורר ההרשאות ──
+                  שתי אפשרויות שעובדות ונאכפות בחוקי האבטחה, ואחת
+                  מושבתת עם הסבר.
+
+                  **הפיתוי היה תפריט של שלוש.** אבל עריכה משותפת אינה
+                  קיימת: אין מבנה נתונים שמאפשר לשני אנשים לשנות את
+                  אותו מסלול, ואין הכרעה מה קורה כששניהם עורכים אותו
+                  יום. אפשרות שנראית זמינה ואינה עושה דבר היא בדיוק
+                  מה שהחזיר אותנו לכאן — "שתף טיול" ששלח שם עיר. */}
+              <ToggleButtonGroup
+                value={mode}
+                exclusive
+                size="small"
+                onChange={(e, v) => v && handleModeChange(v)}
+                sx={{ mt: 1.5, mb: .5, display: 'flex', flexWrap: 'wrap' }}
+              >
+                <ToggleButton value="view" disabled={modeSaving} sx={{ flex: 1, minHeight: 40 }}>
+                  לצפייה בלבד
+                </ToggleButton>
+                <ToggleButton value="comment" disabled={modeSaving} sx={{ flex: 1, minHeight: 40 }}>
+                  לצפייה ולהערות
+                </ToggleButton>
+                <ToggleButton value="edit" disabled sx={{ flex: 1, minHeight: 40 }}>
+                  לעריכה
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                {mode === 'view'
+                  ? 'מי שמקבל את הקישור יראה את המסלול ולא יוכל להעיר.'
+                  : 'מי שמקבל את הקישור יוכל להעיר. הצפייה אינה דורשת התחברות, הערה כן.'}
+                {' '}עריכה משותפת עדיין לא נבנתה.
               </Typography>
 
               {/* "עדכן את השיתוף" — הצד השני של ההחלטה על תמונת מצב.
