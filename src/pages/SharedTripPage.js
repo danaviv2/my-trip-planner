@@ -28,7 +28,7 @@ import {
   Place as PlaceIcon,
   Visibility as ViewIcon,
 } from '@mui/icons-material';
-import { getShare, addComment, watchShare, editShared } from '../services/sharedTripService';
+import { getShare, addComment, watchShare, editShared, requestEditAccess } from '../services/sharedTripService';
 import { useAuth } from '../contexts/AuthContext';
 
 /** תאריך יום במסלול, נגזר מתאריך ההתחלה. */
@@ -48,6 +48,7 @@ const SharedTripPage = () => {
   const [draft, setDraft] = useState('');
   const [posting, setPosting] = useState(false);
   const [commentError, setCommentError] = useState('');
+  const [asking, setAsking] = useState(false);
 
   const comments = state.share?.comments || {};
   const commentList = Object.entries(comments)
@@ -56,7 +57,11 @@ const SharedTripPage = () => {
 
   // עריכה דורשת מצב 'edit' **וגם** זהות. שני התנאים נאכפים גם בחוקי
   // האבטחה; כאן הם רק קובעים מה מוצג, ולא מה מותר.
-  const canEdit = state.share?.mode === 'edit' && Boolean(user);
+  // ההרשאה היא **לאדם ולא לקישור**: מי שמחזיק בכתובת אינו עורך עד
+  // שהמשתף אישר אותו במפורש. קישור עובר הלאה; אישור לא.
+  const editors = state.share?.editors || {};
+  const canEdit = state.share?.mode === 'edit' && Boolean(user) && Boolean(editors[user?.uid]);
+  const askedAlready = Boolean(user && state.share?.requests?.[user.uid]);
 
   const handleComment = async () => {
     if (!user || !draft.trim()) return;
@@ -247,6 +252,29 @@ const SharedTripPage = () => {
           )}
         </Paper>
       ))}
+
+      {/* בקשת הרשאת עריכה — כשהמצב פתוח לעריכה אך המשתמש לא אושר */}
+      {state.share.mode === 'edit' && user && !canEdit && (
+        <Paper elevation={0} sx={{ p: 2, mt: 3, borderRadius: 2, bgcolor: 'action.hover' }}>
+          <Typography variant="body2" mb={1.5}>
+            {askedAlready
+              ? 'הבקשה נשלחה. המשתף יראה אותה ויאשר.'
+              : 'המסלול פתוח לעריכה משותפת, אבל צריך אישור מהמשתף.'}
+          </Typography>
+          <Button
+            variant="outlined" size="small"
+            disabled={askedAlready || asking}
+            onClick={async () => {
+              setAsking(true);
+              try { await requestEditAccess(code, user.uid, user.displayName || user.email); }
+              catch { setCommentError('הבקשה נכשלה. נסה שוב.'); }
+              finally { setAsking(false); }
+            }}
+          >
+            {askedAlready ? 'ממתין לאישור' : 'בקש הרשאת עריכה'}
+          </Button>
+        </Paper>
+      )}
 
       {/* ── הערות ──
           הפידבק חוזר לתוך הטיול במקום להתפזר בצ׳אטים.

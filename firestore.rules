@@ -117,7 +117,7 @@ service cloud.firestore {
       function shapeValid() {
         return request.resource.data.keys().hasOnly(
                  ['code', 'ownerUid', 'mode', 'createdAt', 'expiresAt', 'snapshot',
-                  'updatedAt', 'comments'])
+                  'updatedAt', 'comments', 'editors', 'requests'])
           && request.resource.data.code == code
           && request.resource.data.mode in ['view', 'comment', 'edit']
           && request.resource.data.snapshot is map;
@@ -160,12 +160,38 @@ service cloud.firestore {
       //
       // **המצב עצמו נשלט בידי הבעלים בלבד**, ולכן הוא יכול לסגור את
       // העריכה בכל רגע וזה נאכף מיד.
+      // ── עריכה מותרת למי שהמשתף אישר, לא למי שמחזיק בקישור ──
+      //
+      // עד 05.09.2026 mode=='edit' פתח עריכה לכל משתמש מחובר שהחזיק
+      // בקישור. קישור שנשלח בוואטסאפ מועבר הלאה, ולכן "הרשאה לקישור"
+      // היא הרשאה לכל מי שהקישור הגיע אליו.
+      //
+      // עכשיו ההרשאה היא **לאדם**: רק מי שמזההו נמצא ב-`editors`,
+      // ורק הבעלים כותב לשם.
       function collaboratorEdit() {
         return request.auth != null
           && resource.data.mode == 'edit'
+          && resource.data.editors != null
+          && request.auth.uid in resource.data.editors
           && request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['snapshot', 'updatedAt'])
           && request.resource.data.snapshot is map;
+      }
+
+      // ── בקשת הרשאה ──
+      //
+      // אותו מודל שכבר מוכח פעמיים כאן: הבקשות ממופתחות לפי מזהה
+      // המבקש, ולכן אדם יכול לבקש רק בשם עצמו — ולא לאשר את עצמו,
+      // כי `editors` אינו נוגע.
+      function ownRequestOnly() {
+        return request.auth != null
+          && resource.data.mode == 'edit'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['requests'])
+          && request.resource.data.requests.diff(resource.data.requests)
+               .affectedKeys().hasOnly([request.auth.uid])
+          && request.resource.data.requests[request.auth.uid].keys().hasOnly(['name', 'at'])
+          && request.resource.data.requests[request.auth.uid].name is string
+          && request.resource.data.requests[request.auth.uid].name.size() <= 40;
       }
 
       allow get: if true;
@@ -183,7 +209,7 @@ service cloud.firestore {
           && shapeValid()
           && request.resource.data.ownerUid == resource.data.ownerUid
           && request.resource.data.code == resource.data.code
-        ) || ownCommentOnly() || collaboratorEdit();
+        ) || ownCommentOnly() || collaboratorEdit() || ownRequestOnly();
 
       allow delete: if isOwner();
     }

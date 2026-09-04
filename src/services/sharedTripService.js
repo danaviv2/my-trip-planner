@@ -107,6 +107,10 @@ export const createShare = async (trip, uid, mode = 'comment') => {
     // `resource.data.comments`, ושדה שאינו קיים היה מפיל את ההשוואה
     // ומונע את ההערה הראשונה — תקלה שהייתה נראית כבאג הרשאות.
     comments: {},
+    // נוצרים ריקים מראש: החוקים משווים מולם, ושדה שאינו קיים מפיל
+    // את ההשוואה — תקלה שנראית כבאג הרשאות.
+    editors: {},
+    requests: {},
   };
 
   await setDoc(tripRef(code), shared);
@@ -230,6 +234,43 @@ export const setShareMode = async (code, mode) => {
 };
 
 /**
+ * מבקש הרשאת עריכה.
+ *
+ * המבקש כותב **רק את המפתח של עצמו** — אותו מודל שכבר מוכח כאן
+ * בהצבעות ובהערות. הוא אינו יכול לאשר את עצמו, כי `editors` אינו
+ * נוגע בבקשה.
+ */
+export const requestEditAccess = async (code, uid, name) => {
+  if (!code || !uid) throw new Error('INVALID_REQUEST');
+  await updateDoc(tripRef(code), {
+    [`requests.${uid}`]: { name: String(name || 'אורח').slice(0, 40), at: new Date().toISOString() },
+  });
+  return true;
+};
+
+/**
+ * הבעלים מאשר או מסיר הרשאת עריכה.
+ *
+ * ── למה זה קיים ──
+ * עד 05.09.2026 `mode: 'edit'` פתח עריכה לכל מי שהחזיק בקישור והיה
+ * מחובר. קישור שנשלח בוואטסאפ מועבר הלאה, ולכן "הרשאה לקישור" היא
+ * הרשאה לכל מי שהקישור הגיע אליו. ההרשאה היא לאדם.
+ */
+export const setEditor = async (code, uid, name, allowed) => {
+  if (!code || !uid) throw new Error('INVALID_EDITOR');
+  const current = await getShare(code);
+  if (!current) return null;
+  const editors = { ...(current.editors || {}) };
+  const requests = { ...(current.requests || {}) };
+  if (allowed) editors[uid] = { name: String(name || 'שותף').slice(0, 40), at: new Date().toISOString() };
+  else delete editors[uid];
+  // הבקשה יורדת בשני המקרים: אושרה או נדחתה, היא טופלה.
+  delete requests[uid];
+  await setDoc(tripRef(code), { ...current, editors, requests, updatedAt: new Date().toISOString() });
+  return true;
+};
+
+/**
  * מוסיף או מעדכן את ההערה של הכותב.
  *
  * ── מדוע הערה אחת לכל אדם ──
@@ -260,4 +301,4 @@ export const revokeShare = async (code) => {
   return true;
 };
 
-export default { createShare, getShare, watchShare, editShared, refreshShare, revokeShare, addComment, setShareMode, snapshotOf, expiryFor };
+export default { createShare, getShare, watchShare, editShared, refreshShare, revokeShare, addComment, setShareMode, requestEditAccess, setEditor, snapshotOf, expiryFor };

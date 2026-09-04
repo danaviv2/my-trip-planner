@@ -16,7 +16,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import PinterestIcon from '@mui/icons-material/Pinterest';
 import SvgIcon from '@mui/material/SvgIcon';
-import { createShare, refreshShare, setShareMode, revokeShare } from '../../services/sharedTripService';
+import { createShare, refreshShare, setShareMode, revokeShare, setEditor, watchShare } from '../../services/sharedTripService';
 import { useAuth } from '../../contexts/AuthContext';
 
 const TikTokIcon = (props) => (
@@ -77,6 +77,31 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
   const [mode, setMode] = useState('comment');
   const [modeSaving, setModeSaving] = useState(false);
   const [revoking, setRevoking] = useState(false);
+  const [live, setLive] = useState(null);
+
+  // האזנה למסמך כדי לראות בקשות הרשאה ברגע שהן מגיעות. בלי זה היית
+  // צריך לסגור ולפתוח את החלון כדי לגלות שמישהו מחכה.
+  useEffect(() => {
+    const code = sharedUrl.split('/trip/')[1];
+    if (!open || !code) return undefined;
+    return watchShare(code, setLive);
+  }, [open, sharedUrl]);
+
+  const requests = Object.entries(live?.requests || {});
+  const editorList = Object.entries(live?.editors || {});
+
+  /** אישור או הסרה של שותף. */
+  const decide = async (uid, name, allowed) => {
+    const code = sharedUrl.split('/trip/')[1];
+    if (!code) return;
+    try {
+      await setEditor(code, uid, name, allowed);
+      showSnackbar(allowed ? `${name} יכול לערוך` : `ההרשאה של ${name} הוסרה`);
+    } catch {
+      showSnackbar('הפעולה נכשלה.', 'error');
+    }
+  };
+
 
   /** ביטול מיידי של הקישור. */
   const handleRevoke = async () => {
@@ -349,9 +374,42 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
                   להיראות ברגע שמקבלים אותה, לא להתגלות אחר כך. */}
               {mode === 'edit' && (
                 <Alert severity="warning" sx={{ mb: 1.5, py: .5 }}>
-                  מתאים לשותף אחד, לא לקבוצה. כל מי שיקבל את הקישור
-                  ויתחבר יוכל לשנות את המסלול — וקישורים עוברים הלאה.
+                  אף אחד לא עורך עד שתאשר אותו אישית. מי שפותח את
+                  הקישור יוכל לבקש הרשאה, והבקשה תופיע כאן.
                 </Alert>
+              )}
+
+              {/* ── מי מבקש, ומי כבר עורך ──
+                  ההרשאה היא לאדם ולא לקישור, ולכן צריך מקום שבו
+                  רואים את שניהם. בלי הרשימה הזו "אישרתי מישהו" הוא
+                  זיכרון ולא מצב. */}
+              {requests.length > 0 && (
+                <Box sx={{ mb: 1.5 }}>
+                  <Typography variant="caption" fontWeight={700} display="block" mb={.5}>
+                    ממתינים לאישור עריכה
+                  </Typography>
+                  {requests.map(([uid, r]) => (
+                    <Box key={uid} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: .5 }}>
+                      <Typography variant="body2" sx={{ flex: 1 }}>{r.name}</Typography>
+                      <Button size="small" onClick={() => decide(uid, r.name, true)}>אשר</Button>
+                      <Button size="small" color="error" onClick={() => decide(uid, r.name, false)}>דחה</Button>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+
+              {editorList.length > 0 && (
+                <Box sx={{ mb: 1.5 }}>
+                  <Typography variant="caption" fontWeight={700} display="block" mb={.5}>
+                    מורשים לערוך
+                  </Typography>
+                  {editorList.map(([uid, e]) => (
+                    <Box key={uid} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: .5 }}>
+                      <Typography variant="body2" sx={{ flex: 1 }}>{e.name}</Typography>
+                      <Button size="small" color="error" onClick={() => decide(uid, e.name, false)}>הסר</Button>
+                    </Box>
+                  ))}
+                </Box>
               )}
 
               {/* "עדכן את השיתוף" — הצד השני של ההחלטה על תמונת מצב.
