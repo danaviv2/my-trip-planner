@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
@@ -16,6 +16,8 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import PinterestIcon from '@mui/icons-material/Pinterest';
 import SvgIcon from '@mui/material/SvgIcon';
+import { createShare } from '../../services/sharedTripService';
+import { useAuth } from '../../contexts/AuthContext';
 
 const TikTokIcon = (props) => (
   <SvgIcon {...props} viewBox="0 0 24 24">
@@ -52,9 +54,59 @@ const ShareButton = ({ icon, label, color, onClick }) => (
 const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, label }) => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const { t } = useTranslation();
+  const { user } = useAuth();
 
   const destination = trip.destination || trip.endPoint || '';
-  const shareUrl = shareUrlProp || `${window.location.origin}/trip-planner?destination=${encodeURIComponent(destination)}`;
+
+  /**
+   * ── מה שהיה כאן עד 04.09.2026 ──
+   * הקישור היה תמיד `?destination=` ושם העיר, כלומר **שם עיר בלבד**.
+   * מסלול מתוכנן לשבוע ברומא נשלח כמתכנן ריק, כי לא היה מסמך משותף
+   * להפנות אליו. עכשיו יש, ולכן טיול עם מסלול מקבל קישור אמיתי.
+   *
+   * הנפילה חזרה ל-`?destination=` נשמרת בכוונה: שיתוף של **יעד**
+   * מדף הבית אינו טיול, ושם הקישור הישן הוא הנכון — הוא נוחת במתכנן
+   * עם היעד ממולא.
+   */
+  const [sharedUrl, setSharedUrl] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [shareError, setShareError] = useState('');
+  const createdFor = useRef(null);
+
+  const hasItinerary = Boolean(trip.dailyItinerary?.length || trip.stops?.length);
+
+  useEffect(() => {
+    if (!open || shareUrlProp || !hasItinerary) return undefined;
+    const key = String(trip.id ?? destination);
+    // מפתח לפי הטיול: פתיחה חוזרת של אותו טיול באותו מפגש לא תייצר
+    // קישור שני, אחרת כל לחיצה על "שתף" הייתה מייצרת מסמך חדש.
+    if (createdFor.current === key && sharedUrl) return undefined;
+
+    let alive = true;
+    setCreating(true);
+    setShareError('');
+    createShare(trip, user?.uid)
+      .then((share) => {
+        if (!alive) return;
+        createdFor.current = key;
+        setSharedUrl(`${window.location.origin}/trip/${share.code}`);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        // כישלון מדווח ככישלון. קישור ישן שמוצג כאילו הוא חדש הוא
+        // בדיוק סוג התקלה שהפרויקט הזה מתעד.
+        setShareError(err?.message === 'EMPTY_TRIP'
+          ? 'אין עדיין מסלול לשתף — תכנן ימים ואז שתף.'
+          : 'יצירת הקישור נכשלה. נסה שוב.');
+      })
+      .finally(() => { if (alive) setCreating(false); });
+
+    return () => { alive = false; };
+  }, [open, shareUrlProp, hasItinerary, trip, user, destination, sharedUrl]);
+
+  const shareUrl = shareUrlProp
+    || sharedUrl
+    || `${window.location.origin}/trip-planner?destination=${encodeURIComponent(destination)}`;
   const displayLabel = label || destination;
   const shareText = t('share.shareText', { label: displayLabel ? ` — ${displayLabel}` : '', url: shareUrl });
 
@@ -153,6 +205,20 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
         <Divider />
 
         <DialogContent sx={{ pt: 2.5, pb: 1 }}>
+          {/* מצב יצירת הקישור מוצג, ולא נבלע.
+              בלי זה, כישלון היה מפיל את הדיאלוג בשקט חזרה לקישור הישן
+              — זה שמוביל למתכנן ריק — והמשתמש היה משתף אותו בהנחה
+              שהכול תקין. כישלון שנראה כהצלחה הוא דפוס הכשל שהפרויקט
+              הזה מתעד יותר מכל אחר. */}
+          {creating && (
+            <Alert severity="info" sx={{ mb: 2 }}>מכין קישור למסלול…</Alert>
+          )}
+          {shareError && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              {shareError}
+              {' '}הקישור שיישלח יפתח את המתכנן עם היעד, בלי המסלול.
+            </Alert>
+          )}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             <ShareButton icon={<WhatsAppIcon />} label={t('share.whatsapp')} color="#25D366" onClick={handleWhatsApp} />
             <ShareButton icon={<LinkIcon />} label={t('share.copyLink')} color="#667eea" onClick={handleCopyLink} />

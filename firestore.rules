@@ -90,6 +90,55 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.createdBy == request.auth.uid;
     }
 
+    // ── טיול משותף לקריאה ──
+    //
+    // עד 04.09.2026 "שתף טיול" שלח `?destination=Rome` — שם העיר בלבד,
+    // כי הטיולים יושבים תחת users/{uid} ואין למה להפנות. זה המסמך
+    // שאפשר להפנות אליו: תמונת מצב, לא מראה חיה של הטיול המקורי.
+    //
+    // **get פתוח לכל, ו-list חסום.** זו החלטה ולא רשלנות:
+    // • הנמען אינו נדרש להתחבר. שיתוף שמחייב הרשמה אינו שיתוף — הוא
+    //   דף נחיתה, ובן הזוג שרק רצה לראות את המסלול נוטש.
+    // • הקוד באורך 10 תווים מאלפבית בן 31, כלומר כ-8×10^14 צירופים,
+    //   ומופק מ-crypto.getRandomValues. אי אפשר לנחש אותו.
+    // • list חסום, ולכן אי אפשר למנות קודים בסריקה — בדיוק כמו
+    //   ב-groupTrips. בלעדיו כל ההגנה הייתה חסרת ערך.
+    // • התוכן נמדד: 25 טיולים, 758KB, אפס מספרי אסמכתה ואפס שמות
+    //   נוסעים. השירות שולח רשימת היתר ולא את הטיול כולו.
+    match /sharedTrips/{code} {
+
+      function isOwner() {
+        return request.auth != null
+          && request.auth.uid == resource.data.ownerUid;
+      }
+
+      // המבנה נאכף כאן ולא בצד הלקוח: מי שקורא ל-API ישירות עוקף
+      // כל ולידציה שנעשית בדפדפן.
+      function shapeValid() {
+        return request.resource.data.keys().hasOnly(
+                 ['code', 'ownerUid', 'mode', 'createdAt', 'expiresAt', 'snapshot', 'updatedAt'])
+          && request.resource.data.code == code
+          && request.resource.data.mode in ['view', 'comment']
+          && request.resource.data.snapshot is map;
+      }
+
+      allow get: if true;
+      allow list: if false;
+
+      allow create: if request.auth != null
+        && shapeValid()
+        && request.resource.data.ownerUid == request.auth.uid;
+
+      // הבעלות והקוד אינם ניתנים לשינוי לאחר היצירה: בלי זה אפשר היה
+      // להשתלט על שיתוף קיים או להפנות קוד ידוע לתוכן אחר.
+      allow update: if isOwner()
+        && shapeValid()
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.code == resource.data.code;
+
+      allow delete: if isOwner();
+    }
+
     // כל השאר חסום. כלל מפורש עדיף על הסתמכות על ברירת המחדל.
     match /{document=**} {
       allow read, write: if false;

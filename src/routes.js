@@ -9,6 +9,7 @@ const TravelServicesBooking = React.lazy(() => import('./components/booking/Trav
 const TripPlannerMapView = React.lazy(() => import('./components/maps/TripPlannerMapView'));
 // ייבוא הדפים השונים (lazy)
 const HomePage = React.lazy(() => import('./pages/HomePage'));
+const SharedTripPage = React.lazy(() => import('./pages/SharedTripPage'));
 const TravelInfoPage = React.lazy(() => import('./pages/TravelInfoPage'));
 const AdvancedSearchPage = React.lazy(() => import('./pages/AdvancedSearchPage'));
 const MapPage = React.lazy(() => import('./pages/MapPage'));
@@ -86,6 +87,10 @@ const AppRoutes = () => {
 
       {/* התחברות */}
       <Route path="/login" element={<LoginPage />} />
+
+      {/* מסלול משותף. **מחוץ ל-ProtectedRoute בכוונה** — שיתוף
+          שדורש הרשמה אינו שיתוף. ההגנה היא הקוד עצמו ו-list חסום. */}
+      <Route path="/trip/:code" element={<SharedTripPage />} />
 
       {/* נתיב ברירת מחדל - מפנה לדף הבית */}
       <Route path="*" element={<HomePage />} />
