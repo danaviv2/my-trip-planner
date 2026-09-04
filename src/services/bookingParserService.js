@@ -158,6 +158,17 @@ Return this exact structure:
       "price": "total price with currency symbol, or null"
     }
   ],
+  "restaurants": [
+    {
+      "name": "restaurant name",
+      "confirmationNumber": "reservation reference, or null",
+      "date": "YYYY-MM-DD",
+      "time": "HH:MM of the table, or null",
+      "location": "street address of the restaurant",
+      "guests": 2,
+      "price": "prepaid amount with currency symbol, or null"
+    }
+  ],
   "hotel": {
     "name": "hotel or accommodation name",
     "confirmationNumber": "reference",
@@ -245,8 +256,17 @@ Rules:
   guessing one.
 - If there are no activities, return an empty array. Do NOT invent any.
 - If there are no flights, return an empty array. Do NOT invent flights.
-- Restaurant reservations are NOT accommodation. If the booking is for a
-  restaurant table, set "isBooking" to false.
+- A restaurant table IS a booking, and it belongs in "restaurants" — never in
+  "hotel" and never in "activities". It is not accommodation: there is no
+  checkOut, and "time" is the hour of the table. Google Reserve writes "Your
+  reservation at <NAME> is confirmed", Tabit writes "הזמנתך ל<NAME> אושרה";
+  both put the address, the party size and the local time in the body.
+  If there are no restaurant tables, return an empty array. Do NOT invent one.
+- A mail that merely RECOMMENDS restaurants is not a booking. Ontopo sends only
+  marketing — 13 such mails were measured, every one ending in "| פרסומת" — and
+  a listing of places with no table, no hour and no party size in the traveller's
+  name must return "isBooking": false. A table invented from a newsletter puts an
+  appointment nobody made into the itinerary, which is worse than missing one.
 - A customer-service reply, support ticket or correspondence about a booking is
   NOT itself a booking. Such messages quote a reference number and sometimes a
   date, but they describe a conversation, not a reservation. Signals: a subject
@@ -268,6 +288,7 @@ const normalizeParsed = (raw) => {
 
   const flights = Array.isArray(parsed.flights) ? parsed.flights : [];
   const activities = Array.isArray(parsed.activities) ? parsed.activities : [];
+  const restaurants = Array.isArray(parsed.restaurants) ? parsed.restaurants : [];
 
   const cancelled = parsed.status === 'cancelled';
   const cancelledReferences = Array.isArray(parsed.cancelledReferences)
@@ -281,7 +302,7 @@ const normalizeParsed = (raw) => {
     isBooking:
       parsed.isBooking !== false &&
       (flights.length > 0 || !!parsed.carRental || !!parsed.hotel ||
-       !!parsed.insurance || activities.length > 0 ||
+       !!parsed.insurance || activities.length > 0 || restaurants.length > 0 ||
        (cancelled && cancelledReferences.length > 0)),
     cancelledReferences,
     // מייל ביטול נראה כמו אישור לכל דבר ומכיל את אותם פרטים. בלי השדה
@@ -342,6 +363,18 @@ const normalizeParsed = (raw) => {
       location: a.location || '',
       guests: Number(a.guests) || null,
       price: a.price || '',
+    })),
+    // אותם שדות בדיוק כמו פעילות — שם, מועד, מקום ומספר סועדים. הסוג
+    // נפרד ממנה לא בגלל המבנה אלא בגלל המשמעות: שולחן שהוזמן לשבע הוא
+    // אילוץ על הערב, ואטרקציה אינה.
+    restaurants: restaurants.map((r) => ({
+      name: r.name || '',
+      confirmationNumber: r.confirmationNumber || '',
+      date: r.date || '',
+      time: r.time || '',
+      location: r.location || '',
+      guests: Number(r.guests) || null,
+      price: r.price || '',
     })),
     hotel: parsed.hotel
       ? {
@@ -416,18 +449,18 @@ export const parseTravelDocumentFromPdf = async (base64Pdf) => {
 
 /** אמוג'י לפי סוג הזמנה */
 export const bookingEmoji = (type) => {
-  const map = { hotel: '🏨', flight: '✈️', car_rental: '🚗', activity: '🎫' };
+  const map = { hotel: '🏨', flight: '✈️', car_rental: '🚗', activity: '🎫', restaurant: '🍽️' };
   return map[type] || '📋';
 };
 
 /** צבע לפי סוג הזמנה */
 export const bookingColor = (type) => {
-  const map = { hotel: '#4CAF50', flight: '#2196F3', car_rental: '#FF9800', activity: '#9C27B0' };
+  const map = { hotel: '#4CAF50', flight: '#2196F3', car_rental: '#FF9800', activity: '#9C27B0', restaurant: '#C2185B' };
   return map[type] || '#667eea';
 };
 
 /** תווית עברית לסוג */
 export const bookingLabel = (type) => {
-  const map = { hotel: 'מלון', flight: 'טיסה', car_rental: 'השכרת רכב', activity: 'פעילות' };
+  const map = { hotel: 'מלון', flight: 'טיסה', car_rental: 'השכרת רכב', activity: 'פעילות', restaurant: 'מסעדה' };
   return map[type] || 'הזמנה';
 };

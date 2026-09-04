@@ -77,6 +77,7 @@ const LABELS = {
   car_rental: 'רכב',
   transfer: 'הסעות',
   activity: 'אטרקציות',
+  restaurant: 'מסעדות',
   insurance: 'ביטוח',
 };
 

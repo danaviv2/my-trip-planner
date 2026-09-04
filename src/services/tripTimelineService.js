@@ -71,6 +71,7 @@ const EVENT_META = {
   'car-return': { icon: '🔑', color: '#e65100', label: 'החזרת רכב' },
   transfer: { icon: '🚕', color: '#f9a825', label: 'הסעה' },
   activity: { icon: '🎟️', color: '#2e7d32', label: 'פעילות' },
+  restaurant: { icon: '🍽️', color: '#c2185b', label: 'מסעדה' },
   custom: { icon: '📌', color: '#00838f', label: 'תוכנית' },
 };
 
@@ -94,6 +95,10 @@ export const placeOf = (kind, b) => {
       return b.pickupLocation || '';
     case 'activity':
       return b.location || b.name || '';
+    // המסעדה עצמה היא המקום, ולכן שמה משמש גיבוי לכתובת: "אלנה" על
+    // המפה עדיף על שורה ריקה, וניתן לחפש אותו.
+    case 'restaurant':
+      return b.location || b.address || b.name || '';
     case 'custom':
       return b.location || '';
     default:
@@ -134,6 +139,14 @@ const describe = (kind, b) => {
       };
     case 'activity':
       return { title: b.name || 'פעילות', detail: b.location || '', extra: b.participants ? `${b.participants} משתתפים` : '' };
+    case 'restaurant':
+      return {
+        title: b.name || 'מסעדה',
+        detail: b.location || b.address || '',
+        // מספר הסועדים הוא מה שמבדיל שולחן מהזמנה סתם, והוא הדבר
+        // היחיד שצריך לזכור בדרך. מוצג רק כשהאישור נשא אותו.
+        extra: b.guests ? `${b.guests} סועדים` : '',
+      };
     case 'custom':
       return { title: b.title || 'פריט בתוכנית', detail: b.location || '', extra: b.note || '' };
     default:
@@ -204,6 +217,15 @@ export const eventsFor = (b) => {
       break;
     case 'activity':
       push('activity', b.date, b.time);
+      break;
+    // שולחן שהוזמן לשבע הוא אילוץ קשה על הערב, ולא פחות מכרטיס בשעה
+    // קבועה. בלי השורה הזו הוא נפל ל-default והתנהג כמו פוליסת ביטוח:
+    // נשמר במאגר ולא הופיע בשום יום.
+    //
+    // בלי שעה הוא נשאר allDay ואינו מקבל DAY_ANCHOR — אין לדעת אם זו
+    // ארוחת צהריים או ערב, וסדר מומצא היה מזיז סביבו את שאר היום.
+    case 'restaurant':
+      push('restaurant', b.date, b.time);
       break;
     case 'custom':
       push('custom', b.date, b.time);

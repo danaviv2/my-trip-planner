@@ -255,6 +255,7 @@ const TravelInfoComponent = () => {
                     {trip.summary.cars > 0 && <Chip size="small" label={`🚗 ${trip.summary.cars} רכב`} />}
                     {trip.summary.transfers > 0 && <Chip size="small" label={`🚕 ${trip.summary.transfers} הסעות`} />}
                     {trip.summary.activities > 0 && <Chip size="small" label={`🎟️ ${trip.summary.activities} אטרקציות`} />}
+                    {trip.summary.restaurants > 0 && <Chip size="small" label={`🍽️ ${trip.summary.restaurants} מסעדות`} />}
                     {trip.summary.insurance > 0 && <Chip size="small" color="success" label="🛡️ מבוטח" />}
                   </Box>
                 </Box>

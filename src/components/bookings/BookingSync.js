@@ -17,6 +17,9 @@ const FIELD_MAP = {
   flight:     [['name','טיסה'], ['from','מוצא'], ['to','יעד'], ['checkIn','יציאה'], ['checkOut','חזרה'], ['passengers','נוסעים'], ['price','מחיר'], ['confirmationNumber','מספר הזמנה']],
   car_rental: [['name','חברה'], ['destination','מיקום'], ['checkIn','איסוף'], ['checkOut','החזרה'], ['price','מחיר'], ['confirmationNumber','מספר אישור']],
   activity:   [['name','פעילות'], ['destination','יעד'], ['checkIn','תאריך'], ['price','מחיר'], ['confirmationNumber','מספר אישור'], ['notes','הערות']],
+  // בלי השורה הזו הכרטיס נפל ל-FIELD_MAP.hotel, והציג "צ׳ק-אאוט" ו"לילות"
+  // ריקים לשולחן במסעדה — שדות שאין להם משמעות כאן.
+  restaurant: [['name','מסעדה'], ['address','כתובת'], ['checkIn','תאריך'], ['time','שעה'], ['guests','סועדים'], ['price','מחיר'], ['confirmationNumber','מספר אישור']],
 };
 
 const BookingCard = ({ booking, onAdd, added }) => {

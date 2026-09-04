@@ -47,6 +47,7 @@ const toBookings = (result, source = {}) => [
   ...(result.hotel ? [{ ...result.hotel, type: 'hotel' }] : []),
   ...(result.insurance ? [{ ...result.insurance, type: 'insurance' }] : []),
   ...(result.activities || []).map((a) => ({ ...a, type: 'activity' })),
+  ...(result.restaurants || []).map((r) => ({ ...r, type: 'restaurant' })),
 ].map((b) => ({ ...b, ...source }));
 
 /**

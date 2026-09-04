@@ -169,7 +169,11 @@ const undatedTrip = (group) => ({
     hotels: group.filter((x) => x.type === 'hotel').length,
     cars: group.filter((x) => x.type === 'car_rental').length,
     transfers: group.filter((x) => x.type === 'transfer').length,
-    activities: group.filter((x) => x.type === 'activity' || x.type === 'restaurant').length,
+    activities: group.filter((x) => x.type === 'activity').length,
+    // נספרת בנפרד ולא נבלעת ב"אטרקציות". הקיבוץ המשותף היה נכון —
+    // מסעדה אכן מתנהגת כמו פעילות — אבל הספירה נראית למשתמש, ושולחן
+    // שמוצג כ"אטרקציה" הוא תווית שגויה על מסך.
+    restaurants: group.filter((x) => x.type === 'restaurant').length,
     insurance: group.filter((x) => x.type === 'insurance').length,
   },
 });
@@ -421,7 +425,11 @@ export const groupBookingsIntoTrips = (bookings = []) => {
         hotels: group.filter((x) => x.type === 'hotel').length,
         cars: group.filter((x) => x.type === 'car_rental').length,
         transfers: group.filter((x) => x.type === 'transfer').length,
-        activities: group.filter((x) => x.type === 'activity' || x.type === 'restaurant').length,
+        activities: group.filter((x) => x.type === 'activity').length,
+    // נספרת בנפרד ולא נבלעת ב"אטרקציות". הקיבוץ המשותף היה נכון —
+    // מסעדה אכן מתנהגת כמו פעילות — אבל הספירה נראית למשתמש, ושולחן
+    // שמוצג כ"אטרקציה" הוא תווית שגויה על מסך.
+    restaurants: group.filter((x) => x.type === 'restaurant').length,
         insurance: group.filter((x) => x.type === 'insurance').length,
       },
     };
