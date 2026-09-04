@@ -30,6 +30,7 @@ import TripChatWidget from './components/chat/TripChatWidget';
 import { TripProvider } from './contexts/TripContext';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { TripSaveProvider } from './contexts/TripSaveContext';
+import { Analytics } from '@vercel/analytics/react';
 import { BookingsProvider } from './contexts/BookingsContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -83,6 +84,22 @@ useEffect(() => {
 
             {/* רכיב הנתיבים החדש שיטפל בניתוב לדפים השונים */}
             <AppRoutes />
+
+            {/* מדידת שימוש.
+                נוסף ב-04.09.2026 אחרי ביקורת דף הבית, שבה כל ממצא על
+                *מבנה* היה מדוד — 19 יעדי מגע קטנים מ-44px, אפס הפניות
+                לנתוני המשתמש — וכל ממצא על *התנהגות* היה ניחוש. כלומר
+                השיפור הבא היה נשען על היגיון, בפרויקט שכל התרבות שלו
+                היא "אל תנחש, מדוד".
+
+                Vercel ולא Google Analytics: בלי עוגיות, ולכן בלי באנר
+                הסכמה; הנתונים מצטברים ואינם מזהים אדם. הבקשות יוצאות
+                ל-`/_vercel/insights` באותו דומיין, ולכן חוסם פרסומות
+                אינו מפיל אותן כמו סקריפט צד-שלישי.
+
+                **החבילה לבדה אינה מספיקה** — יש להפעיל Web Analytics
+                בלוח הבקרה של Vercel, אחרת הסקריפט רץ ודבר אינו נאסף. */}
+            <Analytics />
 
             {/* AI Trip Chat Widget - צ'אט חכם עם ידע על הטיולים */}
             <TripChatWidget />
