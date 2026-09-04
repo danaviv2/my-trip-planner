@@ -16,7 +16,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import PinterestIcon from '@mui/icons-material/Pinterest';
 import SvgIcon from '@mui/material/SvgIcon';
-import { createShare } from '../../services/sharedTripService';
+import { createShare, refreshShare } from '../../services/sharedTripService';
 import { useAuth } from '../../contexts/AuthContext';
 
 const TikTokIcon = (props) => (
@@ -72,6 +72,33 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
   const [creating, setCreating] = useState(false);
   const [shareError, setShareError] = useState('');
   const createdFor = useRef(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshed, setRefreshed] = useState(false);
+
+  /** מרענן את תמונת המצב לקוד שכבר נוצר. */
+  const handleRefresh = async () => {
+    const code = sharedUrl.split('/trip/')[1];
+    if (!code) return;
+    setRefreshing(true);
+    setRefreshed(false);
+    try {
+      const res = await refreshShare(code, trip);
+      // ההודעה נגזרת מהתוצאה ולא מהניסיון: refreshShare מחזיר null
+      // כשהשיתוף בוטל או פג, ו"עודכן ✓" במקרה כזה היה שקר.
+      if (res) {
+        setRefreshed(true);
+        showSnackbar('השיתוף עודכן למסלול הנוכחי');
+        setTimeout(() => setRefreshed(false), 3000);
+      } else {
+        showSnackbar('השיתוף כבר אינו קיים. שתף מחדש.', 'warning');
+      }
+    } catch {
+      showSnackbar('העדכון נכשל. נסה שוב.', 'error');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
 
   const hasItinerary = Boolean(trip.dailyItinerary?.length || trip.stops?.length);
 
@@ -218,6 +245,38 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
               {shareError}
               {' '}הקישור שיישלח יפתח את המתכנן עם היעד, בלי המסלול.
             </Alert>
+          )}
+
+          {/* הקישור מוצג ולא רק מועתק.
+              עד כה הוא נכנס ללוח בלי שאיש ראה אותו — ומי ששולח קישור
+              רוצה לדעת מה בדיוק הוא שולח, במיוחד אחרי שהקישור הקודם
+              הוביל למסך ריק. */}
+          {sharedUrl && (
+            <Box sx={{ mb: 2 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  display: 'block', p: 1.2, borderRadius: 1.5,
+                  bgcolor: 'action.hover', direction: 'ltr', textAlign: 'left',
+                  wordBreak: 'break-all', fontFamily: 'monospace',
+                }}
+              >
+                {sharedUrl}
+              </Typography>
+
+              {/* "עדכן את השיתוף" — הצד השני של ההחלטה על תמונת מצב.
+                  הקישור אינו מראה חיה בכוונה, ולכן חייבת להיות דרך
+                  מפורשת לרענן אותו. בלעדיה תמונת המצב הייתה הופכת
+                  למגבלה במקום לבחירה. */}
+              <Button
+                size="small"
+                onClick={handleRefresh}
+                disabled={refreshing}
+                sx={{ mt: .5 }}
+              >
+                {refreshing ? 'מעדכן…' : refreshed ? 'עודכן ✓' : 'עדכן את השיתוף למסלול הנוכחי'}
+              </Button>
+            </Box>
           )}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             <ShareButton icon={<WhatsAppIcon />} label={t('share.whatsapp')} color="#25D366" onClick={handleWhatsApp} />
