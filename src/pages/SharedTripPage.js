@@ -31,6 +31,17 @@ import {
 import { getShare, addComment, watchShare, editShared, requestEditAccess } from '../services/sharedTripService';
 import { useAuth } from '../contexts/AuthContext';
 
+/**
+ * קריאה עמידה של רשימה.
+ *
+ * הבאג של נתיב מנוקד לתוך מערך המיר **גם** את `dailyItinerary` **וגם**
+ * את `activities` ממערך למפה. התיקון הראשון כאן כיסה רק את הראשון,
+ * וזה בדיוק דפוס הכשל שהפרויקט מתעד: תיקון שיושם באחד ולא באחיו.
+ *
+ * לכן פונקציה אחת לשניהם — שני תיקונים נפרדים היו סוטים שוב.
+ */
+const asList = (v) => (Array.isArray(v) ? v : (v && typeof v === 'object' ? Object.values(v) : []));
+
 /** תאריך יום במסלול, נגזר מתאריך ההתחלה. */
 const dayDate = (startDate, index) => {
   if (!startDate) return '';
@@ -132,8 +143,7 @@ const SharedTripPage = () => {
   // מסמך שנהרס בגרסה קודמת מחזיק `dailyItinerary` כמפה ולא כמערך,
   // ואז `.map` נופל והמסך מציג "אירעה שגיאה". מסמך פגום צריך להיראות
   // חלקית ולא להפיל את הדף.
-  const raw = snapshot.dailyItinerary;
-  const days = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? Object.values(raw) : []);
+  const days = asList(snapshot.dailyItinerary);
 
   return (
     <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
@@ -185,7 +195,7 @@ const SharedTripPage = () => {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>{day.theme}</Typography>
           )}
 
-          {(day.activities || []).map((act, j) => (
+          {asList(day.activities).map((act, j) => (
             <Box key={j} sx={{ display: 'flex', gap: 1.5, py: 1.25,
                                borderTop: j === 0 ? 'none' : '1px solid', borderColor: 'divider' }}>
               <Typography variant="body2" sx={{
