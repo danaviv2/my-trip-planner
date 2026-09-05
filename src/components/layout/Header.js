@@ -80,11 +80,18 @@ const Header = () => {
   const LanguageSwitcher = () => (
     <>
       <Tooltip title="Language / שפה">
+        {/* ── אזור לחיצה 44px, אייקון בגודלו ──
+            נמדד ב-05.09.2026: בורר השפה היה 46×30, מצב כהה 34×34
+            והתראות 40×40 — כולם מתחת ל-44 שהוא הסף המקובל
+            (Apple/Google/WCAG). קצה אצבע מכסה כ-9 מ"מ, ומטרה קטנה מזה
+            מוחטאת — במיוחד ביד אחת בתנועה.
+            `minWidth`/`minHeight` בלבד: האייקון עצמו לא משתנה, רק
+            השטח שסביבו. */}
         <IconButton
           color="inherit"
           size="small"
           onClick={(e) => setLangAnchorEl(e.currentTarget)}
-          sx={{ gap: 0.5 }}
+          sx={{ gap: 0.5, minWidth: 44, minHeight: 44 }}
         >
           <LanguageIcon fontSize="small" />
           <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.75rem' }}>
@@ -139,7 +146,13 @@ const Header = () => {
               fontWeight: 700,
               fontSize: { xs: '1rem', md: '1.25rem' },
               whiteSpace: 'nowrap',
-              flexShrink: 0
+              flexShrink: 0,
+              // הלוגו הוא קישור לדף הבית, ונמדד 177×32 — רחב מספיק
+              // וגבוה מדי מעט. הריפוד האנכי מביא את אזור הלחיצה ל-44
+              // בלי להזיז את הטקסט: `display:flex` ממרכז אותו בתוכו.
+              display: 'flex',
+              alignItems: 'center',
+              minHeight: 44,
             }}
           >
             ✈️ My Trip Planner
@@ -151,7 +164,7 @@ const Header = () => {
               <InstallPWAButton />
               {LanguageSwitcher()}
               <Tooltip title={userPreferences.darkMode ? t('nav.lightMode') : t('nav.darkMode')}>
-                <IconButton color="inherit" onClick={toggleDarkMode} size="small">
+                <IconButton color="inherit" onClick={toggleDarkMode} size="small" sx={{ minWidth: 44, minHeight: 44 }}>
                   {userPreferences.darkMode ? <LightModeIcon /> : <DarkModeIcon />}
                 </IconButton>
               </Tooltip>
@@ -160,7 +173,7 @@ const Header = () => {
               {user ? (
                 <>
                   <Tooltip title={user.displayName || user.email}>
-                    <IconButton onClick={handleAvatarClick} size="small" sx={{ ml: 0.5 }}>
+                    <IconButton onClick={handleAvatarClick} size="small" sx={{ ml: 0.5, minWidth: 44, minHeight: 44 }}>
                       <Avatar
                         src={user.photoURL}
                         sx={{ width: 32, height: 32, bgcolor: '#764ba2', fontSize: 14 }}
@@ -258,14 +271,14 @@ const Header = () => {
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               {LanguageSwitcher()}
               <Tooltip title={userPreferences.darkMode ? t('nav.lightMode') : t('nav.darkMode')}>
-                <IconButton color="inherit" onClick={toggleDarkMode} size="small">
+                <IconButton color="inherit" onClick={toggleDarkMode} size="small" sx={{ minWidth: 44, minHeight: 44 }}>
                   {userPreferences.darkMode ? <LightModeIcon /> : <DarkModeIcon />}
                 </IconButton>
               </Tooltip>
               <NotificationCenter />
               {user ? (
                 <>
-                  <IconButton onClick={handleAvatarClick} size="small" sx={{ ml: 0.5 }}>
+                  <IconButton onClick={handleAvatarClick} size="small" sx={{ ml: 0.5, minWidth: 44, minHeight: 44 }}>
                     <Avatar
                       src={user.photoURL}
                       sx={{ width: 28, height: 28, bgcolor: '#764ba2', fontSize: 12 }}
@@ -283,11 +296,11 @@ const Header = () => {
                   </Menu>
                 </>
               ) : (
-                <IconButton color="inherit" component={Link} to="/login" size="small" sx={{ ml: 0.5 }}>
+                <IconButton color="inherit" component={Link} to="/login" size="small" sx={{ ml: 0.5, minWidth: 44, minHeight: 44 }}>
                   <LoginIcon />
                 </IconButton>
               )}
-              <IconButton color="inherit" onClick={() => setDrawerOpen(true)} sx={{ ml: 1 }}>
+              <IconButton color="inherit" onClick={() => setDrawerOpen(true)} sx={{ ml: 1, minWidth: 44, minHeight: 44 }}>
                 <MenuIcon />
               </IconButton>
             </Box>
@@ -311,7 +324,7 @@ const Header = () => {
           alignItems: 'center'
         }}>
           <Typography variant="h6" fontWeight="bold">✈️ {t('nav.menu')}</Typography>
-          <IconButton color="inherit" onClick={() => setDrawerOpen(false)}>
+          <IconButton color="inherit" onClick={() => setDrawerOpen(false)} sx={{ minWidth: 44, minHeight: 44 }}>
             <CloseIcon />
           </IconButton>
         </Box>

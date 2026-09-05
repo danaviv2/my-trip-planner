@@ -65,7 +65,8 @@ const NotificationCenter = () => {
 
   return (
     <>
-      <IconButton color="inherit" onClick={handleOpen}>
+      {/* אזור לחיצה 44px — נמדד 40×40, מתחת לסף. הפעמון עצמו לא משתנה. */}
+      <IconButton color="inherit" onClick={handleOpen} sx={{ minWidth: 44, minHeight: 44 }}>
         <Badge badgeContent={unreadCount} color="error">
           <NotificationsIcon />
         </Badge>
