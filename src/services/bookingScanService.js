@@ -117,150 +117,166 @@ export const scanMailbox = async (
     let failure = null;
     let gotSomething = false;
 
-    // ── מה שאינו הזמנה נפסל לפני המודל ──
-    // שני מקרים, אותה סיבה: הספק אינו מפיק אישורים כלל.
+    // ── מייל אחד אינו מפיל סריקה שלמה ──
+    // הפענוח עצמו כבר עטוף, אבל כל השאר לא היה: הפסילה לפני המודל,
+    // בניית הרשומות והדחיפה לרשימה. ב-05.09.2026 חריגה אחת שם — מזהה
+    // בודד שהועבר ל-markProcessed — הפילה סריקה של 60 מיילים אצל
+    // המשתמש, והשגיאה הוצגה במקום התוצאה.
     //
-    // זכאות — שובר כניסה לטרקלין נכנס למאגר כאטרקציה ובנה נסיעה בשם
-    // "יעד לא ידוע". אין בו מועד, מקום או טווח — רק תוקף.
-    //
-    // התראה — TripIt כותב "added it to your itinerary" ומצטט את שורת
-    // הנושא של האישור האמיתי. נמדד ב-05.09.2026: חמישה מתוך 15 המיילים
-    // שנסרקו היו כאלה. מסמך שמצטט שם מלון ותאריך בלי שנה, ואין בו
-    // פרטים, הוא המצע המושלם לערך מומצא.
-    //
-    // בשני המקרים ההכרעה מותנית ב-`sole`: ספק שמפיק גם אישורים אמיתיים
-    // אינו נחסם כאן, ושם ההכרעה נשארת בקריאת המסמך.
-    const blocked = neverBookingSender(email.from);
-    if (blocked) {
-      unrecognized.push({
-        subject: email.subject,
-        from: email.from,
-        reason: `${blocked.vendor} — ${blocked.why}`,
-      });
-      markProcessed([email.id]);
-      continue;
-    }
-
-    // כתובת השולח היא הסימן הדטרמיניסטי היחיד בצינור: היא נשלפת ממילא
-    // ב-gmailService ונזרקה כאן, בדיוק כפי שקרה ל-messageId. המבנה של
-    // מספר האסמכתה אינו יכול להחליף אותה — אצל המשתמש שובר הטרקלין
-    // ומספר הזמנת מלון אמיתית היו שניהם שש-עשרה ספרות רצופות.
-    const hint = senderHint(email.from);
-
-    // ── הסוג כפי שהשולח הצהיר עליו ──
-    // schema.org במייל הוא הסימן החזק ביותר שיש, והוא גם התשובה לשאלה
-    // "איך אפליקציות אחרות יודעות": הן אינן מנחשות לפי מספר האסמכתה,
-    // הן קוראות הצהרה מפורשת. שובר טרקלין לעולם לא יישא
-    // LodgingReservation.
-    const SCHEMA_HE = {
-      FlightReservation: 'טיסה', LodgingReservation: 'לינה',
-      RentalCarReservation: 'רכב', EventReservation: 'אירוע או אטרקציה',
-      FoodEstablishmentReservation: 'מסעדה', BusReservation: 'אוטובוס',
-      TrainReservation: 'רכבת', TaxiReservation: 'הסעה',
-    };
-    const declared = email.schemaType
-      ? `סוג מוצהר (schema.org): ${email.schemaType} — ${SCHEMA_HE[email.schemaType] || email.schemaType}. השולח הצהיר על כך במפורש; זהו הסימן החזק ביותר במסמך.`
-      : '';
-    if (email.schemaType) schemaDeclared++;
-
-    // ── תאריך המייל, והסיבה שהוא כאן ──
-    // אישור של Tabit נמדד ב-05.09.2026 והחזיר 2024-08-16 במקום 2025-08-16.
-    // הגוף כותב "16/8" ו-"16 באוגוסט" ואינו נושא שנה כלל, ולכן המודל
-    // ניחש אחת. השדה היה בידינו כל הזמן: `gmailService` שולף אותו
-    // ומאותו רגע הוא נזרק — בדיוק מה שקרה ל-messageId ול-sourceFrom.
-    //
-    // זה אינו באג של מסעדות: כל אישור מקומי שכותב תאריך בלי שנה חשוף לו.
-    const sentOn = email.date
-      ? `תאריך שליחת המייל: ${email.date}. כשהמסמך נוקב בתאריך בלי שנה, השנה נגזרת מכאן.`
-      : '';
-
-    const header = [declared, hint, sentOn, email.subject ? `נושא: ${email.subject}` : '']
-      .filter(Boolean).join('\n');
-
-    // קודם גוף המייל — זול ומהיר יותר
+    // הכשל נרשם ב-unrecognized ולא נבלע: מייל שנפל חייב להופיע ברשימה
+    // שמסבירה אישור חסר, אחרת הוא נראה כאילו מעולם לא הגיע.
     try {
-      if (email.text) {
-        // שורת הנושא נושאת לעיתים את הזהות היחידה של ההזמנה — "סיכום
-        // פרטי פוליסה מס׳ 310558317". היא שימשה לסינון ונזרקה לפני
-        // הפענוח, כך שדווקא המזהה לא הגיע למודל.
-        const result = await parseTravelDocument(
-          header ? `${header}\n\n${email.text}` : email.text
-        );
-        if (result.isBooking) {
-          if (result.cancelled) {
-            // ביטול ללא פרטים מיוצג במספר האישור בלבד — זו כל האחיזה
-            // שיש כדי לאתר את ההזמנה המקורית במאגר.
-            cancellations.push(
-              ...toBookings(result),
-              ...(result.cancelledReferences || []).map((ref) => ({ confirmationNumber: ref }))
-            );
-          } else {
-            // מזהה המייל נשמר על ההזמנה. הוא נשלף ממילא בזמן הסריקה — שימש
-            // למשיכת הקובץ המצורף ונזרק — ובלעדיו "לא לרוץ לחפש במייל" אינו
-            // מתקיים: יש פרטים, אין מסמך. בשדה התעופה מבקשים את האישור.
-            bookings.push(...toBookings(result, {
-              sourceSubject: email.subject,
-              sourceKind: 'body',
-              sourceMessageId: email.id,
-              sourceFrom: email.from || '',
-              sourceSchemaType: email.schemaType || '',
-            }));
-          }
-          // "משהו" אינו "מספיק". מייל שגופו מכתב לוואי מניב רשומה שכל
-          // תוכנה שם הספק, וזו חסמה את הקובץ המצורף שבו הפוליסה כולה —
-          // התאריכים וטלפון החירום. רשומה דלה אינה סיבה לוותר על הקובץ.
-          gotSomething = toBookings(result).some(isSubstantial);
-        }
-      }
-    } catch (err) {
-      // מייל בודד שנכשל אינו מפיל את הסריקה כולה — אבל הכשל נשמר, כדי
-      // שלא יוצג בהמשך כ"אין כאן הזמנה".
-      failure = err;
-    }
 
-    // ספקים רבים שמים את הפרטים רק בקובץ המצורף. ניגשים אליו כשגוף
-    // המייל לא הניב דבר, כדי לא לשלם על פענוח כפול.
-    if (!gotSomething && email.pdfs?.length) {
-      // מייל אחד נושא לעיתים קבלה, דף מידע והפוליסה עצמה. כשהמכסה
-      // חתכה את הרשימה לפי סדר ההגעה, דווקא הפוליסה — הקובץ היחיד שיש
-      // בו תוכן — נותרה מחוץ לסריקה. לכן הקבצים ממוינים לפי שמם.
-      const byRelevance = [...email.pdfs].sort((x, y) => rank(y) - rank(x));
-      for (const pdf of byRelevance.slice(0, maxPdfsPerEmail)) {
-        try {
-          onProgress(`קורא קובץ מצורף (${i + 1}/${emails.length})...`, i + 1, emails.length);
-          const base64 = await fetchAttachment(token, email.id, pdf.attachmentId);
-          if (!base64) continue;
-          const result = await parseTravelDocumentFromPdf(base64);
+      // ── מה שאינו הזמנה נפסל לפני המודל ──
+      // שני מקרים, אותה סיבה: הספק אינו מפיק אישורים כלל.
+      //
+      // זכאות — שובר כניסה לטרקלין נכנס למאגר כאטרקציה ובנה נסיעה בשם
+      // "יעד לא ידוע". אין בו מועד, מקום או טווח — רק תוקף.
+      //
+      // התראה — TripIt כותב "added it to your itinerary" ומצטט את שורת
+      // הנושא של האישור האמיתי. נמדד ב-05.09.2026: חמישה מתוך 15 המיילים
+      // שנסרקו היו כאלה. מסמך שמצטט שם מלון ותאריך בלי שנה, ואין בו
+      // פרטים, הוא המצע המושלם לערך מומצא.
+      //
+      // בשני המקרים ההכרעה מותנית ב-`sole`: ספק שמפיק גם אישורים אמיתיים
+      // אינו נחסם כאן, ושם ההכרעה נשארת בקריאת המסמך.
+      const blocked = neverBookingSender(email.from);
+      if (blocked) {
+        unrecognized.push({
+          subject: email.subject,
+          from: email.from,
+          reason: `${blocked.vendor} — ${blocked.why}`,
+        });
+        markProcessed([email.id]);
+        continue;
+      }
+
+      // כתובת השולח היא הסימן הדטרמיניסטי היחיד בצינור: היא נשלפת ממילא
+      // ב-gmailService ונזרקה כאן, בדיוק כפי שקרה ל-messageId. המבנה של
+      // מספר האסמכתה אינו יכול להחליף אותה — אצל המשתמש שובר הטרקלין
+      // ומספר הזמנת מלון אמיתית היו שניהם שש-עשרה ספרות רצופות.
+      const hint = senderHint(email.from);
+
+      // ── הסוג כפי שהשולח הצהיר עליו ──
+      // schema.org במייל הוא הסימן החזק ביותר שיש, והוא גם התשובה לשאלה
+      // "איך אפליקציות אחרות יודעות": הן אינן מנחשות לפי מספר האסמכתה,
+      // הן קוראות הצהרה מפורשת. שובר טרקלין לעולם לא יישא
+      // LodgingReservation.
+      const SCHEMA_HE = {
+        FlightReservation: 'טיסה', LodgingReservation: 'לינה',
+        RentalCarReservation: 'רכב', EventReservation: 'אירוע או אטרקציה',
+        FoodEstablishmentReservation: 'מסעדה', BusReservation: 'אוטובוס',
+        TrainReservation: 'רכבת', TaxiReservation: 'הסעה',
+      };
+      const declared = email.schemaType
+        ? `סוג מוצהר (schema.org): ${email.schemaType} — ${SCHEMA_HE[email.schemaType] || email.schemaType}. השולח הצהיר על כך במפורש; זהו הסימן החזק ביותר במסמך.`
+        : '';
+      if (email.schemaType) schemaDeclared++;
+
+      // ── תאריך המייל, והסיבה שהוא כאן ──
+      // אישור של Tabit נמדד ב-05.09.2026 והחזיר 2024-08-16 במקום 2025-08-16.
+      // הגוף כותב "16/8" ו-"16 באוגוסט" ואינו נושא שנה כלל, ולכן המודל
+      // ניחש אחת. השדה היה בידינו כל הזמן: `gmailService` שולף אותו
+      // ומאותו רגע הוא נזרק — בדיוק מה שקרה ל-messageId ול-sourceFrom.
+      //
+      // זה אינו באג של מסעדות: כל אישור מקומי שכותב תאריך בלי שנה חשוף לו.
+      const sentOn = email.date
+        ? `תאריך שליחת המייל: ${email.date}. כשהמסמך נוקב בתאריך בלי שנה, השנה נגזרת מכאן.`
+        : '';
+
+      const header = [declared, hint, sentOn, email.subject ? `נושא: ${email.subject}` : '']
+        .filter(Boolean).join('\n');
+
+      // קודם גוף המייל — זול ומהיר יותר
+      try {
+        if (email.text) {
+          // שורת הנושא נושאת לעיתים את הזהות היחידה של ההזמנה — "סיכום
+          // פרטי פוליסה מס׳ 310558317". היא שימשה לסינון ונזרקה לפני
+          // הפענוח, כך שדווקא המזהה לא הגיע למודל.
+          const result = await parseTravelDocument(
+            header ? `${header}\n\n${email.text}` : email.text
+          );
           if (result.isBooking) {
             if (result.cancelled) {
+              // ביטול ללא פרטים מיוצג במספר האישור בלבד — זו כל האחיזה
+              // שיש כדי לאתר את ההזמנה המקורית במאגר.
               cancellations.push(
                 ...toBookings(result),
                 ...(result.cancelledReferences || []).map((ref) => ({ confirmationNumber: ref }))
               );
             } else {
-              bookings.push(
-                ...toBookings(result, {
-                  sourceSubject: email.subject,
-                  sourceKind: pdf.filename || 'קובץ מצורף',
-                  sourceMessageId: email.id,
-                  sourceFrom: email.from || '',
-                })
-              );
+              // מזהה המייל נשמר על ההזמנה. הוא נשלף ממילא בזמן הסריקה — שימש
+              // למשיכת הקובץ המצורף ונזרק — ובלעדיו "לא לרוץ לחפש במייל" אינו
+              // מתקיים: יש פרטים, אין מסמך. בשדה התעופה מבקשים את האישור.
+              bookings.push(...toBookings(result, {
+                sourceSubject: email.subject,
+                sourceKind: 'body',
+                sourceMessageId: email.id,
+                sourceFrom: email.from || '',
+                sourceSchemaType: email.schemaType || '',
+              }));
             }
-            gotSomething = true;
-            fromPdf++;
-            break;
+            // "משהו" אינו "מספיק". מייל שגופו מכתב לוואי מניב רשומה שכל
+            // תוכנה שם הספק, וזו חסמה את הקובץ המצורף שבו הפוליסה כולה —
+            // התאריכים וטלפון החירום. רשומה דלה אינה סיבה לוותר על הקובץ.
+            gotSomething = toBookings(result).some(isSubstantial);
           }
-        } catch (err) {
-          // קובץ פגום או חסום אינו מפיל את הסריקה. הכשל נשמר רק אם גוף
-          // המייל לא נכשל כבר — השגיאה הראשונה היא המסבירה.
-          failure = failure || err;
+        }
+      } catch (err) {
+        // מייל בודד שנכשל אינו מפיל את הסריקה כולה — אבל הכשל נשמר, כדי
+        // שלא יוצג בהמשך כ"אין כאן הזמנה".
+        failure = err;
+      }
+
+      // ספקים רבים שמים את הפרטים רק בקובץ המצורף. ניגשים אליו כשגוף
+      // המייל לא הניב דבר, כדי לא לשלם על פענוח כפול.
+      if (!gotSomething && email.pdfs?.length) {
+        // מייל אחד נושא לעיתים קבלה, דף מידע והפוליסה עצמה. כשהמכסה
+        // חתכה את הרשימה לפי סדר ההגעה, דווקא הפוליסה — הקובץ היחיד שיש
+        // בו תוכן — נותרה מחוץ לסריקה. לכן הקבצים ממוינים לפי שמם.
+        const byRelevance = [...email.pdfs].sort((x, y) => rank(y) - rank(x));
+        for (const pdf of byRelevance.slice(0, maxPdfsPerEmail)) {
+          try {
+            onProgress(`קורא קובץ מצורף (${i + 1}/${emails.length})...`, i + 1, emails.length);
+            const base64 = await fetchAttachment(token, email.id, pdf.attachmentId);
+            if (!base64) continue;
+            const result = await parseTravelDocumentFromPdf(base64);
+            if (result.isBooking) {
+              if (result.cancelled) {
+                cancellations.push(
+                  ...toBookings(result),
+                  ...(result.cancelledReferences || []).map((ref) => ({ confirmationNumber: ref }))
+                );
+              } else {
+                bookings.push(
+                  ...toBookings(result, {
+                    sourceSubject: email.subject,
+                    sourceKind: pdf.filename || 'קובץ מצורף',
+                    sourceMessageId: email.id,
+                    sourceFrom: email.from || '',
+                  })
+                );
+              }
+              gotSomething = true;
+              fromPdf++;
+              break;
+            }
+          } catch (err) {
+            // קובץ פגום או חסום אינו מפיל את הסריקה. הכשל נשמר רק אם גוף
+            // המייל לא נכשל כבר — השגיאה הראשונה היא המסבירה.
+            failure = failure || err;
+          }
         }
       }
-    }
 
-    if (gotSomething) parsed++;
-    else unrecognized.push(failure ? { ...email, reason: describeFailure(failure) } : email);
+      if (gotSomething) parsed++;
+      else unrecognized.push(failure ? { ...email, reason: describeFailure(failure) } : email);
+    } catch (err) {
+      // רשומות שכבר נאספו מהמייל הזה נשארות; רק הדיווח מתווסף.
+      if (!gotSomething) {
+        unrecognized.push({ subject: email.subject, from: email.from, reason: describeFailure(err) });
+      }
+    }
   }
 
   // הסימון נעשה בסוף ורק על מיילים שהמעבר עליהם הושלם. סימון מוקדם היה
