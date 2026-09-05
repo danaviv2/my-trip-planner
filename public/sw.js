@@ -1,4 +1,7 @@
-const CACHE_NAME = 'trip-planner-v3';
+// v4 — ניקוי חובה: v3 הכיל רשומות מורעלות שבהן index.html נשמר תחת
+// כתובת של קובץ JS. ראה `looksLikeHtml` למטה. העלאת השם היא מה שמוחק
+// אותן אצל משתמשים קיימים, כי `activate` מוחק כל מטמון שאינו הנוכחי.
+const CACHE_NAME = 'trip-planner-v4';
 const FONTS_CACHE = 'trip-planner-fonts-v1';
 const TILES_CACHE = 'trip-planner-tiles-v1';
 
@@ -142,11 +145,37 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // JS / CSS / תמונות — Cache First, ואם אין ברשת שמור לקאש
+  // ── התשובה היא HTML, אבל ביקשנו קוד ──
+  //
+  // זה קרה באתר החי ב-05.09.2026 והפיל אותו לגמרי:
+  //   Uncaught SyntaxError: Unexpected token '<'   main.5b8c4300.js:1
+  //
+  // המנגנון: בזמן פריסה ה-SW הישן מבקש צ'אנק מהבנייה הקודמת. Vercel כבר
+  // החליף בנייה, הנתיב אינו קיים — ומכיוון שזה SPA, השרת מחזיר את
+  // `index.html` עם **סטטוס 200**. השומר היחיד שהיה כאן הוא
+  // `if (response.ok)`, ו-200 עובר אותו בלי בעיה. ה-HTML נשמר במטמון
+  // תחת כתובת ה-JS, ומאותו רגע Cache First מגיש אותו לנצח — גם אחרי
+  // שהפריסה הסתיימה והקובץ האמיתי שוב זמין.
+  //
+  // כלומר כישלון שהוצג כהצלחה, דפוס הכשל מס' 3 שהפרויקט מתעד. הסטטוס
+  // אינו מספיק; צריך לשאול אם **הסוג** שחזר הוא הסוג שביקשנו.
+  const wantsCode = request.destination === 'script' || request.destination === 'style';
+  const looksLikeHtml = (res) =>
+    (res.headers.get('content-type') || '').includes('text/html');
+
   event.respondWith(
     caches.match(request).then((cached) => {
-      if (cached) return cached;
+      // גם רשומה שכבר במטמון נבדקת: מטמון מורעל מלפני התיקון עדיין
+      // יושב אצל משתמשים, ומחיקת המטמון לבדה אינה מגיעה למי שלא
+      // הפעיל מחדש את ה-SW.
+      if (cached && !(wantsCode && looksLikeHtml(cached))) return cached;
+
       return fetch(request).then((response) => {
+        // HTML בתשובה לבקשת קוד הוא כשל, לא תוכן. לא נשמר ולא מוגש —
+        // שגיאת רשת גלויה עדיפה על דף שנשבר בלי הסבר.
+        if (wantsCode && looksLikeHtml(response)) {
+          return new Response('', { status: 504, statusText: 'Stale asset' });
+        }
         if (response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
