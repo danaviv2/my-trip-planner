@@ -204,9 +204,15 @@ class GooglePlacesService {
           'formatted_phone_number',
           'opening_hours',
           'website',
-          'photos',
           'price_level',
-          'reviews',
+          // ── 'photos' ו-'reviews' הוסרו: נשלפו בתשלום ונזרקו ──
+          // אף מסך אינו צורך אותם. הספירה שמוצגת היא `userRatingsTotal`
+          // מתוצאות החיפוש ולא מערך הביקורות, והרכיב היחיד שהציג
+          // תמונות (`PlaceGallery`) אינו מיובא מאף מקום.
+          //
+          // שניהם מעלים את הבקשה לדרגת חיוב גבוהה יותר, ו-'photos'
+          // גורר את SKU בשם Places Photo — שהיה 100% מהחיוב שנמדד
+          // ב-05.09.2026: ₪45 בארבעה ימים, תחזית ₪254 לחודש.
           'geometry',
           'types',
           'url'
@@ -271,9 +277,15 @@ class GooglePlacesService {
         lat: place.geometry.location.lat(),
         lng: place.geometry.location.lng()
       },
-      photos: place.photos ? place.photos.map(photo => ({
-        url: photo.getUrl({ maxWidth: 400, maxHeight: 400 })
-      })) : [],
+      // ── תמונות אינן נוצרות לתוצאות חיפוש ──
+      // כל תמונה שנטענת היא בקשת Places Photo מחויבת. הפאנל הציג
+      // אווטאר של 56 פיקסל בכל שורה, ארבע קטגוריות × ~20 שורות —
+      // כ-80 בקשות בכל פתיחה של המפה, בלי מטמון, לכל משתמש.
+      //
+      // נמדד בחשבון של 05.09.2026: ₪45.07 בארבעה ימים, **100% מהם**
+      // SKU בשם Places Photo, ותחזית ₪254 לחודש. זה כל החיוב.
+      // תמונות נשארות רק במסך פרטי המקום, שנפתח ביוזמת המשתמש.
+      photos: [],
       openNow: place.opening_hours?.open_now,
       icon: place.icon
     }));
@@ -297,9 +309,12 @@ class GooglePlacesService {
         lat: place.geometry.location.lat(),
         lng: place.geometry.location.lng()
       },
-      photos: place.photos ? place.photos.slice(0, 10).map(photo => ({
-        url: photo.getUrl({ maxWidth: 800, maxHeight: 600 })
-      })) : [],
+      // ── גם כאן אין תמונות, ומסיבה חזקה יותר ──
+      // המסך המורחב בפאנל צורך שלושה שדות בלבד: טלפון, שעות ואתר.
+      // הרכיב היחיד שידע להציג תמונות, `PlaceGallery`, אינו מיובא
+      // מאף מקום — הוא יתום. כלומר עשר כתובות תמונה נוצרו בכל פתיחה
+      // של מקום, ואיש מעולם לא ראה אחת מהן.
+      photos: [],
       openingHours: place.opening_hours ? {
         openNow: place.opening_hours.open_now,
         weekdayText: place.opening_hours.weekday_text || []

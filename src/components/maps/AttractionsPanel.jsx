@@ -307,7 +307,13 @@ const AttractionsPanel = ({ center, onPlaceSelect }) => {
                     sx={{ '&:hover': { bgcolor: 'action.hover' } }}
                   >
                     <ListItemAvatar>
-                      <Avatar src={place.photos?.[0]?.url} alt={place.name} sx={{ width: 56, height: 56 }}>
+                      {/* ── בלי תמונה, ובכוונה ──
+                          כל אווטאר כאן היה בקשת Places Photo מחויבת: ארבע
+                          קטגוריות × ~20 שורות = כ-80 בקשות בכל פתיחה, מחדש
+                          בכל רענון ולכל משתמש. נמדד ₪45 בארבעה ימים, ותחזית
+                          ₪254 לחודש — כל החיוב של הפרויקט הגיע מכאן.
+                          אייקון הקטגוריה כבר היה כאן כגיבוי, והוא מספיק. */}
+                      <Avatar alt={place.name} sx={{ width: 56, height: 56 }}>
                         {iconFor(place.categoryKey)}
                       </Avatar>
                     </ListItemAvatar>

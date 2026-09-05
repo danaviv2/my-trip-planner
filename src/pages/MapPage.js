@@ -90,7 +90,10 @@ const MapPage = () => {
       lng: selectedPlace.location.lng,
       title: selectedPlace.name,
       description: selectedPlace.address,
-      image: selectedPlace.photos?.[0]?.url,
+      // `image` הוסר: `photos` אינו מיוצר יותר בתוצאות חיפוש, ולכן
+      // השדה היה `undefined` תמיד — וה-InfoWindow פשוט לא היה מציג
+      // דבר, בשקט. תמונה אחת בחלונית אינה שווה החזרת כתובות תמונה
+      // לכל תוצאה, וזה מה שהיה מחזיר את החיוב של ₪254 לחודש.
       icon: markerIconFor(selectedPlace.categoryKey)
     }];
   }, [selectedPlace]);
