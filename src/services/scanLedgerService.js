@@ -66,11 +66,25 @@ export const processedIds = () => {
   );
 };
 
-/** מסמן הודעות כמטופלות בגרסת הפענוח הנוכחית. */
+/**
+ * מסמן הודעות כמטופלות בגרסת הפענוח הנוכחית.
+ *
+ * מקבל מזהה בודד או מערך. החתימה דרשה מערך בלבד, ואחד משני הקוראים
+ * העביר מחרוזת — `markProcessed(email.id)` בענף שפוסל שולח לפני המודל.
+ * `'abc'.length` אמיתי, ולכן השומר עבר, ו-`forEach` קרס.
+ *
+ * הכשל היה רדום מאז 2ad4064: הענף ירה רק על שוברי טרקלין, ואלה כבר
+ * ישבו ביומן ולא נסרקו שוב. הוא התעורר ב-05.09.2026 כשהגרסה הועלתה
+ * והתראות TripIt נחסמו — והפיל את הסריקה כולה אצל המשתמש.
+ *
+ * הנרמול כאן ולא רק בקורא, כי חתימה שקורסת על קלט סביר היא מלכודת:
+ * היא כבר תפסה מישהו פעם אחת.
+ */
 export const markProcessed = (ids = []) => {
-  if (!ids.length) return;
+  const list = Array.isArray(ids) ? ids : [ids];
+  if (!list.length) return;
   const ledger = read();
-  ids.forEach((id) => {
+  list.forEach((id) => {
     if (id) ledger[String(id)] = PARSER_VERSION;
   });
   write(ledger);

@@ -137,7 +137,7 @@ export const scanMailbox = async (
         from: email.from,
         reason: `${blocked.vendor} — ${blocked.why}`,
       });
-      markProcessed(email.id);
+      markProcessed([email.id]);
       continue;
     }
 
