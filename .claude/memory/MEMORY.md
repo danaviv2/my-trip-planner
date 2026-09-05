@@ -6,3 +6,4 @@
 - [Coherence not presence](coherence-not-presence.md) — הבאג שנראה ככפילות, ולמה בדיקות נוכחות לא תפסו אותו
 - [Docs auto, code asks](docs-auto-code-asks.md) — תיעוד וגיבוי אוטומטית; שינוי קוד רק באישור
 - [Pipeline is not the obvious function](pipeline-not-the-obvious-function.md) — שם משכנע אינו הוכחה שזה המסלול שרץ
+- [Bump parser version](bump-parser-version.md) — שינוי בפרומפט בלי העלאת הגרסה = סריקה שמחזירה אפס
