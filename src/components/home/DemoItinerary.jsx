@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Box, Button, Card, Chip, Collapse, Typography, Fade } from '@mui/material';
+import React, { useMemo } from 'react';
+import { Box, Chip, Typography, Grow } from '@mui/material';
 import { buildTimeline, humanGap } from '../../services/tripTimelineService';
 
 /**
@@ -18,6 +18,16 @@ import { buildTimeline, humanGap } from '../../services/tripTimelineService';
  *    המשתמש; דוגמה מסומנת אינה אותו דבר.
  * 2. **הם אינם נוגעים במאגר.** אין כתיבה ל-localStorage ואין
  *    `addBookings`. ההדגמה חיה בזיכרון הרכיב ומתה איתו.
+ *
+ * ── למה היא פתוחה, ולמה היא בתוך ה-Hero ──
+ * הגרסה הראשונה הייתה מכווצת ויושבת מתחת ל-Hero, כדי לחסוך גובה. זו
+ * הייתה אופטימיזציה למדד הלא נכון: המשתמש דיווח שגם למי שמכיר את
+ * האפליקציה לקח כמה שניות להבחין בה. הדבר שאמור לעצור מבקר לא היה
+ * על המסך כלל — הוא היה מאחורי לחיצה, בגופן 1rem, מתחת לכותרת של
+ * 3.5rem על רקע סגול רווי.
+ *
+ * מסקנה: אין טעם להתחרות ב-Hero על תשומת לב. ההדגמה **היא** ה-Hero,
+ * והכרטיסים הלבנים על הסגול הם מה שמייצר את הניגוד.
  *
  * ── ומה שאינו מומצא ──
  * הציר עצמו. `buildTimeline` ו-`humanGap` הן אותן פונקציות שמזינות את
@@ -56,133 +66,116 @@ const SAMPLE_BOOKINGS = [
 ];
 
 const DemoItinerary = () => {
-  const [open, setOpen] = useState(false);
-
   // הציר נבנה פעם אחת, ודרך אותה פונקציה שמזינה את המסך האמיתי.
   const days = useMemo(() => buildTimeline(SAMPLE_BOOKINGS), []);
 
+  // כרטיס לבן על הסגול. הניגוד הוא כל הרעיון, ולכן הוא מוגדר פעם אחת.
+  const paper = {
+    bgcolor: 'rgba(255,255,255,0.97)',
+    color: 'text.primary',
+    borderRadius: 2.5,
+    boxShadow: '0 6px 20px rgba(0,0,0,0.18)',
+  };
+
   return (
-    <Card
-      elevation={0}
-      sx={{
-        borderRadius: 4, border: '1px solid', borderColor: 'divider',
-        background: (t) => `linear-gradient(135deg, ${t.palette.primary.main}08, ${t.palette.secondary.main}10)`,
-        overflow: 'hidden',
-      }}
-    >
-      <Box sx={{ p: { xs: 2, md: 2.5 }, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-        <Box sx={{ flex: 1, minWidth: 220 }}>
-          <Typography sx={{ fontWeight: 700, fontSize: '1rem', lineHeight: 1.3 }}>
-            ארבעה מיילים נכנסו. מסלול אחד יצא.
+    <Box sx={{ mt: { xs: 2, md: 2.5 }, mb: { xs: 1.5, md: 2 } }}>
+      <Box sx={{
+        display: 'flex', gap: { xs: 1.25, md: 2.5 },
+        alignItems: 'stretch', justifyContent: 'center', flexWrap: 'nowrap',
+      }}>
+
+        {/* ── מה שהגיע לתיבה ── */}
+        <Box sx={{ flex: '0 1 200px', minWidth: 0 }}>
+          <Typography sx={{ fontSize: '0.68rem', fontWeight: 700, opacity: 0.85, mb: 0.75, textAlign: 'start' }}>
+            מה שהגיע לתיבה
           </Typography>
-          <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', mt: 0.25 }}>
-            בלי להקליד תאריך אחד — האפליקציה קוראת את אישורי ההזמנה ובונה את היום.
-          </Typography>
+          {SAMPLE_EMAILS.map((m, i) => (
+            <Grow in timeout={500} style={{ transitionDelay: `${150 + i * 110}ms` }} key={m.subject}>
+              <Box sx={{ ...paper, p: { xs: 0.85, md: 1.15 }, mb: 0.75, display: 'flex', gap: 1, alignItems: 'center' }}>
+                <Box sx={{ fontSize: { xs: '0.95rem', md: '1.05rem' } }}>{m.icon}</Box>
+                <Box sx={{ minWidth: 0, textAlign: 'start' }}>
+                  <Typography noWrap sx={{ fontSize: { xs: '0.7rem', md: '0.78rem' }, fontWeight: 700, lineHeight: 1.25 }}>
+                    {m.subject}
+                  </Typography>
+                  <Typography noWrap sx={{ fontSize: { xs: '0.62rem', md: '0.68rem' }, color: 'text.secondary' }}>
+                    {m.line}
+                  </Typography>
+                </Box>
+              </Box>
+            </Grow>
+          ))}
         </Box>
-        <Button
-          variant={open ? 'text' : 'contained'}
-          onClick={() => setOpen((v) => !v)}
-          sx={{ borderRadius: 2.5, px: 3, minHeight: 44, whiteSpace: 'nowrap' }}
-        >
-          {open ? 'סגור' : 'תראה לי איך זה עובד'}
-        </Button>
-      </Box>
 
-      <Collapse in={open} timeout={400} unmountOnExit>
-        <Box sx={{ px: { xs: 2, md: 2.5 }, pb: { xs: 2, md: 2.5 } }}>
-          <Box sx={{ display: 'flex', gap: { xs: 2, md: 3 }, flexWrap: 'wrap', alignItems: 'stretch' }}>
+        {/* ── החץ: הרגע שבו הדבר קורה ── */}
+        <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <Box sx={{
+            fontSize: { xs: '1.4rem', md: '2rem' }, fontWeight: 300, lineHeight: 1,
+            // פעימה אחת ומתונה. תנועה מושכת עין; תנועה בלי סוף מעייפת.
+            animation: 'demoFlow 2.6s ease-in-out infinite',
+            '@keyframes demoFlow': {
+              '0%, 100%': { transform: 'translateX(0)', opacity: 0.55 },
+              '50%': { transform: 'translateX(-6px)', opacity: 1 },
+            },
+          }}>
+            ←
+          </Box>
+        </Box>
 
-            {/* ── מה שהגיע ── */}
-            <Box sx={{ flex: '1 1 240px', minWidth: 240 }}>
-              <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: 'text.secondary', mb: 1 }}>
-                מה שהגיע לתיבה
-              </Typography>
-              {SAMPLE_EMAILS.map((m, i) => (
-                <Fade in={open} timeout={300} style={{ transitionDelay: `${i * 90}ms` }} key={m.subject}>
-                  <Box sx={{
-                    display: 'flex', gap: 1.25, alignItems: 'center', mb: 0.75,
-                    p: 1.25, borderRadius: 2, bgcolor: 'background.paper',
-                    border: '1px solid', borderColor: 'divider',
-                  }}>
-                    <Box sx={{ fontSize: '1.1rem' }}>{m.icon}</Box>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, lineHeight: 1.2 }}>
-                        {m.subject}
+        {/* ── והמסלול שיצא ── */}
+        <Box sx={{ flex: '1 1 340px', minWidth: 0, maxWidth: 460 }}>
+          <Typography sx={{ fontSize: '0.68rem', fontWeight: 700, opacity: 0.85, mb: 0.75, textAlign: 'start' }}>
+            המסלול שנבנה מהם — לבד
+          </Typography>
+
+          {days.slice(0, 1).map((day) => (
+            <Box key={day.dayKey}>
+              <Chip
+                label={new Date(day.date).toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'numeric' })}
+                size="small"
+                sx={{ mb: 0.75, fontSize: '0.65rem', fontWeight: 700,
+                  bgcolor: 'rgba(255,255,255,0.25)', color: 'white', backdropFilter: 'blur(6px)' }}
+              />
+              {day.events.map((ev, i) => (
+                <Grow in timeout={550} style={{ transitionDelay: `${620 + i * 160}ms` }} key={`${ev.kind}-${i}`}>
+                  <Box>
+                    {/* הפער מגיע מ-`humanGap` ולא מחישוב מקומי: הוא כבר יודע
+                        שהוא נמדד מהנחיתה ולא מההמראה. */}
+                    {ev.gapBefore != null && ev.gapBefore >= 30 && (
+                      <Typography sx={{ fontSize: '0.62rem', opacity: 0.8, textAlign: 'center', my: 0.25 }}>
+                        ↓ {humanGap(ev.gapBefore)}
                       </Typography>
-                      <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>
-                        {m.line}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Fade>
-              ))}
-            </Box>
-
-            {/* ── ומה שיצא ── */}
-            <Box sx={{ flex: '2 1 320px', minWidth: 280 }}>
-              <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: 'text.secondary', mb: 1 }}>
-                המסלול שנבנה מהם
-              </Typography>
-
-              {days.map((day) => (
-                <Box key={day.dayKey} sx={{ mb: 1.5 }}>
-                  <Chip
-                    label={new Date(day.date).toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'numeric' })}
-                    size="small"
-                    sx={{ mb: 0.75, fontSize: '0.7rem', fontWeight: 600 }}
-                  />
-                  {day.events.map((ev, i) => (
-                    <Fade in={open} timeout={350} style={{ transitionDelay: `${420 + i * 110}ms` }} key={`${ev.kind}-${i}`}>
-                      <Box>
-                        {/* הפער מגיע מ-`humanGap` ולא מחישוב מקומי: הוא כבר
-                            יודע שהוא נמדד מהנחיתה ולא מההמראה. */}
-                        {ev.gapBefore != null && ev.gapBefore >= 30 && (
-                          <Typography sx={{ fontSize: '0.68rem', color: 'text.disabled', textAlign: 'center', my: 0.25 }}>
-                            ↓ {humanGap(ev.gapBefore)}
+                    )}
+                    <Box sx={{ ...paper, p: { xs: 0.85, md: 1.15 }, mb: 0.6, display: 'flex', gap: 1, alignItems: 'flex-start', textAlign: 'start' }}>
+                      <Box sx={{ width: 40, flexShrink: 0, fontSize: { xs: '0.68rem', md: '0.75rem' }, fontWeight: 800, color: 'text.secondary', pt: 0.2 }}>
+                        {ev.allDay ? '' : `${String(ev.at.getHours()).padStart(2, '0')}:${String(ev.at.getMinutes()).padStart(2, '0')}`}
+                      </Box>
+                      <Box sx={{ fontSize: { xs: '0.9rem', md: '1rem' } }}>{ev.icon}</Box>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography noWrap sx={{ fontSize: { xs: '0.74rem', md: '0.82rem' }, fontWeight: 700, lineHeight: 1.25 }}>
+                          {ev.title}
+                        </Typography>
+                        {ev.detail && (
+                          <Typography noWrap sx={{ fontSize: { xs: '0.63rem', md: '0.7rem' }, color: 'text.secondary' }}>
+                            {ev.detail}
                           </Typography>
                         )}
-                        <Box sx={{
-                          display: 'flex', gap: 1.25, alignItems: 'flex-start',
-                          p: 1.25, borderRadius: 2, bgcolor: 'background.paper',
-                          border: '1px solid', borderColor: 'divider', mb: 0.5,
-                        }}>
-                          <Box sx={{ width: 46, flexShrink: 0, fontSize: '0.78rem', fontWeight: 700, color: 'text.secondary', pt: 0.25 }}>
-                            {ev.allDay ? '' : `${String(ev.at.getHours()).padStart(2, '0')}:${String(ev.at.getMinutes()).padStart(2, '0')}`}
-                          </Box>
-                          <Box sx={{ fontSize: '1rem' }}>{ev.icon}</Box>
-                          <Box sx={{ minWidth: 0 }}>
-                            <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, lineHeight: 1.25 }}>
-                              {ev.title}
-                            </Typography>
-                            {ev.detail && (
-                              <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>
-                                {ev.detail}
-                              </Typography>
-                            )}
-                            {ev.extra && (
-                              <Typography sx={{ fontSize: '0.72rem', color: 'text.disabled' }}>
-                                {ev.extra}
-                              </Typography>
-                            )}
-                          </Box>
-                        </Box>
                       </Box>
-                    </Fade>
-                  ))}
-                </Box>
+                    </Box>
+                  </Box>
+                </Grow>
               ))}
             </Box>
-          </Box>
-
-          {/* ── האמירה שאסור להשמיט ──
-              הנתונים כאן מומצאים. זה נאמר בגוף ההדגמה ולא בהערת שוליים,
-              כי דוגמה שאינה מסומנת היא בדיוק הדבר שהפרויקט אוסר. */}
-          <Typography sx={{ mt: 1, fontSize: '0.72rem', color: 'text.disabled', textAlign: 'center' }}>
-            נסיעה לדוגמה · הנתונים אינם אמיתיים ואינם נשמרים · הציר עצמו מחושב במנוע האמיתי
-          </Typography>
+          ))}
         </Box>
-      </Collapse>
-    </Card>
+      </Box>
+
+      {/* ── האמירה שאסור להשמיט ──
+          הנתונים כאן מומצאים. זה נאמר בגוף ההדגמה ולא בהערת שוליים,
+          כי דוגמה שאינה מסומנת היא בדיוק הדבר שהפרויקט אוסר. */}
+      <Typography sx={{ mt: 1, fontSize: '0.65rem', opacity: 0.75, textAlign: 'center' }}>
+        נסיעה לדוגמה · הנתונים אינם אמיתיים ואינם נשמרים · הציר מחושב במנוע האמיתי
+      </Typography>
+    </Box>
   );
 };
 
