@@ -15,7 +15,7 @@
  * • ביטוח אינו אירוע. הוא חל על כל הנסיעה, ומקומו בכותרת ולא בציר.
  */
 
-import { dateKey } from './bookingIdentity';
+import { dateKey, nameKey } from './bookingIdentity';
 
 const MINUTE = 60000;
 
@@ -62,6 +62,54 @@ const orderOf = (kind, moment) =>
   moment.allDay && DAY_ANCHOR[kind] != null
     ? DAY_ANCHOR[kind]
     : moment.at.getHours() * 60 + moment.at.getMinutes();
+
+/**
+ * הרגע שבו הנוסע פנוי אחרי האירוע.
+ *
+ * לרוב זה רגע האירוע עצמו, ולטיסה זו הנחיתה. הפער חושב עד כה מרגע
+ * ההמראה, ולכן טיסה של שעתיים "העניקה" שעתיים פנויות שלא היו: נמדד
+ * במסך אמיתי ב-05.09.2026 — LY5111 ממריאה 15:00 ונוחתת 17:15, ומעליה
+ * נכתב "5 שעות ו-30 דקות" עד ארוחה ב-20:30. בפועל 3 שעות ו-15 דקות.
+ * זהו מספר שמתכננים לפיו, וההפרש הוא בין להספיק לבין לפספס.
+ *
+ * כשהנחיתה אינה ידועה, או שהיא "לפני" ההמראה — טיסת לילה שחוצה חצות,
+ * ואין במסמך תאריך נחיתה — מוחזר `unknown`. אז לא יוצג פער כלל, כי
+ * פער שמחושב מההמראה הוא בדיוק הערך השגוי שהתגלה כאן.
+ *
+ * @returns {Date|'unknown'|null} null = הרגע עצמו מספיק
+ */
+const freeAtOf = (kind, b, m) => {
+  if (kind !== 'flight' || m.allDay) return null;
+  const t = timeOf(b.arrivalTime);
+  if (!t) return 'unknown';
+  const at = new Date(m.at.getFullYear(), m.at.getMonth(), m.at.getDate(), t.h, t.min);
+  return at > m.at ? at : 'unknown';
+};
+
+/**
+ * שורת המיקום, בלי לחזור על מה שהכותרת כבר אומרת.
+ *
+ * המודל מחזיר לעיתים את שם העסק בתוך שדה הכתובת: תחת הכותרת
+ * "Trattoria Pizzeria Ieri, Oggi, Domani" הופיע "Ieri Oggi, Domani,
+ * Via Nazionale, 6d, 80143 Napoli". ההסרה היא **בתצוגה בלבד** — הערך
+ * השמור נשאר מלא, כי איתור המקום על המפה נשען על המחרוזת המקורית.
+ *
+ * הבדיקה היא הכלה בשם ולא קידומת שלו: החלק שחוזר הוא לרוב הליבה
+ * ("Ieri Oggi, Domani") ולא השם המלא. נעצרים בקטע הראשון שאינו בשם,
+ * ולעולם לא מוחזרת מחרוזת ריקה.
+ */
+const withoutNameEcho = (place, name) => {
+  const key = nameKey(name);
+  if (!key) return place;
+  const parts = String(place || '').split(',');
+  let i = 0;
+  while (i < parts.length - 1) {
+    const seg = nameKey(parts[i]);
+    if (!seg || !` ${key} `.includes(` ${seg} `)) break;
+    i++;
+  }
+  return i === 0 ? place : parts.slice(i).join(',').trim();
+};
 
 const EVENT_META = {
   flight: { icon: '✈️', color: '#1976d2', label: 'טיסה' },
@@ -142,7 +190,7 @@ const describe = (kind, b) => {
     case 'restaurant':
       return {
         title: b.name || 'מסעדה',
-        detail: b.location || b.address || '',
+        detail: withoutNameEcho(b.location || b.address || '', b.name),
         // מספר הסועדים הוא מה שמבדיל שולחן מהזמנה סתם, והוא הדבר
         // היחיד שצריך לזכור בדרך. מוצג רק כשהאישור נשא אותו.
         extra: b.guests ? `${b.guests} סועדים` : '',
@@ -184,8 +232,12 @@ export const eventsFor = (b) => {
 
     const base = describe(kind, b);
 
+    const free = freeAtOf(kind, b, m);
+
     out.push({
       kind, booking: b, ...m, order: orderOf(kind, m),
+      freeAt: free instanceof Date ? free : null,
+      freeUnknown: free === 'unknown',
       place: (ov && ov.place) || placeOf(kind, b),
       coords: coordsOf(kind, b),
       ...base,
@@ -245,7 +297,10 @@ export const eventsFor = (b) => {
  */
 const gapMinutes = (prev, next) => {
   if (!prev || !next || prev.allDay || next.allDay) return null;
-  return Math.round((next.at - prev.at) / MINUTE);
+  // אירוע שלא ידוע מתי הוא נגמר אינו מייצר פער. מספר שמחושב מתחילתו
+  // נראה מדויק בדיוק כמו מספר נכון, וזו הסיבה שאסור להציגו.
+  if (prev.freeUnknown) return null;
+  return Math.round((next.at - (prev.freeAt || prev.at)) / MINUTE);
 };
 
 /**
