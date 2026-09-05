@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { useBookings } from '../contexts/BookingsContext';
 import NextUpCard from '../components/travel-info/NextUpCard';
 import UpcomingTripCard, { pickTrip } from '../components/home/UpcomingTripCard';
+import DemoItinerary from '../components/home/DemoItinerary';
 import PlaceImage from '../components/destination-info/PlaceImage';
 import SurpriseTripModal from '../components/surprise/SurpriseTripModal';
 import VibeMatcher from '../components/vibe/VibeMatcher';
@@ -285,6 +286,20 @@ const HomePage = () => {
           </Box>
         </Container>
       </Box>
+
+      {/* ── ההדגמה, ורק לאורח ──
+          הדבר הראשון מתחת לכותרת, כי בשמונה השניות הראשונות אין
+          "אחר כך". מי שכבר יש לו נסיעה אינו זקוק להדגמה — הוא ראה את
+          הדבר האמיתי בכרטיס שלמעלה — ולכן היא נעלמת אצלו לגמרי ואינה
+          גוזלת ממנו גובה.
+
+          מכווצת כברירת מחדל: היא עולה כ-90px עד שנוגעים בה, והפתיחה
+          עצמה היא האינטראקציה הראשונה של המבקר עם המוצר. */}
+      {!hasUpcoming && (
+        <Container maxWidth="lg" sx={{ mt: { xs: 2.5, md: 3 }, position: 'relative', zIndex: 2, px: { xs: 2, md: 3 } }}>
+          <DemoItinerary />
+        </Container>
+      )}
 
       <Container maxWidth="lg" sx={{ mt: { xs: 3, md: 4 }, position: 'relative', zIndex: 2, px: { xs: 2, md: 3 } }}>
 
