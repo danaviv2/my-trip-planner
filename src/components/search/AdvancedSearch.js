@@ -562,13 +562,34 @@ const AdvancedSearch = ({
                   }
                 }}
               >
-                <CardMedia
-                  component="img"
-                  height="160"
-                  image={item.image || `https://source.unsplash.com/300x200/?${item.category || 'travel'}`}
-                  alt={item.title}
-                  sx={{ position: 'relative' }}
-                />
+                {/* ── תמונה אמיתית, או כלום ──
+                    כאן ישב `source.unsplash.com` כגיבוי. **השירות מת** —
+                    נמדד ב-05.09.2026 והחזיר HTTP 503 — ומכיוון ש-`item.image`
+                    לעולם אינו מוגדר בעמוד החיפוש, הגיבוי ירה תמיד וכל
+                    כרטיס הציג אייקון של תמונה שבורה.
+                    וגם כשהוא עבד הוא היה שגוי: תצלום אקראי לפי קטגוריה
+                    תחת שם של מקום אמיתי. זה בדיוק מה שהוסר מהפרויקט
+                    ב-`placeMediaService`, ונשאר כאן.
+                    שטח נקי עם אייקון הוא הודעה כנה: אין לנו תמונה. */}
+                {item.image ? (
+                  <CardMedia
+                    component="img"
+                    height="160"
+                    image={item.image}
+                    alt={item.name || item.title}
+                    sx={{ position: 'relative' }}
+                  />
+                ) : (
+                  <Box sx={{
+                    height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: (t) => `linear-gradient(135deg, ${t.palette.primary.main}1A, ${t.palette.secondary.main}26)`,
+                    fontSize: '2.5rem',
+                  }}>
+                    {item.category === 'restaurants' ? '🍽️'
+                      : item.category === 'hotels' ? '🏨'
+                      : item.category === 'attractions' ? '🎟️' : '📍'}
+                  </Box>
+                )}
                 
                 {/* כפתור מועדפים */}
                 {showFavorites && (

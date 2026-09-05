@@ -40,7 +40,10 @@ const transformDestinationData = (data, destName) => {
     results.push({
       id: `a_${i}`, name: item.name, category: 'attractions',
       location: loc,
-      image: `https://source.unsplash.com/500x300/?${encodeURIComponent(item.name + ' ' + destName)}`,
+      // התמונה הוסרה: `source.unsplash.com` מחזיר 503 והשירות נסגר.
+      // תצלום אקראי לפי מילות חיפוש תחת שם מקום אמיתי הוא ממילא
+      // המצאה — הכרטיס מציג עכשיו אייקון קטגוריה במקום.
+      image: null,
       rating: item.rating || 4.2, price: parsePrice(item.price),
       description: item.description || '',
       tags: ['culture', 'attraction'], reviews: 1000 + i * 347,
@@ -53,7 +56,7 @@ const transformDestinationData = (data, destName) => {
     results.push({
       id: `r_${i}`, name: item.name, category: 'restaurants',
       location: item.area ? `${item.area}, ${loc}` : loc,
-      image: `https://source.unsplash.com/500x300/?restaurant,${encodeURIComponent(destName)}`,
+      image: null,
       rating: item.rating || 4.0, price: priceMap[item.priceRange] || 30,
       description: `${item.description || ''} • ${item.cuisine || ''}`,
       tags: ['food', 'restaurant'], reviews: 500 + i * 123,
@@ -65,7 +68,7 @@ const transformDestinationData = (data, destName) => {
     results.push({
       id: `m_${i}`, name: item.name, category: 'attractions',
       location: loc,
-      image: item.image || `https://source.unsplash.com/500x300/?market,${encodeURIComponent(destName)}`,
+      image: item.image || null,
       rating: 4.3, price: 0,
       description: item.description || '',
       tags: ['market', 'shopping', 'food'], reviews: 300 + i * 89
