@@ -21,6 +21,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useBookings } from '../contexts/BookingsContext';
 import NextUpCard from '../components/travel-info/NextUpCard';
+import UpcomingTripCard, { pickTrip } from '../components/home/UpcomingTripCard';
 import PlaceImage from '../components/destination-info/PlaceImage';
 import SurpriseTripModal from '../components/surprise/SurpriseTripModal';
 import VibeMatcher from '../components/vibe/VibeMatcher';
@@ -39,6 +40,12 @@ const HomePage = () => {
   // אפס הפניות ל-useAuth, useBookings או savedTrips — ולכן מי שיש לו
   // 63 הזמנות שיובאו מהמייל ראה בדיוק את המסך שרואה זר שנחת לראשונה.
   const { trips } = useBookings();
+
+  // ── מי שכבר בדרך לא צריך שימכרו לו את האפליקציה ──
+  // ההכרעה נגזרת מ-`pickTrip` של הכרטיס עצמו ולא משוכפלת כאן. שני
+  // מקומות שמחשבים "האם יש נסיעה קרובה" נפרדים בשינוי הבא, וזה הדפוס
+  // שהפרויקט כבר שילם עליו יותר מפעם אחת.
+  const hasUpcoming = !!pickTrip(trips || []);
 
   // מקור אמת אחד לניווט לתכנון. קודם אותה מחרוזת הופיעה פעמיים —
   // ב-onKeyDown וב-onClick — וזו הדרך שבה שתי התנהגויות נפרדות.
@@ -144,14 +151,28 @@ const HomePage = () => {
       {trips?.length > 0 && (
         <Container maxWidth="lg" sx={{ px: { xs: 2, md: 3 }, pt: 2 }}>
           <NextUpCard trips={trips} />
+
+          {/* ── ומה שקורה ב-99% מהזמן ──
+              `NextUpCard` מכסה 48 שעות. נמדד ב-05.09.2026 שנסיעה בעוד
+              35 ימים הותירה את דף הבית זהה לחלוטין לדף של מי שאין לו
+              דבר — כלומר הפריט "אפס הפניות לנתוני המשתמש" נסגר על הנייר
+              בלבד. הכרטיס הזה מחזיק את הטווח הארוך, וגם הוא נעלם מעצמו
+              כשאין נסיעה שלא הסתיימה. */}
+          <Box sx={{ mt: trips?.length ? 1.5 : 0 }}>
+            <UpcomingTripCard trips={trips} />
+          </Box>
         </Container>
       )}
 
-      {/* Hero Section */}
+      {/* Hero Section
+          `py` מתכווץ כשיש נסיעה קרובה. הכותרת "תכנן את הטיול המושלם
+          שלך" נכונה למבקר ראשון וחסרת ערך למי שכבר סגר טיסה, מלון
+          ושולחן — והיא גזלה אצלו כמסך שלם לפני התוכן האמיתי. אורח רואה
+          אותה בדיוק כשהייתה. */}
       <Box sx={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
         color: 'white',
-        py: { xs: 4, md: 8 },
+        py: hasUpcoming ? { xs: 2, md: 2.5 } : { xs: 4, md: 8 },
         px: { xs: 2, md: 3 },
         textAlign: 'center',
         position: 'relative',
@@ -167,22 +188,30 @@ const HomePage = () => {
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Typography variant="h2" sx={{
             fontWeight: 800,
-            fontSize: { xs: '1.8rem', sm: '2.5rem', md: '3.5rem' },
-            mb: 2,
+            fontSize: hasUpcoming
+              ? { xs: '1.15rem', sm: '1.4rem', md: '1.6rem' }
+              : { xs: '1.8rem', sm: '2.5rem', md: '3.5rem' },
+            mb: hasUpcoming ? 0.5 : 2,
             textShadow: '0 4px 20px rgba(0,0,0,0.2)',
             lineHeight: 1.3
           }}>
             ✈️ {t('home.hero.title')}
           </Typography>
-          <Typography variant="h5" sx={{
-            mb: 4, opacity: 0.95,
-            fontSize: { xs: '1rem', sm: '1.2rem', md: '1.5rem' },
-            fontWeight: 500
-          }}>
-            {t('home.hero.subtitle')}
-          </Typography>
+          {/* תת-הכותרת ושני התגים הם הבטחה למי שעדיין מתלבט. מי שכבר
+              סגר טיסה ומלון קיבל את ההבטחה, והם רק דוחפים את התוכן שלו
+              מטה. החיפוש **נשאר** בשני המצבים: הוא פונקציה, לא סיסמה. */}
+          {!hasUpcoming && (
+            <Typography variant="h5" sx={{
+              mb: 4, opacity: 0.95,
+              fontSize: { xs: '1rem', sm: '1.2rem', md: '1.5rem' },
+              fontWeight: 500
+            }}>
+              {t('home.hero.subtitle')}
+            </Typography>
+          )}
 
-          <Stack direction="row" justifyContent="center" flexWrap="wrap" sx={{ gap: 2 }}>
+          <Stack direction="row" justifyContent="center" flexWrap="wrap"
+            sx={{ gap: 2, display: hasUpcoming ? 'none' : 'flex' }}>
             {/* `chip1` הוסר ב-04.09.2026: הוא הכריז "מעל 10,000 יעדים",
                 מחרוזת קשיחה שאין מאחוריה מקור — במאגר 69 רשומות. מספר
                 מומצא במסך הראשון מטיל צל על כל מספר אמיתי באפליקציה. */}
