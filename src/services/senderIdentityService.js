@@ -88,6 +88,14 @@ const DOMAINS = {
   'musement.com': { kind: 'activity', vendor: 'Musement', sole: true },
   'headout.com': { kind: 'activity', vendor: 'Headout', sole: true },
 
+  // ── הזמנת שולחן במסעדה ──
+  // נמדד ב-05.09.2026 מול התיבה האמיתית, לא מזיכרון. שים לב לשני
+  // הדומיינים של TheFork: `email.` שולח אישורים ו-`news.` שולח פרסום
+  // בלבד. הבסיס `thefork.co.uk` **אינו** רשום בכוונה — רישומו היה מתייג
+  // גם את הניוזלטרים כמסעדה, וההתאמה כאן היא לפי סיומת.
+  'email.thefork.co.uk': { kind: 'restaurant', vendor: 'TheFork', sole: true },
+  'tabit.cloud': { kind: 'restaurant', vendor: 'Tabit', sole: true },
+
   // ── ביטוח נסיעות ──
   // sole: false — אותה חברה שולחת גם פוליסה וגם הטבות נלוות. אצל המשתמש
   // PassportCard שלחה גם את הפוליסה וגם שובר טרקלין.
@@ -131,6 +139,23 @@ export const domainOf = (from = '') => {
 };
 
 /**
+ * ספקים שהדומיין שלהם אינו מעיד עליהם, ולכן מזוהים לפי הכתובת המלאה.
+ *
+ * Google Reserve שולח מ-`reserve-noreply@google.com`. רישום `google.com`
+ * בטבלת הדומיינים היה מתייג כמסעדה כל התראת אבטחה, קבלה מ-Cloud והתראת
+ * מחירי טיסות — הדומיין הזה שולח הכול. תיבת הבדיקה מכילה עשרות כאלה.
+ */
+const ADDRESSES = {
+  'reserve-noreply@google.com': { kind: 'restaurant', vendor: 'Google Reserve', sole: true },
+};
+
+/** הכתובת המלאה מתוך הכותרת, ללא שם התצוגה. */
+const addressOf = (from = '') => {
+  const m = /([\w.+-]+@[\w-]+(?:\.[\w-]+)+)/.exec(String(from));
+  return m ? m[1].toLowerCase() : '';
+};
+
+/**
  * זיהוי הספק לפי כתובת השולח.
  *
  * ההתאמה היא על סיומת הדומיין ולא על שוויון מלא: מיילים יוצאים מתת-
@@ -142,6 +167,10 @@ export const domainOf = (from = '') => {
 export const identifySender = (from = '') => {
   const domain = domainOf(from);
   if (!domain) return null;
+
+  // כתובת מלאה גוברת על הדומיין: היא הצהרה ספציפית, והדומיין כאן כללי.
+  const byAddress = ADDRESSES[addressOf(from)];
+  if (byAddress) return { domain, ...byAddress };
 
   // הדומיין הארוך ביותר שמתאים, כדי ש-`co.il` לא יתפוס לפני `elal.co.il`
   let best = null;
@@ -181,6 +210,7 @@ export const senderHint = (from = '') => {
     hotel: 'ספק לינה',
     car_rental: 'חברת השכרת רכב',
     activity: 'פלטפורמת אטרקציות וסיורים',
+    restaurant: 'פלטפורמת הזמנת שולחנות במסעדות',
     insurance: 'חברת ביטוח',
     benefit: 'תוכנית הטבות — זכאות, לא הזמנה',
     mixed: 'סוכנות מקוונת המוכרת כמה סוגי מוצרים',

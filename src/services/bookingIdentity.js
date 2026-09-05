@@ -169,6 +169,18 @@ export const nameKey = (value) =>
  *
  * הכלה ולא זהות: ספק אחד כותב את השם המלא והשני את הליבה. נדרש אורך
  * מזערי כדי ש-"roma" לא יבלע כל מלון שיש בשמו רומא.
+ *
+ * ── למה ההכלה אינה `startsWith` ──
+ * כך זה נכתב, כי המקרה שהוליד את הכלל היה סיומת: "Caruso Place" מול
+ * "Caruso Place Luxury Rooms & Suites". ב-05.09.2026 נמדד ההפך בתיבה
+ * האמיתית: אותו שולחן בנאפולי הוזמן גם דרך גוגל ריזרב וגם דרך TheFork,
+ * והם כתבו "Trattoria Pizzeria Ieri, Oggi, Domani" מול "Ieri Oggi,
+ * Domani" — הליבה בסוף, כי הספק מקדים את סוג העסק. שתי הרשומות לא מוזגו
+ * והמסך הציג "2 מסעדות" לארוחה אחת.
+ *
+ * ההכלה נבדקת עכשיו בכל מקום, אך על **גבול מילה**: `includes` גולמי היה
+ * מזהה "oggi" בתוך "oggidomani" ומאחד עסקים שאין ביניהם דבר. הרווחים
+ * המוקפים הם מה שהופך הכלה למילים שלמות.
  */
 export const sameName = (a, b) => {
   const x = nameKey(a);
@@ -176,5 +188,5 @@ export const sameName = (a, b) => {
   if (!x || !y) return false;
   if (x === y) return true;
   const [short, long] = x.length <= y.length ? [x, y] : [y, x];
-  return short.length >= 5 && long.startsWith(short);
+  return short.length >= 5 && ` ${long} `.includes(` ${short} `);
 };

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { parseTravelDocument } from '../../services/bookingParserService';
 import { useBookings } from '../../contexts/BookingsContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { scanMailbox } from '../../services/bookingScanService';
+import { scanMailbox, toBookings } from '../../services/bookingScanService';
 import { 
   Modal, 
   Box, 
@@ -145,27 +145,44 @@ const EmailImportModal = ({ open, onClose }) => {
         return;
       }
 
-      const parts = [];
-      // הכתיבה לטפסים הידניים הוסרה יחד איתם: היא הזינה מודל נתונים
-      // מקביל שאיש לא קרא. addBookings למטה הוא המסלול היחיד.
-      if (result.flights.length) parts.push(`${result.flights.length} טיסות`);
-      if (result.carRental) parts.push('השכרת רכב');
-      if (result.hotel) {
-        parts.push(`לינה ב${result.hotel.name || 'מלון'}`);
-      }
+      // ── בעלים אחד להמרה ──
+      // כאן ישבה רשימה משלה ובה טיסות, רכב ומלון בלבד. אטרקציות, ביטוח
+      // ומסעדות נזרקו בשקט, והסעה נשמרה כהשכרת רכב. נמדד ב-05.09.2026:
+      // הודבק אישור מסעדה אמיתי, המודל החזיר אותו נכון, והמסך אמר
+      // "נמצאו ויובאו: ." — רשימה ריקה שהוצגה כהצלחה.
+      const toStore = toBookings(result, { sourceKind: 'paste' });
 
       // שמירה למאגר ההזמנות. משם הן מקובצות אוטומטית לטיולים, כך
       // שאישורים שמגיעים בנפרד מתאחדים לנסיעה אחת.
-      const toStore = [
-        ...result.flights.map((f) => ({ ...f, type: 'flight', direction: f.type })),
-        ...(result.carRental ? [{ ...result.carRental, type: 'car_rental' }] : []),
-        ...(result.hotel ? [{ ...result.hotel, type: 'hotel' }] : []),
-      ];
       const { added, skipped } = await addBookings(toStore);
+
+      // ── הטקסט נגזר ממה שקרה, לא ממה שציפינו שיקרה ──
+      // הניסוח הקודם מנה שלושה סוגים מתוך שישה, ולכן ייבוא מוצלח של
+      // אטרקציה או מסעדה הופיע כמשפט בלי נושא.
+      const LABELS = {
+        flight: 'טיסות', hotel: 'לינה', car_rental: 'השכרת רכב',
+        transfer: 'הסעות', activity: 'אטרקציות', restaurant: 'מסעדות',
+        insurance: 'ביטוח',
+      };
+      const counts = toStore.reduce((acc, b) => {
+        const label = LABELS[b.type] || 'הזמנות';
+        acc[label] = (acc[label] || 0) + 1;
+        return acc;
+      }, {});
+      const parts = Object.entries(counts).map(([label, n]) => `${n} ${label}`);
 
       const dupNote = skipped > 0 ? ` ${skipped} כבר היו קיימות.` : '';
       const tripNote = added > 0 ? ' ההזמנות שויכו לטיול אוטומטית.' : '';
-      setSuccess(`נמצאו ויובאו: ${parts.join(' ו-')}.${dupNote}${tripNote} בדוק את הפרטים לפני שמירה.`);
+
+      // רשימה ריקה אינה הצלחה. isBooking אמר "כן" והמיפוי לא הניב דבר —
+      // זה כשל, ולהציגו כהצלחה הוא בדיוק מה שקרה כאן קודם.
+      if (!toStore.length) {
+        setError('זוהתה הזמנה אך לא הופקו ממנה פרטים לשמירה. נסה להדביק את גוף המייל המלא.');
+        setIsLoading(false);
+        return;
+      }
+
+      setSuccess(`נמצאו ויובאו: ${parts.join(' · ')}.${dupNote}${tripNote} בדוק את הפרטים לפני שמירה.`);
     } catch (err) {
       setError(
         err.message === 'PARSE_FAILED'

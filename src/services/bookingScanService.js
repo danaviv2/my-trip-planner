@@ -35,11 +35,17 @@ const isSubstantial = (b) =>
 /**
  * ממיר תוצאת פענוח לרשומות הזמנה שהמאגר מכיר.
  *
+ * מיוצא כי היה לו עותק שני. `EmailImportModal` החזיק רשימה משלו ובה
+ * טיסות, רכב ומלון בלבד — ולכן מסלול ההדבקה זרק בשקט אטרקציות, ביטוח
+ * ומסעדות, ואיבד את ההבחנה בין השכרה להסעה. נמדד ב-05.09.2026: המודל
+ * החזיר מסעדה תקינה והמסך אמר "נמצאו ויובאו: ." — הצלחה עם רשימה ריקה.
+ * שני בעלים לאותה עובדה נפרדים בשינוי הבא, וכאן זה כבר קרה.
+ *
  * כל רשומה נושאת את מקורה. בלי זה, רשומה חלקית על המסך אינה ניתנת
  * לאבחון: אי אפשר לדעת אם המייל לא נסרק, אם נסרק ולא הניב את השדה, או
  * אם הקובץ המצורף לא נקרא — וכל תיקון הוא ניחוש.
  */
-const toBookings = (result, source = {}) => [
+export const toBookings = (result, source = {}) => [
   ...result.flights.map((f) => ({ ...f, type: 'flight', direction: f.type })),
   ...(result.carRental
     ? [{ ...result.carRental, type: result.carRental.category === 'transfer' ? 'transfer' : 'car_rental' }]
@@ -148,7 +154,18 @@ export const scanMailbox = async (
       : '';
     if (email.schemaType) schemaDeclared++;
 
-    const header = [declared, hint, email.subject ? `נושא: ${email.subject}` : '']
+    // ── תאריך המייל, והסיבה שהוא כאן ──
+    // אישור של Tabit נמדד ב-05.09.2026 והחזיר 2024-08-16 במקום 2025-08-16.
+    // הגוף כותב "16/8" ו-"16 באוגוסט" ואינו נושא שנה כלל, ולכן המודל
+    // ניחש אחת. השדה היה בידינו כל הזמן: `gmailService` שולף אותו
+    // ומאותו רגע הוא נזרק — בדיוק מה שקרה ל-messageId ול-sourceFrom.
+    //
+    // זה אינו באג של מסעדות: כל אישור מקומי שכותב תאריך בלי שנה חשוף לו.
+    const sentOn = email.date
+      ? `תאריך שליחת המייל: ${email.date}. כשהמסמך נוקב בתאריך בלי שנה, השנה נגזרת מכאן.`
+      : '';
+
+    const header = [declared, hint, sentOn, email.subject ? `נושא: ${email.subject}` : '']
       .filter(Boolean).join('\n');
 
     // קודם גוף המייל — זול ומהיר יותר

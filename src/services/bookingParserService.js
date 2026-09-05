@@ -182,6 +182,13 @@ Return this exact structure:
 }
 Rules:
 - Convert DD/MM/YYYY to YYYY-MM-DD.
+- NEVER invent a year. Many local confirmations write only a day and a month
+  ("16/8", "16 באוגוסט", "Wednesday 24 June"). When the year is missing, take it
+  from the "תאריך שליחת המייל" line above, choosing the year that puts the
+  booking on or after the send date — a confirmation is not sent after the meal.
+  If that line is absent and the year is nowhere in the text, return null for the
+  date rather than a guessed year: a wrong year files the booking under a day the
+  traveller is not there, and it looks exactly as trustworthy as a right one.
 - For "price", copy the total charged amount exactly as written, including the
   currency symbol or code (e.g. "€ 924.05", "$1,240", "₪3,500"). Never convert
   between currencies and never estimate. If the message shows a price per night
