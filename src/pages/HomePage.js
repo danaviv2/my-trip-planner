@@ -337,7 +337,9 @@ const HomePage = () => {
                     על האובייקט עצמו. זה היה עותק מיותר שגם התחרה
                     בלחיצה על הכרטיס כולו. */}
 
-                <CardContent sx={{ p: { xs: 3, md: 3.5 }, display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                {/* אותו יחס הקטנה כמו בבלוק ההפתעה, כדי ששלושת הגושים
+                    הגדולים יישארו ביחס זה לזה ולא ייראו אקראיים. */}
+                <CardContent sx={{ p: { xs: 2, md: 2.25 }, display: 'flex', gap: 1.75, alignItems: 'flex-start' }}>
                   <Box sx={{ display: 'grid', placeItems: 'center', flexShrink: 0, opacity: .95, mt: .25 }}>
                     {React.cloneElement(feature.icon, { sx: { fontSize: 38 } })}
                   </Box>
@@ -395,8 +397,11 @@ const HomePage = () => {
         </Grid>
 
         {/* Surprise Me */}
+        {/* הריפוד הוקטן מ-3/5 ל-2/3 ומרווח התחתית מ-4/6 ל-3/4. הבלוק
+            נשאר — הוא בשימוש — אבל הוא תפס גובה של כרטיס גיבור בשביל
+            כותרת, שורה וכפתור אחד. הגובה שהתפנה הלך להדגמה ב-Hero. */}
         <Box sx={{
-          mb: { xs: 4, md: 6 }, p: { xs: 3, md: 5 }, borderRadius: 4,
+          mb: { xs: 3, md: 4 }, p: { xs: 2, md: 3 }, borderRadius: 4,
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
           textAlign: 'center', color: 'white', position: 'relative', overflow: 'hidden'
         }}>
@@ -406,10 +411,10 @@ const HomePage = () => {
             backgroundSize: '40px 40px',
           }} />
           <Box sx={{ position: 'relative', zIndex: 1 }}>
-            <Typography variant="h5" fontWeight="bold" mb={1} sx={{ fontSize: { xs: '1.2rem', md: '1.8rem' } }}>
+            <Typography variant="h5" fontWeight="bold" mb={0.5} sx={{ fontSize: { xs: '1.05rem', md: '1.4rem' } }}>
               {t('home.surprise.title')}
             </Typography>
-            <Typography variant="body1" mb={3} sx={{ opacity: 0.9 }}>
+            <Typography variant="body1" mb={2} sx={{ opacity: 0.9, fontSize: '0.9rem' }}>
               {t('home.surprise.subtitle')}
             </Typography>
             <Button

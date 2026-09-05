@@ -17,10 +17,11 @@
   },
   "home": {
     "hero": {
-      "title": "Planifica el viaje perfecto",
+      "title": "Cuatro correos entran. Un itinerario sale.",
       "subtitle": "Itinerarios personalizados • Consejos locales • Información completa",
       "chip2": "Itinerarios a medida",
-      "chip3": "Navegación inteligente"
+      "chip3": "Navegación inteligente",
+      "titleGeneric": "Planifica el viaje perfecto"
     },
     "search": {
       "title": "¿A dónde quieres viajar?",

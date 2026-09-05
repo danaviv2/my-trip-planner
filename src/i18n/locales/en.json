@@ -17,10 +17,11 @@
   },
   "home": {
     "hero": {
-      "title": "Plan Your Perfect Trip",
+      "title": "Four emails in. One itinerary out.",
       "subtitle": "Personalized itineraries • Local tips • Comprehensive info",
       "chip2": "Custom itineraries",
-      "chip3": "Smart navigation"
+      "chip3": "Smart navigation",
+      "titleGeneric": "Plan Your Perfect Trip"
     },
     "search": {
       "title": "Where do you want to travel?",

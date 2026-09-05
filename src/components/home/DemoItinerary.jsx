@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Box, Chip, Typography, Grow } from '@mui/material';
+import React, { useMemo, useState } from 'react';
+import { Box, Button, Chip, Typography, Grow, Fade } from '@mui/material';
 import { buildTimeline, humanGap } from '../../services/tripTimelineService';
 
 /**
@@ -28,6 +28,13 @@ import { buildTimeline, humanGap } from '../../services/tripTimelineService';
  *
  * מסקנה: אין טעם להתחרות ב-Hero על תשומת לב. ההדגמה **היא** ה-Hero,
  * והכרטיסים הלבנים על הסגול הם מה שמייצר את הניגוד.
+ *
+ * ── ולמה בכל זאת יש כפתור ──
+ * הגרסה השנייה הציגה הכל פתוח, והמשתמש העיר נכון: **הרגע שבו המסלול
+ * נבנה מרשים יותר מהמסלול המוגמר.** לכן המיילים גלויים תמיד — הם
+ * ה"לפני", והם מסקרנים בפני עצמם — והלחיצה בונה את ה"אחרי" מולך.
+ * ההבדל מהגרסה הראשונה: שם הכל היה מוסתר ומתחת לקיפול, וכאן הצד
+ * השמאלי הוא הזמנה גלויה לפעולה, בתוך ה-Hero.
  *
  * ── ומה שאינו מומצא ──
  * הציר עצמו. `buildTimeline` ו-`humanGap` הן אותן פונקציות שמזינות את
@@ -66,6 +73,8 @@ const SAMPLE_BOOKINGS = [
 ];
 
 const DemoItinerary = () => {
+  const [built, setBuilt] = useState(false);
+
   // הציר נבנה פעם אחת, ודרך אותה פונקציה שמזינה את המסך האמיתי.
   const days = useMemo(() => buildTimeline(SAMPLE_BOOKINGS), []);
 
@@ -78,13 +87,23 @@ const DemoItinerary = () => {
   };
 
   return (
-    <Box sx={{ mt: { xs: 2, md: 2.5 }, mb: { xs: 1.5, md: 2 } }}>
+    <Box sx={{
+      mt: { xs: 2, md: 2.5 }, mb: { xs: 1.5, md: 2 },
+      p: { xs: 1.5, md: 2 },
+      borderRadius: 4,
+      // מסגרת זכוכית: מפרידה את ההדגמה מהגרדיאנט בלי להוסיף עוד צבע,
+      // ונותנת לכרטיסים הלבנים משטח לשבת עליו במקום לרחף.
+      bgcolor: 'rgba(255,255,255,0.10)',
+      border: '1px solid rgba(255,255,255,0.28)',
+      backdropFilter: 'blur(8px)',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25)',
+    }}>
       <Box sx={{
         display: 'flex', gap: { xs: 1.25, md: 2.5 },
         alignItems: 'stretch', justifyContent: 'center', flexWrap: 'nowrap',
       }}>
 
-        {/* ── מה שהגיע לתיבה ── */}
+        {/* ── מה שהגיע לתיבה: גלוי תמיד, זה ה"לפני" ── */}
         <Box sx={{ flex: '0 1 200px', minWidth: 0 }}>
           <Typography sx={{ fontSize: '0.68rem', fontWeight: 700, opacity: 0.85, mb: 0.75, textAlign: 'start' }}>
             מה שהגיע לתיבה
@@ -106,37 +125,67 @@ const DemoItinerary = () => {
           ))}
         </Box>
 
-        {/* ── החץ: הרגע שבו הדבר קורה ── */}
+        {/* ── החץ: פועם רק כל עוד לא לחצו, ואז נרגע ── */}
         <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           <Box sx={{
             fontSize: { xs: '1.4rem', md: '2rem' }, fontWeight: 300, lineHeight: 1,
-            // פעימה אחת ומתונה. תנועה מושכת עין; תנועה בלי סוף מעייפת.
-            animation: 'demoFlow 2.6s ease-in-out infinite',
+            // תנועה מושכת עין; תנועה שממשיכה אחרי שהיא כבר עשתה את שלה
+            // מעייפת. לכן היא נעצרת ברגע שהמסלול נבנה.
+            animation: built ? 'none' : 'demoFlow 2.2s ease-in-out infinite',
+            opacity: built ? 0.85 : 1,
             '@keyframes demoFlow': {
-              '0%, 100%': { transform: 'translateX(0)', opacity: 0.55 },
-              '50%': { transform: 'translateX(-6px)', opacity: 1 },
+              '0%, 100%': { transform: 'translateX(0)', opacity: 0.5 },
+              '50%': { transform: 'translateX(-7px)', opacity: 1 },
             },
           }}>
             ←
           </Box>
         </Box>
 
-        {/* ── והמסלול שיצא ── */}
-        <Box sx={{ flex: '1 1 340px', minWidth: 0, maxWidth: 460 }}>
+        {/* ── ומה שנבנה מהם ── */}
+        <Box sx={{ flex: '1 1 340px', minWidth: 0, maxWidth: 460, display: 'flex', flexDirection: 'column' }}>
           <Typography sx={{ fontSize: '0.68rem', fontWeight: 700, opacity: 0.85, mb: 0.75, textAlign: 'start' }}>
-            המסלול שנבנה מהם — לבד
+            {built ? 'המסלול שנבנה מהם — לבד' : 'ומה שהאפליקציה עושה מזה'}
           </Typography>
 
-          {days.slice(0, 1).map((day) => (
+          {/* ── הכפתור: ההזמנה לראות את זה קורה ──
+              יושב במקום שבו המסלול יופיע, ולכן הלחיצה נראית כמו הפעולה
+              שבנתה אותו ולא כמו פתיחת מגירה. */}
+          {!built && (
+            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: { xs: 150, md: 190 } }}>
+              <Button
+                onClick={() => setBuilt(true)}
+                sx={{
+                  px: { xs: 3, md: 4 }, py: 1.4, minHeight: 48, borderRadius: 3,
+                  fontSize: { xs: '0.9rem', md: '1rem' }, fontWeight: 800,
+                  color: 'white', border: '2px solid rgba(255,255,255,0.9)',
+                  bgcolor: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)',
+                  whiteSpace: 'nowrap',
+                  animation: 'demoPulse 2.4s ease-in-out infinite',
+                  '@keyframes demoPulse': {
+                    '0%, 100%': { boxShadow: '0 0 0 0 rgba(255,255,255,0.45)' },
+                    '70%': { boxShadow: '0 0 0 14px rgba(255,255,255,0)' },
+                  },
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
+                }}
+              >
+                ✨ תראה לי איך זה עובד
+              </Button>
+            </Box>
+          )}
+
+          {built && days.slice(0, 1).map((day) => (
             <Box key={day.dayKey}>
-              <Chip
-                label={new Date(day.date).toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'numeric' })}
-                size="small"
-                sx={{ mb: 0.75, fontSize: '0.65rem', fontWeight: 700,
-                  bgcolor: 'rgba(255,255,255,0.25)', color: 'white', backdropFilter: 'blur(6px)' }}
-              />
+              <Fade in timeout={400}>
+                <Chip
+                  label={new Date(day.date).toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'numeric' })}
+                  size="small"
+                  sx={{ mb: 0.75, fontSize: '0.65rem', fontWeight: 700,
+                    bgcolor: 'rgba(255,255,255,0.25)', color: 'white', backdropFilter: 'blur(6px)' }}
+                />
+              </Fade>
               {day.events.map((ev, i) => (
-                <Grow in timeout={550} style={{ transitionDelay: `${620 + i * 160}ms` }} key={`${ev.kind}-${i}`}>
+                <Grow in timeout={600} style={{ transitionDelay: `${180 + i * 190}ms` }} key={`${ev.kind}-${i}`}>
                   <Box>
                     {/* הפער מגיע מ-`humanGap` ולא מחישוב מקומי: הוא כבר יודע
                         שהוא נמדד מהנחיתה ולא מההמראה. */}
@@ -170,11 +219,15 @@ const DemoItinerary = () => {
       </Box>
 
       {/* ── האמירה שאסור להשמיט ──
-          הנתונים כאן מומצאים. זה נאמר בגוף ההדגמה ולא בהערת שוליים,
-          כי דוגמה שאינה מסומנת היא בדיוק הדבר שהפרויקט אוסר. */}
-      <Typography sx={{ mt: 1, fontSize: '0.65rem', opacity: 0.75, textAlign: 'center' }}>
-        נסיעה לדוגמה · הנתונים אינם אמיתיים ואינם נשמרים · הציר מחושב במנוע האמיתי
-      </Typography>
+          מוצגת רק אחרי הבנייה: לפניה אין עדיין נתונים על המסך, ואזהרה
+          על מה שלא קיים היא רעש. */}
+      {built && (
+        <Fade in timeout={600} style={{ transitionDelay: '900ms' }}>
+          <Typography sx={{ mt: 1, fontSize: '0.65rem', opacity: 0.75, textAlign: 'center' }}>
+            נסיעה לדוגמה · הנתונים אינם אמיתיים ואינם נשמרים · הציר מחושב במנוע האמיתי
+          </Typography>
+        </Fade>
+      )}
     </Box>
   );
 };

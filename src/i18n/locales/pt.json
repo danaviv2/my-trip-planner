@@ -17,10 +17,11 @@
   },
   "home": {
     "hero": {
-      "title": "Planeje a viagem perfeita",
+      "title": "Quatro e-mails entram. Um roteiro sai.",
       "subtitle": "Roteiros personalizados • Dicas locais • Informações completas",
       "chip2": "Roteiros sob medida",
-      "chip3": "Navegação inteligente"
+      "chip3": "Navegação inteligente",
+      "titleGeneric": "Planeje a viagem perfeita"
     },
     "search": {
       "title": "Para onde você quer viajar?",
