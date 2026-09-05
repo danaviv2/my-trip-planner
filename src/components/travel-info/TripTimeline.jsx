@@ -42,7 +42,27 @@ const stamp = (ev) => {
 const DAY_MS = 86400000;
 
 /** כמה ימים חלפו בין שני ימי ציר. */
-const daysBetween = (a, b) => Math.round((b - a) / DAY_MS);
+/**
+ * מרחק בימים קלנדריים, לפי `dayKey` ולא לפי חותמת זמן.
+ *
+ * כאן חושב `Math.round((b - a) / DAY_MS)` על `day.date` — שהוא **רגע
+ * האירוע הראשון באותו יום** ולא היום עצמו. נמדד ב-05.09.2026: הטיסה
+ * ב-24.6 בשעה 15:00 מול יציאה מהמלון ב-26.6 בחצות היא הפרש של 33
+ * שעות, שמתעגל ל-1, ולכן המפריד "יום אחד ללא הזמנות" לא הוצג ו-25.6
+ * נעלם מהמסך בשקט.
+ *
+ * זה גם טועה לכיוון השני: יום שמתחיל בחצות ונגמר ב-23:00 נותן 2.96,
+ * שמתעגל ל-3 — "יומיים ללא הזמנות" כשרק יום אחד ריק.
+ *
+ * `Date.UTC` ולא בנייה מקומית: מעבר שעון קיץ הופך יממה ל-23 או 25
+ * שעות, וזו בדיוק אותה מלכודת שוב.
+ */
+const daysBetween = (aKey, bKey) => {
+  const [y1, m1, d1] = String(aKey).split('-').map(Number);
+  const [y2, m2, d2] = String(bKey).split('-').map(Number);
+  if (!y1 || !y2) return 0;
+  return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / DAY_MS);
+};
 
 const EventRow = ({ ev, onDelete, onEdit, onMove, canUp, canDown, mapNumber }) => (
   <Box sx={{ display: 'flex', gap: { xs: 0.75, sm: 1.5 }, alignItems: 'flex-start', mb: 0.5 }}>
@@ -258,7 +278,7 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent }) =>
   return (
     <Box>
       {days.map((day, i) => {
-        const skipped = i === 0 ? 0 : daysBetween(days[i - 1].date, day.date) - 1;
+        const skipped = i === 0 ? 0 : daysBetween(days[i - 1].dayKey, day.dayKey) - 1;
 
         // המספור נבנה מהרשימה שהמפה עצמה מציירת, ולא מסינון מקביל:
         // המפה פוסלת גם קואורדינטה פגומה, ומספור נפרד היה מעניק מספר
