@@ -88,8 +88,8 @@ const DemoItinerary = () => {
 
   return (
     <Box sx={{
-      mt: { xs: 2, md: 2.5 }, mb: { xs: 1.5, md: 2 },
-      p: { xs: 1.5, md: 2 },
+      mt: { xs: 1.5, md: 2 }, mb: { xs: 1, md: 1.25 },
+      p: { xs: 1.25, md: 1.5 },
       borderRadius: 4,
       // מסגרת זכוכית: מפרידה את ההדגמה מהגרדיאנט בלי להוסיף עוד צבע,
       // ונותנת לכרטיסים הלבנים משטח לשבת עליו במקום לרחף.
@@ -98,37 +98,68 @@ const DemoItinerary = () => {
       backdropFilter: 'blur(8px)',
       boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25)',
     }}>
+      {/* ── שתי עמודות בדסקטופ, טור בנייד ──
+          `nowrap` בשתי עמודות על מסך 375px כיווץ כל כרטיס מייל ל-50px:
+          "אישור טי…", "הזמנת …". נמדד במכשיר מדומה ולא הוערך. בנייד
+          המיילים נעשים שורה אחת של ארבע גלולות, והחץ מצביע מטה. */}
       <Box sx={{
-        display: 'flex', gap: { xs: 1.25, md: 2.5 },
-        alignItems: 'stretch', justifyContent: 'center', flexWrap: 'nowrap',
+        display: 'flex', gap: { xs: 1, md: 2.5 },
+        flexDirection: { xs: 'column', md: 'row' },
+        alignItems: { xs: 'stretch', md: 'stretch' },
+        justifyContent: 'center', flexWrap: 'nowrap',
       }}>
 
         {/* ── מה שהגיע לתיבה: גלוי תמיד, זה ה"לפני" ── */}
-        <Box sx={{ flex: '0 1 200px', minWidth: 0 }}>
-          <Typography sx={{ fontSize: '0.68rem', fontWeight: 700, opacity: 0.85, mb: 0.75, textAlign: 'start' }}>
+        <Box sx={{ flex: { xs: '0 0 auto', md: '0 1 200px' }, minWidth: 0 }}>
+          {/* התוויות נושאות את כל הנרטיב — "מה נכנס" מול "מה יצא" — והיו
+              ב-0.68rem, קטנות מהטקסט בתוך הכרטיסים שהן מכותרות. */}
+          <Typography sx={{
+            fontSize: { xs: '0.78rem', md: '0.88rem' }, fontWeight: 800, mb: 1,
+            textAlign: 'start', letterSpacing: '0.01em',
+            textShadow: '0 1px 6px rgba(0,0,0,0.25)',
+          }}>
             מה שהגיע לתיבה
           </Typography>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'row', md: 'column' }, gap: { xs: 0.6, md: 0 } }}>
           {SAMPLE_EMAILS.map((m, i) => (
             <Grow in timeout={500} style={{ transitionDelay: `${150 + i * 110}ms` }} key={m.subject}>
-              <Box sx={{ ...paper, p: { xs: 0.85, md: 1.15 }, mb: 0.75, display: 'flex', gap: 1, alignItems: 'center' }}>
-                <Box sx={{ fontSize: { xs: '0.95rem', md: '1.05rem' } }}>{m.icon}</Box>
-                <Box sx={{ minWidth: 0, textAlign: 'start' }}>
-                  <Typography noWrap sx={{ fontSize: { xs: '0.7rem', md: '0.78rem' }, fontWeight: 700, lineHeight: 1.25 }}>
+              <Box sx={{
+                ...paper, mb: { xs: 0, md: 0.6 }, flex: { xs: 1, md: 'none' }, minWidth: 0,
+                p: { xs: 0.7, md: 1 },
+                display: 'flex', gap: { xs: 0.4, md: 1 },
+                flexDirection: { xs: 'column', md: 'row' },
+                alignItems: 'center', textAlign: { xs: 'center', md: 'start' },
+              }}>
+                <Box sx={{ fontSize: { xs: '1rem', md: '1.05rem' }, lineHeight: 1 }}>{m.icon}</Box>
+                <Box sx={{ minWidth: 0, width: '100%' }}>
+                  <Typography noWrap sx={{ fontSize: { xs: '0.6rem', md: '0.78rem' }, fontWeight: 700, lineHeight: 1.2 }}>
                     {m.subject}
                   </Typography>
-                  <Typography noWrap sx={{ fontSize: { xs: '0.62rem', md: '0.68rem' }, color: 'text.secondary' }}>
+                  {/* שורת המשנה יורדת בנייד: ברוחב 85px היא נחתכת ממילא,
+                      וקידומת חתוכה גרועה משורה שאינה קיימת. */}
+                  <Typography noWrap sx={{ fontSize: '0.68rem', color: 'text.secondary', display: { xs: 'none', md: 'block' } }}>
                     {m.line}
                   </Typography>
                 </Box>
               </Box>
             </Grow>
           ))}
+          </Box>
         </Box>
 
         {/* ── החץ: פועם רק כל עוד לא לחצו, ואז נרגע ── */}
-        <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+        {/* הסיבוב יושב על העוטף והאנימציה על הפנימי, ולא שניהם על אותו
+            אלמנט: `transform` הוא מאפיין אחד, וה-keyframes שמזיזים את
+            החץ דרסו את ה-`rotate` בשקט. נמדד — `matrix(1,0,0,1,-1.1,0)`,
+            הזזה בלי סיבוב — ולא נראה בעין. */}
+        <Box sx={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          // ‎-90° ולא 90°: החץ ‎←‎ פונה מערבה, וסיבוב עם כיוון השעון היה
+          // מפנה אותו צפונה. נמדד על המסך אחרי שהסיבוב כבר חל.
+          transform: { xs: 'rotate(-90deg)', md: 'none' },
+        }}>
           <Box sx={{
-            fontSize: { xs: '1.4rem', md: '2rem' }, fontWeight: 300, lineHeight: 1,
+            fontSize: { xs: '1.5rem', md: '2rem' }, fontWeight: 300, lineHeight: 1,
             // תנועה מושכת עין; תנועה שממשיכה אחרי שהיא כבר עשתה את שלה
             // מעייפת. לכן היא נעצרת ברגע שהמסלול נבנה.
             animation: built ? 'none' : 'demoFlow 2.2s ease-in-out infinite',
@@ -143,8 +174,20 @@ const DemoItinerary = () => {
         </Box>
 
         {/* ── ומה שנבנה מהם ── */}
-        <Box sx={{ flex: '1 1 340px', minWidth: 0, maxWidth: 460, display: 'flex', flexDirection: 'column' }}>
-          <Typography sx={{ fontSize: '0.68rem', fontWeight: 700, opacity: 0.85, mb: 0.75, textAlign: 'start' }}>
+        {/* ── `flex-basis` בטור הוא גובה, לא רוחב ──
+            `1 1 340px` בפריסת נייד (flexDirection: column) קבע לטור גובה
+            של 340px, ומכאן מלבן זכוכית ריק מתחת לכפתור. בדסקטופ, שבו
+            הכיוון row, אותו ערך הוא הרוחב הרצוי. */}
+        <Box sx={{
+          flex: { xs: '0 0 auto', md: '1 1 340px' },
+          minWidth: 0, maxWidth: { xs: '100%', md: 460 },
+          display: 'flex', flexDirection: 'column',
+        }}>
+          <Typography sx={{
+            fontSize: { xs: '0.78rem', md: '0.88rem' }, fontWeight: 800, mb: 1,
+            textAlign: 'start', letterSpacing: '0.01em',
+            textShadow: '0 1px 6px rgba(0,0,0,0.25)',
+          }}>
             {built ? 'המסלול שנבנה מהם — לבד' : 'ומה שהאפליקציה עושה מזה'}
           </Typography>
 
@@ -152,7 +195,16 @@ const DemoItinerary = () => {
               יושב במקום שבו המסלול יופיע, ולכן הלחיצה נראית כמו הפעולה
               שבנתה אותו ולא כמו פתיחת מגירה. */}
           {!built && (
-            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: { xs: 150, md: 190 } }}>
+            <Box sx={{
+              // `flex: 1` מותח את העוטף לגובה הטור בנייד — נמדד 313px
+              // לכפתור בן 48. בדסקטופ הוא נחוץ כדי למרכז אותו בשטח
+              // ששמור למסלול.
+              flex: { xs: 'none', md: 1 },
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              // הגובה שמור רק בדסקטופ, כדי שהמעבר לכפתור⟵מסלול לא יקפיץ
+              // את הדף. בנייד הוא יצר חלל ריק של 140px מתחת לתווית.
+              minHeight: { xs: 0, md: 175 }, py: { xs: 1.5, md: 0 },
+            }}>
               <Button
                 onClick={() => setBuilt(true)}
                 sx={{

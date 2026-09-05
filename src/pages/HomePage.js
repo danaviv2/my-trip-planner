@@ -173,7 +173,12 @@ const HomePage = () => {
       <Box sx={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
         color: 'white',
-        py: hasUpcoming ? { xs: 2, md: 2.5 } : { xs: 4, md: 8 },
+        // ── הצצה במקום מסך מלא ──
+        // נמדד: ה-Hero הסתיים ב-789px בחלון של 811, כלומר **22 פיקסלים
+        // בלבד** של הבלוק הבא נראו. Hero שממלא בדיוק את המסך מסתיר את
+        // עצם קיומו של שאר הדף, ואין בו שום רמז לגלול. הריפוד קוצץ כדי
+        // שהכרטיס הבא יציץ — זה הסימן שאומר "יש עוד".
+        py: hasUpcoming ? { xs: 2, md: 2.5 } : { xs: 2.5, md: 4 },
         px: { xs: 2, md: 3 },
         textAlign: 'center',
         position: 'relative',
