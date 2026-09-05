@@ -107,7 +107,7 @@ Rules:
       location: destination,
       address: a.address || '',
       description: a.description || '',
-      image: `https://picsum.photos/seed/${seed + i}/500/400`,
+      image: null /* picsum הוסר: תצלום אקראי תחת שם מקום אמיתי */,
       rating: Number(a.rating) || 4.3,
       duration: Number(a.duration) || 90,
       price: a.price || '',

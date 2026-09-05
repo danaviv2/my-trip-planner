@@ -175,25 +175,30 @@ Required JSON structure:
     }
 
     // תמונות דינמיות לפי seed של שם היעד
-    const coverImage = `https://picsum.photos/seed/${seed}/1200/600`;
+    // ── בלי תמונה מומצאת ──
+    // כאן ישבו זרעי picsum.photos. השירות **חי** ומחזיר 200, וזו בדיוק
+    // הסכנה: הוא מגיש תצלום אקראי שנראה כמו תצלום של המקום. זה הדפוס
+    // שהוסר מהפרויקט ב-`placeMediaService` ("תמונת מקום שגויה תחת שם
+    // נכון"), ונשאר כאן בחמישה מקומות.
+    const coverImage = null;
     const attractions = (parsed.attractions || []).map((a, i) => ({
       ...a,
-      image: `https://picsum.photos/seed/${seed + i + 10}/500/400`
+      image: null
     }));
     const food = {
       ...parsed.food,
       dishes: (parsed.food?.dishes || []).map((d, i) => ({
         ...d,
-        image: `https://picsum.photos/seed/${seed + i + 20}/150/150`
+        image: null
       })),
       markets: (parsed.food?.markets || []).map((m, i) => ({
         ...m,
-        image: `https://picsum.photos/seed/${seed + i + 30}/300/200`
+        image: null
       }))
     };
     const nearbyDestinations = (parsed.nearbyDestinations || []).map((n, i) => ({
       ...n,
-      image: `https://picsum.photos/seed/${seed + i + 40}/300/200`
+      image: null
     }));
 
     const result = {

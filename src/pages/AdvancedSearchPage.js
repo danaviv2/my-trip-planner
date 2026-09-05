@@ -32,6 +32,29 @@ const parsePrice = (priceStr) => {
   return match ? parseInt(match[1]) : 0;
 };
 
+/**
+ * ── מה שהוסר כאן, ולמה ──
+ * שדות `rating` ו-`reviews` הוסרו מכל שלושת הסוגים. הם לא הגיעו משום
+ * מקום: מספר הביקורות היה **נוסחה על האינדקס** בלולאה —
+ *
+ *   reviews: 1000 + i * 347   →   1,000 · 1,347 · 1,694 …
+ *
+ * ובצילום מסך של המשתמש (05.09.2026) הופיעו "בתי הקובייה 1,000
+ * ביקורות" ו"מארקטאל 1,347 ביקורות" — שני האיברים הראשונים של הנוסחה,
+ * בדיוק. הדירוגים היו ברירות מחדל קשיחות (4.2 / 4.0 / 4.3).
+ *
+ * מספר מומצא שנראה כמדידה הוא הדבר שהפרויקט אוסר במפורש, והוא גרוע
+ * משדה ריק: שדה ריק מתוקן על ידי המקור הבא, מספר מומצא נסמכים עליו.
+ *
+ * ── ומה שנבדק כתחליף ──
+ * דירוגים אמיתיים נבחנו ב-05.09.2026. Google Places מחזיק אותם, אך
+ * `rating` הוא שדה Enterprise ו**אסור לשמור אותו במטמון** — כלומר כל
+ * רינדור של כרטיס הוא קריאה מחויבת, ועלות שגדלה עם צפיות ולא עם
+ * נתונים. TripAdvisor Terra הוא המסלול הריאלי, ודורש הרשמה וייחוס.
+ *
+ * צפיות בוויקיפדיה נבדקו כאות פופולריות חינמי: **חייב שם באנגלית.**
+ * חיפוש בעברית החזיר "בתי הקובייה" ⟵ "קוביית משחק" — פגיעה שגויה.
+ */
 const transformDestinationData = (data, destName) => {
   const results = [];
   const loc = `${destName}, ${data.country || ''}`;
@@ -44,9 +67,9 @@ const transformDestinationData = (data, destName) => {
       // תצלום אקראי לפי מילות חיפוש תחת שם מקום אמיתי הוא ממילא
       // המצאה — הכרטיס מציג עכשיו אייקון קטגוריה במקום.
       image: null,
-      rating: item.rating || 4.2, price: parsePrice(item.price),
+      price: parsePrice(item.price),
       description: item.description || '',
-      tags: ['culture', 'attraction'], reviews: 1000 + i * 347,
+      tags: ['culture', 'attraction'],
       duration: item.recommendedDuration, tips: item.tips
     });
   });
@@ -57,9 +80,9 @@ const transformDestinationData = (data, destName) => {
       id: `r_${i}`, name: item.name, category: 'restaurants',
       location: item.area ? `${item.area}, ${loc}` : loc,
       image: null,
-      rating: item.rating || 4.0, price: priceMap[item.priceRange] || 30,
+      price: priceMap[item.priceRange] || 30,
       description: `${item.description || ''} • ${item.cuisine || ''}`,
-      tags: ['food', 'restaurant'], reviews: 500 + i * 123,
+      tags: ['food', 'restaurant'],
       website: item.website
     });
   });
@@ -69,9 +92,9 @@ const transformDestinationData = (data, destName) => {
       id: `m_${i}`, name: item.name, category: 'attractions',
       location: loc,
       image: item.image || null,
-      rating: 4.3, price: 0,
+      price: 0,
       description: item.description || '',
-      tags: ['market', 'shopping', 'food'], reviews: 300 + i * 89
+      tags: ['market', 'shopping', 'food']
     });
   });
 
@@ -172,7 +195,7 @@ const AdvancedSearchPage = () => {
       case 'rating': filtered.sort((a, b) => b.rating - a.rating); break;
       case 'price-low': filtered.sort((a, b) => a.price - b.price); break;
       case 'price-high': filtered.sort((a, b) => b.price - a.price); break;
-      case 'reviews': filtered.sort((a, b) => b.reviews - a.reviews); break;
+      case 'reviews': filtered.sort((a, b) => (b.reviews || 0) - (a.reviews || 0)); break;
       default: break;
     }
 
@@ -514,12 +537,21 @@ const AdvancedSearchPage = () => {
                       <Typography variant="body2" color="text.secondary">{result.location}</Typography>
                     </Box>
 
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                      <Rating value={result.rating} precision={0.1} size="small" readOnly />
-                      <Typography variant="body2" color="text.secondary">
-                        {result.rating} ({result.reviews.toLocaleString()} {t('advancedSearch.reviews')})
-                      </Typography>
-                    </Box>
+                    {/* מוצג רק כשיש דירוג **אמיתי**. השדות הוסרו מהמרת
+                        הנתונים, ולכן הבלוק אינו מרונדר — ולא מוצג "0 כוכבים"
+                        או "undefined ביקורות". שדה חסר צריך להיעדר, לא
+                        להופיע ריק.
+                        `?.` על `reviews`: הקריאה הייתה `.toLocaleString()`
+                        ישירות, וזורקת ברגע שהשדה אינו קיים. */}
+                    {result.rating > 0 && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        <Rating value={result.rating} precision={0.1} size="small" readOnly />
+                        <Typography variant="body2" color="text.secondary">
+                          {result.rating}
+                          {result.reviews ? ` (${result.reviews.toLocaleString()} ${t('advancedSearch.reviews')})` : ''}
+                        </Typography>
+                      </Box>
+                    )}
 
                     <Typography variant="body2" paragraph sx={{ flexGrow: 1 }}>{result.description}</Typography>
 

@@ -116,7 +116,7 @@ const SmartTripPlanner = () => {
             location: 'מסעדה מקומית',
             price: Math.floor(Math.random() * 50) + 30,
             description: 'ארוחת בוקר מקומית',
-            image: 'https://source.unsplash.com/300x200/?breakfast',
+            image: null,
             rating: 4.2
           });
         }
@@ -137,7 +137,7 @@ const SmartTripPlanner = () => {
               location: 'מיקום כלשהו',
               price: Math.floor(Math.random() * 100) + 50,
               description: `פעילות בתחום ${interestData?.label || interest}`,
-              image: `https://source.unsplash.com/300x200/?${interest}`,
+              image: null,
               rating: (Math.random() * 2) + 3, // דירוג בין 3 ל-5
               duration: 60 + (Math.floor(Math.random() * 4) * 30) // בין שעה לשעתיים וחצי
             });
@@ -156,7 +156,7 @@ const SmartTripPlanner = () => {
             location: 'מסעדה מקומית',
             price: Math.floor(Math.random() * 80) + 60,
             description: 'ארוחת צהריים מקומית',
-            image: 'https://source.unsplash.com/300x200/?lunch',
+            image: null,
             rating: 4.5
           });
         }
@@ -173,7 +173,7 @@ const SmartTripPlanner = () => {
             location: 'מסעדה מקומית',
             price: Math.floor(Math.random() * 120) + 80,
             description: 'ארוחת ערב מקומית',
-            image: 'https://source.unsplash.com/300x200/?dinner',
+            image: null,
             rating: 4.8
           });
         }
@@ -312,7 +312,7 @@ const SmartTripPlanner = () => {
       location: 'הזן מיקום',
       price: 0,
       description: 'תיאור הפעילות',
-      image: `https://source.unsplash.com/300x200/?${activityType || 'activity'}`,
+      image: null,
       rating: 4.0
     };
     
