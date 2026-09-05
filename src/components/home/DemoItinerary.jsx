@@ -89,7 +89,13 @@ const DemoItinerary = () => {
   return (
     <Box sx={{
       mt: { xs: 1.5, md: 2 }, mb: { xs: 1, md: 1.25 },
-      p: { xs: 1.25, md: 1.5 },
+      p: { xs: 1.25, md: 1.25 },
+      // ── רוחב, לא גובה ──
+      // המלבן נמדד ב-1,138px על מסך 1280 — 89% מהרוחב — בעוד שדה
+      // החיפוש שמתחתיו הוא 459px. הוא נראה כמו באנר שחוצה את הדף ולא
+      // כמו כרטיס, ופי 2.5 מהאלמנט הבא אחריו. התקרה כאן מספיקה לשתי
+      // העמודות (200 + חץ + 340) ומשאירה אותו ממורכז ומכוון.
+      maxWidth: 720, mx: 'auto',
       borderRadius: 4,
       // מסגרת זכוכית: מפרידה את ההדגמה מהגרדיאנט בלי להוסיף עוד צבע,
       // ונותנת לכרטיסים הלבנים משטח לשבת עליו במקום לרחף.
@@ -123,24 +129,28 @@ const DemoItinerary = () => {
           <Box sx={{ display: 'flex', flexDirection: { xs: 'row', md: 'column' }, gap: { xs: 0.6, md: 0 } }}>
           {SAMPLE_EMAILS.map((m, i) => (
             <Grow in timeout={500} style={{ transitionDelay: `${150 + i * 110}ms` }} key={m.subject}>
+              {/* ── שורה אחת, לא שתיים ──
+                  הכרטיס היה 47px ואַרבעה מהם קבעו למלבן רצפה של 188px.
+                  הנושא והפרט יושבים עכשיו באותה שורה, והכרטיס ירד לכ-32px
+                  בלי לוותר על מידע. בנייד הפרט יורד ממילא — ברוחב 87px
+                  הוא נחתך, וקידומת חתוכה גרועה משורה שאינה קיימת. */}
               <Box sx={{
-                ...paper, mb: { xs: 0, md: 0.6 }, flex: { xs: 1, md: 'none' }, minWidth: 0,
-                p: { xs: 0.7, md: 1 },
-                display: 'flex', gap: { xs: 0.4, md: 1 },
+                ...paper, mb: { xs: 0, md: 0.5 }, flex: { xs: 1, md: 'none' }, minWidth: 0,
+                px: { xs: 0.7, md: 1 }, py: { xs: 0.7, md: 0.55 },
+                display: 'flex', gap: { xs: 0.4, md: 0.85 },
                 flexDirection: { xs: 'column', md: 'row' },
                 alignItems: 'center', textAlign: { xs: 'center', md: 'start' },
               }}>
-                <Box sx={{ fontSize: { xs: '1rem', md: '1.05rem' }, lineHeight: 1 }}>{m.icon}</Box>
-                <Box sx={{ minWidth: 0, width: '100%' }}>
-                  <Typography noWrap sx={{ fontSize: { xs: '0.6rem', md: '0.78rem' }, fontWeight: 700, lineHeight: 1.2 }}>
-                    {m.subject}
-                  </Typography>
-                  {/* שורת המשנה יורדת בנייד: ברוחב 85px היא נחתכת ממילא,
-                      וקידומת חתוכה גרועה משורה שאינה קיימת. */}
-                  <Typography noWrap sx={{ fontSize: '0.68rem', color: 'text.secondary', display: { xs: 'none', md: 'block' } }}>
-                    {m.line}
-                  </Typography>
-                </Box>
+                <Box sx={{ fontSize: { xs: '1rem', md: '0.95rem' }, lineHeight: 1 }}>{m.icon}</Box>
+                <Typography noWrap sx={{ fontSize: { xs: '0.6rem', md: '0.74rem' }, fontWeight: 700, lineHeight: 1.25, minWidth: 0 }}>
+                  {m.subject}
+                </Typography>
+                <Typography noWrap sx={{
+                  fontSize: '0.66rem', color: 'text.secondary', minWidth: 0,
+                  display: { xs: 'none', md: 'block' },
+                }}>
+                  · {m.line}
+                </Typography>
               </Box>
             </Grow>
           ))}
@@ -203,7 +213,7 @@ const DemoItinerary = () => {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               // הגובה שמור רק בדסקטופ, כדי שהמעבר לכפתור⟵מסלול לא יקפיץ
               // את הדף. בנייד הוא יצר חלל ריק של 140px מתחת לתווית.
-              minHeight: { xs: 0, md: 175 }, py: { xs: 1.5, md: 0 },
+              minHeight: { xs: 0, md: 132 }, py: { xs: 1.5, md: 0 },
             }}>
               <Button
                 onClick={() => setBuilt(true)}
@@ -246,18 +256,18 @@ const DemoItinerary = () => {
                         ↓ {humanGap(ev.gapBefore)}
                       </Typography>
                     )}
-                    <Box sx={{ ...paper, p: { xs: 0.85, md: 1.15 }, mb: 0.6, display: 'flex', gap: 1, alignItems: 'flex-start', textAlign: 'start' }}>
+                    <Box sx={{ ...paper, px: { xs: 0.85, md: 1 }, py: { xs: 0.7, md: 0.55 }, mb: 0.5, display: 'flex', gap: 0.85, alignItems: 'center', textAlign: 'start' }}>
                       <Box sx={{ width: 40, flexShrink: 0, fontSize: { xs: '0.68rem', md: '0.75rem' }, fontWeight: 800, color: 'text.secondary', pt: 0.2 }}>
                         {ev.allDay ? '' : `${String(ev.at.getHours()).padStart(2, '0')}:${String(ev.at.getMinutes()).padStart(2, '0')}`}
                       </Box>
                       <Box sx={{ fontSize: { xs: '0.9rem', md: '1rem' } }}>{ev.icon}</Box>
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography noWrap sx={{ fontSize: { xs: '0.74rem', md: '0.82rem' }, fontWeight: 700, lineHeight: 1.25 }}>
+                      <Box sx={{ minWidth: 0, display: 'flex', gap: 0.7, alignItems: 'baseline' }}>
+                        <Typography noWrap sx={{ fontSize: { xs: '0.74rem', md: '0.78rem' }, fontWeight: 700, lineHeight: 1.3 }}>
                           {ev.title}
                         </Typography>
                         {ev.detail && (
-                          <Typography noWrap sx={{ fontSize: { xs: '0.63rem', md: '0.7rem' }, color: 'text.secondary' }}>
-                            {ev.detail}
+                          <Typography noWrap sx={{ fontSize: { xs: '0.63rem', md: '0.68rem' }, color: 'text.secondary', minWidth: 0 }}>
+                            · {ev.detail}
                           </Typography>
                         )}
                       </Box>
