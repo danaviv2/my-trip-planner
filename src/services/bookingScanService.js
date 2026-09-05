@@ -1,7 +1,7 @@
 import { fetchBookingEmails, fetchAttachment } from './gmailService';
 import { parseTravelDocument, parseTravelDocumentFromPdf } from './bookingParserService';
 import { processedIds, markProcessed } from './scanLedgerService';
-import { senderHint, isEntitlementSender, identifySender } from './senderIdentityService';
+import { senderHint, neverBookingSender } from './senderIdentityService';
 
 /**
  * סריקת תיבת הדואר ופענוח האישורים שנמצאו.
@@ -117,16 +117,25 @@ export const scanMailbox = async (
     let failure = null;
     let gotSomething = false;
 
-    // ── זכאות אינה הזמנה ──
-    // שובר כניסה לטרקלין נכנס למאגר כאטרקציה ובנה נסיעה בשם "יעד לא
-    // ידוע". אין בו מועד, מקום או טווח — רק תוקף. הכתובת מכריעה כאן
-    // לבדה רק כשכל תוצרתו של הספק היא זכאויות; חברת ביטוח ששולחת גם
-    // שובר טרקלין אינה נחסמת כאן, שם ההכרעה נשארת בקריאת המסמך.
-    if (isEntitlementSender(email.from)) {
+    // ── מה שאינו הזמנה נפסל לפני המודל ──
+    // שני מקרים, אותה סיבה: הספק אינו מפיק אישורים כלל.
+    //
+    // זכאות — שובר כניסה לטרקלין נכנס למאגר כאטרקציה ובנה נסיעה בשם
+    // "יעד לא ידוע". אין בו מועד, מקום או טווח — רק תוקף.
+    //
+    // התראה — TripIt כותב "added it to your itinerary" ומצטט את שורת
+    // הנושא של האישור האמיתי. נמדד ב-05.09.2026: חמישה מתוך 15 המיילים
+    // שנסרקו היו כאלה. מסמך שמצטט שם מלון ותאריך בלי שנה, ואין בו
+    // פרטים, הוא המצע המושלם לערך מומצא.
+    //
+    // בשני המקרים ההכרעה מותנית ב-`sole`: ספק שמפיק גם אישורים אמיתיים
+    // אינו נחסם כאן, ושם ההכרעה נשארת בקריאת המסמך.
+    const blocked = neverBookingSender(email.from);
+    if (blocked) {
       unrecognized.push({
         subject: email.subject,
         from: email.from,
-        reason: `${identifySender(email.from).vendor} — זכאות ולא הזמנה`,
+        reason: `${blocked.vendor} — ${blocked.why}`,
       });
       markProcessed(email.id);
       continue;

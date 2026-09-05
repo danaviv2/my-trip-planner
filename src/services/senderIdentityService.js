@@ -24,7 +24,7 @@
  */
 
 /**
- * @typedef {'flight'|'hotel'|'car_rental'|'activity'|'insurance'|'benefit'|'mixed'} SenderKind
+ * @typedef {'flight'|'hotel'|'car_rental'|'activity'|'restaurant'|'insurance'|'benefit'|'notification'|'mixed'} SenderKind
  */
 
 /**
@@ -112,6 +112,18 @@ const DOMAINS = {
   'dragonpass.com': { kind: 'benefit', vendor: 'DragonPass', sole: true },
   'collinsonassistance.com': { kind: 'benefit', vendor: 'Collinson', sole: true },
 
+  // ── שירותי מסלול שמדווחים על הזמנה ואינם ההזמנה ──
+  // נצפה בסריקה חיה ב-05.09.2026: חמישה מתוך 15 המיילים שנסרקו היו
+  // התראות TripIt. הגוף אומר "We got your email and added it to your
+  // itinerary" ומצטט את שורת הנושא של האישור האמיתי — שם מלון, ולעיתים
+  // תאריך בלי שנה. אין בו פרטי הזמנה כלל.
+  //
+  // הסכנה אינה הרעש אלא הציטוט: מסמך שנראה כמו אישור ואין בו דבר הוא
+  // בדיוק המצע לערך מומצא בשדה מלא. ההכרעה כאן דטרמיניסטית ולא נמסרת
+  // למודל.
+  'tripit.com': { kind: 'notification', vendor: 'TripIt', sole: true },
+  'tripcase.com': { kind: 'notification', vendor: 'TripCase', sole: true },
+
   // ── סוכנויות מקוונות: מוכרות הכל ──
   'booking.com': { kind: 'mixed', vendor: 'Booking.com', sole: false },
   'expedia.com': { kind: 'mixed', vendor: 'Expedia', sole: false },
@@ -195,6 +207,24 @@ export const isEntitlementSender = (from = '') => {
 };
 
 /**
+ * האם השולח אינו שולח הזמנות כלל.
+ *
+ * מכליל את `isEntitlementSender`: זכאות אינה הזמנה, והתראה על הזמנה
+ * אינה ההזמנה. שניהם נפסלים על הסף מאותה סיבה — לא בגלל מה שכתוב
+ * במסמך, אלא בגלל שהספק הזה אינו מפיק אישורים. `sole` הוא התנאי:
+ * ספק שמפיק גם אישורים אמיתיים לעולם אינו נחסם כאן.
+ *
+ * @returns {{vendor:string, why:string}|null} הסיבה לדיווח, או null
+ */
+export const neverBookingSender = (from = '') => {
+  const id = identifySender(from);
+  if (!id || id.sole !== true) return null;
+  if (id.kind === 'benefit') return { vendor: id.vendor, why: 'זכאות ולא הזמנה' };
+  if (id.kind === 'notification') return { vendor: id.vendor, why: 'התראה על הזמנה, לא ההזמנה עצמה' };
+  return null;
+};
+
+/**
  * שורת ההקשר שנמסרת למודל.
  *
  * נמסר גם מה הדומיין מוכיח וגם מה הוא אינו מוכיח. שורה שאומרת רק
@@ -213,6 +243,7 @@ export const senderHint = (from = '') => {
     restaurant: 'פלטפורמת הזמנת שולחנות במסעדות',
     insurance: 'חברת ביטוח',
     benefit: 'תוכנית הטבות — זכאות, לא הזמנה',
+    notification: 'שירות מסלול שמדווח על הזמנות — אינו מפיק אישורים',
     mixed: 'סוכנות מקוונת המוכרת כמה סוגי מוצרים',
   }[id.kind];
 
@@ -221,4 +252,4 @@ export const senderHint = (from = '') => {
     : `שולח: ${from} — ${id.vendor}, ${what}. ספק זה שולח כמה סוגי מסמכים; אין להסיק את הסוג מהשולח בלבד.`;
 };
 
-export default { identifySender, domainOf, isEntitlementSender, senderHint };
+export default { identifySender, domainOf, isEntitlementSender, neverBookingSender, senderHint };
