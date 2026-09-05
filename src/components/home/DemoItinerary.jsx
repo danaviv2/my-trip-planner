@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Box, Button, Chip, Typography, Grow, Fade } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { buildTimeline, humanGap } from '../../services/tripTimelineService';
 
 /**
@@ -73,6 +74,7 @@ const SAMPLE_BOOKINGS = [
 ];
 
 const DemoItinerary = () => {
+  const navigate = useNavigate();
   const [built, setBuilt] = useState(false);
 
   // הציר נבנה פעם אחת, ודרך אותה פונקציה שמזינה את המסך האמיתי.
@@ -285,14 +287,35 @@ const DemoItinerary = () => {
         </Box>
       </Box>
 
-      {/* ── האמירה שאסור להשמיט ──
-          מוצגת רק אחרי הבנייה: לפניה אין עדיין נתונים על המסך, ואזהרה
-          על מה שלא קיים היא רעש. */}
+      {/* ── הצעד הבא, ברגע שבו הוא נדרש ──
+          נמדד ב-05.09.2026: אין בדף הבית שום קריאה לחבר את תיבת הדואר.
+          המבקר רואה מסלול נבנה מארבעה מיילים, משתכנע — ואז נתקל בשדה
+          חיפוש יעדים. הרגע שיוצר את הרצון נבנה, ולא ניתן לו לאן ללכת.
+
+          הכפתור מופיע **רק אחרי הבנייה**, כי לפניה אין עדיין מה למכור. */}
       {built && (
-        <Fade in timeout={600} style={{ transitionDelay: '900ms' }}>
-          <Typography sx={{ mt: 1, fontSize: '0.65rem', opacity: 0.75, textAlign: 'center' }}>
-            נסיעה לדוגמה · הנתונים אינם אמיתיים ואינם נשמרים · הציר מחושב במנוע האמיתי
-          </Typography>
+        <Fade in timeout={600} style={{ transitionDelay: '820ms' }}>
+          <Box sx={{ mt: 1.5, textAlign: 'center' }}>
+            <Button
+              onClick={() => navigate('/travel-info?import=1')}
+              sx={{
+                px: { xs: 2.5, md: 4 }, py: 1.25, minHeight: 48, borderRadius: 3,
+                fontSize: { xs: '0.85rem', md: '0.98rem' }, fontWeight: 800,
+                color: 'primary.main', bgcolor: 'rgba(255,255,255,0.96)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.22)', whiteSpace: 'nowrap',
+                '&:hover': { bgcolor: '#fff' },
+              }}
+            >
+              עכשיו בוא נעשה את זה עם התיבה שלך ←
+            </Button>
+
+            {/* ── האמירה שאסור להשמיט ──
+                מוצגת רק אחרי הבנייה: לפניה אין עדיין נתונים על המסך,
+                ואזהרה על מה שלא קיים היא רעש. */}
+            <Typography sx={{ mt: 1.25, fontSize: '0.65rem', opacity: 0.75 }}>
+              נסיעה לדוגמה · הנתונים אינם אמיתיים ואינם נשמרים · הציר מחושב במנוע האמיתי
+            </Typography>
+          </Box>
         </Fade>
       )}
     </Box>

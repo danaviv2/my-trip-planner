@@ -66,6 +66,16 @@ const TravelInfoComponent = () => {
   // מצב פתיחת חלונית מידע
   const [infoModalOpen, setInfoModalOpen] = useState(false);
   const [emailImportModalOpen, setEmailImportModalOpen] = useState(false);
+
+  // ── הגעה ישירה מההדגמה בדף הבית ──
+  // מבקר שראה את המסלול נבנה מארבעה מיילים ולחץ "עכשיו עם התיבה שלי"
+  // מגיע לכאן משוכנע. להנחית אותו על מסך ולתת לו לחפש את הכפתור זה
+  // לאבד בדיוק את הרגע שההדגמה יצרה.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('import') === '1') {
+      setEmailImportModalOpen(true);
+    }
+  }, []);
   
   // מצבים לניהול תצוגה
   const [showPast, setShowPast] = useState(false);
