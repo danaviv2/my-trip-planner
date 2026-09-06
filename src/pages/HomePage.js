@@ -498,15 +498,29 @@ const HomePage = () => {
                     '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover': { transform: 'none' } },
                   }}
                 >
-                  <PlaceImage name={dest.he} lookup={dest.name} city={dest.he} height={110} icon="📍" />
+                  {/* ── התווית מתורגמת, השאילתה לא ──
+                      שמות הערים הוצגו בעברית בכל השפות: משתמש בצרפתית
+                      ראה שישה כרטיסים ובהם "פריז" ו"רומא", מתחת לממשק
+                      צרפתי מלא. אבל `name` הוא גם שאילתת התמונה, והיא
+                      **חייבת** להישאר עברית — תשעה מתוך עשרה מקומות
+                      נמצאים בוויקיפדיה העברית לפי שמם. לכן `label`
+                      נפרד: העין רואה מתורגם, החיפוש ממשיך כשהיה. */}
+                  <PlaceImage
+                    name={dest.he}
+                    label={t(`home.popular.cities.${dest.name}`)}
+                    lookup={dest.name}
+                    city={dest.he}
+                    height={110}
+                    icon="📍"
+                  />
                   <Box sx={{ px: 1, py: 1.1, textAlign: 'center' }}>
                     <Typography sx={{ fontWeight: 700, fontSize: { xs: '.85rem', md: '.95rem' }, lineHeight: 1.2 }}>
-                      {dest.he}
+                      {t(`home.popular.cities.${dest.name}`)}
                     </Typography>
                   </Box>
-                  <Tooltip title={`${t('share.title')} — ${dest.he}`}>
+                  <Tooltip title={`${t('share.title')} — ${t(`home.popular.cities.${dest.name}`)}`}>
                     <IconButton
-                      aria-label={`${t('share.title')} — ${dest.he}`}
+                      aria-label={`${t('share.title')} — ${t(`home.popular.cities.${dest.name}`)}`}
                       onClick={(e) => { e.stopPropagation(); setShareTarget(dest.name); }}
                       sx={{
                         position: 'absolute', top: 2, right: 2,

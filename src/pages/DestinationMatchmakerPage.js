@@ -473,7 +473,7 @@ export default function DestinationMatchmakerPage() {
           fontWeight={900}
           sx={{ fontSize: { xs: '1.6rem', sm: '2.1rem' }, mb: 0.5 }}
         >
-          🎯 מצ'קמייקר יעדים
+          🎯 מאצ'מייקר יעדים
         </Typography>
         <Typography
           variant="body1"

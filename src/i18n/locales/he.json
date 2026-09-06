@@ -13,7 +13,13 @@
     "login": "התחברות",
     "logout": "התנתק",
     "darkMode": "מצב כהה",
-    "lightMode": "מצב בהיר"
+    "lightMode": "מצב בהיר",
+    "rollingTrip": "טיול מתגלגל",
+    "journal": "יומן מסע",
+    "matchmaker": "מאצ'מייקר",
+    "more": "עוד",
+    "moreDestinations": "עוד יעדים",
+    "user": "משתמש"
   },
   "home": {
     "hero": {
@@ -68,7 +74,15 @@
       "groupTrip": "טיול קבוצתי 🗳️"
     },
     "popular": {
-      "title": "יעדים פופולריים"
+      "title": "יעדים פופולריים",
+      "cities": {
+        "Paris": "פריז",
+        "Rome": "רומא",
+        "Barcelona": "ברצלונה",
+        "London": "לונדון",
+        "Amsterdam": "אמסטרדם",
+        "Dubai": "דובאי"
+      }
     },
     "stats": {
       "smartPlanning": {

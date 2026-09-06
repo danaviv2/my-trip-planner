@@ -6,7 +6,12 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  direction: rtl;
+  /* ── הכיוון יורש מ-<html> ואינו נכפה כאן ──
+     עד 06.09.2026 עמדה כאן `direction: rtl` קבועה, ולכן משתמש
+     בצרפתית קיבל ממשק צרפתי בפריסת ימין-לשמאל: הנקודה בסוף המשפט
+     נחתה בתחילתו ("‎.itinéraire sort"), והיישור היה מראה.
+     `<html dir>` נקבע לפי השפה — ראה `public/index.html` ו-
+     `LanguageContext` — והברירה כאן היא לרשת אותו. */
   /* ללא background-color — CssBaseline של MUI מגדיר אותו לפי ערכת הנושא,
      כך שמצב כהה חל גם על גוף העמוד. */
 }

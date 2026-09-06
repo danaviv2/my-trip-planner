@@ -37,10 +37,17 @@ const tintOf = (text) => {
  * @param {string} city   העיר, לאימות שהערך שנמצא באמת שם. בלעדיה
  *   "גלריית האקדמיה" מחזירה את המוזיאון שבוונציה — תצלום אמיתי,
  *   מאתיים קילומטר מהיעד.
+ * @param {string} label  מה שהעין רואה, כשזה שונה ממה שמחפשים.
+ *   `name` חייב להישאר בעברית כי הוא השאילתה, אבל למשתמש בצרפתית
+ *   צריך להופיע "Paris" ולא "פריז". בלי ההפרדה הזו כל תרגום של
+ *   התווית היה שובר את חיפוש התמונה. ברירת המחדל היא `name`, ולכן
+ *   כל קריאה קיימת מתנהגת בדיוק כשהייתה.
  */
 const PlaceImage = ({
   name, lookup = '', city = '', height = 180, icon = '📍', mustBePlace = false,
+  label = '',
 }) => {
+  const shown = String(label || name || '').trim();
   const query = String(name || '').trim();
   const alt = String(lookup || '').trim();
   const where = String(city || '').trim();
@@ -68,7 +75,7 @@ const PlaceImage = ({
       <Box
         component="img"
         src={state.photo}
-        alt={name}
+        alt={shown}
         loading="lazy"
         // גם תמונה אמיתית עלולה להיעלם מהמקור. במקרה כזה עוברים לשדה
         // הצבע, ולא משאירים אייקון של תמונה שבורה.
@@ -82,6 +89,8 @@ const PlaceImage = ({
     <Box
       sx={{
         height,
+        // הגוון נגזר מ-`name` ולא מהתווית, כדי שאותו יעד יקבל
+        // את אותו צבע בכל השפות.
         bgcolor: tintOf(name || ''),
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         flexDirection: 'column', gap: 0.5, px: 2,
@@ -95,7 +104,7 @@ const PlaceImage = ({
           WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
         }}
       >
-        {name}
+        {shown}
       </Box>
     </Box>
   );

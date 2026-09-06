@@ -13,7 +13,13 @@
     "login": "Iniciar sesión",
     "logout": "Cerrar sesión",
     "darkMode": "Modo oscuro",
-    "lightMode": "Modo claro"
+    "lightMode": "Modo claro",
+    "rollingTrip": "Viaje sobre ruedas",
+    "journal": "Diario de viaje",
+    "matchmaker": "Buscador",
+    "more": "Más",
+    "moreDestinations": "Más destinos",
+    "user": "Usuario"
   },
   "home": {
     "hero": {
@@ -68,7 +74,15 @@
       "groupTrip": "Viaje en grupo 🗳️"
     },
     "popular": {
-      "title": "🔥 Destinos populares"
+      "title": "🔥 Destinos populares",
+      "cities": {
+        "Paris": "París",
+        "Rome": "Roma",
+        "Barcelona": "Barcelona",
+        "London": "Londres",
+        "Amsterdam": "Ámsterdam",
+        "Dubai": "Dubái"
+      }
     },
     "stats": {
       "smartPlanning": {

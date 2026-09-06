@@ -82,7 +82,7 @@ const AppRoutes = () => {
       {/* יומן מסע 📓 */}
       <Route path="/journal" element={<TravelJournalPage />} />
 
-      {/* מצ'קמייקר יעדים 🎯 */}
+      {/* מאצ'מייקר יעדים 🎯 */}
       <Route path="/matchmaker" element={<DestinationMatchmakerPage />} />
 
       {/* התחברות */}

@@ -57,13 +57,17 @@ const Header = () => {
     { label: `📊 ${t('nav.statistics')}`, path: '/statistics', icon: <StatsIcon /> },
     { label: `🗳️ ${t('nav.groupTrip')}`, path: '/group-trip', icon: <GroupIcon /> },
     { label: `✈️ ${t('nav.myTrips')}`, path: '/my-trips', icon: <TripsIcon /> },
-    { label: `🛣️ טיול מתגלגל`, path: '/rolling-trip', icon: <RouteIcon /> },
-    { label: `📓 יומן מסע`, path: '/journal', icon: <RouteIcon /> },
-    { label: `🎯 מצ'קמייקר`, path: '/matchmaker', icon: <RouteIcon /> },
+    // שלושת האחרונים היו כתובים קשיח בעברית עד 06.09.2026, בזמן
+    // שתשעת הקישורים שמעליהם עברו ב-`t()`. סרגל הניווט מוצג בכל עמוד,
+    // ולכן משתמש באנגלית ראה תשעה פריטים בשפתו ושלושה בעברית — בשורה
+    // אחת. תיקון שהוחל על תשעה אחים ולא על שלושה.
+    { label: `🛣️ ${t('nav.rollingTrip')}`, path: '/rolling-trip', icon: <RouteIcon /> },
+    { label: `📓 ${t('nav.journal')}`, path: '/journal', icon: <RouteIcon /> },
+    { label: `🎯 ${t('nav.matchmaker')}`, path: '/matchmaker', icon: <RouteIcon /> },
   ];
 
   // 12 הקישורים דרשו 1562px ברוחב אחד — כלומר בכל מסך צר מזה נחתכו
-  // פריטים מחוץ למסך (המצ'קמייקר ויומן המסע נעלמו לגמרי בלפטופ 1440).
+  // פריטים מחוץ למסך (המאצ'מייקר ויומן המסע נעלמו לגמרי בלפטופ 1440).
   // מציגים 6 ראשיים בשורה והשאר בתפריט "עוד", כך שכל היעדים נשארים נגישים.
   const INLINE_LINKS = 6;
   const primaryLinks = navLinks.slice(0, INLINE_LINKS);
@@ -230,7 +234,7 @@ const Header = () => {
                     color="inherit"
                     onClick={(e) => setMoreAnchorEl(e.currentTarget)}
                     endIcon={<MoreIcon />}
-                    aria-label="עוד יעדים"
+                    aria-label={t('nav.moreDestinations')}
                     aria-haspopup="true"
                     sx={{
                       fontSize: '0.85rem',
@@ -242,7 +246,7 @@ const Header = () => {
                       '&:hover': { background: 'rgba(0,0,0,0.18)' }
                     }}
                   >
-                    עוד
+                    {t('nav.more')}
                   </Button>
                   <Menu
                     anchorEl={moreAnchorEl}
@@ -393,7 +397,7 @@ const Header = () => {
                   {!user.photoURL && (user.displayName?.[0] || user.email?.[0] || '?').toUpperCase()}
                 </Avatar>
                 <Box>
-                  <Typography variant="body2" fontWeight={600}>{user.displayName || 'משתמש'}</Typography>
+                  <Typography variant="body2" fontWeight={600}>{user.displayName || t('nav.user')}</Typography>
                   <Typography variant="caption" color="text.secondary">{user.email}</Typography>
                 </Box>
               </Box>

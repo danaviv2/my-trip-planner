@@ -1,7 +1,24 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
   <head>
     <meta charset="utf-8" />
+    <!-- ── הכיוון נקבע לפני הציור הראשון ──
+         `LanguageContext` מחיל dir ו-lang רק כשמחליפים שפה בפועל.
+         משתמש שכבר בחר צרפתית וחזר לאתר קיבל `lang="he"` ופריסת RTL,
+         כי בטעינה השפה נקראת מ-localStorage ל-state ותופעת הלוואי
+         אינה מושמעת מחדש. סקריפט חוסם קצר מונע גם את זה וגם הבזק של
+         כיוון שגוי בין הציור הראשון ל-hydration. עברית היא ברירת
+         המחדל בתגית עצמה, כך שכשל כאן משאיר את הרוב על מכונו. -->
+    <script>
+      (function () {
+        try {
+          var c = localStorage.getItem('appLanguage') || 'he';
+          var ltr = { en: 1, fr: 1, es: 1, pt: 1 };
+          document.documentElement.lang = c;
+          document.documentElement.dir = ltr[c] ? 'ltr' : 'rtl';
+        } catch (e) { /* אחסון חסום — נשארים בברירת המחדל שבתגית */ }
+      })();
+    </script>
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <link rel="icon" type="image/png" sizes="64x64" href="%PUBLIC_URL%/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
