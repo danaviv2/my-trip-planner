@@ -213,6 +213,21 @@ Two traps that produced real waste here:
   `\uXXXX` and there were 35 chunks, not one. Sanity-check the instrument against a
   known-true case before trusting what it says.
 
+  It happened a second time on 06.09.2026, the self-test passing and the answer still
+  wrong. `"מאצ'מייקר יעדים"` was reported missing from a deploy that had in fact
+  landed: the minifier delimits with single quotes, so the **apostrophe inside the
+  string is escaped as `\'`**, and a plain substring search never matches. Searching
+  a fragment without the apostrophe found it immediately, in `main.js`.
+  So: **pick a marker with no quote, apostrophe, backslash or newline in it** — and
+  when a marker is not found, retry on a punctuation-free fragment of it before
+  concluding anything about the deploy.
+
+  The same round also chose a bad *negative* marker. `"מצ'קמייקר יעדים"` was expected
+  to disappear once `HomePage` stopped hardcoding it, and it did not — because
+  `DestinationMatchmakerPage` and `Header` hold the same string, and were never part
+  of the change. A negative marker is only evidence when **exactly one** place in the
+  tree produces it; `grep -rn` the source first, or the test asserts nothing.
+
 ## Verify before shipping, not after
 
 Measuring only once the user reports that the fix did not appear is the same loop,
