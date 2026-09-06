@@ -6,7 +6,6 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 // Use lazy-loading for heavy pages to reduce bundle size and avoid loading
 // browser-only libs during SSR/test/build phases.
 const TravelServicesBooking = React.lazy(() => import('./components/booking/TravelServicesBooking'));
-const TripPlannerMapView = React.lazy(() => import('./components/maps/TripPlannerMapView'));
 // ייבוא הדפים השונים (lazy)
 const HomePage = React.lazy(() => import('./pages/HomePage'));
 const SharedTripPage = React.lazy(() => import('./pages/SharedTripPage'));
@@ -66,10 +65,7 @@ const AppRoutes = () => {
       
       {/* הזמנות */}
       <Route path="/booking" element={<TravelServicesBooking />} />
-      
-      {/* מפת תכנון טיול */}
-      <Route path="/trip-map" element={<TripPlannerMapView />} />
-      
+
       {/* טיול קבוצתי 🗳️ */}
       <Route path="/group-trip" element={<ProtectedRoute><GroupTripPage /></ProtectedRoute>} />
 

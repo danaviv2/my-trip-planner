@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -144,21 +144,103 @@ const getBookingButtons = (activity, destination) => {
   return buttons;
 };
 
+/**
+ * ממרכז את המפה על הנקודות — אבל רק כשיש לה גודל.
+ *
+ * ── מה שנמדד, אחרי ששתי השערות נפלו ──
+ * מרגע שהמפה יושבת בפריסת flex לצד פאנל, `fitBounds` רץ לפני
+ * שהדפדפן נתן למכולה רוחב. דיאגנוסטיקה ב-07.09.2026 החזירה:
+ *
+ *   { dayIndex: 'all', n: 6, size: [0, 400], zBefore: 13, zAfter: 18 }
+ *
+ * **רוחב אפס.** Leaflet מתאים גבולות למסך בגודל אפס ומחזיר את הזום
+ * המרבי, ולכן מבט על צרפת כולה נפתח על שדה ריק בזום 18.
+ *
+ * `invalidateSize` בתוך ה-effect לא הציל: באותו רגע האלמנט באמת היה
+ * ברוחב 0, ולא היה מה למדוד מחדש. הניחוש "מתי הפריסה מוכנה" הוא
+ * בדיוק מה שנכשל כאן פעמיים — לכן `ResizeObserver` מדווח מתי היא
+ * מוכנה במקום שננחש.
+ *
+ * ההתאמה האוטומטית מהצופה קורית **רק** במעבר מרוחב אפס לרוחב אמיתי.
+ * אחריה שינוי גודל מרענן את המפה בלבד: הזזה או זום של המשתמש הם
+ * כוונה, ואיפוסם בכל שינוי חלון הוא באג בפני עצמו.
+ */
+/**
+ * ממרכז את המפה על הנקודות — פעם אחת לכל יום, ברגע שיש לה גודל.
+ *
+ * ── שתי גרסאות נכשלו כאן, ושתיהן על תזמון ──
+ * מרגע שהמפה יושבת בפריסת flex לצד פאנל, היא נוצרת לפני שהדפדפן
+ * נותן למכולה רוחב. דיאגנוסטיקה ב-07.09.2026 החזירה:
+ *
+ *   { dayIndex: 'all', n: 6, size: [0, 400], zBefore: 13, zAfter: 18 }
+ *
+ * **רוחב אפס.** Leaflet מתאים גבולות למסך בגודל אפס ומחזיר את הזום
+ * המרבי — מבט על צרפת כולה נפתח על שדה ריק בזום 18.
+ *
+ * `invalidateSize` בתוך ה-effect לא הציל: באותו רגע האלמנט באמת היה
+ * ברוחב 0. ואז `ResizeObserver` שבודק "האם הרוחב היה אפס כשנרשמתי"
+ * נכשל גם הוא — כשהרוחב כבר הספיק להתמלא בין שני ה-effects, התנאי
+ * לא התקיים לעולם והמפה נשארה בזום ההתחלתי. הבדיקה החזירה 6/6 בריצה
+ * אחת ו-0/6 בריצה הבאה, על אותו קוד.
+ *
+ * לכן התנאי כאן אינו תזמון אלא **עובדה**: "האם כבר התאמתי ליום
+ * הזה". מי שמגיע ראשון עם גודל אמיתי — ה-effect או הצופה — מבצע,
+ * והשני מוצא שאין מה לעשות. אין מרוץ כי אין תלות בסדר.
+ */
 const FitBounds = ({ positions, dayIndex }) => {
   const map = useMap();
-  const prevDay = useRef(-1);
+  const posRef = useRef(positions);
+  const dayRef = useRef(dayIndex);
+  const fittedFor = useRef(NOT_FITTED);
+  posRef.current = positions;
+  dayRef.current = dayIndex;
+
+  const tryFit = useCallback(() => {
+    const key = dayRef.current;
+    if (fittedFor.current === key) return;
+    const p = posRef.current;
+    if (!p || p.length === 0) return;
+    const size = map.getSize();
+    if (size.x === 0 || size.y === 0) return;
+    if (p.length === 1) map.setView(p[0], 15);
+    else map.fitBounds(L.latLngBounds(p), { padding: [60, 60] });
+    fittedFor.current = key;
+  }, [map]);
+
+  useEffect(() => { tryFit(); }, [dayIndex, positions, tryFit]);
 
   useEffect(() => {
-    if (positions.length === 0 || prevDay.current === dayIndex) return;
-    prevDay.current = dayIndex;
+    const el = map.getContainer();
+    const ro = new ResizeObserver(() => {
+      map.invalidateSize({ animate: false });
+      // התאמה מחדש רק ליום שטרם הותאם. אחרי שהותאם, הזזה וזום של
+      // המשתמש הם כוונה, ואיפוסם בכל שינוי חלון הוא באג בפני עצמו.
+      tryFit();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [map, tryFit]);
 
-    if (positions.length === 1) {
-      map.setView(positions[0], 15);
-    } else {
-      map.fitBounds(L.latLngBounds(positions), { padding: [60, 60] });
-    }
-  }, [positions, dayIndex]); // eslint-disable-line
+  return null;
+};
 
+const TILES = {
+  map: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  },
+  satellite: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics',
+  },
+};
+
+/** מרכוז המפה על נקודה שנבחרה מהפאנל. */
+const FlyTo = ({ target }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (target) map.flyTo(target, Math.max(map.getZoom(), 15), { duration: 0.8 });
+  }, [target]); // eslint-disable-line
   return null;
 };
 
@@ -177,6 +259,9 @@ const isValidCoord = (a) => {
 // צבע לכל יום במבט המלא. הצבע לפי **יום** ולא לפי סוג הפעילות: במבט
 // על נסיעה שלמה השאלה היא "מתי אני כאן", לא "מה זה". סוג הפעילות
 // ממשיך לצבוע את הסיכות במבט היומי, שם הוא כן השאלה.
+// ערך התחלתי שלא יכול להיות שווה לשום `dayIndex` אמיתי
+const NOT_FITTED = Symbol('not-fitted');
+
 const DAY_COLORS = [
   '#E53935', '#1E88E5', '#43A047', '#FB8C00', '#8E24AA',
   '#00ACC1', '#F4511E', '#3949AB', '#7CB342', '#D81B60',
@@ -251,6 +336,18 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
     ? groups.map((g) => centroid(g.ms))
     : markers.map((a) => [Number(a.lat), Number(a.lng)]);
 
+  const [layer, setLayer] = useState('map');
+  const [focus, setFocus] = useState(null);
+
+  // ── ההפניות מתאפסות בפירוק, לא ב-effect ──
+  // הניסיון הראשון ניקה אותן ב-`useEffect` על היום הנבחר, וזה **הרס
+  // את ההפניות החדשות**: React קושר ref בשלב ה-commit, לפני שה-effect
+  // רץ. כלומר הסיכות של היום החדש נרשמו ואז נמחקו, והלחיצה בפאנל
+  // פנתה לכלום. הפתרון הוא שה-callback עצמו יכתוב גם `null` בפירוק —
+  // אותה נקודת אמת, בלי סנכרון ידני שאפשר לטעות בסדר שלו.
+  const pinRefs = useRef({});
+  useEffect(() => { setFocus(null); }, [selectedDayIndex]);
+
   const center = positions.length > 0
     ? [
         positions.reduce((s, p) => s + p[0], 0) / positions.length,
@@ -258,8 +355,45 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
       ]
     : [32.0853, 34.7818];
 
+  const panelRows = whole
+    ? groups.map((g) => ({ key: `d${g.i}`, color: dayColor(g.i), badge: g.i + 1,
+        title: g.day.title, sub: `${g.ms.length} עצירות`, onClick: () => onSelectDay && onSelectDay(g.i) }))
+    : markers.map((a, i) => ({ key: `a${i}`, color: TYPE_COLORS[a.type] || '#667eea', badge: i + 1,
+        title: `${a.emoji || ''} ${a.name}`.trim(), sub: [a.time, a.duration].filter(Boolean).join(' · '),
+        onClick: () => {
+          setFocus([Number(a.lat), Number(a.lng)]);
+          const m = pinRefs.current[i];
+          if (m) setTimeout(() => m.openPopup(), 850);
+        } }));
+
   return (
-    <Box sx={{ position: 'relative', height: { xs: '400px', md: '520px' } }}>
+    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, height: { xs: 'auto', md: '520px' } }}>
+    <Box sx={{ position: 'relative', flex: { md: 2 }, minWidth: 0, height: { xs: '400px', md: '100%' } }}>
+
+      {/* ── מפה או לוויין ──
+          הרעיון הגיע מ-`/trip-map`, מסך מוקאפ שנמחק: שם "לוויין" היה
+          כפתור שלא עשה דבר מעל תצלום סטוק. כאן זו שכבת אריחים אמיתית. */}
+      <Box sx={{
+        position: 'absolute', top: 10, left: 10, zIndex: 1000,
+        bgcolor: 'rgba(255,255,255,0.95)', borderRadius: 2, boxShadow: 2,
+        display: 'flex', overflow: 'hidden',
+      }}>
+        {[['map', '🗺️ מפה'], ['satellite', '🛰️ לוויין']].map(([k, label]) => (
+          <Box
+            key={k}
+            component="button"
+            onClick={() => setLayer(k)}
+            sx={{
+              border: 0, cursor: 'pointer', px: 1.2, py: 0.6,
+              fontSize: '0.7rem', fontWeight: 700, fontFamily: 'inherit',
+              bgcolor: layer === k ? '#667eea' : 'transparent',
+              color: layer === k ? '#fff' : '#555',
+            }}
+          >
+            {label}
+          </Box>
+        ))}
+      </Box>
 
       {/* כותרת המבט המלא */}
       {whole && groups.length > 0 && (
@@ -334,11 +468,9 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
         style={{ height: '100%', width: '100%' }}
 
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <TileLayer key={layer} attribution={TILES[layer].attribution} url={TILES[layer].url} />
 
+        <FlyTo target={focus} />
         <FitBounds positions={positions} dayIndex={whole ? 'all' : selectedDayIndex} />
 
         {/* קו מסלול.
@@ -412,6 +544,7 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
           return (
           <Marker
             key={idx}
+            ref={(m) => { pinRefs.current[idx] = m; }}
             position={[Number(activity.lat), Number(activity.lng)]}
             icon={createNumberedPin(idx + 1, activity.type)}
           >
@@ -533,6 +666,57 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
           );
         })}
       </MapContainer>
+    </Box>
+
+    {/* ── פאנל העצירות ──
+        הרעיון השני שנלקח מ-`/trip-map`. במבט המלא הוא מונה ימים
+        ולחיצה פותחת יום; במבט היומי הוא מונה עצירות ולחיצה מרכזת
+        עליהן ופותחת את הכרטיס. הרשימה נגזרת מאותם `groups`/`markers`
+        שמציירים את המפה — לא מחישוב מקביל שיסטה מהם. */}
+    {panelRows.length > 0 && (
+      <Box sx={{
+        flex: { md: 1 }, minWidth: { md: 250 }, maxWidth: { md: 320 },
+        height: { xs: 240, md: '100%' }, overflowY: 'auto',
+        borderInlineStart: { md: '1px solid rgba(0,0,0,0.08)' },
+        borderBlockStart: { xs: '1px solid rgba(0,0,0,0.08)', md: 'none' },
+        bgcolor: '#fafbff',
+      }}>
+        {panelRows.map((r) => (
+          <Box
+            key={r.key}
+            onClick={r.onClick}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && r.onClick()}
+            sx={{
+              display: 'flex', alignItems: 'flex-start', gap: 1.2,
+              px: 1.5, py: 1.1, cursor: 'pointer',
+              borderBottom: '1px solid rgba(0,0,0,0.05)',
+              transition: 'background .15s ease',
+              '&:hover': { bgcolor: 'rgba(102,126,234,0.08)' },
+              '&:focus-visible': { outline: '2px solid #667eea', outlineOffset: -2 },
+              '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+            }}
+          >
+            <Box sx={{
+              width: 22, height: 22, borderRadius: '50%', flexShrink: 0, mt: 0.2,
+              bgcolor: r.color, color: '#fff', display: 'grid', placeItems: 'center',
+              fontSize: '0.7rem', fontWeight: 800,
+            }}>
+              {r.badge}
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, lineHeight: 1.25 }}>
+                {r.title}
+              </Typography>
+              {r.sub && (
+                <Typography variant="caption" color="text.secondary">{r.sub}</Typography>
+              )}
+            </Box>
+          </Box>
+        ))}
+      </Box>
+    )}
     </Box>
   );
 };
