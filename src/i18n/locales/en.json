@@ -5,7 +5,7 @@
     "destination": "Destination Info",
     "search": "Search",
     "map": "Map",
-    "routeMap": "Route Map",
+    "routeMap": "Directions",
     "statistics": "Reports",
     "groupTrip": "Group Trip",
     "myTrips": "My Trips",
@@ -336,7 +336,7 @@
     "vibe_adventure": "Adventure"
   },
   "routeMap": {
-    "title": "🗺️ Route Map",
+    "title": "🧭 Directions",
     "subtitle": "Search routes between any two points in the world",
     "origin": "Origin",
     "destination": "Destination",
@@ -361,7 +361,10 @@
     "search_btn": "Search",
     "popular_label": "Popular destinations:",
     "recent_label": "Recent:",
-    "open_google_maps": "Open in Google Maps"
+    "open_google_maps": "Open in Google Maps",
+    "tripMapTitle": "Your trip map",
+    "exploreBtn": "Explore destinations",
+    "wholeTripBtn": "Whole trip"
   },
   "surprise": {
     "title": "🎲 Surprise Me!",

@@ -12,6 +12,8 @@ import InteractiveMap from '../components/maps/InteractiveMap';
 import AttractionsPanel from '../components/maps/AttractionsPanel';
 import { geocode } from '../services/roadRouteService';
 import { markerIconFor } from '../services/placeCategories';
+import TripMap from '../components/map/TripMap';
+import { useTripContext } from '../contexts/TripContext';
 
 const popularDestinations = [
   'Paris, France',
@@ -45,6 +47,17 @@ const MapPage = () => {
   const [center, setCenter] = useState(null);
   const [centerStatus, setCenterStatus] = useState('loading');
   const [selectedPlace, setSelectedPlace] = useState(null);
+
+  // ── מסך שיודע באיזה מצב המשתמש נמצא ──
+  // עד 07.09.2026 המסך הזה קרא **אפס** נתוני נסיעה: מי שתכנן 12 ימים
+  // בפריז לחץ "מפה" ונחת על תל אביב, ברירת המחדל הקשיחה. הסייר הוא
+  // כלי ל**לפני** שיש תוכנית — "לאן בכלל" — וברגע שיש תוכנית השאלה
+  // השתנתה. הסייר לא נלקח: `explore` מחזיר אליו בלחיצה.
+  const { tripPlan } = useTripContext();
+  const hasTrip = (tripPlan?.dailyItinerary?.length || 0) > 0;
+  const [explore, setExplore] = useState(false);
+  const [tripDay, setTripDay] = useState(null); // null = כל הנסיעה
+  const showTrip = hasTrip && !explore;
 
   useEffect(() => {
     try {
@@ -126,15 +139,57 @@ const MapPage = () => {
         mb: 3
       }}>
         <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.4rem', md: '2rem' } }}>
-          {t('map.title')}
+          {showTrip ? t('map.tripMapTitle') : t('map.title')}
         </Typography>
         <Typography variant="body1" sx={{ opacity: 0.9, mt: 0.5, fontSize: { xs: '0.85rem', md: '1rem' } }}>
-          {t('map.subtitle')}
+          {showTrip ? (tripPlan?.destination || '') : t('map.subtitle')}
         </Typography>
       </Box>
 
       <Container maxWidth="lg">
+        {/* מפת הנסיעה — כשיש נסיעה מתוכננת ולא ביקשו במפורש לחקור */}
+        {showTrip && (
+          <Paper elevation={4} sx={{ borderRadius: 3, mb: 3, overflow: 'hidden' }}>
+            <Box sx={{ p: 1.5, display: 'flex', justifyContent: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <Button
+                size="small"
+                variant={tripDay === null ? 'contained' : 'outlined'}
+                onClick={() => setTripDay(null)}
+                sx={{ fontSize: '0.75rem', py: 0.4, borderRadius: 2 }}
+              >
+                🗺️ {t('map.wholeTripBtn')}
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setExplore(true)}
+                startIcon={<SearchIcon sx={{ fontSize: '0.9rem' }} />}
+                sx={{ fontSize: '0.75rem', py: 0.4, borderRadius: 2 }}
+              >
+                {t('map.exploreBtn')}
+              </Button>
+            </Box>
+            <TripMap
+              tripPlan={tripPlan}
+              selectedDayIndex={tripDay}
+              onSelectDay={setTripDay}
+            />
+          </Paper>
+        )}
+
+        {/* הסייר. מוצג כשאין נסיעה, או כשביקשו אותו במפורש. */}
+        {!showTrip && (
+        <>
         <Paper elevation={4} sx={{ p: { xs: 2, md: 3 }, borderRadius: 3, mb: 3 }}>
+          {hasTrip && (
+            <Button
+              size="small" variant="text"
+              onClick={() => setExplore(false)}
+              sx={{ mb: 1.5, fontSize: '0.75rem' }}
+            >
+              ← {t('map.tripMapTitle')}
+            </Button>
+          )}
           <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
             <TextField
               fullWidth
@@ -273,6 +328,8 @@ const MapPage = () => {
             </Box>
           )}
         </Paper>
+        </>
+        )}
       </Container>
     </Box>
   );

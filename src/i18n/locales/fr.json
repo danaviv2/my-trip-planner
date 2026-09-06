@@ -5,7 +5,7 @@
     "destination": "Infos destination",
     "search": "Recherche",
     "map": "Carte",
-    "routeMap": "Carte des itinéraires",
+    "routeMap": "Itinéraire",
     "statistics": "Rapports",
     "groupTrip": "Voyage en groupe",
     "myTrips": "Mes voyages",
@@ -336,7 +336,7 @@
     "vibe_adventure": "Aventure"
   },
   "routeMap": {
-    "title": "🗺️ Carte des itinéraires",
+    "title": "🧭 Itinéraire",
     "subtitle": "Recherchez un itinéraire entre deux points dans le monde",
     "origin": "Départ",
     "destination": "Destination",
@@ -361,7 +361,10 @@
     "search_btn": "Rechercher",
     "popular_label": "Destinations populaires :",
     "recent_label": "Récents :",
-    "open_google_maps": "Ouvrir dans Google Maps"
+    "open_google_maps": "Ouvrir dans Google Maps",
+    "tripMapTitle": "Carte de votre voyage",
+    "exploreBtn": "Explorer des destinations",
+    "wholeTripBtn": "Tout le voyage"
   },
   "surprise": {
     "title": "🎲 Surprenez-moi !",

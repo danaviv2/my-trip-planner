@@ -5,7 +5,7 @@
     "destination": "מידע על יעד",
     "search": "חיפוש",
     "map": "מפה",
-    "routeMap": "מפת מסלולים",
+    "routeMap": "ניווט",
     "statistics": "דוחות",
     "groupTrip": "טיול קבוצתי",
     "myTrips": "הטיולים שלי",
@@ -336,7 +336,7 @@
     "vibe_adventure": "הרפתקה"
   },
   "routeMap": {
-    "title": "🗺️ מפת מסלולים",
+    "title": "🧭 ניווט והוראות הגעה",
     "subtitle": "חפש מסלול בין כל שתי נקודות בעולם",
     "origin": "מוצא",
     "destination": "יעד",
@@ -361,7 +361,10 @@
     "search_btn": "חפש",
     "popular_label": "יעדים פופולריים:",
     "recent_label": "אחרונים:",
-    "open_google_maps": "פתח ב-Google Maps"
+    "open_google_maps": "פתח ב-Google Maps",
+    "tripMapTitle": "מפת הנסיעה שלך",
+    "exploreBtn": "חיפוש יעדים",
+    "wholeTripBtn": "כל הנסיעה"
   },
   "surprise": {
     "title": "🎲 הפתיעו אותי!",
