@@ -7,6 +7,7 @@ import {
   ToggleButton, ToggleButtonGroup, Collapse, Fab, CircularProgress
 } from '@mui/material';
 import { fetchDestinationFromAI } from '../services/aiDestinationService';
+import { fetchPopularity, topPlaces } from '../services/placePopularityService';
 import {
   Search as SearchIcon,
   FilterList as FilterIcon,
@@ -61,7 +62,7 @@ const transformDestinationData = (data, destName) => {
 
   (data.attractions || []).forEach((item, i) => {
     results.push({
-      id: `a_${i}`, name: item.name, category: 'attractions',
+      id: `a_${i}`, name: item.name, nameEn: item.nameEn, category: 'attractions',
       location: loc,
       // התמונה הוסרה: `source.unsplash.com` מחזיר 503 והשירות נסגר.
       // תצלום אקראי לפי מילות חיפוש תחת שם מקום אמיתי הוא ממילא
@@ -77,7 +78,7 @@ const transformDestinationData = (data, destName) => {
   (data.food?.restaurants || []).forEach((item, i) => {
     const priceMap = { '$': 10, '$$': 30, '$$$': 65, '$$$$': 120 };
     results.push({
-      id: `r_${i}`, name: item.name, category: 'restaurants',
+      id: `r_${i}`, name: item.name, nameEn: item.nameEn, category: 'restaurants',
       location: item.area ? `${item.area}, ${loc}` : loc,
       image: null,
       price: priceMap[item.priceRange] || 30,
@@ -89,7 +90,7 @@ const transformDestinationData = (data, destName) => {
 
   (data.food?.markets || []).forEach((item, i) => {
     results.push({
-      id: `m_${i}`, name: item.name, category: 'attractions',
+      id: `m_${i}`, name: item.name, nameEn: item.nameEn, category: 'attractions',
       location: loc,
       image: item.image || null,
       price: 0,
@@ -156,7 +157,21 @@ const AdvancedSearchPage = () => {
     setSelectedCategory('all');
     try {
       const aiData = await fetchDestinationFromAI(trimmed);
-      setResults(transformDestinationData(aiData, trimmed));
+      const rows = transformDestinationData(aiData, trimmed);
+      setResults(rows);
+
+      // ── הפופולריות נטענת ברקע, אחרי שהתוצאות כבר על המסך ──
+      // היא קישוט ולא תוכן: המשתמש לא ימתין 12 שניות של ויסות בשביל
+      // תגית. כשל שקט כאן נכון — הכרטיסים פשוט יישארו בלי הסימון.
+      fetchPopularity(rows, trimmed)
+        .then((views) => {
+          const top = topPlaces(views);
+          if (!top.size) return;
+          setResults((prev) => prev.map((r) => (
+            r.nameEn && top.has(r.nameEn) ? { ...r, wellKnown: true } : r
+          )));
+        })
+        .catch(() => {});
     } catch (err) {
       setSearchError(err.message === 'NO_API_KEY' ? 'no_api_key' : 'error');
       setResults([]);
@@ -183,7 +198,12 @@ const AdvancedSearchPage = () => {
     }
 
     filtered = filtered.filter(item => item.price >= priceRange[0] && item.price <= priceRange[1]);
-    filtered = filtered.filter(item => item.rating >= minRating);
+    // ── מקום בלי דירוג אינו נופל מהמסנן ──
+    // הדירוגים המומצאים הוסרו, ו-`undefined >= 0` הוא false — כלומר
+    // המסנן העלים **את כל התוצאות**. נתפס בהרצה חיה: החיפוש החזיר
+    // 0 כרטיסים בזמן שהנתונים היו במקום.
+    // כשאין סף, אין מה לסנן.
+    if (minRating > 0) filtered = filtered.filter(item => (item.rating || 0) >= minRating);
 
     if (selectedTags.length > 0) {
       filtered = filtered.filter(item =>
@@ -192,7 +212,7 @@ const AdvancedSearchPage = () => {
     }
 
     switch (sortBy) {
-      case 'rating': filtered.sort((a, b) => b.rating - a.rating); break;
+      case 'rating': filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0)); break;
       case 'price-low': filtered.sort((a, b) => a.price - b.price); break;
       case 'price-high': filtered.sort((a, b) => b.price - a.price); break;
       case 'reviews': filtered.sort((a, b) => (b.reviews || 0) - (a.reviews || 0)); break;
@@ -530,7 +550,24 @@ const AdvancedSearchPage = () => {
                   </Box>
 
                   <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                    <Typography variant="h6" fontWeight="bold" gutterBottom>{result.name}</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, flexWrap: 'wrap', mb: 0.5 }}>
+                      <Typography variant="h6" fontWeight="bold">{result.name}</Typography>
+                      {/* ── תגית שנשענת על מדידה ──
+                          מוצגת רק לשלושת המקומות שערך הוויקיפדיה שלהם
+                          נקרא הכי הרבה בחודש האחרון, ורק כשיש יותר
+                          משלושה מועמדים. הניסוח "מהמוכרים" ולא "הכי
+                          טוב": צפיות מודדות היכרות, לא איכות, ומקום
+                          יכול להיות מפורסם ומאכזב. */}
+                      {result.wellKnown && (
+                        <Chip
+                          label="מהמוכרים באזור"
+                          size="small"
+                          sx={{ height: 22, fontSize: '0.68rem', fontWeight: 700 }}
+                          color="primary"
+                          variant="outlined"
+                        />
+                      )}
+                    </Box>
 
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                       <PlaceIcon fontSize="small" color="action" />
