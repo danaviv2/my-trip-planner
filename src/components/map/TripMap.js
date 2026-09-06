@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Box, Typography, Chip, Button } from '@mui/material';
@@ -174,32 +174,113 @@ const isValidCoord = (a) => {
   );
 };
 
-const TripMap = ({ tripPlan, selectedDayIndex }) => {
-  const day = tripPlan?.dailyItinerary?.[selectedDayIndex];
-  const rawActivities = day?.activities || [];
+// צבע לכל יום במבט המלא. הצבע לפי **יום** ולא לפי סוג הפעילות: במבט
+// על נסיעה שלמה השאלה היא "מתי אני כאן", לא "מה זה". סוג הפעילות
+// ממשיך לצבוע את הסיכות במבט היומי, שם הוא כן השאלה.
+const DAY_COLORS = [
+  '#E53935', '#1E88E5', '#43A047', '#FB8C00', '#8E24AA',
+  '#00ACC1', '#F4511E', '#3949AB', '#7CB342', '#D81B60',
+  '#00897B', '#5E35B1',
+];
+const dayColor = (i) => DAY_COLORS[i % DAY_COLORS.length];
 
-  // fallback: פעילויות ללא קואורדינטות מקבלות ממוצע של הפעילויות התקינות ביום
-  const validInDay = rawActivities.filter(isValidCoord);
-  const fallbackLat = validInDay.length > 0 ? validInDay.reduce((s, a) => s + Number(a.lat), 0) / validInDay.length : null;
-  const fallbackLng = validInDay.length > 0 ? validInDay.reduce((s, a) => s + Number(a.lng), 0) / validInDay.length : null;
+/**
+ * הפעילויות של יום שיש להן מקום על המפה.
+ *
+ * פונקציה אחת לשני המצבים — היומי והמלא. שני מקומות שמחשבים את אותה
+ * עובדה סוטים זה מזה בשינוי הבא, וזה דפוס שהפרויקט כבר שילם עליו.
+ *
+ * פעילות בלי קואורדינטות מקבלת את ממוצע היום ולא נעלמת: היא באמת
+ * קרתה, והשמטתה משאירה חור בקו המסלול.
+ */
+const dayMarkers = (day) => {
+  const raw = day?.activities || [];
+  const valid = raw.filter(isValidCoord);
+  if (valid.length === 0) return [];
+  const avgLat = valid.reduce((s, a) => s + Number(a.lat), 0) / valid.length;
+  const avgLng = valid.reduce((s, a) => s + Number(a.lng), 0) / valid.length;
+  return raw
+    .map((a) => (isValidCoord(a) ? a : { ...a, lat: avgLat, lng: avgLng }))
+    .filter(isValidCoord);
+};
 
-  const activities = rawActivities.map(a =>
-    isValidCoord(a) || fallbackLat == null ? a : { ...a, lat: fallbackLat, lng: fallbackLng }
-  );
+const centroid = (ms) => [
+  ms.reduce((s, a) => s + Number(a.lat), 0) / ms.length,
+  ms.reduce((s, a) => s + Number(a.lng), 0) / ms.length,
+];
 
-  const markers = activities.filter(isValidCoord);
+/** סיכת יום במבט המלא — מספר היום, בצבע היום. */
+const createDayPin = (dayNumber, color) => L.divIcon({
+  className: '',
+  html: `<div style="
+      width:30px;height:30px;border-radius:50%;
+      background:${color};border:3px solid #fff;
+      box-shadow:0 2px 6px rgba(0,0,0,.4);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:800;font-size:13px;font-family:system-ui,sans-serif;
+    ">${dayNumber}</div>`,
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],
+});
 
-  const positions = markers.map(a => [Number(a.lat), Number(a.lng)]);
+/**
+ * @param {number|null} selectedDayIndex  אינדקס היום, או `null` למבט על
+ *   כל הנסיעה. המבט המלא נבנה כי נסיעה אינה בהכרח בעיר אחת: מסלול
+ *   שיוצא לבורדו הוא מסע בין נקודות, ובמבט יומי בלבד הקשר ביניהן
+ *   פשוט לא קיים על המסך.
+ * @param {Function} onSelectDay  לחיצה על יום במבט המלא קופצת אליו.
+ */
+const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
+  const whole = selectedDayIndex == null;
+  const allDays = tripPlan?.dailyItinerary || [];
 
-  const center = markers.length > 0
+  // ── המבט המלא: יום = נקודה אחת, לא חמש ──
+  // חמישים סיכות פרושות על מסלול הן ענן ולא מסלול. כל יום מקבל סיכה
+  // אחת במרכז הכובד שלו, והפעילויות עצמן מצוירות כנקודות קטנות — כך
+  // רואים גם את הרצף בין הימים וגם את הצפיפות לאורכו.
+  const groups = whole
+    ? allDays
+        .map((d, i) => ({ i, day: d, ms: dayMarkers(d) }))
+        .filter((g) => g.ms.length > 0)
+    : [];
+
+  const day = whole ? null : allDays[selectedDayIndex];
+  const markers = whole ? [] : dayMarkers(day);
+
+  const positions = whole
+    ? groups.map((g) => centroid(g.ms))
+    : markers.map((a) => [Number(a.lat), Number(a.lng)]);
+
+  const center = positions.length > 0
     ? [
-        markers.reduce((s, a) => s + Number(a.lat), 0) / markers.length,
-        markers.reduce((s, a) => s + Number(a.lng), 0) / markers.length,
+        positions.reduce((s, p) => s + p[0], 0) / positions.length,
+        positions.reduce((s, p) => s + p[1], 0) / positions.length,
       ]
     : [32.0853, 34.7818];
 
   return (
     <Box sx={{ position: 'relative', height: { xs: '400px', md: '520px' } }}>
+
+      {/* כותרת המבט המלא */}
+      {whole && groups.length > 0 && (
+        <Box sx={{
+          position: 'absolute', top: 10, right: 10, zIndex: 1000,
+          bgcolor: 'rgba(255,255,255,0.95)', px: 2, py: 1,
+          borderRadius: 3, boxShadow: 3, maxWidth: '60%',
+        }}>
+          <Typography variant="caption" fontWeight={800} display="block" sx={{ color: '#667eea' }}>
+            כל הנסיעה
+          </Typography>
+          {tripPlan?.destination && (
+            <Typography variant="caption" fontWeight={600} display="block" sx={{ color: '#333', lineHeight: 1.3 }}>
+              {tripPlan.destination}
+            </Typography>
+          )}
+          <Typography variant="caption" color="text.secondary">
+            {groups.length} ימים · {groups.reduce((n, g) => n + g.ms.length, 0)} עצירות
+          </Typography>
+        </Box>
+      )}
 
       {/* כותרת יום */}
       {day && (
@@ -222,8 +303,10 @@ const TripMap = ({ tripPlan, selectedDayIndex }) => {
         </Box>
       )}
 
-      {/* אגדת סוגים */}
-      {markers.length > 0 && (
+      {/* אגדת סוגים — רק במבט היומי. במבט המלא הצבע מסמן יום, ואגדה
+          של שנים־עשר ימים תופסת יותר מסך מהמפה עצמה; מספר היום יושב
+          על הסיכה וזו האגדה. */}
+      {!whole && markers.length > 0 && (
         <Box sx={{
           position: 'absolute', bottom: 24, left: 8, zIndex: 1000,
           bgcolor: 'rgba(255,255,255,0.95)', p: 1, borderRadius: 2, boxShadow: 2,
@@ -256,21 +339,73 @@ const TripMap = ({ tripPlan, selectedDayIndex }) => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        <FitBounds positions={positions} dayIndex={selectedDayIndex} />
+        <FitBounds positions={positions} dayIndex={whole ? 'all' : selectedDayIndex} />
 
-        {/* קו מסלול בין הפעילויות */}
-        {positions.length >= 2 && (
-          <Polyline
-            positions={positions}
-            color="#667eea"
-            weight={3}
-            opacity={0.7}
-            dashArray="8, 6"
-          />
+        {/* קו מסלול.
+            במבט היומי — בין הפעילויות. במבט המלא — בין הימים, וכל קטע
+            נצבע בצבע היום שאליו הוא מוביל, כך שכיוון המסע נקרא מהצבע
+            ולא רק מהמספרים. */}
+        {!whole && positions.length >= 2 && (
+          <Polyline positions={positions} color="#667eea" weight={3} opacity={0.7} dashArray="8, 6" />
         )}
+        {whole && positions.slice(0, -1).map((from, i) => (
+          <Polyline
+            key={`leg-${i}`}
+            positions={[from, positions[i + 1]]}
+            color={dayColor(groups[i + 1].i)}
+            weight={4}
+            opacity={0.75}
+          />
+        ))}
 
-        {/* סיכות ממוספרות */}
-        {markers.map((activity, idx) => {
+        {/* המבט המלא: נקודה קטנה לכל פעילות, וסיכה אחת לכל יום */}
+        {whole && groups.map((g) => (
+          <React.Fragment key={`day-${g.i}`}>
+            {g.ms.map((a, k) => (
+              <CircleMarker
+                key={`dot-${g.i}-${k}`}
+                center={[Number(a.lat), Number(a.lng)]}
+                radius={4}
+                pathOptions={{ color: '#fff', weight: 1.5, fillColor: dayColor(g.i), fillOpacity: 0.9 }}
+              >
+                <Popup>
+                  <Typography variant="caption" fontWeight={700} display="block">
+                    {a.emoji} {a.name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    יום {g.i + 1}{a.time ? ` · ${a.time}` : ''}
+                  </Typography>
+                </Popup>
+              </CircleMarker>
+            ))}
+            <Marker position={centroid(g.ms)} icon={createDayPin(g.i + 1, dayColor(g.i))}>
+              <Popup minWidth={190}>
+                <Typography variant="caption" fontWeight={800} display="block" sx={{ color: dayColor(g.i) }}>
+                  יום {g.i + 1}
+                </Typography>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.3 }}>
+                  {g.day.title}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.8 }}>
+                  {g.ms.length} עצירות
+                </Typography>
+                {onSelectDay && (
+                  <Button
+                    fullWidth size="small" variant="contained"
+                    onClick={() => onSelectDay(g.i)}
+                    sx={{ fontSize: '0.7rem', py: 0.3, background: dayColor(g.i),
+                      '&:hover': { background: dayColor(g.i), filter: 'brightness(0.9)' } }}
+                  >
+                    פתח את יום {g.i + 1}
+                  </Button>
+                )}
+              </Popup>
+            </Marker>
+          </React.Fragment>
+        ))}
+
+        {/* סיכות ממוספרות — המבט היומי */}
+        {!whole && markers.map((activity, idx) => {
           const prevActivity = idx > 0 ? markers[idx - 1] : null;
           const navOrigin = prevActivity ? encodeURIComponent(prevActivity.address || prevActivity.name) : null;
           const navDest = encodeURIComponent(activity.address || activity.name);

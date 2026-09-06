@@ -1,9 +1,10 @@
 - [Project location](project-location.md) — היכן הפרויקט חי, אילו תיקיות מטעות, ומה חסר אחרי שכפול
 - [Memory lives in git](memory-lives-in-git.md) — למה תיקיית הזיכרון היא קישור לריפו, ומה לעשות אם היא נראית ריקה
 - [Auto push to main](auto-push-to-main.md) — לדחוף בלי לשאול, לאמת שנחת, ולומר מה נפרס
-- [VS Code setup](vscode-setup.md) — שתי התקנות, איזו היא הנכונה, ומאיפה בא `code`
+- [VS Code setup](vscode-setup.md) — ההתקנה הנכונה, מאיפה בא `code`, ואיפה היסטוריית ההגדרות לשחזור
 - [Booking reference formats](booking-reference-formats.md) — למה מבנה מספר אסמכתה אינו מפריד בין הזמנה לפוליסה, ומה כן
 - [Coherence not presence](coherence-not-presence.md) — הבאג שנראה ככפילות, ולמה בדיקות נוכחות לא תפסו אותו
 - [Docs auto, code asks](docs-auto-code-asks.md) — תיעוד וגיבוי אוטומטית; שינוי קוד רק באישור
 - [Pipeline is not the obvious function](pipeline-not-the-obvious-function.md) — שם משכנע אינו הוכחה שזה המסלול שרץ
 - [Bump parser version](bump-parser-version.md) — שינוי בפרומפט בלי העלאת הגרסה = סריקה שמחזירה אפס
+- [i18n decision pending](i18n-decision-pending.md) — מה תוקן ברב-לשוניות, ומה ממתין להכרעת מוצר

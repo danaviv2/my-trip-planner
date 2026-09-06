@@ -46,7 +46,7 @@ const TripPlannerPage = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
-  const { tripPlan, selectedDayIndex, updateTripPlan } = useTripContext();
+  const { tripPlan, selectedDayIndex, setSelectedDayIndex, updateTripPlan } = useTripContext();
   const [saved, setSaved] = useState(false);
   const [lastSavedTripId, setLastSavedTripId] = useState(searchParams.get('tripId') || null);
   const [shareOpen, setShareOpen] = useState(false);
@@ -61,6 +61,12 @@ const TripPlannerPage = () => {
   });
   const [hotelModalOpen, setHotelModalOpen] = useState(false);
   const [mapFocus, setMapFocus] = useState(null);
+
+  // ── מצב המפה: יום נבחר או כל הנסיעה ──
+  // state מקומי בכוונה. `selectedDayIndex` משותף עם הציר ועם
+  // `TripPlanner`, ומעבר למבט המלא אינו אמור להזיז את היום שהמשתמש
+  // עומד עליו — הוא חוזר אליו כשהוא מכבה את המתג.
+  const [wholeTripMap, setWholeTripMap] = useState(false);
   const [hotelRecommendations, setHotelRecommendations] = useState([]);
   const [syncedBookings, setSyncedBookings] = useState(() => {
     try { return JSON.parse(localStorage.getItem('syncedBookings') || '[]'); } catch { return []; }
@@ -650,12 +656,40 @@ const TripPlannerPage = () => {
           )}
         </Box>
 
-        {/* מפת מסלול יומי — כשיש תכנון AI ואנחנו בלשונית תכנון */}
+        {/* מפת המסלול — כשיש תכנון AI ואנחנו בלשונית תכנון */}
         {mainTab === 'plan' && tripPlan && (
-          <TripMap
-            tripPlan={tripPlan}
-            selectedDayIndex={selectedDayIndex}
-          />
+          <>
+            {/* ── המתג שמחבר בין התכנון למפה ──
+                עד 06.09.2026 המפה הראתה יום אחד בלבד, ולכן נסיעה שהיא
+                מסלול בין ערים — נניח פריז ⟵ בורדו — לא נראתה כמסלול
+                בשום מסך: כל יום הופיע לחוד ואת הקשר ביניהם המשתמש היה
+                צריך להרכיב בראש. */}
+            {(tripPlan.dailyItinerary?.length || 0) > 1 && (
+              <Box sx={{ px: 2, pb: 1.5, display: 'flex', justifyContent: 'center', gap: 1 }}>
+                <Button
+                  size="small"
+                  variant={wholeTripMap ? 'contained' : 'outlined'}
+                  onClick={() => setWholeTripMap(true)}
+                  sx={{ fontSize: '0.75rem', py: 0.4, borderRadius: 2 }}
+                >
+                  🗺️ כל הנסיעה
+                </Button>
+                <Button
+                  size="small"
+                  variant={!wholeTripMap ? 'contained' : 'outlined'}
+                  onClick={() => setWholeTripMap(false)}
+                  sx={{ fontSize: '0.75rem', py: 0.4, borderRadius: 2 }}
+                >
+                  📍 יום {selectedDayIndex + 1}
+                </Button>
+              </Box>
+            )}
+            <TripMap
+              tripPlan={tripPlan}
+              selectedDayIndex={wholeTripMap ? null : selectedDayIndex}
+              onSelectDay={(i) => { setSelectedDayIndex(i); setWholeTripMap(false); }}
+            />
+          </>
         )}
 
         {/* מפת מלונות Leaflet — נשארת מותקנת (display:none שומר על הסיכות) */}
