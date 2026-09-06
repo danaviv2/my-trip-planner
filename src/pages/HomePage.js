@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container, Box, Typography, Button, Grid, Card, CardContent,
-  Paper, Chip, Stack, TextField, IconButton, Tooltip
+  Paper, Stack, TextField, IconButton, Tooltip
 } from '@mui/material';
 import {
   Flight as FlightIcon,
   Explore as ExploreIcon,
   Search as SearchIcon,
   Map as MapIcon,
-  TrendingUp as TrendingIcon,
-  LocationOn as LocationIcon,
   Casino as CasinoIcon,
   Luggage as LuggageIcon,
   Group as GroupIcon,
@@ -104,8 +102,13 @@ const HomePage = () => {
       emoji: '📋'
     },
     {
-      title: 'טיול מתגלגל',
-      description: 'הגדר מסלול ו-AI יגלה את העצירות המושלמות לאורך הדרך',
+      // שתי התכונות האחרונות היו כתובות קשיח בעברית עד 06.09.2026,
+      // בזמן שחמש שמעליהן עברו ב-`t()`. נמדד בכל חמש השפות:
+      // `home.features` הכיל planner, destination, search, map, myTrips
+      // — חמישה מפתחות מול שבעה כרטיסים. משתמש באנגלית ראה חמישה
+      // כרטיסים מתורגמים ושניים בעברית, על אותו מסך.
+      title: t('home.features.rollingTrip.title'),
+      description: t('home.features.rollingTrip.desc'),
       icon: <RouteIcon sx={{ fontSize: 60 }} />,
       color: 'linear-gradient(135deg, #f7971e 0%, #e74c3c 100%)',
       path: '/rolling-trip',
@@ -113,8 +116,8 @@ const HomePage = () => {
       emoji: '🛣️'
     },
     {
-      title: "מצ'קמייקר יעדים",
-      description: 'ענה על 5 שאלות ו-AI ימצא את היעד המושלם עבורך',
+      title: t('home.features.matchmaker.title'),
+      description: t('home.features.matchmaker.desc'),
       icon: <CasinoIcon sx={{ fontSize: 60 }} />,
       color: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
       path: '/matchmaker',
@@ -229,33 +232,15 @@ const HomePage = () => {
               שמעליו, ואצלו זה היה רעש. */}
           {!hasUpcoming && <DemoItinerary />}
 
-          {/* שני התגים ירדו לגמרי: הם אמרו במילים ("מסלולים מותאמים")
-              בדיוק את מה שההדגמה מראה בעין, ובכך גם התחרו בה על תשומת
-              לב וגם שילמו את הגובה שהיא צריכה. */}
-          <Stack direction="row" justifyContent="center" flexWrap="wrap"
-            sx={{ gap: 2, display: 'none' }}>
-            {/* `chip1` הוסר ב-04.09.2026: הוא הכריז "מעל 10,000 יעדים",
-                מחרוזת קשיחה שאין מאחוריה מקור — במאגר 69 רשומות. מספר
-                מומצא במסך הראשון מטיל צל על כל מספר אמיתי באפליקציה. */}
-            {[
-              { icon: <TrendingIcon />, label: t('home.hero.chip2') },
-              { icon: <LocationIcon />, label: t('home.hero.chip3') },
-            ].map((chip) => (
-              <Chip
-                key={chip.label}
-                icon={chip.icon}
-                label={chip.label}
-                sx={{
-                  bgcolor: 'rgba(255,255,255,0.2)',
-                  color: 'white',
-                  fontWeight: 600,
-                  backdropFilter: 'blur(10px)',
-                  fontSize: '1rem',
-                  py: 2.5, px: 1
-                }}
-              />
-            ))}
-          </Stack>
+          {/* שני התגים ירדו ב-04.09.2026: הם אמרו במילים ("מסלולים
+              מותאמים") בדיוק את מה שההדגמה מראה בעין, ובכך גם התחרו
+              בה על תשומת לב וגם שילמו את הגובה שהיא צריכה. `chip1`
+              ירד עוד קודם — הוא הכריז "מעל 10,000 יעדים", מחרוזת
+              קשיחה שאין מאחוריה מקור: במאגר 69 רשומות.
+
+              עד 06.09.2026 הם נשארו בקוד תחת `display: 'none'` —
+              כלומר עדיין נבנו, עדיין רונדרו, ורק לא נראו. מה שלא
+              מוצג לא צריך להיבנות. */}
 
           {/* שדה החיפוש עלה לכאן ב-04.09.2026. קודם הוא ישב בכרטיס CTA
               נפרד מתחת ל-hero, כלומר שני גושי גרדיאנט שהבטיחו אותו דבר
@@ -439,7 +424,16 @@ const HomePage = () => {
                 fontSize: { xs: '1rem', md: '1.3rem' }, px: { xs: 4, md: 6 }, py: { xs: 1.5, md: 2 },
                 borderRadius: 3, boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
                 animation: 'pulse 2s ease-in-out infinite',
-                '&:hover': { background: 'rgba(255,255,255,0.95)', transform: 'scale(1.08)', boxShadow: '0 15px 40px rgba(0,0,0,0.3)' }
+                '&:hover': { background: 'rgba(255,255,255,0.95)', transform: 'scale(1.08)', boxShadow: '0 15px 40px rgba(0,0,0,0.3)' },
+                // ── האנימציה האינסופית האחרונה שנשארה בלי שומר ──
+                // בדף שלושה שומרי `prefers-reduced-motion` — בכרטיסים
+                // הראשיים, במשניים וביעדים — וזה היה היחיד בלעדיו,
+                // דווקא הוא: `scale` שרץ ללא הפסקה. תיקון שהוחל על אח
+                // אחד ולא על אחיו הוא הדפוס הראשון ב-`CLAUDE.md`.
+                '@media (prefers-reduced-motion: reduce)': {
+                  animation: 'none',
+                  '&:hover': { transform: 'none' },
+                },
               }}
             >
               {t('home.surprise.button')}
@@ -541,11 +535,9 @@ const HomePage = () => {
         trip={{ destination: shareTarget }}
       />
 
+      {/* `@keyframes bounce` נמחק ב-06.09.2026 — שריד מהאנימציה
+          שהוסרה מכרטיסי הניווט, בלי ולו שימוש אחד בקובץ. */}
       <style>{`
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
         @keyframes pulse {
           0%, 100% { box-shadow: 0 8px 30px rgba(255,255,255,0.3); }
           50% { box-shadow: 0 8px 50px rgba(255,255,255,0.6); transform: scale(1.03); }

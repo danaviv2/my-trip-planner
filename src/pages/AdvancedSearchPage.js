@@ -161,8 +161,12 @@ const AdvancedSearchPage = () => {
       setResults(rows);
 
       // ── הפופולריות נטענת ברקע, אחרי שהתוצאות כבר על המסך ──
-      // היא קישוט ולא תוכן: המשתמש לא ימתין 12 שניות של ויסות בשביל
-      // תגית. כשל שקט כאן נכון — הכרטיסים פשוט יישארו בלי הסימון.
+      // היא קישוט ולא תוכן. כשל שקט כאן נכון — הכרטיסים פשוט יישארו
+      // בלי הסימון.
+      //
+      // הגרסה הראשונה שאלה מקום-מקום ולקחה 17 שניות, ונחסמה ב-429
+      // אחרי חמישה. היום זו בקשה אחת לכל הרשימה — נמדד 40 מקומות
+      // ב-362ms — ולכן הרקע כאן הוא זהירות, לא הכרח.
       fetchPopularity(rows, trimmed)
         .then((views) => {
           const top = topPlaces(views);
@@ -560,7 +564,7 @@ const AdvancedSearchPage = () => {
                           יכול להיות מפורסם ומאכזב. */}
                       {result.wellKnown && (
                         <Chip
-                          label="מהמוכרים באזור"
+                          label={t('advancedSearch.wellKnown')}
                           size="small"
                           sx={{ height: 22, fontSize: '0.68rem', fontWeight: 700 }}
                           color="primary"

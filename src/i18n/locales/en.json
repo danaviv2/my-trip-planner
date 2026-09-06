@@ -48,6 +48,14 @@
       "myTrips": {
         "title": "My Trips",
         "desc": "All your saved trips in one place — view, edit and plan again"
+      },
+      "rollingTrip": {
+        "title": "Rolling Trip",
+        "desc": "Set a route and AI will find the perfect stops along the way"
+      },
+      "matchmaker": {
+        "title": "Destination Matchmaker",
+        "desc": "Answer 5 questions and AI will find your perfect destination"
       }
     },
     "surprise": {
@@ -255,7 +263,8 @@
     "clear_search": "Clear Search",
     "free": "Free",
     "details": "More Details",
-    "reviews": "reviews"
+    "reviews": "reviews",
+    "wellKnown": "Well known here"
   },
   "statistics": {
     "title": "📊 Reports & Statistics",

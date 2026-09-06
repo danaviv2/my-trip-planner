@@ -48,6 +48,14 @@
       "myTrips": {
         "title": "Minhas viagens",
         "desc": "Todas as suas viagens salvas em um só lugar — veja, edite e planeje novamente"
+      },
+      "rollingTrip": {
+        "title": "Viagem em movimento",
+        "desc": "Defina uma rota e a IA encontrará as paradas perfeitas"
+      },
+      "matchmaker": {
+        "title": "Combinador de destinos",
+        "desc": "Responda a 5 perguntas e a IA encontrará o seu destino ideal"
       }
     },
     "surprise": {
@@ -255,7 +263,8 @@
     "clear_search": "Limpar pesquisa",
     "free": "Grátis",
     "details": "Mais detalhes",
-    "reviews": "avaliações"
+    "reviews": "avaliações",
+    "wellKnown": "Dos mais conhecidos"
   },
   "statistics": {
     "title": "📊 Relatórios e estatísticas",
