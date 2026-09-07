@@ -80,10 +80,19 @@ const DemoItinerary = () => {
   // הציר נבנה פעם אחת, ודרך אותה פונקציה שמזינה את המסך האמיתי.
   const days = useMemo(() => buildTimeline(SAMPLE_BOOKINGS), []);
 
-  // כרטיס לבן על הסגול. הניגוד הוא כל הרעיון, ולכן הוא מוגדר פעם אחת.
+  // ── כרטיס לבן על הסגול. הניגוד הוא כל הרעיון ──
+  // ולכן הרקע **וגם** הטקסט קשיחים, ביחד. עד 07.09.2026 הרקע היה
+  // קשיח ו-`color` נלקח מהערכה, ולכן במצב כהה הכרטיסים היו **לבן על
+  // לבן**: נמדד יחס 1:1 על שמונה אלמנטים, ועוד 1.91 על ארבע שורות
+  // המשנה. הכרטיס נשאר לבן בשתי הערכות — הוא יושב על גרדיאנט, לא על
+  // משטח הדף — ולכן צבע שנגזר מהערכה הוא באג ולא גמישות.
+  //
+  // הכלל: רקע קשיח מחייב טקסט קשיח. מי שמערבב אותם מקבל מסך שנעלם.
+  const INK = '#1f2340';
+  const INK_SOFT = '#5a6072';
   const paper = {
     bgcolor: 'rgba(255,255,255,0.97)',
-    color: 'text.primary',
+    color: INK,
     borderRadius: 2.5,
     boxShadow: '0 6px 20px rgba(0,0,0,0.18)',
   };
@@ -152,7 +161,7 @@ const DemoItinerary = () => {
                     {m.subject}
                   </Typography>
                   <Typography noWrap sx={{
-                    fontSize: '0.72rem', color: 'text.secondary',
+                    fontSize: '0.72rem', color: INK_SOFT,
                     display: { xs: 'none', md: 'block' },
                   }}>
                     {m.line}
@@ -268,7 +277,7 @@ const DemoItinerary = () => {
                       </Typography>
                     )}
                     <Box sx={{ ...paper, px: { xs: 0.85, md: 1.15 }, py: { xs: 0.7, md: 0.9 }, mb: 0.6, display: 'flex', gap: 1, alignItems: 'flex-start', textAlign: 'start' }}>
-                      <Box sx={{ width: 40, flexShrink: 0, fontSize: { xs: '0.68rem', md: '0.75rem' }, fontWeight: 800, color: 'text.secondary', pt: 0.2 }}>
+                      <Box sx={{ width: 40, flexShrink: 0, fontSize: { xs: '0.68rem', md: '0.75rem' }, fontWeight: 800, color: INK_SOFT, pt: 0.2 }}>
                         {ev.allDay ? '' : `${String(ev.at.getHours()).padStart(2, '0')}:${String(ev.at.getMinutes()).padStart(2, '0')}`}
                       </Box>
                       <Box sx={{ fontSize: { xs: '0.9rem', md: '1rem' } }}>{ev.icon}</Box>
@@ -277,7 +286,7 @@ const DemoItinerary = () => {
                           {ev.title}
                         </Typography>
                         {ev.detail && (
-                          <Typography noWrap sx={{ fontSize: { xs: '0.63rem', md: '0.72rem' }, color: 'text.secondary' }}>
+                          <Typography noWrap sx={{ fontSize: { xs: '0.63rem', md: '0.72rem' }, color: INK_SOFT }}>
                             {ev.detail}
                           </Typography>
                         )}

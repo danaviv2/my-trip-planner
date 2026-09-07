@@ -81,9 +81,15 @@ export default function VibeMatcher() {
                   textAlign: 'center',
                   borderRadius: 3,
                   border: isSelected ? `3px solid ${vibe.color}` : '3px solid transparent',
+                  // ── `background.paper` ולא `'white'` ──
+                  // כאן ההפך מ-`DemoItinerary`: הכרטיס יושב בתוך
+                  // `Paper` של הדף ולא על גרדיאנט, ולכן הוא **אמור**
+                  // ללכת אחרי הערכה. עד 07.09.2026 הוא היה לבן קשיח
+                  // בזמן ש-`color` נגזר מהערכה, ובמצב כהה נמדדו 16
+                  // כרטיסים של לבן על לבן — יחס 1:1.
                   background: isSelected
                     ? `linear-gradient(135deg, ${vibe.color}22 0%, ${vibe.color}44 100%)`
-                    : 'white',
+                    : 'background.paper',
                   opacity: isDisabled ? 0.45 : 1,
                   boxShadow: isSelected ? `0 4px 20px ${vibe.color}55` : '0 2px 8px rgba(0,0,0,0.08)',
                   transition: 'all 0.2s ease',
