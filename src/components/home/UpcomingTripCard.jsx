@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Box, Card, Chip, Typography, Button, Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { buildTimeline } from '../../services/tripTimelineService';
+import { useTranslation } from 'react-i18next';
 
 /**
  * הנסיעה הקרובה, בראש דף הבית.
@@ -43,6 +44,30 @@ const todayKey = () => {
 };
 
 /**
+ * תאריך קריא במקום מחרוזת ISO.
+ *
+ * עד 07.09.2026 הוצג כאן `2026-10-10 — 2026-10-14` — פלט גולמי של
+ * מסד הנתונים, באותו כרטיס שמנסח בקפידה "מחר" ו"יום אחד עדיין בלי
+ * תוכנית".
+ *
+ * הפירוק ידני ולא `new Date(iso)`: מחרוזת `YYYY-MM-DD` נקראת כ-UTC,
+ * ובאזור זמן שמאחורי גריניץ' היא מציגה את היום הקודם. וכשהערך אינו
+ * ISO הוא מוחזר כפי שהוא — עדיף תאריך גולמי מ-"Invalid Date".
+ */
+const fmtDate = (iso, lang) => {
+  const [y, m, d] = String(iso || '').split('-').map(Number);
+  if (!y || !m || !d) return iso || '';
+  return new Date(y, m - 1, d).toLocaleDateString(lang, { day: 'numeric', month: 'short' });
+};
+
+const fmtRange = (from, to, lang) => {
+  const a = fmtDate(from, lang);
+  const b = fmtDate(to, lang);
+  return a === b ? a : `${a} — ${b}`;
+};
+
+
+/**
  * הנסיעה שרלוונטית עכשיו: זו שבעיצומה, ואם אין — הקרובה שטרם התחילה.
  * נסיעה שהסתיימה אינה מועמדת, וכך גם קבוצה בלי תאריכים.
  */
@@ -66,6 +91,7 @@ const countdownOf = (days, dayOfTrip, totalDays) => {
 };
 
 const UpcomingTripCard = ({ trips = [] }) => {
+  const { i18n } = useTranslation();
   const navigate = useNavigate();
 
   const data = useMemo(() => {
@@ -146,7 +172,7 @@ const UpcomingTripCard = ({ trips = [] }) => {
             {trip.destination}
           </Typography>
           <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 1 }}>
-            {trip.startDate} — {trip.endDate}
+            {fmtRange(trip.startDate, trip.endDate, i18n.language)}
             {trip.nights ? ` · ${trip.nights} לילות` : ''}
             {inProgress ? ' · בעיצומה' : ''}
           </Typography>
