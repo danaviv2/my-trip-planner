@@ -497,21 +497,42 @@ const HomePage = () => {
           <Grid container spacing={{ xs: 1.5, md: 2.5 }}>
             {popularDestinations.map((dest) => (
               <Grid item xs={6} sm={4} md={2} key={dest.name}>
+                {/* ── הכרטיס והשיתוף הם אחים, לא מקוננים ──
+                    עד 07.09.2026 כפתור השיתוף ישב **בתוך** עוטף עם
+                    `role="button"`, ו-`stopPropagation` היה רק
+                    ב-`onClick`. אירוע ה-`keydown` בעבע לעוטף, ולכן
+                    Enter על "שתף" פתח את הדיאלוג **וגם** ניווט לדף
+                    היעד — המשתמש ראה חלון נפתח והדף מתחלף מתחתיו.
+                    רווח ניווט וגם גלל את הדף, כי לא היה `preventDefault`.
+
+                    התיקון אינו `e.target !== e.currentTarget`: רכיב
+                    אינטראקטיבי בתוך רכיב אינטראקטיבי הוא ממילא מבנה
+                    פסול, וקורא מסך מכריז אותו כפול. העוטף אינו לחיץ
+                    עוד, הניווט עבר ל-`<button>` אמיתי — שמטפל
+                    ב-Enter וברווח בעצמו, כולל מניעת הגלילה — והשיתוף
+                    יושב לצידו כאח. */}
                 <Box
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => navigate(`/destination-info/${dest.name}`)}
-                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate(`/destination-info/${dest.name}`)}
                   sx={{
-                    position: 'relative', cursor: 'pointer', borderRadius: 3,
+                    position: 'relative', borderRadius: 3,
                     overflow: 'hidden', bgcolor: 'background.paper',
                     border: '1px solid', borderColor: 'divider',
                     transition: 'transform .2s ease, box-shadow .2s ease',
                     '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 10px 24px -12px rgba(0,0,0,.45)' },
-                    '&:focus-visible': { outline: '2px solid', outlineColor: dest.color, outlineOffset: 2 },
                     '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover': { transform: 'none' } },
                   }}
                 >
+                  <Box
+                    component="button"
+                    type="button"
+                    onClick={() => navigate(`/destination-info/${dest.name}`)}
+                    sx={{
+                      all: 'unset',
+                      display: 'block', width: '100%', cursor: 'pointer',
+                      // offset שלילי: ל-`overflow: hidden` של האב, טבעת
+                      // שמצוירת בחוץ פשוט נחתכת ואינה נראית.
+                      '&:focus-visible': { outline: '3px solid', outlineColor: dest.color, outlineOffset: -3 },
+                    }}
+                  >
                   {/* ── התווית מתורגמת, השאילתה לא ──
                       שמות הערים הוצגו בעברית בכל השפות: משתמש בצרפתית
                       ראה שישה כרטיסים ובהם "פריז" ו"רומא", מתחת לממשק
@@ -532,10 +553,11 @@ const HomePage = () => {
                       {t(`home.popular.cities.${dest.name}`)}
                     </Typography>
                   </Box>
+                  </Box>
                   <Tooltip title={`${t('share.title')} — ${t(`home.popular.cities.${dest.name}`)}`}>
                     <IconButton
                       aria-label={`${t('share.title')} — ${t(`home.popular.cities.${dest.name}`)}`}
-                      onClick={(e) => { e.stopPropagation(); setShareTarget(dest.name); }}
+                      onClick={() => setShareTarget(dest.name)}
                       sx={{
                         position: 'absolute', top: 2, right: 2,
                         width: 44, height: 44, color: 'white',
