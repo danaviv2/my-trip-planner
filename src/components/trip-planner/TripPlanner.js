@@ -136,6 +136,7 @@ import { generateAttractions } from '../../services/aiAttractionsService';
 import DayAnchors from './DayAnchors';
 import { anchorsByDayNumber } from '../../services/tripAnchorsService';
 import { useBookings } from '../../contexts/BookingsContext';
+import PackingListModal from '../packing/PackingListModal';
 
 // רכיבים מסוגננים קיימים
 const StepperContainer = styled(Paper)(({ theme }) => ({
@@ -422,19 +423,18 @@ const TripPlanner = () => {
   const [showMapView, setShowMapView] = useState(false);
   const [activeFilters, setActiveFilters] = useState(['all']);
   const [currentDayInMap, setCurrentDayInMap] = useState(0);
+  // ── רשימת האריזה: מימוש אחד, ב-`PackingListModal` ──
+  // כאן ישבה רשימה שנייה — תשעה פריטים קשיחים, זהים לפריז בחורף
+  // ולתאילנד בקיץ. היא **מעולם לא רונדרה**: `showPackingList` הוחלף
+  // בכפתור ואיש לא קרא אותו, ושלוש הפונקציות שניהלו אותה
+  // (`togglePackingItem`, `addPackingItem`, `removePackingItem`) לא
+  // נקראו אף פעם. היא כן נשמרה לתוך כל טיול, ולכן כל טיול שמור נשא
+  // רשימה שהמשתמש לא ראה ולא ערך.
+  //
+  // `PackingListModal` גוזר את הפריטים מהיעד (חוף/הרים/רשמי),
+  // מהעונה ומאורך הנסיעה, ושומר את הסימונים. כאן הוא סוף־סוף מקבל
+  // את שני הערכים שהוא נבנה בשבילם — מדף הבית הוא קיבל אפס.
   const [showPackingList, setShowPackingList] = useState(false);
-  const [packingList, setPackingList] = useState([
-    { id: 1, name: 'דרכון', category: 'מסמכים', checked: false, essential: true },
-    { id: 2, name: 'כרטיסי טיסה', category: 'מסמכים', checked: false, essential: true },
-    { id: 3, name: 'מטען וכבל לטלפון', category: 'אלקטרוניקה', checked: false, essential: true },
-    { id: 4, name: 'מתאם חשמל', category: 'אלקטרוניקה', checked: false, essential: true },
-    { id: 5, name: 'תרופות', category: 'בריאות', checked: false, essential: true },
-    { id: 6, name: 'משקפי שמש', category: 'ביגוד', checked: false, essential: false },
-    { id: 7, name: 'כובע', category: 'ביגוד', checked: false, essential: false },
-    { id: 8, name: 'קרם הגנה', category: 'בריאות', checked: false, essential: false },
-    { id: 9, name: 'מצלמה', category: 'אלקטרוניקה', checked: false, essential: false }
-  ]);
-  const [newPackingItem, setNewPackingItem] = useState({ name: '', category: 'כללי', essential: false });
   
   const [advancedFilters, setAdvancedFilters] = useState({
     priceRange: [0, 200],
@@ -860,7 +860,6 @@ const TripPlanner = () => {
       dailyItinerary: itinerary,
       budget: budgetData,
       currency: budgetCurrency,
-      packingList,
       lastModified: new Date().toISOString()
     };
     
@@ -1101,38 +1100,6 @@ const TripPlanner = () => {
     
     setSnackbarMessage(`תבנית "${templateName}" הוחלה בהצלחה`);
     setSnackbarOpen(true);
-  };
-
-  // עדכון פריט ציוד
-  const togglePackingItem = (itemId) => {
-    const updatedList = packingList.map(item =>
-      item.id === itemId ? { ...item, checked: !item.checked } : item
-    );
-    
-    setPackingList(updatedList);
-  };
-
-  // הוספת פריט ציוד
-  const addPackingItem = () => {
-    if (newPackingItem.name.trim() === '') {
-      return;
-    }
-    
-    const newItem = {
-      id: Date.now(),
-      name: newPackingItem.name,
-      category: newPackingItem.category,
-      checked: false,
-      essential: newPackingItem.essential
-    };
-    
-    setPackingList([...packingList, newItem]);
-    setNewPackingItem({ name: '', category: 'כללי', essential: false });
-  };
-
-  // הסרת פריט ציוד
-  const removePackingItem = (itemId) => {
-    setPackingList(packingList.filter(item => item.id !== itemId));
   };
 
   // עדכון תקציב
@@ -1575,10 +1542,10 @@ const TripPlanner = () => {
           </Button>
 
           <Button
-            variant={showPackingList ? 'contained' : 'outlined'}
+            variant="outlined"
             color="secondary"
             startIcon={<CollectionsIcon />}
-            onClick={() => setShowPackingList(!showPackingList)}
+            onClick={() => setShowPackingList(true)}
           >
             רשימת ציוד
           </Button>
@@ -2285,6 +2252,16 @@ const TripPlanner = () => {
         }
       />
       
+      {/* רשימת האריזה. `initialDestination` ו-`initialDays` הם כל
+          ההבדל: מדף הבית היא נפתחה ריקה והמשתמש הקליד ידנית מה
+          שהאפליקציה כבר יודעת. */}
+      <PackingListModal
+        open={showPackingList}
+        onClose={() => setShowPackingList(false)}
+        initialDestination={destination}
+        initialDays={tripDays}
+      />
+
       {/* Backdrop לטעינה */}
       <Backdrop
         sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
