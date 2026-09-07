@@ -180,6 +180,9 @@ const DemoItinerary = () => {
             // תנועה מושכת עין; תנועה שממשיכה אחרי שהיא כבר עשתה את שלה
             // מעייפת. לכן היא נעצרת ברגע שהמסלול נבנה.
             animation: built ? 'none' : 'demoFlow 2.2s ease-in-out infinite',
+            // שומר תנועה. ההערה ב-HomePage טענה שכפתור ההפתעה היה
+            // האנימציה האינסופית האחרונה בלי שומר — היא לא הייתה.
+            '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
             opacity: built ? 0.85 : 1,
             '@keyframes demoFlow': {
               '0%, 100%': { transform: 'translateX(0)', opacity: 0.5 },
@@ -231,6 +234,7 @@ const DemoItinerary = () => {
                   bgcolor: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)',
                   whiteSpace: 'nowrap',
                   animation: 'demoPulse 2.4s ease-in-out infinite',
+                  '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
                   '@keyframes demoPulse': {
                     '0%, 100%': { boxShadow: '0 0 0 0 rgba(255,255,255,0.45)' },
                     '70%': { boxShadow: '0 0 0 14px rgba(255,255,255,0)' },

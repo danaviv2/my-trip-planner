@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container, Box, Typography, Button, Grid, Card, CardContent,
-  Paper, Stack, TextField, IconButton, Tooltip
+  Paper, TextField, IconButton, Tooltip
 } from '@mui/material';
 import {
   Flight as FlightIcon,
@@ -10,8 +10,6 @@ import {
   Search as SearchIcon,
   Map as MapIcon,
   Casino as CasinoIcon,
-  Luggage as LuggageIcon,
-  Group as GroupIcon,
   BookmarkBorder as MyTripsIcon,
   Share as ShareIcon,
   Route as RouteIcon,
@@ -24,14 +22,12 @@ import DemoItinerary from '../components/home/DemoItinerary';
 import PlaceImage from '../components/destination-info/PlaceImage';
 import SurpriseTripModal from '../components/surprise/SurpriseTripModal';
 import VibeMatcher from '../components/vibe/VibeMatcher';
-import PackingListModal from '../components/packing/PackingListModal';
 import ShareTripDialog from '../components/shared/ShareTripDialog';
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [surpriseOpen, setSurpriseOpen] = useState(false);
-  const [packingOpen, setPackingOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [shareTarget, setShareTarget] = useState(null);
 
@@ -174,7 +170,17 @@ const HomePage = () => {
           ושולחן — והיא גזלה אצלו כמסך שלם לפני התוכן האמיתי. אורח רואה
           אותה בדיוק כשהייתה. */}
       <Box sx={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+        // ── שתי עצירות הוחלפו ב-07.09.2026, לפי מדידה ולא לפי טעם ──
+        // לבן על העצירות המקוריות (יחס WCAG):
+        //   #667eea  3.66:1  נכשל ב-AA לטקסט רגיל
+        //   #f093fb  2.04:1  נכשל **גם** בסף של טקסט גדול (3:1)
+        // הקצה הוורוד הוא הצד שאליו נוטה הגרדיאנט ב-135°, ושם יושבות
+        // תוויות ההדגמה — ולכן הן שנקראו "כמעט בלתי נראות".
+        //
+        // #5568d3 (4.88:1) אינו בחירה חדשה: זה הערך ש-`theme.js:88`
+        // כבר מדד ואישר כשההדר תוקן, ואז הוחל על ההדר בלבד.
+        // #8e3fa8 נותן 6.13:1 ונשאר במשפחת המג'נטה.
+        background: 'linear-gradient(135deg, #5568d3 0%, #764ba2 50%, #8e3fa8 100%)',
         color: 'white',
         // ── מכרזת לכרטיס ──
         // נמדד 1,234×425 עם `borderRadius: 0` — רצועה שחוצה את המסך
@@ -213,7 +219,14 @@ const HomePage = () => {
             textShadow: '0 4px 20px rgba(0,0,0,0.2)',
             lineHeight: 1.3
           }}>
-            ✈️ {t('home.hero.title')}
+            {/* ── הכותרת שמבטיחה את ההדגמה מוצגת רק כשההדגמה על המסך ──
+                "ארבעה מיילים נכנסו. מסלול אחד יצא." היא כיתוב לארבעת
+                כרטיסי המייל שמתחתיה. אבל `DemoItinerary` מרונדרת רק
+                כש-`!hasUpcoming` — כלומר משתמש שכבר יש לו נסיעה קיבל
+                את ההבטחה בלי ההוכחה, ומשפט שנשמע סתום בלי ההקשר.
+                `titleGeneric` קיים ומתורגם בחמש שפות מאז שהכותרת
+                הוחלפה, ולא נקרא מעולם. */}
+            ✈️ {t(hasUpcoming ? 'home.hero.titleGeneric' : 'home.hero.title')}
           </Typography>
           {/* תת-הכותרת ("מסלולים מותאמים אישית • טיפים מקומיים • מידע
               מקיף") הוסרה לגמרי. היא הבטחה גנרית שכל מתכנן טיולים יכול
@@ -401,7 +414,8 @@ const HomePage = () => {
             כותרת, שורה וכפתור אחד. הגובה שהתפנה הלך להדגמה ב-Hero. */}
         <Box sx={{
           mb: { xs: 3, md: 4 }, p: { xs: 2, md: 3 }, borderRadius: 4,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+          // אותן עצירות כמו ב-Hero — גם כאן טקסט לבן. ראה הנימוק שם.
+          background: 'linear-gradient(135deg, #5568d3 0%, #764ba2 50%, #8e3fa8 100%)',
           textAlign: 'center', color: 'white', position: 'relative', overflow: 'hidden'
         }}>
           <Box sx={{
@@ -446,23 +460,23 @@ const HomePage = () => {
           <VibeMatcher />
         </Paper>
 
-        {/* Quick Actions */}
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={{ xs: 4, md: 6 }} justifyContent="center">
-          <Button
-            variant="outlined" size="large" startIcon={<LuggageIcon />}
-            onClick={() => setPackingOpen(true)}
-            sx={{ borderRadius: 3, py: 1.5, px: 3, fontWeight: 700, borderColor: '#667eea', color: '#667eea', '&:hover': { bgcolor: '#667eea11' } }}
-          >
-            {t('home.quickActions.packing')}
-          </Button>
-          <Button
-            variant="outlined" size="large" startIcon={<GroupIcon />}
-            onClick={() => navigate('/group-trip')}
-            sx={{ borderRadius: 3, py: 1.5, px: 3, fontWeight: 700, borderColor: '#f5576c', color: '#f5576c', '&:hover': { bgcolor: '#f5576c11' } }}
-          >
-            {t('home.quickActions.groupTrip')}
-          </Button>
-        </Stack>
+        {/* ── "Quick Actions" הוסר ב-07.09.2026 ──
+            שני כפתורים שלא שייכים למסך שרוב יושביו עוד לא תכננו דבר:
+
+            **טיול קבוצתי** היה כפילות — הוא כבר בסרגל הניווט
+            (`Header.js`) — ו-`/group-trip` מוגן ב-`ProtectedRoute`,
+            כלומר אורח שלחץ עליו נחסם במסך התחברות. דף הבית הוא
+            המקום שבו יושבים הכי הרבה אורחים.
+
+            **מה לארוז** הוא כלי של זמן-נסיעה, והוא נפתח כאן בלי ולו
+            prop אחד: `PackingListModal` מקבל `initialDestination`
+            ו-`days`, ומדף הבית קיבל אפס. המשתמש הוקלד ידנית יעד
+            ומספר ימים שהאפליקציה כבר מחזיקה עליו.
+
+            הרכיב עצמו **לא נמחק** — הוא 339 שורות ודף הבית היה
+            נקודת הכניסה היחידה שלו. העברתו למסכי הנסיעה, יחד עם
+            הכרעה מול המימוש המקביל ב-`TripPlanner.js`, רשומה
+            ב-STATUS תחת "מה פתוח". */}
 
         {/* יעדים פופולריים */}
         <Paper elevation={3} sx={{ p: { xs: 2.5, md: 5 }, borderRadius: 4, background: 'linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%)' }}>
@@ -542,7 +556,6 @@ const HomePage = () => {
 
       {/* Modals */}
       <SurpriseTripModal open={surpriseOpen} onClose={() => setSurpriseOpen(false)} />
-      <PackingListModal open={packingOpen} onClose={() => setPackingOpen(false)} />
       <ShareTripDialog
         open={shareTarget !== null}
         onClose={() => setShareTarget(null)}
