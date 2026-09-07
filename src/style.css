@@ -18,21 +18,20 @@ html, body, #root {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
   }
   
-  .MuiPaper-root {
-    background: #ffffff;
-    border-radius: 20px;
-  }
-  
-  .MuiButton-containedPrimary {
-    background: #2196F3 !important;
-    padding: 10px 20px !important;
-    border-radius: 10px !important;
-  }
-  
-  .MuiIconButton-root {
-    border-radius: 8px !important;
-  }
-  
-  .MuiTextField-root {
-    border-radius: 8px !important;
-  }
+/* ── ארבעה כללי MUI נמחקו כאן ב-07.09.2026 ──
+   הם קדמו ל-`theme.js` ושכפלו אותו: `MuiButton` (רדיוס 8, ריפוד
+   10/24), `MuiPaper` ו-`MuiTextField` כבר מוגדרים שם — ושם הם ניתנים
+   לדריסה מקומית, שזו הנקודה כולה.
+
+   כאן הם ישבו עם `!important`, ולכן ניצחו כל `sx`. סקר על 115
+   כפתורים מצא ש-**54 מהם, ב-26 קבצים, רונדרו לא כפי שנכתבו**: ה-`sx`
+   שלהם ביקש רקע והכלל דרס אותו ב-`#2196F3` — צבע שאינו קיים ב-
+   `theme.js` ואין לו מקור אחר בקוד. הוא גם דרס להם ריפוד ורדיוס,
+   ולכן כפתור לצד שדה חיפוש קיבל פינה 10px מול 8px של השדה.
+
+   `.MuiPaper-root { background: #ffffff }` הוסר גם הוא, אבל **לא**
+   משום ששבר את המצב הכהה: נבדק ב-07.09.2026 בהחזרה זמנית של הכלל,
+   והמצב הכהה המשיך לעבוד (`Paper` נשאר `rgb(30,30,30)`). בלי
+   `!important` הסגנון של MUI מנצח מחלקת CSS רגילה. הוא הוסר משום
+   שהוא כפילות מתה שסותרת את ההערה שבראש הקובץ, ומטעה את מי שיקרא
+   אותה — לא משום שתיקן משהו. */
