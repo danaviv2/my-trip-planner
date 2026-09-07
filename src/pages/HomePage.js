@@ -247,17 +247,28 @@ const HomePage = () => {
 
               מה שכן נשאר בתוקף הוא הגובה, ולכן היא מוצגת **רק לאורח**:
               מי שיש לו נסיעה קרובה ראה את הדבר האמיתי בכרטיס שמעל,
-              ואצלו זו הבטחה על מוצר שהוא כבר קנה. */}
+              ואצלו זו הבטחה על מוצר שהוא כבר קנה.
+
+              ── ונוסח קצר לנייד ──
+              הנוסח המלא נפרש ב-375px לשש שורות ותופס ~190px, וה-Hero
+              חרג מהקיפול ב-103px. הקצר אינו נוסח חדש אלא המשפט השני
+              של המלא, מקוצץ — אותה הבטחה בלי תיאור הבעיה. בדסקטופ
+              שניהם נכנסים, ושם המלא עובד. */}
           {!hasUpcoming && (
             <Typography
               sx={{
                 maxWidth: 780, mx: 'auto', mb: { xs: 1.5, md: 2 },
-                fontSize: { xs: '.9rem', md: '1.02rem' },
-                lineHeight: 1.55, opacity: 0.95,
+                fontSize: { xs: '.88rem', md: '1.02rem' },
+                lineHeight: 1.5, opacity: 0.95,
                 textShadow: '0 1px 3px rgba(0,0,0,0.35)',
               }}
             >
-              {t('home.hero.subtitle')}
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                {t('home.hero.subtitle')}
+              </Box>
+              <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                {t('home.hero.subtitleShort')}
+              </Box>
             </Typography>
           )}
 
@@ -604,10 +615,16 @@ const HomePage = () => {
 
       {/* Modals */}
       <SurpriseTripModal open={surpriseOpen} onClose={() => setSurpriseOpen(false)} />
+      {/* `label` נפרד מ-`destination`, מאותה סיבה כמו ב-`PlaceImage`:
+          `shareTarget` הוא המזהה האנגלי והוא גם הפרמטר בקישור
+          (`?destination=Paris`), ולכן חייב להישאר כפי שהוא. אבל
+          הכרטיס אומר "פריז" והחלונית אמרה "שתף — Paris", ואותו יעד
+          נשא שני שמות באותו מסך. */}
       <ShareTripDialog
         open={shareTarget !== null}
         onClose={() => setShareTarget(null)}
         trip={{ destination: shareTarget }}
+        label={shareTarget ? t(`home.popular.cities.${shareTarget}`) : ''}
       />
 
       {/* `@keyframes bounce` נמחק ב-06.09.2026 — שריד מהאנימציה
