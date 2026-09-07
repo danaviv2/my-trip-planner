@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { Box, Typography, IconButton, Chip, Tooltip } from '@mui/material';
+import {
+  Box, Typography, IconButton, Chip, Tooltip,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, Alert,
+} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import MailIcon from '@mui/icons-material/MailOutline';
 import EditIcon from '@mui/icons-material/EditOutlined';
@@ -193,23 +196,30 @@ const EventRow = ({ ev, onDelete, onEdit, onMove, canUp, canDown, mapNumber }) =
               במקום הלא נכון — וזה קרה בפועל. */}
           {onMove && (
             <>
-              <IconButton size="small" disabled={!canUp} onClick={() => onMove(-1)} sx={{ p: 0.6 }}>
+              <IconButton size="small" aria-label="הזז מוקדם יותר" disabled={!canUp} onClick={() => onMove(-1)} sx={{ p: 0.6 }}>
                 <UpIcon sx={{ fontSize: '1rem' }} />
               </IconButton>
-              <IconButton size="small" disabled={!canDown} onClick={() => onMove(1)} sx={{ p: 0.6 }}>
+              <IconButton size="small" aria-label="הזז מאוחר יותר" disabled={!canDown} onClick={() => onMove(1)} sx={{ p: 0.6 }}>
                 <DownIcon sx={{ fontSize: '1rem' }} />
               </IconButton>
             </>
           )}
           {onEdit && (
-            <IconButton size="small" onClick={() => onEdit(ev)} sx={{ p: 0.6 }}>
+            <IconButton size="small" aria-label={`ערוך: ${ev.title}`} onClick={() => onEdit(ev)} sx={{ p: 0.6 }}>
               <EditIcon sx={{ fontSize: '1rem' }} />
             </IconButton>
           )}
-          {onDelete && (
-            <IconButton size="small" onClick={() => onDelete(ev.booking.id)} sx={{ p: 0.6 }}>
-              <DeleteIcon sx={{ fontSize: '1.05rem' }} />
-            </IconButton>
+          {onDelete && ev.booking?.id && (
+            <Tooltip title="מחק מהנסיעה">
+              <IconButton
+                size="small"
+                aria-label={`מחק: ${ev.title}`}
+                onClick={() => onDelete(ev)}
+                sx={{ p: 0.6 }}
+              >
+                <DeleteIcon sx={{ fontSize: '1.05rem' }} />
+              </IconButton>
+            </Tooltip>
           )}
         </Box>
       )}
@@ -241,6 +251,8 @@ const GapRow = ({ minutes }) => (
 
 const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent }) => {
   const [editing, setEditing] = useState(null);
+  // האירוע שממתין לאישור מחיקה. `null` = הדיאלוג סגור.
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   const days = buildTimeline(bookings);
   if (!days.length) return null;
@@ -321,7 +333,7 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent }) =>
                   {ev.gapBefore != null && ev.gapBefore >= 30 && <GapRow minutes={ev.gapBefore} />}
                   <EventRow
                     ev={ev}
-                    onDelete={onDelete}
+                    onDelete={onDelete ? setConfirmDelete : null}
                     onEdit={editable ? setEditing : null}
                     mapNumber={numbers.get(ev)}
                     // הזזה דורשת שני אירועים לפחות ולפחות אחד עם שעה,
@@ -341,6 +353,51 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent }) =>
           </React.Fragment>
         );
       })}
+
+      {/* ── אישור מחיקה ──
+          `removeBooking` יוצרת סימון מחיקה, ולכן הסריקה הבאה לא תחזיר
+          את ההזמנה: המייל נשאר בתיבה ומדולג עליו בכוונה. זו פעולה
+          שאינה הפיכה מהמסך, והכפתור שלה יושב רביעי בשורה של ארבעה
+          כפתורים צמודים ברוחב 0.6 ריפוד — מרחק נגיעה אחת מחץ "הזז
+          למטה". דיאלוג האיפוס הכולל כבר דרש אישור; המחיקה הבודדת,
+          שאותה עושים הרבה יותר, לא דרשה דבר. */}
+      <Dialog
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>למחוק מהנסיעה?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            {confirmDelete?.title}
+          </Typography>
+          {confirmDelete?.detail && (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+              {confirmDelete.detail}
+            </Typography>
+          )}
+          <Alert severity="warning" sx={{ fontSize: '0.85rem' }}>
+            הסריקה הבאה לא תחזיר את הפריט הזה, גם אם המייל עדיין בתיבה.
+            לביטול המחיקה יש לנקות את כל ההזמנות ולסרוק מחדש.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDelete(null)}>ביטול</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              // המזהה נקרא כאן ולא בשעת הלחיצה על הפח, כדי שיהיה מקור
+              // אחד לאירוע שמוצג בדיאלוג ולזה שנמחק בפועל.
+              onDelete(confirmDelete.booking.id);
+              setConfirmDelete(null);
+            }}
+          >
+            מחק
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <EventEditDialog
         open={!!editing}

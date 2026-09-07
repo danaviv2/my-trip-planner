@@ -38,6 +38,7 @@ const BottomNav = () => {
 
   return (
     <Paper
+      className="no-print"
       elevation={3}
       sx={{
         position: 'fixed',

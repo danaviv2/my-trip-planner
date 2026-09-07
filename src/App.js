@@ -77,7 +77,9 @@ useEffect(() => {
             {/* רכיב Header שמכיל את הניווט לדפים השונים */}
             <Header />
             {/* spacer — גובה AppBar + safe-area-inset-top (notch / Dynamic Island) */}
-            <Box sx={{ height: { xs: 'calc(56px + env(safe-area-inset-top))', md: '64px' } }} />
+            {/* `no-print`: ה-AppBar מוסתר בהדפסה, והמרווח שמחזיק את מקומו
+                היה נשאר כשטח לבן בראש העמוד הראשון. */}
+            <Box className="no-print" sx={{ height: { xs: 'calc(56px + env(safe-area-inset-top))', md: '64px' } }} />
 
             {/* חיווי ניתוק. מוצג מעל התוכן כדי שלא יתפרש כתקלה. */}
             <OfflineBanner />

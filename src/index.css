@@ -238,3 +238,97 @@ a {
 .relative.h-\[60vh\] img {
   max-height: 600px !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   הדפסה — "הדפס פרטי נסיעה"
+   ══════════════════════════════════════════════════════════════════
+
+   נכתב ב-07.09.2026, אחרי שהתברר שהכפתור `window.print()` פעל מאז ומעולם
+   בלי גיליון הדפסה כלשהו.
+
+   הכללים כן היו כתובים — `.no-print` ו-`.print-only` יושבים ב-
+   `src/assets/styles/style.css` — אבל **הקובץ ההוא אינו מיובא באף מקום**.
+   הקובץ שנטען הוא `src/style.css`, ובו אין `@media print`. כלומר גיליון
+   ההדפסה היה קיים, לא נטען, ואיש לא ידע: ההדפסה כללה את סרגל הניווט, את
+   שני הכפתורים שמפעילים אותה, את סרגל הניווט התחתון, את בועת הצ'אט ואת
+   חותמת הגרסה.
+
+   הלקח שנשמר כאן: מחלקה שמוגדרת ואינה בשימוש נראית כמו תשתית קיימת.
+   `grep` על `.no-print` בכל `src` החזיר שתי תוצאות — שתיהן ההגדרה עצמה,
+   אפס שימושים.
+
+   הכללים חיים כאן, ב-`index.css`, שנטען מ-`index.js` ולכן חל על כל מסך.
+   ── אין להעביר אותם לקובץ שאינו מיובא. ── */
+
+@media print {
+  /* שלד הדף */
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .app {
+    padding: 0 !important;
+  }
+
+  /* המחלקה המפורשת: כל מה שסומן בקוד כלא-להדפסה */
+  .no-print {
+    display: none !important;
+  }
+
+  /* ── כרום שאינו תוכן ──
+     ממוקד לפי מחלקות המבנה של MUI ולא לפי `position: fixed` גורף:
+     אלמנט מרחף שהוא כן תוכן היה נעלם בשקט, וזה כשל שמתגלה רק על נייר. */
+  header.MuiAppBar-root,      /* סרגל הניווט העליון */
+  .MuiBottomNavigation-root,  /* סרגל הניווט התחתון */
+  .MuiFab-root,               /* בועת הצ'אט */
+  .MuiSnackbar-root,          /* הודעות רגעיות */
+  .MuiDrawer-root,
+  .MuiBackdrop-root,
+  .MuiDialog-root,            /* דיאלוג פתוח בשעת ההדפסה */
+  .MuiTooltip-popper,
+  .MuiSpeedDial-root {
+    display: none !important;
+  }
+
+  /* ── אקורדיון מקופל מודפס כשורת כותרת ריקה ──
+     ב-`/travel-info` רק הנסיעה הראשונה פתוחה כברירת מחדל
+     (`defaultExpanded={index === 0}`), ולכן ההדפסה החזירה נסיעה אחת
+     מלאה ואת כל השאר ככותרות. בהדפסה הכול פתוח: מי שמדפיס רוצה את
+     הנייר, לא את מצב הקיפול של המסך. */
+  .MuiCollapse-root {
+    height: auto !important;
+    min-height: 0 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+  }
+
+  .MuiCollapse-wrapper,
+  .MuiCollapse-wrapperInner {
+    display: block !important;
+  }
+
+  .MuiAccordionSummary-expandIconWrapper {
+    display: none !important;
+  }
+
+  /* צל אינו קיים על נייר; הוא מודפס כמריחה אפורה */
+  .MuiPaper-root,
+  .paper {
+    box-shadow: none !important;
+    border: 1px solid #ddd;
+  }
+
+  /* נסיעה או יום שנחתכים באמצע בין שני דפים הם בדיוק מה שההדפסה
+     אמורה למנוע */
+  .MuiAccordion-root,
+  .print-keep-together {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* הופך את הכלל שנכתב פעם ומעולם לא נטען */
+  .print-only {
+    display: block !important;
+  }
+}

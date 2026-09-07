@@ -61,6 +61,24 @@ const tripConflicts = (trip) => {
  * TravelInfoComponent - רכיב לניהול פרטי נסיעה
  * מציג ומנהל מידע על טיסות והשכרת רכב
  */
+/**
+ * מספר הנוסעים שההזמנה עצמה מצהירה עליו.
+ *
+ * כאן ישב `passengers={2}` קבוע. הוא אינו מספר פנימי: הוא מגיע למסך
+ * כסכום כסף — "€1,200" ו-"(€600 × 2 נוסעים)" — ומשם ל-`claimLetter`,
+ * המכתב שנשלח לחברת התעופה. נוסע יחיד ראה סכום כפול, ומשפחה של ארבעה
+ * ראתה חצי. שניים לא היו מדידה של דבר; הם היו הערך לדוגמה בסכמת
+ * ה-JSON שבפרומפט הפענוח.
+ *
+ * ברירת המחדל היא 1 ולא ניחוש: תביעה בחסר מתוקנת בשיחה עם חברת
+ * התעופה, תביעה בעודף מפילה את אמינות הפונה. זהו אותו כלל שלפיו שדה
+ * ריק עדיף על שדה מומצא.
+ */
+const passengersOf = (booking) => {
+  const n = Number(booking?.passengers);
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1;
+};
+
 const TravelInfoComponent = () => {
   const { t } = useTranslation();
   // מצב פתיחת חלונית מידע
@@ -312,7 +330,7 @@ const TravelInfoComponent = () => {
                 {(trip.bookings || [])
                   .filter((b) => b.type === 'flight')
                   .map((b, i) => (
-                    <FlightRights key={`r${b.id || i}`} flight={b} passengers={2} />
+                    <FlightRights key={`r${b.id || i}`} flight={b} passengers={passengersOf(b)} />
                   ))}
               </AccordionDetails>
             </Accordion>
@@ -329,7 +347,9 @@ const TravelInfoComponent = () => {
         {t('travelInfoPage.title')}
       </Typography>
       
-      <Box sx={{ mb: 3, display: 'flex', gap: 1 }}>
+      {/* `no-print`: הכפתור שמפעיל את ההדפסה הודפס בעצמו, לצד כפתור
+          ייבוא שאין בו שום משמעות על נייר. */}
+      <Box className="no-print" sx={{ mb: 3, display: 'flex', gap: 1 }}>
         <Button 
           variant="contained" 
           color="primary"
@@ -456,7 +476,7 @@ const TravelInfoComponent = () => {
           נדרשת לבדיקה נקייה: סימוני המחיקה שורדים מחיקת הזמנות, ולכן
           סריקה חוזרת מדלגת דווקא על מה שנמחק. */}
       {(upcoming.length > 0 || past.length > 0) && (
-        <Box sx={{ mb: 2 }}>
+        <Box className="no-print" sx={{ mb: 2 }}>
           <Button size="small" color="error" onClick={() => setResetOpen(true)} sx={{ fontSize: '0.75rem' }}>
             נקה את כל ההזמנות והתחל מחדש
           </Button>
@@ -468,9 +488,11 @@ const TravelInfoComponent = () => {
       {/* כלי מדידה, לא תכונה: הוא עונה על "למה נסיעה מכילה את מה שהיא
           מכילה" — שאלה שניחוש עליה כבר נכשל פעם אחת. מחוץ לאלמנט הטקסט
           שמתחתיו, כי הוא מכיל כפתור ובלוק. */}
-      <TripBoundsReport trips={[...upcoming, ...past]} />
+      <Box className="no-print">
+        <TripBoundsReport trips={[...upcoming, ...past]} />
+      </Box>
 
-      <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'text.disabled', fontSize: '0.65rem' }}>
+      <Typography className="no-print" variant="caption" sx={{ display: 'block', mb: 2, color: 'text.disabled', fontSize: '0.65rem' }}>
         גרסה: {process.env.REACT_APP_BUILD_TIME
           ? new Date(process.env.REACT_APP_BUILD_TIME).toLocaleString('he-IL', {
               day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',

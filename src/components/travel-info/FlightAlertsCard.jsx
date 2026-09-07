@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, AlertTitle, Box, Button, Paper, Typography, CircularProgress } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   pushSupport, subscribeToPush, unsubscribeFromPush, currentSubscription,
 } from '../../services/pushService';
@@ -15,6 +16,13 @@ import { useAuth } from '../../contexts/AuthContext';
  *
  * הכפתור מוצג רק כשההרשמה אפשרית בפועל. כשלא — נאמר בדיוק מדוע, ובאייפון
  * גם מה לעשות. כפתור שמבטיח התראות ושותק גרוע מהיעדר כפתור.
+ *
+ * ── ולכן גם שער האורח ──
+ * `/travel-info` פתוח בלי התחברות, וזו החוליה שהופרה כאן: אורח לחץ,
+ * הדפדפן אישר, ההרשמה נוצרה — ולא נשמרה בשום מקום, כי `savePushSubscription`
+ * דורשת `user.uid`. המסך הכריז "ההתראות פעילות במכשיר הזה" מול שרת שלא
+ * ידע על קיום המכשיר. בלי זהות אין למי לשייך מכשיר, ולכן ההתחברות אינה
+ * מדיניות אלא תנאי טכני — ונאמרת ככזו, עם הדרך לתקן אותה.
  */
 const FlightAlertsCard = ({ hasFlights }) => {
   const { user } = useAuth();
@@ -37,6 +45,10 @@ const FlightAlertsCard = ({ hasFlights }) => {
   if (!hasFlights) return null;
 
   const enable = async () => {
+    // אורח אינו יכול להירשם, ולכן אינו מגיע לכאן. השומר כאן הוא השני:
+    // הראשון הוא שהכפתור כלל אינו מרונדר בלי משתמש.
+    if (!user) return;
+
     setBusy(true);
     setError('');
     const res = await subscribeToPush();
@@ -45,8 +57,24 @@ const FlightAlertsCard = ({ hasFlights }) => {
       setBusy(false);
       return;
     }
-    // ההרשמה נשמרת בענן, אחרת השרת אינו יודע לאן לשלוח
-    if (user) await savePushSubscription(user.uid, res.subscription).catch(() => {});
+
+    // ── "פעיל" נגזר מהשמירה, לא מה-subscribe ──
+    // ההרשמה חיה בדפדפן; השרת יודע לאן לשלוח רק אם היא נשמרה אצלו.
+    // כאן ישב `.catch(() => {})` ריק, ולכן כישלון שמירה הציג "ההתראות
+    // פעילות במכשיר הזה" בזמן שלא היה נמען. הבטחה כזאת נבדקת בפעם
+    // היחידה שבה היא משנה — ביום שהטיסה מתעכבת.
+    try {
+      await savePushSubscription(user.uid, res.subscription);
+    } catch (err) {
+      // ההרשמה בדפדפן מבוטלת בחזרה: הרשאה שניתנה בלי נמען בשרת היא
+      // בדיוק המצב שנראה תקין ואינו עובד.
+      await unsubscribeFromPush().catch(() => {});
+      setEnabled(false);
+      setError(`ההרשמה נוצרה אך לא נשמרה בשרת, ולכן לא הייתה מגיעה התראה: ${err?.message || err}. נסה שוב.`);
+      setBusy(false);
+      return;
+    }
+
     setEnabled(true);
     setBusy(false);
   };
@@ -96,7 +124,7 @@ const FlightAlertsCard = ({ hasFlights }) => {
   };
 
   return (
-    <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 2 }}>
+    <Paper className="no-print" variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 2 }}>
       <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
         🔔 התראות על עיכוב בטיסה
       </Typography>
@@ -111,6 +139,30 @@ const FlightAlertsCard = ({ hasFlights }) => {
           </AlertTitle>
           {support.reason}
         </Alert>
+      ) : !user ? (
+        /* אורח: אין כפתור להפעיל, כי אין למי לשייך את המכשיר. הכפתור
+           הוסר ולא הושבת — כפתור אפור בלי הסבר שולח לנחש מה חסר. */
+        <Alert
+          severity="info"
+          sx={{ fontSize: '0.85rem' }}
+          action={
+            <Button
+              component={RouterLink}
+              to="/login"
+              size="small"
+              variant="contained"
+              sx={{ whiteSpace: 'nowrap' }}
+            >
+              התחבר
+            </Button>
+          }
+        >
+          <AlertTitle sx={{ fontSize: '0.9rem', fontWeight: 700, mb: 0.25 }}>
+            נדרשת התחברות
+          </AlertTitle>
+          ההתראה נשלחת מהשרת אל המכשיר שלך, ולכן צריך לדעת שהמכשיר הזה שלך.
+          שאר המסך עובד גם בלי.
+        </Alert>
       ) : (
         <Box>
           {error && <Alert severity="warning" sx={{ mb: 1, fontSize: '0.85rem' }}>{error}</Alert>}
@@ -124,7 +176,7 @@ const FlightAlertsCard = ({ hasFlights }) => {
                 size="small"
                 variant="outlined"
                 onClick={sendTest}
-                disabled={testing || !user}
+                disabled={testing}
                 startIcon={testing ? <CircularProgress size={14} /> : null}
               >
                 {testing ? 'שולח...' : 'שלח בדיקה'}
