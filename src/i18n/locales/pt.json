@@ -75,15 +75,7 @@
       "groupTrip": "Viagem em grupo 🗳️"
     },
     "popular": {
-      "title": "🔥 Destinos populares",
-      "cities": {
-        "Paris": "Paris",
-        "Rome": "Roma",
-        "Barcelona": "Barcelona",
-        "London": "Londres",
-        "Amsterdam": "Amesterdão",
-        "Dubai": "Dubai"
-      }
+      "title": "🔥 Destinos populares"
     },
     "stats": {
       "smartPlanning": {
@@ -594,7 +586,22 @@
     "errorRetry": "Tentar novamente",
     "errorBackToSearch": "Voltar à pesquisa",
     "map": "Mapa",
-    "website_short": "Site"
+    "website_short": "Site",
+    "aiDisclaimer": "✨ Esta seção é gerada automaticamente e pode ser imprecisa — confira preços e horários na fonte.",
+    "cuisine_label": "Cozinha",
+    "area_label": "Área",
+    "searching": "Procurando informações sobre \"{{dest}}\"...",
+    "searchingSub": "A IA está gerando informações detalhadas — leva alguns segundos",
+    "keyRequired": "Chave de IA necessária",
+    "notFoundFor": "Nenhuma informação encontrada para \"{{dest}}\"",
+    "keyHowTo": "Para pesquisar qualquer destino, adicione uma chave Gemini ao .env: REACT_APP_GEMINI_API_KEY",
+    "loadFailed": "Não conseguimos carregar as informações deste destino. Tente novamente ou escolha um popular.",
+    "backToPicker": "Voltar aos destinos",
+    "goBack": "Voltar",
+    "pickerTitle": "🌍 Para onde quer viajar?",
+    "pickerSubtitle": "Escolha um destino para informações detalhadas: clima, atrações, dicas e mais",
+    "searchPlaceholder": "Pesquise qualquer destino do mundo...",
+    "searchBtn": "Pesquisar"
   },
   "tripPlanner": {
     "title": "Planejamento de viagem para {{location}}",
@@ -789,5 +796,18 @@
   },
   "common": {
     "from": "A partir de"
+  },
+  "cities": {
+    "Paris": "Paris",
+    "Rome": "Roma",
+    "Barcelona": "Barcelona",
+    "London": "Londres",
+    "Amsterdam": "Amesterdão",
+    "Dubai": "Dubai",
+    "Tokyo": "Tóquio",
+    "NewYork": "Nova Iorque",
+    "Bangkok": "Banguecoque",
+    "Prague": "Praga",
+    "Singapore": "Singapura"
   }
 }

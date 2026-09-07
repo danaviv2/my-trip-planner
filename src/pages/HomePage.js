@@ -579,7 +579,7 @@ const HomePage = () => {
                       נפרד: העין רואה מתורגם, החיפוש ממשיך כשהיה. */}
                   <PlaceImage
                     name={dest.he}
-                    label={t(`home.popular.cities.${dest.name}`)}
+                    label={t(`cities.${dest.name}`)}
                     lookup={dest.name}
                     city={dest.he}
                     height={110}
@@ -587,13 +587,13 @@ const HomePage = () => {
                   />
                   <Box sx={{ px: 1, py: 1.1, textAlign: 'center' }}>
                     <Typography sx={{ fontWeight: 700, fontSize: { xs: '.85rem', md: '.95rem' }, lineHeight: 1.2 }}>
-                      {t(`home.popular.cities.${dest.name}`)}
+                      {t(`cities.${dest.name}`)}
                     </Typography>
                   </Box>
                   </Box>
-                  <Tooltip title={`${t('share.title')} — ${t(`home.popular.cities.${dest.name}`)}`}>
+                  <Tooltip title={`${t('share.title')} — ${t(`cities.${dest.name}`)}`}>
                     <IconButton
-                      aria-label={`${t('share.title')} — ${t(`home.popular.cities.${dest.name}`)}`}
+                      aria-label={`${t('share.title')} — ${t(`cities.${dest.name}`)}`}
                       onClick={() => setShareTarget(dest.name)}
                       sx={{
                         position: 'absolute', top: 2, right: 2,
@@ -624,7 +624,7 @@ const HomePage = () => {
         open={shareTarget !== null}
         onClose={() => setShareTarget(null)}
         trip={{ destination: shareTarget }}
-        label={shareTarget ? t(`home.popular.cities.${shareTarget}`) : ''}
+        label={shareTarget ? t(`cities.${shareTarget}`) : ''}
       />
 
       {/* `@keyframes bounce` נמחק ב-06.09.2026 — שריד מהאנימציה

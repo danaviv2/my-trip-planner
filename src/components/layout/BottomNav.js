@@ -20,10 +20,18 @@ const BottomNav = () => {
 
   const navItems = [
     { labelKey: 'bottomNav.home', path: '/', icon: <HomeIcon /> },
-    { label: '🛣️ מתגלגל', path: '/rolling-trip', icon: <RollingIcon /> },
+    // ── שני הפריטים האלה היו כתובים קשיח בעברית עד 07.09.2026 ──
+    // שלושת האחרים בשורה הזו עברו `t()`, וכך משתמש בצרפתית קיבל
+    // סרגל תחתון עם שלוש מילים בשפתו ושתיים בעברית — **בסרגל הראשי
+    // של הנייד**, שמוצג בכל מסך. אותה תבנית בדיוק שתוקנה בסרגל
+    // העליון, בקומפוננטה שלא נבדקה איתו.
+    //
+    // המפתחות הם `nav.*` ולא `bottomNav.*`: אלה אותם יעדים בדיוק
+    // כמו בסרגל העליון, ושתי מחרוזות לאותו יעד סוטות זו מזו.
+    { labelKey: 'nav.rollingTrip', path: '/rolling-trip', icon: <RollingIcon /> },
     { labelKey: 'bottomNav.search', path: '/advanced-search', icon: <SearchIcon /> },
     { labelKey: 'bottomNav.myTrips', path: '/my-trips', icon: <MyTripsIcon /> },
-    { label: '📓 יומן', path: '/journal', icon: <JournalIcon /> },
+    { labelKey: 'nav.journal', path: '/journal', icon: <JournalIcon /> },
   ];
 
   if (!isMobile) return null;

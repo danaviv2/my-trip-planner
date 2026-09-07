@@ -75,15 +75,7 @@
       "groupTrip": "Group Trip 🗳️"
     },
     "popular": {
-      "title": "🔥 Popular Destinations",
-      "cities": {
-        "Paris": "Paris",
-        "Rome": "Rome",
-        "Barcelona": "Barcelona",
-        "London": "London",
-        "Amsterdam": "Amsterdam",
-        "Dubai": "Dubai"
-      }
+      "title": "🔥 Popular Destinations"
     },
     "stats": {
       "smartPlanning": {
@@ -594,7 +586,22 @@
     "errorRetry": "Try again",
     "errorBackToSearch": "Back to search",
     "map": "Map",
-    "website_short": "Website"
+    "website_short": "Website",
+    "aiDisclaimer": "✨ This section is generated automatically and may be inaccurate — verify prices and hours at the source.",
+    "cuisine_label": "Cuisine",
+    "area_label": "Area",
+    "searching": "Looking up \"{{dest}}\"...",
+    "searchingSub": "The AI is generating detailed info — this takes a few seconds",
+    "keyRequired": "AI key required",
+    "notFoundFor": "No information found for \"{{dest}}\"",
+    "keyHowTo": "To search any destination worldwide, add a Gemini key to .env: REACT_APP_GEMINI_API_KEY",
+    "loadFailed": "We couldn't load information for this destination. Try again or pick a popular one.",
+    "backToPicker": "Back to destinations",
+    "goBack": "Go back",
+    "pickerTitle": "🌍 Where would you like to travel?",
+    "pickerSubtitle": "Pick a destination for detailed info — weather, attractions, tips and more",
+    "searchPlaceholder": "Search any destination worldwide...",
+    "searchBtn": "Search"
   },
   "tripPlanner": {
     "title": "Trip Planning to {{location}}",
@@ -789,5 +796,18 @@
   },
   "common": {
     "from": "From"
+  },
+  "cities": {
+    "Paris": "Paris",
+    "Rome": "Rome",
+    "Barcelona": "Barcelona",
+    "London": "London",
+    "Amsterdam": "Amsterdam",
+    "Dubai": "Dubai",
+    "Tokyo": "Tokyo",
+    "NewYork": "New York",
+    "Bangkok": "Bangkok",
+    "Prague": "Prague",
+    "Singapore": "Singapore"
   }
 }

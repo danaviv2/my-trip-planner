@@ -75,15 +75,7 @@
       "groupTrip": "Voyage en groupe 🗳️"
     },
     "popular": {
-      "title": "🔥 Destinations populaires",
-      "cities": {
-        "Paris": "Paris",
-        "Rome": "Rome",
-        "Barcelona": "Barcelone",
-        "London": "Londres",
-        "Amsterdam": "Amsterdam",
-        "Dubai": "Dubaï"
-      }
+      "title": "🔥 Destinations populaires"
     },
     "stats": {
       "smartPlanning": {
@@ -594,7 +586,22 @@
     "errorRetry": "Réessayer",
     "errorBackToSearch": "Retour à la recherche",
     "map": "Carte",
-    "website_short": "Site web"
+    "website_short": "Site web",
+    "aiDisclaimer": "✨ Cette section est générée automatiquement et peut être inexacte — vérifiez les prix et horaires à la source.",
+    "cuisine_label": "Cuisine",
+    "area_label": "Quartier",
+    "searching": "Recherche d'informations sur « {{dest}} »...",
+    "searchingSub": "L'IA génère des informations détaillées — cela prend quelques secondes",
+    "keyRequired": "Clé IA requise",
+    "notFoundFor": "Aucune information trouvée pour « {{dest}} »",
+    "keyHowTo": "Pour rechercher n'importe quelle destination, ajoutez une clé Gemini au .env : REACT_APP_GEMINI_API_KEY",
+    "loadFailed": "Impossible de charger les informations pour cette destination. Réessayez ou choisissez-en une populaire.",
+    "backToPicker": "Retour aux destinations",
+    "goBack": "Retour",
+    "pickerTitle": "🌍 Où souhaitez-vous voyager ?",
+    "pickerSubtitle": "Choisissez une destination pour des infos détaillées : météo, attractions, conseils et plus",
+    "searchPlaceholder": "Rechercher une destination dans le monde...",
+    "searchBtn": "Rechercher"
   },
   "tripPlanner": {
     "title": "Planification de voyage à {{location}}",
@@ -789,5 +796,18 @@
   },
   "common": {
     "from": "À partir de"
+  },
+  "cities": {
+    "Paris": "Paris",
+    "Rome": "Rome",
+    "Barcelona": "Barcelone",
+    "London": "Londres",
+    "Amsterdam": "Amsterdam",
+    "Dubai": "Dubaï",
+    "Tokyo": "Tokyo",
+    "NewYork": "New York",
+    "Bangkok": "Bangkok",
+    "Prague": "Prague",
+    "Singapore": "Singapour"
   }
 }

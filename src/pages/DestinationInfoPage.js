@@ -930,7 +930,7 @@ const DestinationInfoPage = () => {
     if (!(destinationData?.aiFilledSections || []).includes(section)) return null;
     return (
       <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'text.secondary' }}>
-        ✨ החלק הזה נוצר אוטומטית ועשוי להיות לא מדויק — כדאי לאמת מחירים ושעות מול המקור.
+        {t('destInfo.aiDisclaimer')}
       </Typography>
     );
   };
@@ -1015,11 +1015,11 @@ const DestinationInfoPage = () => {
         </Box>
         
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          <strong>מטבח:</strong> {restaurant.cuisine}
+          <strong>{t('destInfo.cuisine_label')}:</strong> {restaurant.cuisine}
         </Typography>
         
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          <strong>אזור:</strong> {restaurant.area}
+          <strong>{t('destInfo.area_label')}:</strong> {restaurant.area}
         </Typography>
         
         <Typography variant="body2" paragraph>
@@ -1038,7 +1038,7 @@ const DestinationInfoPage = () => {
               textTransform: 'none',
             }}
           >
-            מפה
+            {t('destInfo.map')}
           </Button>
           
           {/* ── הקישור מגיע מ-OpenStreetMap ולא מהנתונים ──
@@ -1058,7 +1058,7 @@ const DestinationInfoPage = () => {
                 textTransform: 'none',
               }}
             >
-              אתר
+              {t('destInfo.website_short')}
             </Button>
           )}
         </Box>
@@ -1084,10 +1084,10 @@ const DestinationInfoPage = () => {
           }}>
             <Typography sx={{ fontSize: '2.5rem', mb: 1 }}>🤖</Typography>
             <Typography variant="h6" fontWeight="bold" color="primary">
-              מחפש מידע על "{destination}"...
+              {t('destInfo.searching', { dest: destination })}
             </Typography>
             <Typography variant="body2" color="text.secondary" mt={1}>
-              ה-AI מייצר מידע מפורט - לוקח כמה שניות
+              {t('destInfo.searchingSub')}
             </Typography>
           </Box>
         )}
@@ -1144,12 +1144,12 @@ const DestinationInfoPage = () => {
         <Container maxWidth="sm">
           <Typography sx={{ fontSize: '5rem', mb: 2 }}>{isNoKey ? '🔑' : '🔍'}</Typography>
           <Typography variant="h4" fontWeight="bold" mb={2}>
-            {isNoKey ? 'נדרש מפתח AI' : `לא נמצא מידע עבור "${destination}"`}
+            {isNoKey ? t('destInfo.keyRequired') : t('destInfo.notFoundFor', { dest: destination })}
           </Typography>
           <Typography variant="body1" color="text.secondary" mb={4}>
             {isNoKey
-              ? 'כדי לחפש כל יעד בעולם, הוסף מפתח Gemini ל-.env: REACT_APP_GEMINI_API_KEY'
-              : 'לא הצלחנו לטעון מידע על יעד זה. נסה שוב או בחר מהיעדים הפופולריים.'}
+              ? t('destInfo.keyHowTo')
+              : t('destInfo.loadFailed')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
             <Button
@@ -1157,10 +1157,10 @@ const DestinationInfoPage = () => {
               onClick={() => navigate('/destination-info')}
               sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 2, px: 4 }}
             >
-              חזור לבחירת יעד
+              {t('destInfo.backToPicker')}
             </Button>
             <Button variant="outlined" onClick={() => navigate(-1)} sx={{ borderRadius: 2, px: 4 }}>
-              חזור אחורה
+              {t('destInfo.goBack')}
             </Button>
           </Box>
         </Container>
@@ -1171,32 +1171,32 @@ const DestinationInfoPage = () => {
   // אם אין יעד נבחר - הצג בורר יעדים
   if (!destination || !destinationData) {
     const popularDestinations = [
-      { name: 'פריז', emoji: '🗼', color: '#667eea' },
-      { name: 'רומא', emoji: '🏛️', color: '#f5576c' },
-      { name: 'טוקיו', emoji: '🗾', color: '#e91e8c' },
-      { name: 'ניו יורק', emoji: '🗽', color: '#ff6b35' },
-      { name: 'בנגקוק', emoji: '🛕', color: '#f5a623' },
-      { name: 'ברצלונה', emoji: '🏖️', color: '#4facfe' },
-      { name: 'לונדון', emoji: '🎡', color: '#43e97b' },
-      { name: 'אמסטרדם', emoji: '🚲', color: '#f093fb' },
-      { name: 'דובאי', emoji: '🏙️', color: '#fa709a' },
-      { name: 'פראג', emoji: '🏰', color: '#764ba2' },
-      { name: 'סינגפור', emoji: '🌴', color: '#00b09b' },
+      { name: 'פריז', slug: 'Paris', emoji: '🗼', color: '#667eea' },
+      { name: 'רומא', slug: 'Rome', emoji: '🏛️', color: '#f5576c' },
+      { name: 'טוקיו', slug: 'Tokyo', emoji: '🗾', color: '#e91e8c' },
+      { name: 'ניו יורק', slug: 'NewYork', emoji: '🗽', color: '#ff6b35' },
+      { name: 'בנגקוק', slug: 'Bangkok', emoji: '🛕', color: '#f5a623' },
+      { name: 'ברצלונה', slug: 'Barcelona', emoji: '🏖️', color: '#4facfe' },
+      { name: 'לונדון', slug: 'London', emoji: '🎡', color: '#43e97b' },
+      { name: 'אמסטרדם', slug: 'Amsterdam', emoji: '🚲', color: '#f093fb' },
+      { name: 'דובאי', slug: 'Dubai', emoji: '🏙️', color: '#fa709a' },
+      { name: 'פראג', slug: 'Prague', emoji: '🏰', color: '#764ba2' },
+      { name: 'סינגפור', slug: 'Singapore', emoji: '🌴', color: '#00b09b' },
     ];
     return (
       <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f8f9ff 0%, #fff5f8 100%)', pt: '80px', pb: 8 }}>
         <Container maxWidth="md">
           <Box textAlign="center" mb={6}>
             <Typography variant="h3" fontWeight="bold" mb={2}>
-              🌍 לאן תרצה לטייל?
+              {t('destInfo.pickerTitle')}
             </Typography>
             <Typography variant="h6" color="text.secondary" mb={4}>
-              בחר יעד לקבלת מידע מפורט - מזג אוויר, אטרקציות, טיפים ועוד
+              {t('destInfo.pickerSubtitle')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, maxWidth: 480, mx: 'auto' }}>
               <TextField
                 fullWidth
-                placeholder="חפש כל יעד בעולם..."
+                placeholder={t('destInfo.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -1219,7 +1219,7 @@ const DestinationInfoPage = () => {
                   borderRadius: 2
                 }}
               >
-                חפש
+                {t('destInfo.searchBtn')}
               </Button>
             </Box>
           </Box>
@@ -1244,8 +1244,16 @@ const DestinationInfoPage = () => {
                     }
                   }}
                 >
+                  {/* ── התווית מתורגמת, המזהה לא ──
+                      `dest.name` הוא גם פרמטר הניתוב
+                      (`/destination-info/פריז`) וגם המפתח לתוך
+                      `destinationsData`. תרגומו היה שובר קישורים
+                      קיימים ואת חיפוש המסד גם יחד. לכן `slug` נפרד,
+                      בדיוק כמו `label` מול `name` ב-`PlaceImage`. */}
                   <Typography sx={{ fontSize: '3rem', mb: 1 }}>{dest.emoji}</Typography>
-                  <Typography variant="h6" fontWeight="bold">{dest.name}</Typography>
+                  <Typography variant="h6" fontWeight="bold">
+                    {dest.slug ? t(`cities.${dest.slug}`) : dest.name}
+                  </Typography>
                 </Paper>
               </Grid>
             ))}

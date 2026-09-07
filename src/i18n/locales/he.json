@@ -75,15 +75,7 @@
       "groupTrip": "טיול קבוצתי 🗳️"
     },
     "popular": {
-      "title": "יעדים פופולריים",
-      "cities": {
-        "Paris": "פריז",
-        "Rome": "רומא",
-        "Barcelona": "ברצלונה",
-        "London": "לונדון",
-        "Amsterdam": "אמסטרדם",
-        "Dubai": "דובאי"
-      }
+      "title": "יעדים פופולריים"
     },
     "stats": {
       "smartPlanning": {
@@ -594,7 +586,22 @@
     "errorRetry": "נסה שוב",
     "errorBackToSearch": "חזור לחיפוש",
     "map": "מפה",
-    "website_short": "אתר"
+    "website_short": "אתר",
+    "aiDisclaimer": "✨ החלק הזה נוצר אוטומטית ועשוי להיות לא מדויק — כדאי לאמת מחירים ושעות מול המקור.",
+    "cuisine_label": "מטבח",
+    "area_label": "אזור",
+    "searching": "מחפש מידע על \"{{dest}}\"...",
+    "searchingSub": "ה-AI מייצר מידע מפורט - לוקח כמה שניות",
+    "keyRequired": "נדרש מפתח AI",
+    "notFoundFor": "לא נמצא מידע עבור \"{{dest}}\"",
+    "keyHowTo": "כדי לחפש כל יעד בעולם, הוסף מפתח Gemini ל-.env: REACT_APP_GEMINI_API_KEY",
+    "loadFailed": "לא הצלחנו לטעון מידע על יעד זה. נסה שוב או בחר מהיעדים הפופולריים.",
+    "backToPicker": "חזור לבחירת יעד",
+    "goBack": "חזור אחורה",
+    "pickerTitle": "🌍 לאן תרצה לטייל?",
+    "pickerSubtitle": "בחר יעד לקבלת מידע מפורט - מזג אוויר, אטרקציות, טיפים ועוד",
+    "searchPlaceholder": "חפש כל יעד בעולם...",
+    "searchBtn": "חפש"
   },
   "tripPlanner": {
     "title": "תכנון טיול ל{{location}}",
@@ -789,5 +796,18 @@
   },
   "common": {
     "from": "החל מ-"
+  },
+  "cities": {
+    "Paris": "פריז",
+    "Rome": "רומא",
+    "Barcelona": "ברצלונה",
+    "London": "לונדון",
+    "Amsterdam": "אמסטרדם",
+    "Dubai": "דובאי",
+    "Tokyo": "טוקיו",
+    "NewYork": "ניו יורק",
+    "Bangkok": "בנגקוק",
+    "Prague": "פראג",
+    "Singapore": "סינגפור"
   }
 }
