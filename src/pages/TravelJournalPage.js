@@ -176,6 +176,9 @@ const TravelJournalPage = () => {
   // trip report card
   const [reportCard, setReportCard] = useState(null);
   const [reportOpen, setReportOpen] = useState(false);
+  // הפריט שממתין לאישור מחיקה. `null` = הדיאלוג סגור.
+  // `{kind:'entry'|'expense', id, title, sub, photos}`
+  const [confirmDel, setConfirmDel] = useState(null);
   const [loadingReport, setLoadingReport] = useState(false);
 
   const [snack, setSnack] = useState({ open: false, msg: '', severity: 'success' });
@@ -351,14 +354,43 @@ const TravelJournalPage = () => {
     };
     const updated = [...entries, entry];
     setEntries(updated);
-    saveEntriesLocal(updated);
-    // Firestore sync in background — don't block UI
+
+    // ── ההודעה נגזרת ממה שקרה, לא ממה שניסינו ──
+    // עד 08.09.2026 שלוש השורות האלה בלעו כל כישלון: `saveEntriesLocal`
+    // היה `catch {}` ריק, `saveEntry` היה `.catch(() => {})`, וההודעה
+    // "נשמר בהצלחה" הודפסה בלי קשר. רשומה נושאת עד חמש תמונות base64,
+    // וחריגת מכסה ב-`localStorage` שקטה פירושה שהצ׳ק-אין נעלם ברענון.
+    const local = saveEntriesLocal(updated);
+
+    // כשהשמירה המקומית נכשלה, הענן הוא הרשת האחרונה — ולכן ממתינים לו
+    // במקום לשגר ולשכוח. במסלול התקין הוא נשאר ברקע ואינו חוסם.
+    let cloudOk = null;
     if (user) {
-      saveEntry(user.uid, entry).catch(() => {});
+      if (local.ok) {
+        saveEntry(user.uid, entry).catch(() => {});
+      } else {
+        cloudOk = await saveEntry(user.uid, entry).then(() => true).catch(() => false);
+      }
     }
+
     setSaving(false);
     setCheckinAct(null);
-    showSnack('✅ צ׳ק-אין נשמר בהצלחה!');
+
+    if (local.ok) {
+      showSnack('✅ צ׳ק-אין נשמר בהצלחה!');
+    } else if (cloudOk) {
+      showSnack('נשמר בחשבון שלך, אך לא במטמון המקומי — ייתכן שהמכשיר מלא. הרשומה לא תאבד.', 'warning');
+    } else {
+      // אין עותק בשום מקום. הרשומה מוסרת מהמסך במפורש: מסך שמציג
+      // רשומה שאינה קיימת הוא בדיוק השקר שהתיקון הזה בא למנוע.
+      setEntries(entries);
+      showSnack(
+        local.quota
+          ? `אין מקום פנוי לשמירה${checkinPhotos.length ? ` (${checkinPhotos.length} תמונות)` : ''}. מחק רשומות ישנות או הסר תמונות, ונסה שוב.`
+          : `השמירה נכשלה: ${local.error}. נסה שוב.`,
+        'error'
+      );
+    }
   };
 
   // ── delete entry ──
@@ -367,7 +399,14 @@ const TravelJournalPage = () => {
     // באותו טיפוס.
     const updated = entries.filter(e => String(e.id) !== String(entryId));
     setEntries(updated);
-    saveEntriesLocal(updated);
+    // כישלון כאן פירושו שהרשומה תחזור ברענון. שתיקה הייתה מציגה
+    // "נמחק" על מחיקה שלא נשמרה.
+    const localDel = saveEntriesLocal(updated);
+    if (!localDel.ok && !user) {
+      setEntries(entries);
+      showSnack(`המחיקה לא נשמרה: ${localDel.error}. נסה שוב.`, 'error');
+      return;
+    }
     if (user) {
       try {
         await deleteEntryFirestore(user.uid, entryId);
@@ -501,7 +540,16 @@ const TravelJournalPage = () => {
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="מחק">
-                  <IconButton size="small" onClick={() => handleDelete(entryForAct.id)} color="error">
+                  <IconButton
+                    size="small"
+                    color="error"
+                    aria-label={`מחק רשומה: ${entryForAct.activityName || ''}`}
+                    onClick={() => setConfirmDel({
+                      kind: 'entry', id: entryForAct.id,
+                      title: entryForAct.activityName, sub: entryForAct.note,
+                      photos: (entryForAct.photos || []).length,
+                    })}
+                  >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
@@ -641,7 +689,16 @@ const TravelJournalPage = () => {
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="מחק">
-                          <IconButton size="small" onClick={() => handleDelete(entry.id)} color="error">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            aria-label={`מחק רשומה: ${entry.activityName || ''}`}
+                            onClick={() => setConfirmDel({
+                              kind: 'entry', id: entry.id,
+                              title: entry.activityName, sub: entry.note,
+                              photos: (entry.photos || []).length,
+                            })}
+                          >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -1010,7 +1067,12 @@ ${summary}
                   <Typography variant="caption" color="text.secondary">{new Date(exp.date).toLocaleDateString('he-IL')}</Typography>
                 </Box>
                 <Typography fontWeight={800} color={cat.color} sx={{ flexShrink: 0 }}>₪{exp.amount.toFixed(0)}</Typography>
-                <IconButton size="small" color="error" onClick={() => deleteExpense(exp.id)}><DeleteIcon fontSize="small" /></IconButton>
+                <IconButton
+                  size="small"
+                  color="error"
+                  aria-label={`מחק הוצאה: ${exp.label || ''}`}
+                  onClick={() => setConfirmDel({ kind: 'expense', id: exp.id, title: exp.label, sub: `₪${exp.amount}` })}
+                ><DeleteIcon fontSize="small" /></IconButton>
               </Paper>
             );
           })
@@ -1589,11 +1651,72 @@ ${summary}
       </Dialog>
 
       {/* Share Dialog — all platforms */}
+      {/* ── אישור מחיקה ──
+          רשומת יומן נושאת תמונות שהמשתמש צילם, ואין להן עותק אחר:
+          מחיקה מסירה אותן גם מהמטמון המקומי וגם מהענן, ויוצרת סימון
+          שמונע מהן לחזור. שלושה כפתורי פח עשו זאת בלחיצה אחת, בלי
+          אישור ובלי ביטול, בזמן ש-`travel-info` כבר קיבל אישור
+          ב-8189a79 — דפוס 1: תיקון שהוחל על אח אחד ולא על אחיו. */}
+      <Dialog open={!!confirmDel} onClose={() => setConfirmDel(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          {confirmDel?.kind === 'expense' ? 'למחוק את ההוצאה?' : 'למחוק את הרשומה?'}
+        </DialogTitle>
+        <DialogContent>
+          {confirmDel?.title && (
+            <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+              {confirmDel.title}
+            </Typography>
+          )}
+          {confirmDel?.sub && (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+              {confirmDel.sub}
+            </Typography>
+          )}
+          {confirmDel?.kind === 'entry' && (
+            <Alert severity="warning" sx={{ fontSize: '0.85rem' }}>
+              {confirmDel.photos > 0
+                ? `${confirmDel.photos === 1 ? 'התמונה שצירפת תימחק' : `${confirmDel.photos} התמונות שצירפת יימחקו`} יחד עם הרשומה, ואין להן עותק אחר.`
+                : 'הרשומה תימחק מכל המכשירים ולא ניתן לשחזר אותה.'}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDel(null)}>ביטול</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              const d = confirmDel;
+              setConfirmDel(null);
+              if (d.kind === 'expense') deleteExpense(d.id);
+              else handleDelete(d.id);
+            }}
+          >
+            מחק
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── `trip` במקום `shareUrl` קשיח ──
+          כאן ישב `shareUrl={origin + '/journal'}`. רשומות היומן חיות
+          ב-`localStorage` וב-`users/{uid}/journal` — פרטיות לחלוטין —
+          ולכן מי שקיבל את הקישור נחת ביומן **שלו**, שברוב המקרים ריק.
+          הוספת מזהה הטיול ל-`/journal` לא הייתה פותרת את זה: הבעיה
+          אינה בכתובת אלא בכך שאין מסמך ציבורי להפנות אליו.
+
+          ול-`ShareTripDialog` כבר יש אחד: `createShare(trip, uid)`
+          מייצר מסמך ומחזיר `/trip/{code}`. העברת `shareUrl` גרמה לו
+          לצאת מוקדם (`:176`), ולכן המסלול האמיתי מעולם לא רץ. הוא
+          גם יודע ליפול חזרה ל-`?destination=` כשאין מסלול.
+
+          מה שעדיין לא משותף: **רשומות היומן עצמן**. הקישור מוביל
+          למסלול הטיול, והרשומה נשלחת בגוף ההודעה דרך `label`.
+          שיתוף רשומות דורש סוג מסמך חדש — נרשם ב-STATUS.md. */}
       <ShareTripDialog
         open={shareOpen}
         onClose={() => setShareOpen(false)}
         label={shareLabel}
-        shareUrl={`${window.location.origin}/journal`}
+        trip={selectedTrip || {}}
       />
 
       {/* Snackbar */}
