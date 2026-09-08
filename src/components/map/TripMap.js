@@ -677,9 +677,16 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
       <Box sx={{
         flex: { md: 1 }, minWidth: { md: 250 }, maxWidth: { md: 320 },
         height: { xs: 240, md: '100%' }, overflowY: 'auto',
-        borderInlineStart: { md: '1px solid rgba(0,0,0,0.08)' },
-        borderBlockStart: { xs: '1px solid rgba(0,0,0,0.08)', md: 'none' },
-        bgcolor: '#fafbff',
+        borderInlineStart: { md: '1px solid' },
+        borderBlockStart: { xs: '1px solid', md: 'none' },
+        borderColor: 'divider',
+        // ── הגוון הכחלחל נשמר, בשתי הערכות ──
+        // `#fafbff` היה קשיח, בזמן שכותרת כל שורה אינה מגדירה `color`
+        // (יורשת `text.primary`) והכותרת המשנית היא `text.secondary`.
+        // במצב כהה נמדדו כאן 12 כשלים: 6 ביחס 1.0 — לבן על לבן ממש —
+        // ו-6 ביחס 1.84. הפאנל הוא כרום ולא אי-ניגוד מכוון, ולכן הוא
+        // הולך אחרי הערכה.
+        bgcolor: (t) => (t.palette.mode === 'dark' ? '#191b22' : '#fafbff'),
       }}>
         {panelRows.map((r) => (
           <Box
@@ -691,7 +698,8 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
             sx={{
               display: 'flex', alignItems: 'flex-start', gap: 1.2,
               px: 1.5, py: 1.1, cursor: 'pointer',
-              borderBottom: '1px solid rgba(0,0,0,0.05)',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
               transition: 'background .15s ease',
               '&:hover': { bgcolor: 'rgba(102,126,234,0.08)' },
               '&:focus-visible': { outline: '2px solid #667eea', outlineOffset: -2 },

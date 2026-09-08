@@ -82,9 +82,13 @@ function OptionCard({ option, onClick }) {
         boxShadow: hovered
           ? '0 12px 32px rgba(247, 151, 30, 0.22)'
           : '0 2px 8px rgba(0,0,0,0.07)',
+        // `background.paper` ולא `'#fff'`: הכרטיס יושב בזרימת הדף ולא
+        // על גרדיאנט, ולכן הוא אמור ללכת אחרי הערכה — בדיוק כמו
+        // `VibeMatcher` שתוקן ב-6da81c4. שם נמדדו 16 כרטיסים של לבן
+        // על לבן, כאן 8. אותו באג, קובץ אחר.
         background: hovered
           ? 'linear-gradient(135deg, rgba(247,151,30,0.08) 0%, rgba(231,76,60,0.08) 100%)'
-          : '#fff',
+          : 'background.paper',
         cursor: 'pointer',
       }}
     >
@@ -130,9 +134,12 @@ function DestinationCard({ destination, rank }) {
           : '0 4px 16px rgba(0,0,0,0.07)',
         position: 'relative',
         overflow: 'visible',
+        // אותו תיקון כמו בכרטיס האופציה. הכרטיס הזה לא נתפס בסריקת
+        // הניגודיות משום שהוא מרונדר רק אחרי מילוי השאלון — סורק
+        // רואה רק את מה שמרונדר, ולכן קריאת הקוד השלימה אותו.
         background: isTop
           ? 'linear-gradient(135deg, rgba(247,151,30,0.04) 0%, rgba(231,76,60,0.04) 100%)'
-          : '#fff',
+          : 'background.paper',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         '&:hover': {
           transform: 'translateY(-3px)',
@@ -452,7 +459,15 @@ export default function DestinationMatchmakerPage() {
       dir="rtl"
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(160deg, #fff8f0 0%, #fff 60%, #fff5f5 100%)',
+        // ── הגרדיאנט החם נשמר, בשתי הערכות ──
+        // עד 08.09.2026 הוא היה בהיר וקשיח על שורש הדף, בזמן שכל
+        // הטקסט מעליו נגזר מהערכה. במצב כהה `text.primary` הופך לבן
+        // והרקע נשאר קרם: נמדדו 8 אלמנטים ביחס 1:1 — בלתי נראים.
+        // הזהות החמה היא כן החלטה עיצובית, ולכן היא תורגמה לכהה
+        // במקום להימחק.
+        background: (t) => (t.palette.mode === 'dark'
+          ? 'linear-gradient(160deg, #241d16 0%, #121212 60%, #241a1a 100%)'
+          : 'linear-gradient(160deg, #fff8f0 0%, #fff 60%, #fff5f5 100%)'),
         pb: 8,
       }}
     >

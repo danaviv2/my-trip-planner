@@ -90,7 +90,7 @@ const EventRow = ({ ev, onDelete, onEdit, onMove, canUp, canDown, mapNumber }) =
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '0.95rem',
           // הטבעת בצבע הרקע מנתקת את העיגול מהקו שמאחוריו
-          boxShadow: '0 0 0 4px #f5f7fa',
+          boxShadow: (t) => `0 0 0 4px ${t.palette.background.default}`,
         }}
       >
         {ev.icon}
@@ -104,7 +104,7 @@ const EventRow = ({ ev, onDelete, onEdit, onMove, canUp, canDown, mapNumber }) =
               bgcolor: ev.color, color: '#fff',
               fontSize: '0.6rem', fontWeight: 700,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 0 0 2px #f5f7fa',
+              boxShadow: (t) => `0 0 0 2px ${t.palette.background.default}`,
             }}
           >
             {mapNumber}
@@ -115,7 +115,12 @@ const EventRow = ({ ev, onDelete, onEdit, onMove, canUp, canDown, mapNumber }) =
 
     <Box
       sx={{
-        flex: 1, minWidth: 0, bgcolor: '#fff', borderRadius: 3,
+        // ── `background.paper` ולא `'#fff'` ──
+        // הכותרת שמעליו אינה מגדירה `color`, ולכן היא יורשת את
+        // `text.primary` — לבן במצב כהה. נמדדו כאן שלושה אלמנטים
+        // ביחס 1:1 ב-08.09.2026. אותו באג של `VibeMatcher`
+        // ו-`DestinationMatchmakerPage`.
+        flex: 1, minWidth: 0, bgcolor: 'background.paper', borderRadius: 3,
         px: { xs: 1.25, sm: 1.75 }, py: 1.5,
         boxShadow: '0 1px 3px rgba(16,24,40,.06)',
       }}
@@ -142,7 +147,7 @@ const EventRow = ({ ev, onDelete, onEdit, onMove, canUp, canDown, mapNumber }) =
       </Box>
 
       {ev.detail && (
-        <Typography sx={{ mt: 0.5, fontSize: '0.85rem', color: '#444', wordBreak: 'break-word' }}>
+        <Typography sx={{ mt: 0.5, fontSize: '0.85rem', color: 'text.secondary', wordBreak: 'break-word' }}>
           {ev.detail}
         </Typography>
       )}
@@ -303,19 +308,21 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent }) =>
           <React.Fragment key={day.dayKey}>
             {skipped > 0 && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, my: 2 }}>
-                <Box sx={{ flex: 1, height: '1px', bgcolor: '#e6e8f0' }} />
+                <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
                 <Typography sx={{ fontSize: '0.75rem', color: 'text.disabled' }}>
                   {skipped === 1 ? 'יום אחד ללא הזמנות' : skipped === 2 ? 'יומיים ללא הזמנות' : `${skipped} ימים ללא הזמנות`}
                 </Typography>
-                <Box sx={{ flex: 1, height: '1px', bgcolor: '#e6e8f0' }} />
+                <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
               </Box>
             )}
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mt: i === 0 ? 1 : 3, mb: 1.5, px: 0.25 }}>
-              <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'primary.dark', letterSpacing: '0.2px' }}>
+              {/* `primary.dark` על רקע כהה נמדד 3.62 — מתחת ל-4.5.
+                  הגוון נשמר, רק נבחר הקצה שקריא בכל ערכה. */}
+              <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: (t) => (t.palette.mode === 'dark' ? 'primary.light' : 'primary.dark'), letterSpacing: '0.2px' }}>
                 {dayLabel(day.date)}
               </Typography>
-              <Box sx={{ flex: 1, height: '1px', bgcolor: '#e6e8f0' }} />
+              <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
             </Box>
 
             <DayMiniMap events={day.events} />
@@ -325,7 +332,7 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent }) =>
               <Box
                 sx={{
                   position: 'absolute', top: 14, bottom: 14, right: 62,
-                  width: '2px', bgcolor: '#e6e8f0',
+                  width: '2px', bgcolor: 'divider',
                 }}
               />
               {day.events.map((ev, j) => (
