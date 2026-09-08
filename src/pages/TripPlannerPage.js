@@ -368,7 +368,14 @@ const TripPlannerPage = () => {
 
   return (
     <Box sx={{ maxWidth: '1200px', margin: '0 auto' }}>
-      <Paper elevation={3} sx={{ p: 3, mb: 4, bgcolor: '#ffffff', borderRadius: '16px' }}>
+      {/* ── הוסר `bgcolor: '#ffffff'`, 08.09.2026 ──
+          ה-Paper הזה עוטף את כל המתכנן (נמדד: 2,316 פיקסל גובה), והוא
+          היה לבן קשיח בזמן שכל הטקסט שבתוכו נגזר מהערכה. במצב כהה נמדדו
+          על האתר החי **70 כשלי ניגודיות**, מהם שמונה ביחס 1.0 — כולל
+          כותרת ה-h1 של הטיול, שהייתה לבן על לבן.
+          מקור אחד, כמו ב-`TravelInfoPage` וב-`DestinationMatchmakerPage`.
+          עטיפת דף היא שלד, והשלד הולך אחרי הערכה. */}
+      <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: '16px' }}>
         <Typography variant="h4" align="center" gutterBottom sx={{
           color: '#2c3e50',
           fontWeight: 'bold',
@@ -556,7 +563,7 @@ const TripPlannerPage = () => {
                 <Typography variant="body2" color="text.secondary">{t('tripPlanner.noLogs')}</Typography>
               )}
               {tripLogs.map((log, li) => (
-                <Paper key={log.id ?? li} sx={{ p: 2, m: '5px 0', bgcolor: '#f9f9f9', borderRadius: '8px', boxShadow: 1 }}>
+                <Paper key={log.id ?? li} sx={{ p: 2, m: '5px 0', bgcolor: (t) => (t.palette.mode === 'dark' ? '#242424' : '#f9f9f9'), borderRadius: '8px', boxShadow: 1 }}>
                   <Typography fontWeight={700}>{log.destination}</Typography>
                   <Typography variant="body2" color="text.secondary">
                     {t('tripPlanner.date')}: {new Date(log.date).toLocaleDateString()}
