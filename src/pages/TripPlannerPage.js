@@ -471,7 +471,12 @@ const TripPlannerPage = () => {
               </Box>
 
               {tripBookings.length === 0 ? (
-                <Box sx={{ bgcolor: '#f8f9fa', borderRadius: 2, p: 2, textAlign: 'center' }}>
+                <Box sx={{
+                  // רקע קשיח בהיר מתחת ל-`text.secondary` שנגזר מהערכה.
+                  // נמדד 08.09.2026 על האתר החי: יחס 1.81 במצב כהה.
+                  bgcolor: (t) => (t.palette.mode === 'dark' ? '#1c1d1f' : '#f8f9fa'),
+                  borderRadius: 2, p: 2, textAlign: 'center',
+                }}>
                   <Typography variant="body2" color="text.secondary">
                     {syncedBookings.length > 0
                       ? `יש לך ${syncedBookings.length} הזמנות מיובאות, אך אף אחת מהן אינה משויכת ל${plannerDestination || 'יעד הזה'}.`

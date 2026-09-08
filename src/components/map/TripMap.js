@@ -36,8 +36,47 @@ const TYPE_LABELS = {
   beach:      'חוף',
 };
 
+/**
+ * נרמול סוג הפעילות לאוצר המילים של המפה.
+ *
+ * ── למה לא פשוט לשנות את המפתח ──
+ * ב-08.09.2026 נמדדה במקרא התווית `transportation` באנגלית גולמית,
+ * בתוך ממשק עברי. הפיתוי היה לשנות ב-`TYPE_LABELS` את `transport`
+ * ל-`transportation`. זה היה **שובר את מה שעובד**: `transport` הוא
+ * אוצר המילים של האפליקציה עצמה — `EditAttractionModal`,
+ * `ActivityEditorDialog` ו-`aiItineraryService` כולם מייצרים אותו,
+ * ואף אחד מהם אינו מייצר `transportation`.
+ *
+ * המקור הוא Gemini: `activity.type` מגיע ממנו כפי שהוא, והפרומפט
+ * מדגים `"type":"attraction"` בלי להגביל את אוצר המילים. כלומר
+ * `transportation` הוא וריאנט אחד מני רבים, ורשימת המפתחות לעולם
+ * לא תדביק מודל חופשי.
+ *
+ * לכן נרמול ולא שינוי שם: הנרדפות הידועות ממופות לסוג הקנוני, ושני
+ * הצדדים — הצבע והתווית — נגזרים מאותה פונקציה, כדי ששלט לא יקבל
+ * צבע אחד ותווית אחרת.
+ *
+ * סוג שאינו מוכר מוצג כפי שהוא ובכוונה: תווית גנרית הייתה מאחדת שני
+ * סוגים שונים לשורה אחת במקרא, ומסתירה שיש כאן ערך שלא זוהה.
+ */
+const TYPE_ALIASES = {
+  transportation: 'transport', transit: 'transport', travel: 'transport',
+  restaurant: 'food', meal: 'food', dining: 'food', cafe: 'food',
+  sightseeing: 'attraction', landmark: 'attraction', monument: 'attraction',
+  gallery: 'museum',
+  break: 'rest', hotel: 'rest', accommodation: 'rest',
+  bar: 'nightlife', club: 'nightlife',
+  park: 'nature', hiking: 'nature', outdoor: 'nature',
+  market: 'shopping', mall: 'shopping',
+};
+
+const normalizeType = (type) => {
+  const k = String(type || '').trim().toLowerCase();
+  return TYPE_ALIASES[k] || k;
+};
+
 const createNumberedPin = (number, type) => {
-  const color = TYPE_COLORS[type] || '#667eea';
+  const color = TYPE_COLORS[normalizeType(type)] || '#667eea';
   return L.divIcon({
     className: '',
     html: `
@@ -399,14 +438,19 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
       {whole && groups.length > 0 && (
         <Box sx={{
           position: 'absolute', top: 10, right: 10, zIndex: 1000,
-          bgcolor: 'rgba(255,255,255,0.95)', px: 2, py: 1,
+          // אותו תיקון כמו במקרא שמתחת: רקע קשיח בהיר מתחת ל-
+          // `text.secondary`. נמדד 1.91 במצב כהה.
+          bgcolor: (t) => (t.palette.mode === 'dark'
+            ? 'rgba(30,30,30,0.95)'
+            : 'rgba(255,255,255,0.95)'),
+          px: 2, py: 1,
           borderRadius: 3, boxShadow: 3, maxWidth: '60%',
         }}>
-          <Typography variant="caption" fontWeight={800} display="block" sx={{ color: '#667eea' }}>
+          <Typography variant="caption" fontWeight={800} display="block" sx={{ color: (t) => (t.palette.mode === 'dark' ? '#8fa4f0' : '#667eea') }}>
             כל הנסיעה
           </Typography>
           {tripPlan?.destination && (
-            <Typography variant="caption" fontWeight={600} display="block" sx={{ color: '#333', lineHeight: 1.3 }}>
+            <Typography variant="caption" fontWeight={600} display="block" sx={{ color: 'text.primary', lineHeight: 1.3 }}>
               {tripPlan.destination}
             </Typography>
           )}
@@ -420,13 +464,18 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
       {day && (
         <Box sx={{
           position: 'absolute', top: 10, right: 10, zIndex: 1000,
-          bgcolor: 'rgba(255,255,255,0.95)', px: 2, py: 1,
+          // אותו תיקון כמו במקרא שמתחת: רקע קשיח בהיר מתחת ל-
+          // `text.secondary`. נמדד 1.91 במצב כהה.
+          bgcolor: (t) => (t.palette.mode === 'dark'
+            ? 'rgba(30,30,30,0.95)'
+            : 'rgba(255,255,255,0.95)'),
+          px: 2, py: 1,
           borderRadius: 3, boxShadow: 3, maxWidth: '60%',
         }}>
-          <Typography variant="caption" fontWeight={800} display="block" sx={{ color: '#667eea' }}>
+          <Typography variant="caption" fontWeight={800} display="block" sx={{ color: (t) => (t.palette.mode === 'dark' ? '#8fa4f0' : '#667eea') }}>
             יום {selectedDayIndex + 1}
           </Typography>
-          <Typography variant="caption" fontWeight={600} display="block" sx={{ color: '#333', lineHeight: 1.3 }}>
+          <Typography variant="caption" fontWeight={600} display="block" sx={{ color: 'text.primary', lineHeight: 1.3 }}>
             {day.title}
           </Typography>
           {markers.length > 0 && (
@@ -456,17 +505,17 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
           p: 1, borderRadius: 2, boxShadow: 2,
           display: 'flex', flexDirection: 'column', gap: 0.4,
         }}>
-          {[...new Set(markers.map(a => a.type))].map(type => (
+          {[...new Set(markers.map(a => normalizeType(a.type)))].map(type => (
             <Box key={type} sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
               <Box sx={{
                 width: 12, height: 12,
                 borderRadius: '50% 50% 50% 0',
                 transform: 'rotate(-45deg)',
-                bgcolor: TYPE_COLORS[type] || '#667eea',
+                bgcolor: TYPE_COLORS[normalizeType(type)] || '#667eea',
                 border: (t) => `2px solid ${t.palette.background.paper}`,
                 flexShrink: 0,
               }} />
-              <Typography variant="caption">{TYPE_LABELS[type] || type}</Typography>
+              <Typography variant="caption">{TYPE_LABELS[normalizeType(type)] || type}</Typography>
             </Box>
           ))}
         </Box>
