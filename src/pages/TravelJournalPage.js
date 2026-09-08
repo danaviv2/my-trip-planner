@@ -32,6 +32,7 @@ import {
   Collections as GalleryIcon,
 } from '@mui/icons-material';
 import WeatherMiniCard from '../components/weather/WeatherMiniCard';
+import { useTranslation } from 'react-i18next';
 import { useTripSave } from '../contexts/TripSaveContext';
 import { useAuth } from '../contexts/AuthContext';
 import ShareTripDialog from '../components/shared/ShareTripDialog';
@@ -129,6 +130,7 @@ function tripDays(trip) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const TravelJournalPage = () => {
+  const { t } = useTranslation();
   const { savedTrips } = useTripSave();
   const { user } = useAuth();
 
@@ -377,7 +379,7 @@ const TravelJournalPage = () => {
     setCheckinAct(null);
 
     if (local.ok) {
-      showSnack('✅ צ׳ק-אין נשמר בהצלחה!');
+      showSnack(t('journal.savedOk'));
     } else if (cloudOk) {
       showSnack('נשמר בחשבון שלך, אך לא במטמון המקומי — ייתכן שהמכשיר מלא. הרשומה לא תאבד.', 'warning');
     } else {
@@ -417,7 +419,7 @@ const TravelJournalPage = () => {
         return;
       }
     }
-    showSnack('נמחק', 'info');
+    showSnack(t('journal.deletedOk'), 'info');
   };
 
   // ── share ──
@@ -432,14 +434,14 @@ const TravelJournalPage = () => {
 
   // ── expenses helpers ──
   const EXPENSE_CATS = [
-    { id: 'food',       label: 'אוכל',      emoji: '🍽️', color: '#f5576c' },
-    { id: 'lodging',    label: 'לינה',      emoji: '🏨', color: '#764ba2' },
-    { id: 'transport',  label: 'תחבורה',    emoji: '🚌', color: '#667eea' },
-    { id: 'activities', label: 'פעילויות',  emoji: '🎭', color: '#f7971e' },
-    { id: 'shopping',   label: 'קניות',     emoji: '🛍️', color: '#43e97b' },
-    { id: 'coffee',     label: 'קפה/בר',   emoji: '☕', color: '#a18cd1' },
-    { id: 'health',     label: 'בריאות',    emoji: '💊', color: '#f093fb' },
-    { id: 'other',      label: 'שונות',     emoji: '🎁', color: '#aaa'    },
+    { id: 'food',       label: t('journal.cats.food'),      emoji: '🍽️', color: '#f5576c' },
+    { id: 'lodging',    label: t('journal.cats.lodging'),      emoji: '🏨', color: '#764ba2' },
+    { id: 'transport',  label: t('journal.cats.transport'),    emoji: '🚌', color: '#667eea' },
+    { id: 'activities', label: t('journal.cats.activities'),  emoji: '🎭', color: '#f7971e' },
+    { id: 'shopping',   label: t('journal.cats.shopping'),     emoji: '🛍️', color: '#43e97b' },
+    { id: 'coffee',     label: t('journal.cats.coffee'),   emoji: '☕', color: '#a18cd1' },
+    { id: 'health',     label: t('journal.cats.health'),    emoji: '💊', color: '#f093fb' },
+    { id: 'other',      label: t('journal.cats.other'),     emoji: '🎁', color: '#aaa'    },
   ];
 
   /**
@@ -494,13 +496,21 @@ const TravelJournalPage = () => {
   const renderTripsEmpty = () => (
     <Box textAlign="center" py={8}>
       <TripIcon sx={{ fontSize: 64, color: '#ccc', mb: 2 }} />
-      <Typography variant="h6" color="text.secondary">אין טיולים שמורים</Typography>
-      <Typography variant="body2" color="text.secondary" mt={1}>
-        צור טיול ושמור אותו כדי לנהל יומן מסע
+      <Typography variant="h6" color="text.secondary">{t('journal.empty.title')}</Typography>
+      {/* maxWidth: בלי זה הטקסט נפרס על מלוא 680 הפיקסלים בדסקטופ,
+          ושורה ארוכה מדי נקראת רע. */}
+      <Typography variant="body2" color="text.secondary" mt={1} sx={{ maxWidth: 420, mx: 'auto' }}>
+        {t('journal.empty.body')}
       </Typography>
       <Button variant="contained" href="/rolling-trip" sx={{ mt: 3, background: 'linear-gradient(135deg,#667eea,#764ba2)' }}>
-        🛣️ צור טיול מתגלגל
+        {t('journal.empty.cta')}
       </Button>
+      {/* מה הכפתור באמת עושה: `/rolling-trip` בונה מסלול מנקודת מוצא
+          ליעד, לא "תכנון טיול" כללי. תווית בלי ההסבר הזה מבטיחה
+          משהו אחר ממה שהמסך הבא מציע. */}
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>
+        {t('journal.empty.ctaHint')}
+      </Typography>
     </Box>
   );
 
@@ -606,10 +616,10 @@ const TravelJournalPage = () => {
         {/* Day selector */}
         <Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: 'rgba(102,126,234,0.06)', borderRadius: 2 }}>
           <FormControl fullWidth size="small">
-            <InputLabel>בחר יום</InputLabel>
+            <InputLabel>{t('journal.selectDay')}</InputLabel>
             <Select
               value={selectedDayIdx}
-              label="בחר יום"
+              label={t('journal.selectDay')}
               onChange={(e) => setSelectedDayIdx(Number(e.target.value))}
             >
               {days.map((d, i) => (
@@ -745,16 +755,16 @@ const TravelJournalPage = () => {
 
   // ─── Achievements logic ───────────────────────────────────────────────────────
   const ALL_BADGES = [
-    { id: 'first_checkin',  emoji: '🎯', label: 'הצעד הראשון',    desc: 'צ׳ק-אין ראשון',                  check: (e) => e.length >= 1 },
-    { id: 'foodie',         emoji: '🍽️', label: 'גורמה',           desc: '5 פעילויות אוכל',                 check: (e) => e.filter(x => x.activityKey?.includes('food') || x.activityEmoji === '🍽️').length >= 5 },
-    { id: 'photographer',   emoji: '📸', label: 'צלם מסע',         desc: '5 תמונות הועלו',                  check: (e) => e.filter(x => x.photoBase64).length >= 5 },
-    { id: 'five_stars',     emoji: '⭐', label: 'כוכב חמש',        desc: '3 פעילויות בדירוג 5',            check: (e) => e.filter(x => x.rating === 5).length >= 3 },
-    { id: 'explorer',       emoji: '🗺️', label: 'חוקר',            desc: '3 ימים שונים בוצעו',             check: (e) => new Set(e.map(x => x.dayIdx)).size >= 3 },
-    { id: 'active',         emoji: '🏃', label: 'תייר פעיל',       desc: '10 צ׳ק-אינים',                   check: (e) => e.length >= 10 },
-    { id: 'storyteller',    emoji: '✍️', label: 'סיפורן',           desc: '5 הערות נכתבו',                  check: (e) => e.filter(x => x.note?.length > 10).length >= 5 },
-    { id: 'perfectday',     emoji: '🏅', label: 'יום מושלם',       desc: '5 צ׳ק-אינים ביום אחד',          check: (e) => { const d = {}; e.forEach(x => { d[x.dayIdx] = (d[x.dayIdx]||0)+1; }); return Object.values(d).some(v => v >= 5); } },
-    { id: 'globetrotter',   emoji: '🌍', label: 'מטייל עולם',      desc: '20 צ׳ק-אינים',                   check: (e) => e.length >= 20 },
-    { id: 'memorylane',     emoji: '🎬', label: 'יוצר תוכן',       desc: '10 תמונות הועלו',                 check: (e) => e.filter(x => x.photoBase64).length >= 10 },
+    { id: 'first_checkin',  emoji: '🎯', label: t('journal.badges.first_checkin.label'),    desc: t('journal.badges.first_checkin.desc'),                  check: (e) => e.length >= 1 },
+    { id: 'foodie',         emoji: '🍽️', label: t('journal.badges.foodie.label'),           desc: t('journal.badges.foodie.desc'),                 check: (e) => e.filter(x => x.activityKey?.includes('food') || x.activityEmoji === '🍽️').length >= 5 },
+    { id: 'photographer',   emoji: '📸', label: t('journal.badges.photographer.label'),         desc: t('journal.badges.photographer.desc'),                  check: (e) => e.filter(x => x.photoBase64).length >= 5 },
+    { id: 'five_stars',     emoji: '⭐', label: t('journal.badges.five_stars.label'),        desc: t('journal.badges.five_stars.desc'),            check: (e) => e.filter(x => x.rating === 5).length >= 3 },
+    { id: 'explorer',       emoji: '🗺️', label: t('journal.badges.explorer.label'),            desc: t('journal.badges.explorer.desc'),             check: (e) => new Set(e.map(x => x.dayIdx)).size >= 3 },
+    { id: 'active',         emoji: '🏃', label: t('journal.badges.active.label'),       desc: t('journal.badges.active.desc'),                   check: (e) => e.length >= 10 },
+    { id: 'storyteller',    emoji: '✍️', label: t('journal.badges.storyteller.label'),           desc: t('journal.badges.storyteller.desc'),                  check: (e) => e.filter(x => x.note?.length > 10).length >= 5 },
+    { id: 'perfectday',     emoji: '🏅', label: t('journal.badges.perfectday.label'),       desc: t('journal.badges.perfectday.desc'),          check: (e) => { const d = {}; e.forEach(x => { d[x.dayIdx] = (d[x.dayIdx]||0)+1; }); return Object.values(d).some(v => v >= 5); } },
+    { id: 'globetrotter',   emoji: '🌍', label: t('journal.badges.globetrotter.label'),      desc: t('journal.badges.globetrotter.desc'),                   check: (e) => e.length >= 20 },
+    { id: 'memorylane',     emoji: '🎬', label: t('journal.badges.memorylane.label'),       desc: t('journal.badges.memorylane.desc'),                 check: (e) => e.filter(x => x.photoBase64).length >= 10 },
   ];
 
   const computeBadges = (tripEntriesList) =>
@@ -1122,7 +1132,7 @@ ${summary}
       <Box>
         {/* Progress */}
         <Paper elevation={2} sx={{ p: 2.5, mb: 2, borderRadius: 2, background: 'linear-gradient(135deg,#f7971e,#e74c3c)', color: 'white' }}>
-          <Typography variant="overline" sx={{ opacity: 0.8 }}>הישגים שנצברו</Typography>
+          <Typography variant="overline" sx={{ opacity: 0.8 }}>{t('journal.badgesEarned')}</Typography>
           <Typography variant="h3" fontWeight={800}>{earned.length}/{badges.length}</Typography>
           <LinearProgress variant="determinate" value={pct}
             sx={{ mt: 1, height: 8, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.3)',
@@ -1155,7 +1165,7 @@ ${summary}
         )}
 
         {/* Locked */}
-        <Typography fontWeight={700} mb={1} color="text.secondary">🔒 עדיין נעולים</Typography>
+        <Typography fontWeight={700} mb={1} color="text.secondary">{t('journal.locked')}</Typography>
         <Box display="flex" flexWrap="wrap" gap={1.5}>
           {badges.filter(b => !b.earned).map(b => (
             <Paper key={b.id} elevation={0} sx={{
@@ -1357,7 +1367,7 @@ ${summary}
           📓 יומן מסע
         </Typography>
         <Typography variant="body1" sx={{ opacity: 0.9 }}>
-          תעד את הרגעים, דרג את הפעילויות, שמור זיכרונות
+          {t('journal.subtitle')}
         </Typography>
       </Box>
 
@@ -1366,10 +1376,10 @@ ${summary}
         {savedTrips.length > 0 && (
           <Paper elevation={2} sx={{ p: 2, mb: 2, borderRadius: 2 }}>
             <FormControl fullWidth size="small">
-              <InputLabel>בחר טיול</InputLabel>
+              <InputLabel>{t('journal.selectTrip')}</InputLabel>
               <Select
                 value={selectedTripId}
-                label="בחר טיול"
+                label={t('journal.selectTrip')}
                 onChange={(e) => { setSelectedTripId(e.target.value); setSelectedDayIdx(0); }}
               >
                 {savedTrips.map((t) => (
@@ -1384,7 +1394,7 @@ ${summary}
             </FormControl>
             {selectedTrip?.destination && (
               <Box display="flex" alignItems="center" gap={1} mt={1}>
-                <Typography variant="caption" color="text.secondary">מזג אוויר:</Typography>
+                <Typography variant="caption" color="text.secondary">{t('journal.weather')}</Typography>
                 <WeatherMiniCard
                   cityName={selectedTrip.destination}
                   startDate={selectedTrip.startDate}
@@ -1404,13 +1414,13 @@ ${summary}
             scrollButtons="auto"
             sx={{ '& .MuiTab-root': { fontWeight: 700, minWidth: 80 }, '& .Mui-selected': { color: '#667eea' }, '& .MuiTabs-indicator': { bgcolor: '#667eea' } }}
           >
-            <Tab icon={<TodayIcon />} label="היום" iconPosition="start" />
-            <Tab icon={<StoryIcon />} label="סיפור" iconPosition="start" />
-            <Tab icon={<ReelIcon />} label="רילס" iconPosition="start" />
-            <Tab icon={<MoneyIcon />} label="הוצאות" iconPosition="start" />
-            <Tab icon={<span style={{fontSize:'1.1rem'}}>🏆</span>} label="הישגים" iconPosition="start" />
-            <Tab icon={<MapTabIcon />} label="מפה" iconPosition="start" />
-            <Tab icon={<GalleryIcon />} label="גלריה" iconPosition="start" />
+            <Tab icon={<TodayIcon />} label={t('journal.tabs.today')} iconPosition="start" />
+            <Tab icon={<StoryIcon />} label={t('journal.tabs.story')} iconPosition="start" />
+            <Tab icon={<ReelIcon />} label={t('journal.tabs.reels')} iconPosition="start" />
+            <Tab icon={<MoneyIcon />} label={t('journal.tabs.expenses')} iconPosition="start" />
+            <Tab icon={<span style={{fontSize:'1.1rem'}}>🏆</span>} label={t('journal.tabs.badges')} iconPosition="start" />
+            <Tab icon={<MapTabIcon />} label={t('journal.tabs.map')} iconPosition="start" />
+            <Tab icon={<GalleryIcon />} label={t('journal.tabs.gallery')} iconPosition="start" />
           </Tabs>
         </Paper>
 
@@ -1706,7 +1716,7 @@ ${summary}
             <Alert severity="warning" sx={{ fontSize: '0.85rem' }}>
               {confirmDel.photos > 0
                 ? `${confirmDel.photos === 1 ? 'התמונה שצירפת תימחק' : `${confirmDel.photos} התמונות שצירפת יימחקו`} יחד עם הרשומה, ואין להן עותק אחר.`
-                : 'הרשומה תימחק מכל המכשירים ולא ניתן לשחזר אותה.'}
+                : t(user ? 'journal.confirmDelete.warnSynced' : 'journal.confirmDelete.warnLocal')}
             </Alert>
           )}
         </DialogContent>
@@ -1752,7 +1762,17 @@ ${summary}
       {/* Snackbar */}
       <Snackbar
         open={snack.open}
-        autoHideDuration={3000}
+        autoHideDuration={
+          // ── משך לפי חומרה ──
+          // היה 3000 לכל ההודעות. הודעת השגיאה הארוכה בקובץ היא 76
+          // תווים, וקריאת עברית היא ~15-20 תווים לשנייה — כלומר
+          // ההוראה "נסה שוב" נעלמה בערך כשהמשתמש הגיע אליה. שגיאה
+          // נסגרת ידנית (ל-`Alert` כבר יש `onClose`), אזהרה מקבלת
+          // 8 שניות, והשאר נשאר כשהיה.
+          snack.severity === 'error' ? null
+            : snack.severity === 'warning' ? 8000
+            : 3000
+        }
         onClose={() => setSnack(s => ({ ...s, open: false }))}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >

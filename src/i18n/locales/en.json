@@ -809,5 +809,97 @@
     "Bangkok": "Bangkok",
     "Prague": "Prague",
     "Singapore": "Singapore"
+  },
+  "journal": {
+    "tabs": {
+      "today": "Today",
+      "story": "Story",
+      "reels": "Reels",
+      "expenses": "Expenses",
+      "badges": "Badges",
+      "map": "Map",
+      "gallery": "Gallery"
+    },
+    "cats": {
+      "food": "Food",
+      "lodging": "Lodging",
+      "transport": "Transport",
+      "activities": "Activities",
+      "shopping": "Shopping",
+      "coffee": "Coffee & bars",
+      "health": "Health",
+      "other": "Other"
+    },
+    "badges": {
+      "first_checkin": {
+        "label": "First step",
+        "desc": "First check-in"
+      },
+      "foodie": {
+        "label": "Foodie",
+        "desc": "5 food activities"
+      },
+      "photographer": {
+        "label": "Travel photographer",
+        "desc": "5 photos uploaded"
+      },
+      "five_stars": {
+        "label": "Five stars",
+        "desc": "3 activities rated 5"
+      },
+      "explorer": {
+        "label": "Explorer",
+        "desc": "3 different days logged"
+      },
+      "active": {
+        "label": "Active traveler",
+        "desc": "10 check-ins"
+      },
+      "storyteller": {
+        "label": "Storyteller",
+        "desc": "5 notes written"
+      },
+      "perfectday": {
+        "label": "Perfect day",
+        "desc": "5 check-ins in one day"
+      },
+      "globetrotter": {
+        "label": "Globetrotter",
+        "desc": "20 check-ins"
+      },
+      "memorylane": {
+        "label": "Content creator",
+        "desc": "10 photos uploaded"
+      }
+    },
+    "badgesEarned": "Badges earned",
+    "locked": "🔒 Still locked",
+    "selectTrip": "Choose a trip",
+    "selectDay": "Choose a day",
+    "checkin": "📝 Check in",
+    "saveCheckin": "Save check-in",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "add": "Add",
+    "addExpense": "Add expense",
+    "shareStory": "Share the whole story",
+    "aiReport": "📊 AI trip report",
+    "weather": "Weather:",
+    "confirmDelete": {
+      "entryTitle": "Delete this entry?",
+      "expenseTitle": "Delete this expense?",
+      "noPhotos": "The entry will be deleted from all your devices and cannot be recovered.",
+      "warnSynced": "The entry will be deleted from all your devices, with no way to restore it.",
+      "warnLocal": "The entry will be deleted from this browser only, with no way to restore it."
+    },
+    "subtitle": "Every check-in flows into the reels, the map and the expense summary — you just rate and shoot.",
+    "empty": {
+      "title": "Your next trip gets written here",
+      "body": "Once a trip is saved, every check-in flows into the story, the reels, the map and the gallery — up to 5 photos per activity.",
+      "cta": "🛣️ Build your first route",
+      "ctaHint": "From origin to destination — AI suggests the stops along the way"
+    },
+    "savedOk": "✅ Check-in saved",
+    "deletedOk": "Entry deleted"
   }
 }

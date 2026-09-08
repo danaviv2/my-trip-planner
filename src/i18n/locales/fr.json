@@ -809,5 +809,97 @@
     "Bangkok": "Bangkok",
     "Prague": "Prague",
     "Singapore": "Singapour"
+  },
+  "journal": {
+    "tabs": {
+      "today": "Aujourd'hui",
+      "story": "Récit",
+      "reels": "Reels",
+      "expenses": "Dépenses",
+      "badges": "Badges",
+      "map": "Carte",
+      "gallery": "Galerie"
+    },
+    "cats": {
+      "food": "Nourriture",
+      "lodging": "Hébergement",
+      "transport": "Transport",
+      "activities": "Activités",
+      "shopping": "Achats",
+      "coffee": "Café et bars",
+      "health": "Santé",
+      "other": "Divers"
+    },
+    "badges": {
+      "first_checkin": {
+        "label": "Premier pas",
+        "desc": "Premier check-in"
+      },
+      "foodie": {
+        "label": "Gourmet",
+        "desc": "5 activités culinaires"
+      },
+      "photographer": {
+        "label": "Photographe de voyage",
+        "desc": "5 photos ajoutées"
+      },
+      "five_stars": {
+        "label": "Cinq étoiles",
+        "desc": "3 activités notées 5"
+      },
+      "explorer": {
+        "label": "Explorateur",
+        "desc": "3 jours différents"
+      },
+      "active": {
+        "label": "Voyageur actif",
+        "desc": "10 check-ins"
+      },
+      "storyteller": {
+        "label": "Conteur",
+        "desc": "5 notes écrites"
+      },
+      "perfectday": {
+        "label": "Journée parfaite",
+        "desc": "5 check-ins en un jour"
+      },
+      "globetrotter": {
+        "label": "Globe-trotteur",
+        "desc": "20 check-ins"
+      },
+      "memorylane": {
+        "label": "Créateur de contenu",
+        "desc": "10 photos ajoutées"
+      }
+    },
+    "badgesEarned": "Badges obtenus",
+    "locked": "🔒 Encore verrouillés",
+    "selectTrip": "Choisir un voyage",
+    "selectDay": "Choisir un jour",
+    "checkin": "📝 Check-in",
+    "saveCheckin": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "add": "Ajouter",
+    "addExpense": "Ajouter une dépense",
+    "shareStory": "Partager l'histoire",
+    "aiReport": "📊 Rapport IA du voyage",
+    "weather": "Météo :",
+    "confirmDelete": {
+      "entryTitle": "Supprimer cette entrée ?",
+      "expenseTitle": "Supprimer cette dépense ?",
+      "noPhotos": "L'entrée sera supprimée de tous vos appareils et ne pourra pas être récupérée.",
+      "warnSynced": "L'entrée sera supprimée de tous vos appareils, sans possibilité de restauration.",
+      "warnLocal": "L'entrée sera supprimée de ce navigateur uniquement, sans possibilité de restauration."
+    },
+    "subtitle": "Chaque check-in alimente les reels, la carte et le résumé des dépenses — vous notez et photographiez.",
+    "empty": {
+      "title": "Votre prochain voyage s'écrira ici",
+      "body": "Une fois un voyage enregistré, chaque check-in alimente le récit, les reels, la carte et la galerie — jusqu'à 5 photos par activité.",
+      "cta": "🛣️ Créez votre premier itinéraire",
+      "ctaHint": "D'un point de départ à une destination — l'IA propose les arrêts"
+    },
+    "savedOk": "✅ Check-in enregistré",
+    "deletedOk": "Entrée supprimée"
   }
 }

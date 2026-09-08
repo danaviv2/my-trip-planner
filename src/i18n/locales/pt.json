@@ -809,5 +809,97 @@
     "Bangkok": "Banguecoque",
     "Prague": "Praga",
     "Singapore": "Singapura"
+  },
+  "journal": {
+    "tabs": {
+      "today": "Hoje",
+      "story": "História",
+      "reels": "Reels",
+      "expenses": "Despesas",
+      "badges": "Conquistas",
+      "map": "Mapa",
+      "gallery": "Galeria"
+    },
+    "cats": {
+      "food": "Comida",
+      "lodging": "Hospedagem",
+      "transport": "Transporte",
+      "activities": "Atividades",
+      "shopping": "Compras",
+      "coffee": "Café e bares",
+      "health": "Saúde",
+      "other": "Outros"
+    },
+    "badges": {
+      "first_checkin": {
+        "label": "Primeiro passo",
+        "desc": "Primeiro check-in"
+      },
+      "foodie": {
+        "label": "Gourmet",
+        "desc": "5 atividades gastronômicas"
+      },
+      "photographer": {
+        "label": "Fotógrafo de viagem",
+        "desc": "5 fotos enviadas"
+      },
+      "five_stars": {
+        "label": "Cinco estrelas",
+        "desc": "3 atividades nota 5"
+      },
+      "explorer": {
+        "label": "Explorador",
+        "desc": "3 dias diferentes"
+      },
+      "active": {
+        "label": "Viajante ativo",
+        "desc": "10 check-ins"
+      },
+      "storyteller": {
+        "label": "Contador de histórias",
+        "desc": "5 notas escritas"
+      },
+      "perfectday": {
+        "label": "Dia perfeito",
+        "desc": "5 check-ins num dia"
+      },
+      "globetrotter": {
+        "label": "Cidadão do mundo",
+        "desc": "20 check-ins"
+      },
+      "memorylane": {
+        "label": "Criador de conteúdo",
+        "desc": "10 fotos enviadas"
+      }
+    },
+    "badgesEarned": "Conquistas obtidas",
+    "locked": "🔒 Ainda bloqueados",
+    "selectTrip": "Escolha uma viagem",
+    "selectDay": "Escolha um dia",
+    "checkin": "📝 Check-in",
+    "saveCheckin": "Salvar check-in",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "add": "Adicionar",
+    "addExpense": "Adicionar despesa",
+    "shareStory": "Compartilhar a história",
+    "aiReport": "📊 Relatório IA da viagem",
+    "weather": "Clima:",
+    "confirmDelete": {
+      "entryTitle": "Excluir este registro?",
+      "expenseTitle": "Excluir esta despesa?",
+      "noPhotos": "O registro será excluído de todos os seus dispositivos e não poderá ser recuperado.",
+      "warnSynced": "O registro será excluído de todos os seus dispositivos, sem forma de restaurar.",
+      "warnLocal": "O registro será excluído apenas deste navegador, sem forma de restaurar."
+    },
+    "subtitle": "Cada check-in alimenta os reels, o mapa e o resumo de despesas — você só avalia e fotografa.",
+    "empty": {
+      "title": "Sua próxima viagem será escrita aqui",
+      "body": "Depois de salvar uma viagem, cada check-in alimenta a história, os reels, o mapa e a galeria — até 5 fotos por atividade.",
+      "cta": "🛣️ Monte sua primeira rota",
+      "ctaHint": "Da origem ao destino — a IA sugere as paradas no caminho"
+    },
+    "savedOk": "✅ Check-in salvo",
+    "deletedOk": "Registro excluído"
   }
 }

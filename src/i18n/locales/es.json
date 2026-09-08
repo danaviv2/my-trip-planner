@@ -809,5 +809,97 @@
     "Bangkok": "Bangkok",
     "Prague": "Praga",
     "Singapore": "Singapur"
+  },
+  "journal": {
+    "tabs": {
+      "today": "Hoy",
+      "story": "Historia",
+      "reels": "Reels",
+      "expenses": "Gastos",
+      "badges": "Logros",
+      "map": "Mapa",
+      "gallery": "Galería"
+    },
+    "cats": {
+      "food": "Comida",
+      "lodging": "Alojamiento",
+      "transport": "Transporte",
+      "activities": "Actividades",
+      "shopping": "Compras",
+      "coffee": "Café y bares",
+      "health": "Salud",
+      "other": "Otros"
+    },
+    "badges": {
+      "first_checkin": {
+        "label": "Primer paso",
+        "desc": "Primer registro"
+      },
+      "foodie": {
+        "label": "Gourmet",
+        "desc": "5 actividades de comida"
+      },
+      "photographer": {
+        "label": "Fotógrafo de viajes",
+        "desc": "5 fotos subidas"
+      },
+      "five_stars": {
+        "label": "Cinco estrellas",
+        "desc": "3 actividades con 5"
+      },
+      "explorer": {
+        "label": "Explorador",
+        "desc": "3 días distintos"
+      },
+      "active": {
+        "label": "Viajero activo",
+        "desc": "10 registros"
+      },
+      "storyteller": {
+        "label": "Narrador",
+        "desc": "5 notas escritas"
+      },
+      "perfectday": {
+        "label": "Día perfecto",
+        "desc": "5 registros en un día"
+      },
+      "globetrotter": {
+        "label": "Trotamundos",
+        "desc": "20 registros"
+      },
+      "memorylane": {
+        "label": "Creador de contenido",
+        "desc": "10 fotos subidas"
+      }
+    },
+    "badgesEarned": "Logros obtenidos",
+    "locked": "🔒 Aún bloqueados",
+    "selectTrip": "Elige un viaje",
+    "selectDay": "Elige un día",
+    "checkin": "📝 Registrar",
+    "saveCheckin": "Guardar registro",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "add": "Añadir",
+    "addExpense": "Añadir gasto",
+    "shareStory": "Comparte la historia",
+    "aiReport": "📊 Informe IA del viaje",
+    "weather": "Clima:",
+    "confirmDelete": {
+      "entryTitle": "¿Eliminar esta entrada?",
+      "expenseTitle": "¿Eliminar este gasto?",
+      "noPhotos": "La entrada se eliminará de todos tus dispositivos y no se podrá recuperar.",
+      "warnSynced": "La entrada se eliminará de todos tus dispositivos, sin forma de restaurarla.",
+      "warnLocal": "La entrada se eliminará solo de este navegador, sin forma de restaurarla."
+    },
+    "subtitle": "Cada registro alimenta los reels, el mapa y el resumen de gastos — tú solo puntúas y fotografías.",
+    "empty": {
+      "title": "Aquí se escribirá tu próximo viaje",
+      "body": "Cuando guardes un viaje, cada registro alimenta la historia, los reels, el mapa y la galería — hasta 5 fotos por actividad.",
+      "cta": "🛣️ Crea tu primera ruta",
+      "ctaHint": "De origen a destino — la IA sugiere las paradas del camino"
+    },
+    "savedOk": "✅ Registro guardado",
+    "deletedOk": "Entrada eliminada"
   }
 }
