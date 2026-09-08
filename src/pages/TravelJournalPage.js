@@ -1068,7 +1068,17 @@ ${summary}
           {badges.filter(b => !b.earned).map(b => (
             <Paper key={b.id} elevation={0} sx={{
               p: 1.5, borderRadius: 2, textAlign: 'center', minWidth: 90,
-              bgcolor: '#f5f5f5', border: '2px dashed #ddd', opacity: 0.7,
+              // ── רקע וגבול שהולכים אחרי הערכה ──
+              // היו `#f5f5f5` ו-`#ddd` קשיחים, מתחת ל-`text.secondary`
+              // ו-`text.disabled` שנגזרים מהערכה. נמדד 08.09.2026:
+              // 18 כשלים בלשונית — 9 ביחס 1.09 ו-9 ביחס 1.75.
+              // `opacity` הועלה מ-0.7 ל-0.85: הנעילה כבר מסומנת
+              // בשלושה אמצעים אחרים (אמוג׳י באפור, גבול מקווקו וצבע
+              // טקסט מעומעם), ושכבת עמעום רביעית רק גזלה קריאוּת.
+              bgcolor: (t) => (t.palette.mode === 'dark' ? '#2a2a2a' : '#f5f5f5'),
+              border: '2px dashed',
+              borderColor: 'divider',
+              opacity: 0.85,
             }}>
               <Typography fontSize="2rem" sx={{ filter: 'grayscale(1)' }}>{b.emoji}</Typography>
               <Typography variant="caption" fontWeight={700} display="block" color="text.secondary">{b.label}</Typography>
