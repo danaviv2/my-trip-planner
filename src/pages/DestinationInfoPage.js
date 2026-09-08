@@ -65,6 +65,13 @@ import PlaceImage from '../components/destination-info/PlaceImage';
 import { getPlaceMedia } from '../services/placeMediaService';
 import { getCurrentWeather } from '../services/openMeteoService';
 
+/* ── רקעים פסטליים שהולכים אחרי הערכה, 08.09.2026 ──
+   `#fff8e1` (ענבר), `#e8f5e9` (ירוק) ו-`#e3f2fd` (כחול) היו קשיחים
+   מתחת לטקסט שאינו מגדיר `color` ולכן יורש `text.primary`. במצב כהה
+   נמדדו על המסך **82 כשלי ניגודיות** בארבע לשוניות — רובם ביחס 1.06,
+   כלומר לבן על כמעט-לבן: "לוז מומלץ" 32, "תקציב" 38, "מידע מעשי" 10.
+   הגוון כאן נושא משמעות (ענבר לטיפ, ירוק לחיסכון, כחול למידע), ולכן
+   הוא תורגם למקבילה כהה ולא נמחק. */
 const DestinationInfoPage = () => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -1434,7 +1441,7 @@ const DestinationInfoPage = () => {
                 sx={{
                   width: 48,
                   height: 48,
-                  backgroundColor: '#FFF8E1',
+                  backgroundColor: (t) => (t.palette.mode === 'dark' ? '#2a2412' : '#FFF8E1'),
                   borderRadius: '12px',
                   display: 'flex',
                   justifyContent: 'center',
@@ -1457,7 +1464,7 @@ const DestinationInfoPage = () => {
                 sx={{
                   width: 48,
                   height: 48,
-                  backgroundColor: '#E8F5E9',
+                  backgroundColor: (t) => (t.palette.mode === 'dark' ? '#16281a' : '#E8F5E9'),
                   borderRadius: '12px',
                   display: 'flex',
                   justifyContent: 'center',
@@ -1576,10 +1583,20 @@ const DestinationInfoPage = () => {
             />
           </Tabs>
           
-          <Box sx={{ p: 3 }}>
+          {/* ── `direction` מוצהר כאן פעם אחת, ולא בכל לשונית ──
+              חמש הלשוניות הראשונות הכריזו `direction:'rtl'` בעצמן ושלוש
+              האחרונות (לו״ז, תקציב, מידע מעשי) לא. התוכן עברי תמיד —
+              `aiDestinationService` מורה למודל "Use Hebrew", והמאגר
+              הסטטי עברי — ולכן בשפת ממשק LTR שלוש האחרונות הציגו טקסט
+              עברי בפריסת שמאל-לימין. אומת ב-08.09.2026 באנגלית:
+              `document.dir = ltr` ובלוקי טקסט עברי עם `direction: ltr`.
+              בעברית הבאג בלתי נראה, כי הכל יורש `rtl` מהמסמך — ולכן
+              הוא שרד. חמש ההצהרות הכפולות הוסרו: שני מקומות שמחשבים
+              את אותה עובדה סוטים זה מזה בשינוי הבא, וכך הוא נולד. */}
+          <Box sx={{ p: 3, direction: 'rtl' }}>
             {/* תוכן לשונית מידע כללי */}
             {activeTab === 0 && (
-              <Box sx={{ direction: 'rtl' }}>
+              <Box>
                 <Box 
                   sx={{ 
                     mb: 4, 
@@ -1764,7 +1781,7 @@ const DestinationInfoPage = () => {
             
             {/* תוכן לשונית אטרקציות */}
             {activeTab === 1 && (
-              <Box sx={{ direction: 'rtl' }}>
+              <Box>
                 <Typography variant="h5" fontWeight="bold" gutterBottom>
                   {t('destInfo.attractions_title', { dest: destinationData.name })}
                 </Typography>
@@ -1871,7 +1888,7 @@ const DestinationInfoPage = () => {
             
             {/* תוכן לשונית אוכל ומסעדות */}
             {activeTab === 2 && (
-              <Box sx={{ direction: 'rtl' }}>
+              <Box>
                 <Typography variant="h5" fontWeight="bold" gutterBottom>
                   {t('destInfo.food_title', { dest: destinationData.name })}
                 </Typography>
@@ -2002,7 +2019,7 @@ const DestinationInfoPage = () => {
             
             {/* תוכן לשונית תחבורה */}
             {activeTab === 3 && (
-              <Box sx={{ direction: 'rtl' }}>
+              <Box>
                 <Typography variant="h5" fontWeight="bold" gutterBottom>
                   {t('destInfo.transport_title', { dest: destinationData.name })}
                 </Typography>
@@ -2131,7 +2148,7 @@ const DestinationInfoPage = () => {
             
             {/* תוכן לשונית טיפים */}
             {activeTab === 4 && (
-              <Box sx={{ direction: 'rtl' }}>
+              <Box>
                 <Typography variant="h5" fontWeight="bold" gutterBottom>
                   {t('destInfo.tips_title', { dest: destinationData.name })}
                 </Typography>
@@ -2302,7 +2319,7 @@ const DestinationInfoPage = () => {
 
             {/* טאב 5 - לו"ז מומלץ */}
             {activeTab === 5 && (
-              <Box sx={{ p: 3 }}>
+              <Box>
                 {!destinationData.itinerary ? (
                   <Box textAlign="center" py={6}>
                     <Typography sx={{ fontSize: '3rem', mb: 2 }}>🤖</Typography>
@@ -2329,7 +2346,7 @@ const DestinationInfoPage = () => {
                                 color: 'white', px: 3, py: 1.5 }}>
                                 <Typography fontWeight="bold">{t('destInfo.day_title', { num: day.day, title: day.title })}</Typography>
                               </Box>
-                              <Box sx={{ p: 3 }}>
+                              <Box>
                                 <Grid container spacing={2}>
                                   {[
                                     { label: t('destInfo.morning'), value: day.morning },
@@ -2347,12 +2364,12 @@ const DestinationInfoPage = () => {
                                   ))}
                                 </Grid>
                                 {day.food && (
-                                  <Box sx={{ mt: 2, p: 1.5, bgcolor: '#fff8e1', borderRadius: 2 }}>
+                                  <Box sx={{ mt: 2, p: 1.5, bgcolor: (t) => (t.palette.mode === 'dark' ? '#2a2412' : '#fff8e1'), borderRadius: 2 }}>
                                     <Typography variant="body2"><strong>{t('destInfo.food_label')}</strong> {day.food}</Typography>
                                   </Box>
                                 )}
                                 {day.tip && (
-                                  <Box sx={{ mt: 1, p: 1.5, bgcolor: '#e8f5e9', borderRadius: 2 }}>
+                                  <Box sx={{ mt: 1, p: 1.5, bgcolor: (t) => (t.palette.mode === 'dark' ? '#16281a' : '#e8f5e9'), borderRadius: 2 }}>
                                     <Typography variant="body2"><strong>{t('destInfo.tip_label')}</strong> {day.tip}</Typography>
                                   </Box>
                                 )}
@@ -2369,7 +2386,7 @@ const DestinationInfoPage = () => {
 
             {/* טאב 6 - תקציב */}
             {activeTab === 6 && (
-              <Box sx={{ p: 3 }}>
+              <Box>
                 {!destinationData.budget ? (
                   <Box textAlign="center" py={6}>
                     <Typography sx={{ fontSize: '3rem', mb: 2 }}>🤖</Typography>
@@ -2384,9 +2401,9 @@ const DestinationInfoPage = () => {
                     )}
                     <Grid container spacing={3} mb={4}>
                       {[
-                        { key: 'budget', label: t('destInfo.budget_type_budget'), color: '#43e97b', bg: '#e8f5e9' },
-                        { key: 'mid', label: t('destInfo.budget_type_mid'), color: '#4facfe', bg: '#e3f2fd' },
-                        { key: 'luxury', label: t('destInfo.budget_type_luxury'), color: '#f5576c', bg: '#fce4ec' },
+                        { key: 'budget', label: t('destInfo.budget_type_budget'), color: '#43e97b', bg: (t) => (t.palette.mode === 'dark' ? '#16281a' : '#e8f5e9') },
+                        { key: 'mid', label: t('destInfo.budget_type_mid'), color: '#4facfe', bg: (t) => (t.palette.mode === 'dark' ? '#152430' : '#e3f2fd') },
+                        { key: 'luxury', label: t('destInfo.budget_type_luxury'), color: '#f5576c', bg: (t) => (t.palette.mode === 'dark' ? '#2b1720' : '#fce4ec') },
                       ].map(({ key, label, color, bg }) => {
                         const tier = destinationData.budget[key];
                         if (!tier) return null;
@@ -2426,7 +2443,7 @@ const DestinationInfoPage = () => {
                       <Box>
                         <Typography variant="h6" fontWeight="bold" mb={2}>{t('destInfo.savings_tips')}</Typography>
                         {destinationData.budget.tips.map((tip, i) => (
-                          <Box key={i} sx={{ display: 'flex', gap: 1, mb: 1.5, p: 2, bgcolor: '#fff8e1', borderRadius: 2 }}>
+                          <Box key={i} sx={{ display: 'flex', gap: 1, mb: 1.5, p: 2, bgcolor: (t) => (t.palette.mode === 'dark' ? '#2a2412' : '#fff8e1'), borderRadius: 2 }}>
                             <CheckIcon sx={{ color: '#f9a825', fontSize: 20, mt: 0.2 }} />
                             <Typography variant="body2">{tip}</Typography>
                           </Box>
@@ -2440,7 +2457,7 @@ const DestinationInfoPage = () => {
 
             {/* טאב 7 - מידע מעשי */}
             {activeTab === 7 && (
-              <Box sx={{ p: 3 }}>
+              <Box>
                 {!destinationData.practical ? (
                   <Box textAlign="center" py={6}>
                     <Typography sx={{ fontSize: '3rem', mb: 2 }}>🤖</Typography>
@@ -2505,7 +2522,7 @@ const DestinationInfoPage = () => {
                           ))}
                         </Grid>
                         {destinationData.practical.emergencyNumbers && (
-                          <Box sx={{ mt: 2, p: 2, bgcolor: '#fce4ec', borderRadius: 2 }}>
+                          <Box sx={{ mt: 2, p: 2, bgcolor: (t) => (t.palette.mode === 'dark' ? '#2b1720' : '#fce4ec'), borderRadius: 2 }}>
                             <Typography variant="subtitle2" fontWeight="bold" mb={1}>{t('destInfo.emergency')}</Typography>
                             <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
                               {Object.entries(destinationData.practical.emergencyNumbers).map(([k, v]) => (
@@ -2553,7 +2570,7 @@ const DestinationInfoPage = () => {
                               <Typography variant="subtitle2" fontWeight="bold" mb={1}>{t('destInfo.what_to_buy')}</Typography>
                               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                                 {destinationData.practical.shopping.items.map((item, i) => (
-                                  <Chip key={i} label={item} size="small" sx={{ bgcolor: '#e3f2fd' }} />
+                                  <Chip key={i} label={item} size="small" sx={{ bgcolor: (t) => (t.palette.mode === 'dark' ? '#152430' : '#e3f2fd') }} />
                                 ))}
                               </Box>
                             </Box>
