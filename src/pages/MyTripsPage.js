@@ -178,7 +178,10 @@ const MyTripsPage = () => {
           </Button>
         </Box>
 
-        <Box sx={{ bgcolor: 'white', borderRadius: 3, p: { xs: 2, md: 4 }, minHeight: 400 }}>
+        {/* `background.paper` ולא `'white'`: התוכן כאן אינו מגדיר
+            `color` ולכן יורש `text.primary` — לבן במצב כהה. נמדד
+            08.09.2026 על האתר החי, "כל הטיולים (27)" ביחס 1.0. */}
+        <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, p: { xs: 2, md: 4 }, minHeight: 400 }}>
           {allTrips.length === 0 ? <EmptyState /> : (
             <>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>

@@ -184,7 +184,12 @@ export default function GroupTripPage() {
   return (
     <Box sx={{
       minHeight: '100vh',
-      background: 'linear-gradient(180deg, #f8f9ff 0%, #fff5f8 100%)',
+      // שורש הדף. אותו דפוס שנמצא ב-`DestinationMatchmakerPage`:
+      // גרדיאנט בהיר קשיח מתחת לטקסט שנגזר מהערכה. תורגם לכהה
+      // במקום להימחק — הגוון הוא זהות הדף.
+      background: (t) => (t.palette.mode === 'dark'
+        ? 'linear-gradient(180deg, #16171f 0%, #1f1519 100%)'
+        : 'linear-gradient(180deg, #f8f9ff 0%, #fff5f8 100%)'),
       pt: '80px',
       pb: 8
     }}>
@@ -265,7 +270,7 @@ export default function GroupTripPage() {
               </Button>
             </Stack>
 
-            <Box mt={3} p={2} bgcolor="#f8f9ff" borderRadius={2}>
+            <Box mt={3} p={2} bgcolor={(t) => (t.palette.mode === 'dark' ? '#1b1d26' : '#f8f9ff')} borderRadius={2}>
               <Typography variant="body2" color="text.secondary" textAlign="center">
                 החדר נשמר בענן — כל מי שמקבל את הקוד יכול להצביע מהמכשיר שלו,
                 וההצבעות מתעדכנות אצל כולם מיד.

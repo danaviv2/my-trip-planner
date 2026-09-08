@@ -1330,7 +1330,13 @@ const TripPlanner = () => {
         {/* אפשרויות מתקדמות */}
         {showAdvancedOptions && (
           <Grid item xs={12}>
-            <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: '8px' }}>
+// ── גוונים שנשמרים בשתי הערכות ──
+// הרקעים כאן היו קשיחים ובהירים, בזמן שהטקסט שמעליהם אינו מגדיר
+// `color` (יורש `text.primary`) או משתמש ב-`text.secondary`. במצב כהה
+// נמדדו ב-08.09.2026 על האתר החי: 15 כשלים ב-/trip-planner, מהם
+// ארבעה ביחס 1.0 וחמישה מחירים ביחס 1.09 — בלתי נראים.
+// הגוון (ירוק לתחבורה, סגול להערות) הוא מידע ולכן תורגם, לא נמחק.
+            <Box sx={{ p: 2, bgcolor: (t) => (t.palette.mode === 'dark' ? '#2a2a2a' : '#f5f5f5'), borderRadius: '8px' }}>
               <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold' }}>העדפות מתקדמות</Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
@@ -1663,7 +1669,7 @@ const TripPlanner = () => {
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
                               {activity.price && (
-                                <Typography variant="caption" sx={{ bgcolor: '#f5f5f5', px: 1, py: 0.3, borderRadius: 1, whiteSpace: 'nowrap' }}>
+                                <Typography variant="caption" sx={{ bgcolor: (t) => (t.palette.mode === 'dark' ? '#2a2a2a' : '#f5f5f5'), px: 1, py: 0.3, borderRadius: 1, whiteSpace: 'nowrap' }}>
                                   {activity.price}
                                 </Typography>
                               )}
@@ -1765,7 +1771,7 @@ const TripPlanner = () => {
                             display: 'flex', alignItems: 'center', gap: 0.5,
                             px: 1, py: 0.5,
                           }}>
-                            <Box sx={{ flex: 1, height: '1px', bgcolor: '#e8e8e8' }} />
+                            <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
                             <Typography variant="caption" color="text.disabled" sx={{ whiteSpace: 'nowrap', fontSize: '0.65rem' }}>
                               {activity.time} → {nextActivity.time}
                             </Typography>
@@ -1792,7 +1798,7 @@ const TripPlanner = () => {
                                 {label}
                               </Button>
                             ))}
-                            <Box sx={{ flex: 1, height: '1px', bgcolor: '#e8e8e8' }} />
+                            <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
                           </Box>
                         )}
                       </React.Fragment>
@@ -1821,7 +1827,7 @@ const TripPlanner = () => {
               textAlign: 'center',
               py: 6,
               px: 3,
-              bgcolor: '#f8f9fa',
+              bgcolor: (t) => (t.palette.mode === 'dark' ? '#1c1d1f' : '#f8f9fa'),
               borderRadius: 3,
               border: '2px dashed #dee2e6',
             }}

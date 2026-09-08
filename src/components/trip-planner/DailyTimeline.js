@@ -93,7 +93,13 @@ const DailyTimeline = ({ dayData, defaultLocation, onEditActivity }) => {
       </Typography>
       
       {/* הוספת מיקום יומי - חדש! */}
-      <Paper elevation={1} sx={{ p: 1.5, mb: 2, bgcolor: '#e8f5e9', borderRadius: '8px', border: '1px solid #c8e6c9' }}>
+// ── גוונים שנשמרים בשתי הערכות ──
+// הרקעים כאן היו קשיחים ובהירים, בזמן שהטקסט שמעליהם אינו מגדיר
+// `color` (יורש `text.primary`) או משתמש ב-`text.secondary`. במצב כהה
+// נמדדו ב-08.09.2026 על האתר החי: 15 כשלים ב-/trip-planner, מהם
+// ארבעה ביחס 1.0 וחמישה מחירים ביחס 1.09 — בלתי נראים.
+// הגוון (ירוק לתחבורה, סגול להערות) הוא מידע ולכן תורגם, לא נמחק.
+      <Paper elevation={1} sx={{ p: 1.5, mb: 2, bgcolor: (t) => (t.palette.mode === 'dark' ? '#16281a' : '#e8f5e9'), borderRadius: '8px', border: '1px solid', borderColor: (t) => (t.palette.mode === 'dark' ? '#2c4a32' : '#c8e6c9') }}>
         <Typography variant="subtitle1" sx={{ 
           fontWeight: 'bold', 
           display: 'flex', 
@@ -106,7 +112,7 @@ const DailyTimeline = ({ dayData, defaultLocation, onEditActivity }) => {
       </Paper>
       
       {/* רכיב ניווט להמלצות תחבורה יומיות */}
-      <Paper elevation={0} sx={{ p: 1.5, mb: 2, bgcolor: '#f5f5f5', borderRadius: '8px', border: '1px dashed #ccc' }}>
+      <Paper elevation={0} sx={{ p: 1.5, mb: 2, bgcolor: (t) => (t.palette.mode === 'dark' ? '#2a2a2a' : '#f5f5f5'), borderRadius: '8px', border: '1px dashed', borderColor: 'divider' }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
           <i className="material-icons" style={{ marginRight: '4px', fontSize: '18px' }}>directions</i>
           המלצות תחבורה להיום:
@@ -137,7 +143,7 @@ const DailyTimeline = ({ dayData, defaultLocation, onEditActivity }) => {
                 top: '40px',
                 bottom: '-20px',
                 width: '2px',
-                bgcolor: '#e0e0e0',
+                bgcolor: 'divider',
                 zIndex: 0
               } : {}
             }}
@@ -353,7 +359,7 @@ const DailyTimeline = ({ dayData, defaultLocation, onEditActivity }) => {
       
       {/* תצוגת מידע על המלון/לינה אם קיים - חדש! */}
       {dayData.accommodation && (
-        <Paper sx={{ p: 2, mt: 3, bgcolor: '#f3e5f5', borderRadius: '8px', border: '1px solid #e1bee7' }}>
+        <Paper sx={{ p: 2, mt: 3, bgcolor: (t) => (t.palette.mode === 'dark' ? '#241a26' : '#f3e5f5'), borderRadius: '8px', border: '1px solid', borderColor: (t) => (t.palette.mode === 'dark' ? '#4a2c50' : '#e1bee7') }}>
           <Typography variant="subtitle1" sx={{ 
             mb: 1, 
             fontWeight: 'bold', 
