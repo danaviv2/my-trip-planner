@@ -36,7 +36,7 @@ import { useTripSave } from '../contexts/TripSaveContext';
 import { useAuth } from '../contexts/AuthContext';
 import ShareTripDialog from '../components/shared/ShareTripDialog';
 import {
-  loadEntriesLocal, saveEntriesLocal,
+  loadEntriesLocal, saveEntriesLocal, safeLocalWrite,
   saveEntry, loadEntries, deleteEntryFirestore, loadDeletedEntryIds,
 } from '../services/journalService';
 import { geminiEndpoint } from '../services/geminiClient';
@@ -442,22 +442,52 @@ const TravelJournalPage = () => {
     { id: 'other',      label: 'שונות',     emoji: '🎁', color: '#aaa'    },
   ];
 
+  /**
+   * שמירת הוצאות.
+   *
+   * ── המצב עוקב אחרי מה שנשמר ──
+   * כאן ישב `setExpenses(updated)` ואחריו `catch {}` ריק: המסך עודכן
+   * תמיד, גם כשהכתיבה נכשלה, ו-`addExpense` הכריז "💸 הוצאה נוספה".
+   * להוצאות **אין סנכרון לענן כלל** (בניגוד לרשומות היומן), ולכן כשל
+   * מקומי הוא אובדן מוחלט — והמשתמש היה מגלה אותו רק ברענון.
+   *
+   * לכן העדכון קורה רק אחרי כתיבה מוצלחת. אותו סיווג שגיאה כמו
+   * ברשומות, מאותה פונקציה.
+   *
+   * @returns {{ok: boolean, quota: boolean, error?: string}}
+   */
   const saveExpenses = (updated) => {
-    setExpenses(updated);
-    try { localStorage.setItem(`trip_expenses_${selectedTripId}`, JSON.stringify(updated)); } catch {}
+    const res = safeLocalWrite(`trip_expenses_${selectedTripId}`, updated);
+    if (res.ok) setExpenses(updated);
+    return res;
   };
 
   const addExpense = () => {
     const amt = parseFloat(newExp.amount);
     if (!amt || amt <= 0) return;
     const exp = { id: Date.now(), tripId: selectedTripId, amount: amt, category: newExp.category, note: newExp.note.trim(), date: new Date().toISOString() };
-    saveExpenses([...expenses, exp]);
+    const res = saveExpenses([...expenses, exp]);
+    if (!res.ok) {
+      // הדיאלוג נשאר פתוח עם הערכים: סגירתו הייתה מאבדת גם את מה
+      // שהמשתמש הקליד, על גבי הכישלון עצמו.
+      showSnack(
+        res.quota
+          ? 'אין מקום פנוי לשמירה. מחק רשומות או תמונות ישנות, ונסה שוב.'
+          : `שמירת ההוצאה נכשלה: ${res.error}. נסה שוב.`,
+        'error'
+      );
+      return;
+    }
     setNewExp({ amount: '', category: 'food', note: '' });
     setExpenseOpen(false);
     showSnack(`💸 הוצאה נוספה: ₪${amt}`);
   };
 
-  const deleteExpense = (id) => saveExpenses(expenses.filter(e => e.id !== id));
+  const deleteExpense = (id) => {
+    const res = saveExpenses(expenses.filter(e => e.id !== id));
+    // בלי זה, מחיקה שלא נשמרה נראית כאילו הצליחה — וההוצאה חוזרת ברענון.
+    if (!res.ok) showSnack(`המחיקה לא נשמרה: ${res.error}. נסה שוב.`, 'error');
+  };
 
   // ─── render helpers ──────────────────────────────────────────────────────────
 

@@ -12,25 +12,29 @@ export function loadEntriesLocal() {
 }
 
 /**
- * שמירה מקומית שמדווחת מה קרה.
+ * כתיבה ל-`localStorage` שמדווחת מה קרה, במקום לבלוע.
  *
  * ── למה זה לא `catch {}` ──
  * כאן ישב `try { ... } catch {}` ריק. רשומת יומן נושאת עד חמש תמונות
- * base64, וכשמכסת ה-5MB של `localStorage` נגמרת `setItem` זורק
+ * base64, וכשמכסת ה-`localStorage` נגמרת `setItem` זורק
  * `QuotaExceededError`. ה-catch בלע, הסנכרון לענן בלע גם הוא, והמסך
  * הכריז "✅ צ׳ק-אין נשמר בהצלחה". אורח שאינו מחובר איבד את הרשומה
- * ברענון הבא בלי שדבר רמז על כך. דפוס 3 ב-CLAUDE.md: כישלון שדווח
- * כהצלחה.
+ * ברענון הבא בלי שדבר רמז על כך. דפוס 3 ב-CLAUDE.md.
  *
- * מוחזר אובייקט ולא בוליאני, כי לקורא יש שתי החלטות שונות לקבל:
- * האם להזהיר, ומה לומר. `quota` מפריד בין "אין מקום" — שלמשתמש יש
- * דרך לתקן אותו — לבין כשל אחר, שאין לו.
+ * ── ולמה זו פונקציה אחת ולא שתיים ──
+ * ההוצאות סובלות מאותו כשל בדיוק (`trip_expenses_*`), ועותק שני של
+ * סיווג השגיאה היה נפרד מזה בשינוי הבא — שתי נקודות שמחשבות את אותה
+ * עובדה נפרדות זו מזו, וזה כבר קרה כאן.
+ *
+ * מוחזר אובייקט ולא בוליאני, כי לקורא יש שתי החלטות שונות: האם
+ * להזהיר, ומה לומר. `quota` מפריד בין "אין מקום" — שלמשתמש יש דרך
+ * לתקן אותו — לבין כשל אחר, שאין לו.
  *
  * @returns {{ok: boolean, quota: boolean, error?: string}}
  */
-export function saveEntriesLocal(entries) {
+export function safeLocalWrite(key, value) {
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify(entries));
+    localStorage.setItem(key, JSON.stringify(value));
     return { ok: true, quota: false };
   } catch (err) {
     // הדפדפנים אינם מסכימים על השם: Chrome/Firefox זורקים
@@ -45,6 +49,9 @@ export function saveEntriesLocal(entries) {
     return { ok: false, quota: !!quota, error: err?.message || String(err) };
   }
 }
+
+/** @returns {{ok: boolean, quota: boolean, error?: string}} */
+export const saveEntriesLocal = (entries) => safeLocalWrite(LS_KEY, entries);
 
 // ─── Firestore ─────────────────────────────────────────────────
 
