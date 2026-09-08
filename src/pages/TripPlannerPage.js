@@ -269,8 +269,18 @@ const TripPlannerPage = () => {
       localStorage.setItem('tripLogs', JSON.stringify(updated));
     } else {
       // צור רשומה חדשה
+      // ── המזהה חייב להיות מספר תקין ──
+      // כאן נוצר `NaN`: הכפתור העביר את אירוע הלחיצה כ-`existingLogId`,
+      // הוא truthy, ו-`Number(PointerEvent)` הוא `NaN`. משם זה התגלגל:
+      // `deleteTripLog` סינן ב-`log.id !== id`, ו-`NaN !== NaN` הוא
+      // `true` — כלומר הרשומה **לעולם לא סוננה** וכפתור "מחק" לא עשה
+      // דבר, בשקט. גם `key={log.id ?? li}` קיבל `NaN` לכל השורות, כי
+      // `NaN` אינו nullish.
+      // השומר נשאר גם אחרי תיקון הקורא: מזהה פגום נכתב לאחסון ושורד
+      // רענונים, ואין ממנו דרך חזרה מהמסך.
+      const parsedId = Number(existingLogId);
       const newLog = {
-        id: existingLogId ? Number(existingLogId) : Date.now(),
+        id: Number.isFinite(parsedId) && parsedId > 0 ? parsedId : Date.now(),
         date: new Date().toISOString(),
         destination: dest,
         dailyItinerary: itinerary,
@@ -282,7 +292,11 @@ const TripPlannerPage = () => {
   };
 
   const deleteTripLog = (id) => {
-    const updatedLogs = tripLogs.filter(log => log.id !== id);
+    // השוואה כמחרוזות, כמו ב-`handleDelete` ביומן: מזהים מגיעים גם
+    // מפרמטרים וגם מהאחסון ולא תמיד באותו טיפוס. זה גם מנקה רשומות
+    // שנשמרו עם `id: null` לפני התיקון — `String(null)` שווה לעצמו,
+    // בעוד `NaN !== NaN` הותיר אותן תקועות על המסך לנצח.
+    const updatedLogs = tripLogs.filter(log => String(log.id) !== String(id));
     setTripLogs(updatedLogs);
     localStorage.setItem('tripLogs', JSON.stringify(updatedLogs));
   };
@@ -539,7 +553,11 @@ const TripPlannerPage = () => {
                   </Button>
                 </Grid>
                 <Grid item>
-                  <Button variant="contained" color="primary" onClick={saveTripLog} startIcon={<i className="material-icons">save</i>}>
+                  {/* ── `() => saveTripLog()` ולא `saveTripLog` ──
+                      React מעביר את אירוע הלחיצה כארגומנט הראשון, כלומר
+                      `existingLogId` קיבל אובייקט אירוע. הוא truthy, ולכן
+                      `Number(existingLogId)` בשורה 273 החזיר `NaN`. ראה שם. */}
+                  <Button variant="contained" color="primary" onClick={() => saveTripLog()} startIcon={<i className="material-icons">save</i>}>
                     {t('tripPlanner.saveRoute')}
                   </Button>
                 </Grid>
