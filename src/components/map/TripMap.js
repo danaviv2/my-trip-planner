@@ -443,7 +443,17 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
       {!whole && markers.length > 0 && (
         <Box sx={{
           position: 'absolute', bottom: 24, left: 8, zIndex: 1000,
-          bgcolor: 'rgba(255,255,255,0.95)', p: 1, borderRadius: 2, boxShadow: 2,
+          // ── רקע המקרא הולך אחרי הערכה ──
+          // היה `rgba(255,255,255,0.95)` קשיח, בזמן שה-`Typography`
+          // שבתוכו אינו מגדיר `color` ולכן יורש `text.primary`.
+          // נמדד 08.09.2026 על האתר החי ב-/trip-planner: ארבע תוויות
+          // ביחס 1.0 — `אטרקציה`, `אוכל`, `קניות` ו-`transportation`.
+          // (האחרונה באנגלית משום ש-`TYPE_LABELS` מכיל `transport`
+          //  ולא `transportation`, ולכן נופלת ל-`|| type`. באג נפרד.)
+          bgcolor: (t) => (t.palette.mode === 'dark'
+            ? 'rgba(30,30,30,0.95)'
+            : 'rgba(255,255,255,0.95)'),
+          p: 1, borderRadius: 2, boxShadow: 2,
           display: 'flex', flexDirection: 'column', gap: 0.4,
         }}>
           {[...new Set(markers.map(a => a.type))].map(type => (
@@ -453,7 +463,7 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
                 borderRadius: '50% 50% 50% 0',
                 transform: 'rotate(-45deg)',
                 bgcolor: TYPE_COLORS[type] || '#667eea',
-                border: '2px solid white',
+                border: (t) => `2px solid ${t.palette.background.paper}`,
                 flexShrink: 0,
               }} />
               <Typography variant="caption">{TYPE_LABELS[type] || type}</Typography>
