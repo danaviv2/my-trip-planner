@@ -391,7 +391,12 @@ const TripPlannerPage = () => {
           עטיפת דף היא שלד, והשלד הולך אחרי הערכה. */}
       <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: '16px' }}>
         <Typography variant="h4" align="center" gutterBottom sx={{
-          color: '#2c3e50',
+          // ── היה `#2c3e50` קשיח ──
+          // הוא היה קריא כל עוד ה-`Paper` שמעליו היה לבן קשיח. משהסרתי
+          // את הלבן (08.09.2026), הכותרת נמדדה 1.52 על `#1e1e1e` — כלומר
+          // התיקון עצמו יצר את הנסיגה. זה בדיוק הכלל: רקע קשיח מחייב
+          // טקסט קשיח, ומי שמשחרר את האחד חייב לשחרר גם את השני.
+          color: 'text.primary',
           fontWeight: 'bold',
           mb: 3,
           display: 'flex',

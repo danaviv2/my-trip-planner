@@ -228,8 +228,13 @@ const RouteMapPage = () => {
             <Box sx={{
               px: 2, py: 1.5,
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              borderBottom: '1px solid rgba(0,0,0,0.08)',
-              bgcolor: '#f8fff8'
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              // ── רקע ירקרק שהולך אחרי הערכה ──
+              // היה `#f8fff8` קשיח מתחת ל-`Typography` בלי `color`
+              // (יורש `text.primary`). נמדד 08.09.2026 על האתר החי:
+              // `Tel Aviv → Jerusalem` ביחס **1.02** — לבן על לבן.
+              bgcolor: (t) => (t.palette.mode === 'dark' ? '#16211a' : '#f8fff8'),
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <DirectionsIcon color="success" fontSize="small" />
