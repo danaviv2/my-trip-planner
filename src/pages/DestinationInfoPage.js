@@ -80,8 +80,10 @@ import { getCurrentWeather } from '../services/openMeteoService';
    מה שנסגר קודם על `destinationData`, `t` ו-`theme` מגיע עכשיו כ-props
    או מה-hook של הרכיב עצמו. */
 const AttractionCardFooter = ({ attraction }) => {
-  if (!attraction.recommendedDuration && !attraction.price) return null;
+  const { t } = useTranslation();
+  if (!attraction.recommendedDuration && !attraction.price && !attraction.queueTip) return null;
   return (
+    <>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, pt: 2, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
       {attraction.recommendedDuration ? (
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -100,6 +102,18 @@ const AttractionCardFooter = ({ attraction }) => {
         </Box>
       ) : <span />}
     </Box>
+    {/* ── טיפ עקיפת התור ──
+        מבני בלבד: "להזמין מראש", "להגיע בפתיחה". שעת המתנה או מחיר
+        היו ערך שאין לו מקור, והם בדיוק מה שנכנס לתכנון אמיתי. */}
+    {attraction.queueTip && (
+      <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'flex-start', mt: 1 }}>
+        <Typography variant="caption" fontWeight={800} sx={{ color: 'primary.main', whiteSpace: 'nowrap' }}>
+          {t('destInfo.queueTip')}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">{attraction.queueTip}</Typography>
+      </Box>
+    )}
+    </>
   );
 };
 
@@ -440,10 +454,17 @@ const DestinationInfoPage = () => {
   const getMockDestinationData = (dest) => {
     const destinationsData = {
       'פריז': {
+        hiddenGems: [
+          { name: 'לה קולה ורט', nameEn: 'Coulée verte René-Dumont', description: 'גן ארוך על גשר מסילה נטושה, כמה מטרים מעל הרחוב — הולכים בין עצים והתנועה מתחת.' },
+          { name: 'מוזיאון רודן', nameEn: 'Musée Rodin', description: 'האוסף יושב בבית אחוזה, והפסלים עומדים בגן — רואים את החושב באוויר פתוח.' },
+          { name: 'בית הקברות פר לשז', nameEn: 'Père Lachaise Cemetery', description: 'גבעה מרוצפת סמטאות וקברים מפורסמים; כדאי מפה מראש, אחרת מסתובבים ולא מוצאים.' },
+          { name: 'תעלת סן מרטן', nameEn: 'Canal Saint-Martin', description: 'גשרי ברזל ומנעולי מים בין בתי קפה; בערב יושבים על שפת התעלה עם בגט.' },
+          { name: 'מוזיאון מארמוטאן מונה', nameEn: 'Musée Marmottan Monet', description: 'בית פרטי בשוליים המערביים של פריז, ובו אוסף גדול של מונה.' }
+        ],
         country: 'צרפת',
         coverImage: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200',
         tags: ['רומנטיקה', 'אמנות', 'אוכל', 'היסטוריה'],
-        description: 'פריז, בירת צרפת, היא אחת הערים הרומנטיות והיפות בעולם. ידועה בזכות מגדל אייפל, מוזיאון הלובר, קתדרלת נוטרדאם ושדרות השאנז אליזה.',
+        description: 'בפריז לא מחפשים את מגדל אייפל — הוא פשוט צץ בסוף רחוב אקראי, ואתה נעצר באמצע המדרכה בלי להתכוון.',
         language: 'צרפתית', currency: 'אירו (€)', timezone: 'GMT+1', airport: 'שארל דה גול (CDG), אורלי (ORY)',
         bestTimeToVisit: 'אפריל-יוני, ספטמבר-אוקטובר',
         seasons: { summer: 'חם ונעים 18-25°C, עמוס תיירים', winter: 'קר וגשום 2-8°C, פחות תיירים' },
@@ -452,9 +473,9 @@ const DestinationInfoPage = () => {
           { name: 'פריז פאשן וויק', date: 'פברואר ו-ספטמבר', description: 'שבוע האופנה המפורסם בעולם.' }
         ],
         attractions: [
-          { name: 'מגדל אייפל', rating: 4.7, description: 'סמל פריז, נוף פנורמי מרהיב.', recommendedDuration: '2-3 שעות', price: '€18-28' },
-          { name: 'מוזיאון הלובר', rating: 4.8, description: 'המוזיאון הגדול בעולם, בית המונה ליזה.', recommendedDuration: '3-4 שעות', price: '€17' },
-          { name: 'קתדרלת נוטרדאם', rating: 4.7, description: 'קתדרלה גותית אייקונית בלב פריז.', recommendedDuration: '1-2 שעות', price: 'חינם' },
+          { name: 'מגדל אייפל', queueTip: 'להזמין מראש באתר הרשמי; הכניסה למדרגות ולמעלית נפרדת.', rating: 4.7, description: 'סמל פריז, נוף פנורמי מרהיב.', recommendedDuration: '2-3 שעות', price: '€18-28' },
+          { name: 'מוזיאון הלובר', queueTip: 'להזמין שעת כניסה מראש, ולהתחיל מהאגף המרוחק מהמונה ליזה.', rating: 4.8, description: 'המוזיאון הגדול בעולם, בית המונה ליזה.', recommendedDuration: '3-4 שעות', price: '€17' },
+          { name: 'קתדרלת נוטרדאם', queueTip: 'הכניסה ללא תשלום; לבדוק באתר הרשמי אם נדרשת הזמנת זמן.', rating: 4.7, description: 'קתדרלה גותית אייקונית בלב פריז.', recommendedDuration: '1-2 שעות', price: 'חינם' },
           { name: 'מוזיאון אורסיי', nameEn: 'Musée d\'Orsay', description: 'אוסף האימפרסיוניסטים הגדול בעולם, בתוך תחנת רכבת משופצת.', recommendedDuration: '2-3 שעות' },
           { name: 'שער הניצחון', nameEn: 'Arc de Triomphe', description: 'מרפסת התצפית משקיפה על שתים-עשרה השדרות היוצאות ממנו.', recommendedDuration: 'שעה' },
           { name: 'ארמון ורסאי', nameEn: 'Palace of Versailles', description: 'ארמון המלוכה והגנים - יום שלם מחוץ לעיר.', recommendedDuration: '4-5 שעות' },
@@ -463,6 +484,16 @@ const DestinationInfoPage = () => {
           { name: 'שאנז אליזה', nameEn: 'Champs-Élysées', description: 'השדרה המפורסמת, משער הניצחון עד כיכר קונקורד.', recommendedDuration: '1-2 שעות', price: 'חינם' }
         ],
         food: {
+            honeyTraps: [
+              { name: 'שאנז אליזה', note: 'שדרה של רשתות בינלאומיות שקיימות גם בבית. היפה שבה הוא הנוף אחורה, אל שער הניצחון.' },
+              { name: 'בתי קפה מול נוטרדאם', note: 'משלמים על הכיסא ועל הנוף, לא על האוכל. שני רחובות פנימה המחיר צונח והמנה משתפרת.' },
+              { name: 'מנעולי אהבה על הגשרים', note: 'הסורגים מתחלפים, המנעולים נעלמים, והדוכן ברחוב מוכר לך אחד חדש.' }
+            ],
+            localVault: [
+              { name: 'Bouillon Chartier', note: 'אולם ענק במראה של מאה קודמת, מלצר שרושם את ההזמנה על מפת הנייר, ורעש של עשרות שיחות.' },
+              { name: "Marché d'Aligre", note: 'שוק שכונתי ולא תיירותי; קונים גבינה ולחם ואוכלים בדרך.' },
+              { name: 'Marché des Enfants Rouges', note: 'שוק מקורה בלב המארה, ובתוכו דוכני אוכל משכונות שונות של העולם.' }
+            ],
           intro: 'פריז היא גן עדן קולינרי - מבתי קפה קסומים ועד מסעדות כוכבי מישלן.',
           dishes: [
             { name: 'קרואסון', description: 'מאפה צרפתי קלאסי, פריך ושכבתי.' },
@@ -676,10 +707,17 @@ const DestinationInfoPage = () => {
         ]
       },
       'בנגקוק': {
+        hiddenGems: [
+          { name: 'בית ג׳ים תומפסון', nameEn: 'Jim Thompson House', description: 'בתי עץ תאיים שהורכבו לבית אחד על גדת תעלה, ובתוכו אוסף אמנות אסייתית.' },
+          { name: 'ואט סאקט (הר הזהב)', nameEn: 'Wat Saket', description: 'מדרגות שמקיפות גבעה מלאכותית עד כיפה זהובה, ונוף פתוח על גגות העיר הישנה.' },
+          { name: 'מוזיאון סיאם', nameEn: 'Museum Siam', description: 'מוזיאון אינטראקטיבי ששואל מה זה בכלל להיות תאי — קליל, ממוזג, וטוב לילדים.' },
+          { name: 'פארק לומפיני', nameEn: 'Lumphini Park', description: 'ריאות העיר — אגם עם סירות דוושה, התעמלות קבוצתית בבוקר, ולטאות ענק על הדשא.' },
+          { name: 'טלאט נוי', nameEn: 'Talat Noi', description: 'סמטאות של מוסכים וגרוטאות מנוע ליד הנהר, גרפיטי, ובתי קפה קטנים בין החנויות.' }
+        ],
         country: 'תאילנד',
         coverImage: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=1200',
         tags: ['מקדשים', 'אוכל', 'קניות', 'חיי לילה'],
-        description: 'בנגקוק, עיר הכסא, היא שילוב מרתק של מקדשים עתיקים, שווקים צפופים, אוכל רחוב מדהים ומודרניות בועטת.',
+        description: 'בבנגקוק החום, הריח והרעש מגיעים ביחד, ואחרי חצי יום מפסיקים להילחם בזה — וזה הרגע שהעיר נפתחת.',
         language: 'תאית', currency: 'בהט (THB)', timezone: 'GMT+7', airport: 'סוברנאבהומי (BKK)',
         bestTimeToVisit: 'נובמבר-פברואר',
         seasons: { summer: 'עונת גשמים מאי-אוקטובר, חם ולח', winter: 'יבש ונעים 20-30°C' },
@@ -688,17 +726,27 @@ const DestinationInfoPage = () => {
           { name: 'לוי קרתונג', date: 'נובמבר', description: 'פסטיבל השקת סירות נרות על הנהר.' }
         ],
         attractions: [
-          { name: 'ואט פרא קאו', rating: 4.8, description: 'מקדש בודה אמרלד - הקדוש ביותר בתאילנד.', recommendedDuration: '2 שעות', price: '500 בהט' },
+          { name: 'ואט פרא קאו', queueTip: 'יושב במתחם הארמון הגדול; לבדוק באתר הרשמי מה הכרטיס מכסה.', rating: 4.8, description: 'מקדש בודה אמרלד - הקדוש ביותר בתאילנד.', recommendedDuration: '2 שעות', price: '500 בהט' },
           { name: 'שוק צף', rating: 4.5, description: 'סירות עמוסות פירות וירקות על תעלות עתיקות.', recommendedDuration: '2-3 שעות', price: 'חינם (כניסה)' },
           { name: 'Chatuchak Weekend Market', rating: 4.6, description: 'השוק הגדול בעולם - 15,000 דוכנים!', recommendedDuration: '3-4 שעות', price: 'חינם' },
-          { name: 'הארמון הגדול', nameEn: 'Grand Palace', description: 'מתחם המלוכה ההיסטורי - קוד לבוש מחמיר.', recommendedDuration: '2-3 שעות' },
-          { name: 'ואט פו', nameEn: 'Wat Pho', description: 'הבודהה השוכב באורך 46 מטר, ובית ספר למסאז\' תאי.', recommendedDuration: '1-2 שעות' },
+          { name: 'הארמון הגדול', queueTip: 'קוד לבוש מחמיר — כתפיים וברכיים מכוסות. להגיע בפתיחה.', nameEn: 'Grand Palace', description: 'מתחם המלוכה ההיסטורי - קוד לבוש מחמיר.', recommendedDuration: '2-3 שעות' },
+          { name: 'ואט פו', queueTip: 'שקט יותר מהארמון; להיכנס אחריו, ולסיים בבית הספר שבמתחם.', nameEn: 'Wat Pho', description: 'הבודהה השוכב באורך 46 מטר, ובית ספר למסאז\' תאי.', recommendedDuration: '1-2 שעות' },
           { name: 'ואט ארון', nameEn: 'Wat Arun', description: 'מקדש השחר על גדת הנהר, יפה במיוחד בשקיעה.', recommendedDuration: 'שעה' },
           { name: 'נהר צ\'או פראיה', nameEn: 'Chao Phraya River', description: 'סירת מעבורת בין המקדשים - התחבורה היפה בעיר.', recommendedDuration: '1-2 שעות' },
           { name: 'כאו סאן רואד', nameEn: 'Khao San Road', description: 'רחוב התרמילאים - אוכל רחוב וחיי לילה.', recommendedDuration: 'שעתיים', price: 'חינם' },
           { name: 'אסיאטיק', nameEn: 'Asiatique', description: 'שוק לילה על הנהר, עם גלגל ענק.', recommendedDuration: '2-3 שעות', price: 'חינם' }
         ],
         food: {
+            honeyTraps: [
+              { name: 'השוק הצף לתיירים', note: 'חלק גדול מהסירות מוכר מזכרות, לא אוכל. השווקים לתושבים פועלים מוקדם בבוקר.' },
+              { name: 'טוק-טוק שמציע סיור', note: 'נסיעה זולה שמסתיימת בחנות תכשיטים או חליפות. מונית עם מונה פשוטה יותר.' },
+              { name: 'כאו סאן רואד בערב', note: 'רחוב שמוכר את עצמו כתאילנד, ומגיש בעיקר אלכוהול זול. לאוכל אמיתי — רובע סין.' }
+            ],
+            localVault: [
+              { name: 'Thipsamai', note: 'פאד תאי עטוף בחביתה דקה — מוסד ותיק ברובע העיר העתיקה, לא גרסת בית המלון.' },
+              { name: 'רובע סין (יאוואראט)', note: 'אחרי רדת החשכה המדרכות נפתחות למטבחים — פירות ים, אטריות וקדרות על גז פתוח.' },
+              { name: 'Or Tor Kor Market', note: 'שוק מזון מסודר — פירות, קארי מוכן ודוכני אוכל לתושבים.' }
+            ],
           intro: 'בנגקוק היא גן עדן של אוכל רחוב - כל פינה מגלה ריחות ומתכונים חדשים.',
           dishes: [
             { name: 'פאד תאי', description: 'נודלס מוקפצים עם שרימפס, בוטנים ולימון - המנה הלאומית.' },
@@ -794,10 +842,17 @@ const DestinationInfoPage = () => {
         ]
       },
       'לונדון': {
+        hiddenGems: [
+          { name: 'גן הגג בסיטי', nameEn: 'The Garden at 120', description: 'גן גג פתוח לקהל, עם נוף אל הגורקין ומגדלי הסיטי מקרוב מאוד.' },
+          { name: 'מוזיאון סר ג׳ון סון', nameEn: "Sir John Soane's Museum", description: 'בית אדריכל שנשמר כפי שהיה, דחוס פסלים וציורים מהרצפה עד התקרה.' },
+          { name: 'לידנהול מרקט', nameEn: 'Leadenhall Market', description: 'שוק מקורה ויקטוריאני בלב הסיטי, זכוכית וברזל צבוע — שקט בסוף השבוע.' },
+          { name: 'פארק הדוורים', nameEn: "Postman's Park", description: 'גינה קטנה ובה קיר לוחות קרמיקה לזכר אנשים שמתו בניסיון להציל אחרים.' },
+          { name: 'סמטאות נילס יארד', nameEn: "Neal's Yard", description: 'חצר זעירה בצבעים חזקים מאחורי קובנט גארדן; עוברים לידה בלי לשים לב.' }
+        ],
         country: 'בריטניה',
         coverImage: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1200',
         tags: ['תרבות', 'היסטוריה', 'קניות', 'תיאטרון'],
-        description: 'לונדון, בירת בריטניה, משלבת היסטוריה עתיקה עם מודרניות. ביג בן, ארמון בקינגהאם, גלגל הענק והתיאטרונים.',
+        description: 'לונדון לא מנסה למצוא חן. היא פשוט ממשיכה, ואחרי יומיים אתה מגלה שאתה כבר הולך בקצב שלה, בלי לשים לב.',
         language: 'אנגלית', currency: 'פאונד (£)', timezone: 'GMT', airport: 'היתרו (LHR), גטוויק (LGW)',
         bestTimeToVisit: 'מאי-ספטמבר',
         seasons: { summer: 'נעים 18-25°C, אורך יום', winter: 'קר וגשום 2-8°C' },
@@ -806,17 +861,27 @@ const DestinationInfoPage = () => {
           { name: 'Guy Fawkes Night', date: '5 נובמבר', description: 'זיקוקים ומדורות ברחבי העיר.' }
         ],
         attractions: [
-          { name: 'המוזיאון הבריטי', rating: 4.8, description: 'אחד המוזיאונים הגדולים בעולם - אוצרות מכל התרבויות.', recommendedDuration: '3-4 שעות', price: 'חינם' },
+          { name: 'המוזיאון הבריטי', queueTip: 'הכניסה ללא תשלום, אך כדאי לשריין כרטיס חינם מראש באתר.', rating: 4.8, description: 'אחד המוזיאונים הגדולים בעולם - אוצרות מכל התרבויות.', recommendedDuration: '3-4 שעות', price: 'חינם' },
           { name: 'ביג בן ופרלמנט', rating: 4.6, description: 'סמל לונדון - שעון הכינוי הגדול לצד הטמזה.', recommendedDuration: '1 שעה', price: 'חינם (חיצוני)' },
           { name: 'מוזיאון הלאומי', rating: 4.7, description: 'עצמות דינוזאורים, אמנות ומדע - חינם!', recommendedDuration: '2-3 שעות', price: 'חינם' },
-          { name: 'מגדל לונדון', nameEn: 'Tower of London', description: 'מבצר בן אלף שנה, ובתוכו תכשיטי הכתר.', recommendedDuration: '3 שעות' },
-          { name: 'עין לונדון', nameEn: 'London Eye', description: 'גלגל ענק על הטיימס, סיבוב אחד בחצי שעה.', recommendedDuration: 'שעה' },
+          { name: 'מגדל לונדון', queueTip: 'להזמין מראש באתר הרשמי, ולהתחיל מתכשיטי הכתר.', nameEn: 'Tower of London', description: 'מבצר בן אלף שנה, ובתוכו תכשיטי הכתר.', recommendedDuration: '3 שעות' },
+          { name: 'עין לונדון', queueTip: 'כרטיס לשעה מוגדרת מראש; לבדוק את מזג האוויר לפני שמגיעים.', nameEn: 'London Eye', description: 'גלגל ענק על הטיימס, סיבוב אחד בחצי שעה.', recommendedDuration: 'שעה' },
           { name: 'ארמון בקינגהאם', nameEn: 'Buckingham Palace', description: 'חילופי המשמר בחוץ, והאולמות פתוחים בקיץ.', recommendedDuration: 'שעתיים' },
           { name: 'מנזר וסטמינסטר', nameEn: 'Westminster Abbey', description: 'מקום ההכתרה, וקבריהם של מלכים ומדענים.', recommendedDuration: 'שעתיים' },
           { name: 'טייט מודרן', nameEn: 'Tate Modern', description: 'אמנות מודרנית בתחנת כוח לשעבר.', recommendedDuration: '2-3 שעות', price: 'חינם' },
           { name: 'שוק קמדן', nameEn: 'Camden Market', description: 'דוכנים, אוכל מכל העולם ומוזיקה.', recommendedDuration: 'שעתיים', price: 'חינם' }
         ],
         food: {
+            honeyTraps: [
+              { name: 'חילופי המשמר', note: 'קהל עמוק מסביב לשער, ומהשורה האחורית רואים בעיקר כובעים. המצעד ברחוב נצפה טוב יותר.' },
+              { name: 'דגים וצ׳יפס מול הטיימס', note: 'ככל שהנוף מהחלון יפה יותר, כך קטן הסיכוי שהדג טוגן לפי הזמנה.' },
+              { name: 'רחוב אוקספורד בשבת', note: 'אותן רשתות שיש בכל שדה תעופה, בצפיפות שלא מאפשרת לעצור. סוהו וספיטלפילדס קרובים.' }
+            ],
+            localVault: [
+              { name: 'Dishoom', note: 'מחווה לבתי הקפה האיראניים של בומביי — תה מסאלה, ביצים, וארוחת בוקר שנמשכת.' },
+              { name: 'Borough Market', note: 'שוק מזון מתחת למסילה; טועמים גבינות ובשרים בדוכנים, ואוכלים בעמידה.' },
+              { name: 'פאב שכונתי, לא בסוהו', note: 'ליד התחנות הפאבים מלאים בכולם חוץ ממקומיים. שני רחובות פנימה הכול משתנה.' }
+            ],
           intro: 'לונדון מציעה מגוון קולינרי עצום - מ-fish & chips מסורתי ועד מסעדות כוכבי מישלן.',
           dishes: [
             { name: 'Fish & Chips', description: 'הארוחה הבריטית הקלאסית - דג מטוגן עם צ\'יפס.' },
@@ -1111,6 +1176,11 @@ const DestinationInfoPage = () => {
       },
       events: d.events,
       attractions: d.attractions,
+      // ── `hiddenGems` חייב להופיע כאן במפורש ──
+      // ההרכבה מעתיקה שדה-שדה, ולכן שדה חדש במאגר אינו מגיע למסך
+      // עד שמוסיפים אותו גם כאן. בדיוק מה שקרה ל-`accommodations`:
+      // הנתונים היו, והכפתור הצביע על שדה שמעולם לא עבר.
+      hiddenGems: d.hiddenGems,
       food: d.food,
       transportation: d.transportation,
       tips: d.tips,
@@ -1945,6 +2015,48 @@ const DestinationInfoPage = () => {
                   <Typography variant="body2">{t('destInfo.no_attractions')}</Typography>
                 )}
                 
+                {/* ── פנינות נסתרות ──
+                    מופרדות מהאטרקציות המפורסמות בכוונה: ערבוב היה
+                    מטשטש את מה שמייחד אותן. מרונדר רק כשיש נתונים. */}
+                {destinationData.hiddenGems?.length > 0 && (
+                  <Box sx={{ mt: 5 }}>
+                    <Typography variant="h6" fontWeight="bold">{t('destInfo.hiddenGems')}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                      {t('destInfo.hiddenGemsSub')}
+                    </Typography>
+                    <Grid container spacing={2}>
+                      {destinationData.hiddenGems.map((gem) => (
+                        <Grid item xs={12} sm={6} md={4} key={gem.nameEn || gem.name}>
+                          <Paper
+                            elevation={0}
+                            sx={{
+                              p: 2, height: '100%', borderRadius: 2,
+                              border: '1px solid', borderColor: 'divider',
+                              bgcolor: (th) => (th.palette.mode === 'dark' ? '#1b1d26' : '#f8f9ff'),
+                            }}
+                          >
+                            <Typography fontWeight={700}>{gem.name}</Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                              {gem.description}
+                            </Typography>
+                            <Button
+                              size="small"
+                              startIcon={<PlaceIcon />}
+                              onClick={() => window.open(
+                                `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${gem.nameEn || gem.name} ${destinationData.name}`)}`,
+                                '_blank', 'noopener,noreferrer'
+                              )}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              {t('destInfo.map')}
+                            </Button>
+                          </Paper>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                )}
+
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                   <Button
                     variant="outlined"
@@ -1967,6 +2079,52 @@ const DestinationInfoPage = () => {
                 <Typography variant="body1" paragraph>
                   {destinationData.food?.intro || t('destInfo.food_coming_soon', { dest: destinationData.name })}
                 </Typography>
+
+                {/* ── מדריך הישרדות קולינרי ──
+                    שני צדדים מנוגדים במכוון: מה שכולם עושים מול מה
+                    שעושים מי שגר כאן. הניגוד הוא כל התועלת — רשימת
+                    המלצות בלי הצד השני היא עוד רשימה.
+                    מרונדר רק כשיש נתונים, כך שעשר הערים שטרם נכתבו
+                    אינן מציגות כותרת ריקה. */}
+                {(destinationData.food?.honeyTraps?.length > 0 || destinationData.food?.localVault?.length > 0) && (
+                  <Box sx={{ mb: 5 }}>
+                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                      {t('destInfo.survivalGuide')}
+                    </Typography>
+                    <Grid container spacing={2}>
+                      {[
+                        { items: destinationData.food.honeyTraps, title: t('destInfo.honeyTrap'), sub: t('destInfo.honeyTrapSub'),
+                          light: '#fff4f4', dark: '#2b1a1a', accent: '#d32f2f', icon: '\u26a0\ufe0f' },
+                        { items: destinationData.food.localVault, title: t('destInfo.localVault'), sub: t('destInfo.localVaultSub'),
+                          light: '#f2f9f3', dark: '#16281a', accent: '#2e7d32', icon: '\ud83d\udd11' },
+                      ].filter((col) => col.items?.length > 0).map((col) => (
+                        <Grid item xs={12} md={6} key={col.title}>
+                          <Paper
+                            elevation={0}
+                            sx={{
+                              p: 2, height: '100%', borderRadius: 2,
+                              border: '1px solid', borderColor: 'divider',
+                              bgcolor: (th) => (th.palette.mode === 'dark' ? col.dark : col.light),
+                            }}
+                          >
+                            <Typography fontWeight={800} sx={{ color: col.accent, mb: 0.25 }}>
+                              <span aria-hidden="true">{col.icon}</span> {col.title}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                              {col.sub}
+                            </Typography>
+                            {col.items.map((item) => (
+                              <Box key={item.name} sx={{ mb: 1.25 }}>
+                                <Typography variant="body2" fontWeight={700}>{item.name}</Typography>
+                                <Typography variant="body2" color="text.secondary">{item.note}</Typography>
+                              </Box>
+                            ))}
+                          </Paper>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                )}
                 
                 {/* מאכלים מקומיים */}
                 {destinationData.food?.dishes && destinationData.food.dishes.length > 0 && (

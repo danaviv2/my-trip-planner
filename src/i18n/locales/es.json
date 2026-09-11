@@ -601,7 +601,15 @@
     "pickerTitle": "🌍 ¿A dónde quieres viajar?",
     "pickerSubtitle": "Elige un destino para info detallada: clima, atracciones, consejos y más",
     "searchPlaceholder": "Busca cualquier destino del mundo...",
-    "searchBtn": "Buscar"
+    "searchBtn": "Buscar",
+    "survivalGuide": "Guía de supervivencia culinaria",
+    "honeyTrap": "Trampas para turistas",
+    "honeyTrapSub": "Lo que todos hacen y por qué decepciona",
+    "localVault": "El secreto local",
+    "localVaultSub": "Adonde va quien vive aquí",
+    "hiddenGems": "Joyas ocultas",
+    "hiddenGemsSub": "No están en cada guía, y valen el desvío",
+    "queueTip": "Evita la cola"
   },
   "tripPlanner": {
     "title": "Planificación de viaje a {{location}}",

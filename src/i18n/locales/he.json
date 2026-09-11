@@ -601,7 +601,15 @@
     "pickerTitle": "🌍 לאן תרצה לטייל?",
     "pickerSubtitle": "בחר יעד לקבלת מידע מפורט - מזג אוויר, אטרקציות, טיפים ועוד",
     "searchPlaceholder": "חפש כל יעד בעולם...",
-    "searchBtn": "חפש"
+    "searchBtn": "חפש",
+    "survivalGuide": "מדריך הישרדות קולינרי",
+    "honeyTrap": "מלכודות תיירים",
+    "honeyTrapSub": "מה כולם עושים, ולמה זה מאכזב",
+    "localVault": "הסוד המקומי",
+    "localVaultSub": "לשם הולכים מי שגר כאן",
+    "hiddenGems": "פנינות נסתרות",
+    "hiddenGemsSub": "לא בכל מדריך, ושווים את הדרך",
+    "queueTip": "עקיפת תור"
   },
   "tripPlanner": {
     "title": "תכנון טיול ל{{location}}",
