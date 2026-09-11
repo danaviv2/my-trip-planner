@@ -609,7 +609,7 @@
     "localVaultSub": "Adonde va quien vive aquí",
     "hiddenGems": "Joyas ocultas",
     "hiddenGemsSub": "No están en cada guía, y valen el desvío",
-    "queueTip": "Evita la cola"
+    "queueTip": "En la cola"
   },
   "tripPlanner": {
     "title": "Planificación de viaje a {{location}}",
