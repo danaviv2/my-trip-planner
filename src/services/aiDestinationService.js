@@ -4,7 +4,16 @@ import { geminiEndpoint } from './geminiClient';
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_URL = geminiEndpoint(GEMINI_MODEL);
 
-const CACHE_PREFIX = 'dest_ai_';
+// ── v2, 08.09.2026 ──
+// הסכימה ביקשה מהמודל `"rating":4.5`, והשדה לא סונן: כוכבים שהמודל
+// המציא הוצגו בדיוק כמו כוכבים שנמדדו. דפוס 6 ב-CLAUDE.md — שומר
+// שבודק *נוכחות* ולא *מקור*. שש האטרקציות שנוספו ידנית לפריז ולרומא
+// כבר נשמרו בלי `rating`; עכשיו זה חל על כל היעדים.
+//
+// **הגרסה במפתח היא חלק מהתיקון, לא קישוט.** המטמון חי שבעה ימים,
+// ובלי העלאת הקידומת מי שכבר טען יעד היה ממשיך לראות את הדירוגים
+// המומצאים עד שהתפוגה תעבור — בדיוק מה שקרה כאן עם `PARSER_VERSION`.
+const CACHE_PREFIX = 'dest_ai_v2_';
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 function getCached(name) {
@@ -58,12 +67,12 @@ Required JSON structure:
   "seasons": {"summer": "summer description with temps", "winter": "winter description with temps"},
   "events": [{"name":"event","date":"month","description":"desc"}],
   "attractions": [
-    {"name":"name in Hebrew","nameEn":"official local/English name","rating":4.5,"description":"desc in Hebrew","recommendedDuration":"X hours","price":"price","tips":"tip"}
+    {"name":"name in Hebrew","nameEn":"official local/English name","description":"desc in Hebrew","recommendedDuration":"X hours","price":"price","tips":"tip"}
   ],
   "food": {
     "intro": "cuisine intro in Hebrew",
     "dishes": [{"name":"dish","description":"desc"}],
-    "restaurants": [{"name":"name in Hebrew","nameEn":"official local name","rating":4.4,"description":"desc","cuisine":"type","priceRange":"$$","area":"area"}],
+    "restaurants": [{"name":"name in Hebrew","nameEn":"official local name","description":"desc","cuisine":"type","priceRange":"$$","area":"area"}],
     "markets": [{"name":"name in Hebrew","nameEn":"official local name","description":"desc","hours":"hours"}]
   },
   "transportation": {
@@ -181,12 +190,21 @@ Required JSON structure:
     // שהוסר מהפרויקט ב-`placeMediaService` ("תמונת מקום שגויה תחת שם
     // נכון"), ונשאר כאן בחמישה מקומות.
     const coverImage = null;
-    const attractions = (parsed.attractions || []).map((a, i) => ({
+    // ── `rating` נמחק גם כאן, לא רק מהסכימה ──
+    // הסרת השדה מהפרומפט היא בקשה, לא ערובה: מודל שראה אלפי דפי
+    // אטרקציות עם כוכבים נוטה להוסיף אותם גם כשלא ביקשו. השומר האמיתי
+    // הוא הקוד, באותו מקום שכבר מסיר `image` מומצא מאותה סיבה בדיוק.
+    // eslint-disable-next-line no-unused-vars
+    const attractions = (parsed.attractions || []).map(({ rating, ...a }) => ({
       ...a,
       image: null
     }));
     const food = {
       ...parsed.food,
+      // המסעדות עברו כאן בלי מיפוי כלל — כלומר כל שדה שהמודל החזיר,
+      // כולל `rating`, הגיע למסך כפי שהוא.
+      // eslint-disable-next-line no-unused-vars
+      restaurants: (parsed.food?.restaurants || []).map(({ rating, ...r }) => r),
       dishes: (parsed.food?.dishes || []).map((d, i) => ({
         ...d,
         image: null

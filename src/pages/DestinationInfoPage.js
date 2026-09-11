@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
+  Alert,
   Box,
   Typography,
   Container,
@@ -65,6 +71,223 @@ import PlaceImage from '../components/destination-info/PlaceImage';
 import { getPlaceMedia } from '../services/placeMediaService';
 import { getCurrentWeather } from '../services/openMeteoService';
 
+/* ── רכיבי משנה ברמת המודול, 08.09.2026 ──
+   חמשת אלה הוגדרו בתוך `DestinationInfoPage`. בכל רנדר נוצרה זהות רכיב
+   חדשה, ו-React פירק ובנה מחדש את כל תת-העץ שלהם: לחיצה על הלב — שהיא
+   רק `useState` מקומי — החזירה את כל תשע תמונות האטרקציות ל-Skeleton,
+   איפסה את `useOfficialSite` ושלחה מחדש את בקשות OpenStreetMap. אותו
+   דבר קרה כשמזג האוויר החי הגיע אסינכרונית שנייה אחרי הטעינה.
+   מה שנסגר קודם על `destinationData`, `t` ו-`theme` מגיע עכשיו כ-props
+   או מה-hook של הרכיב עצמו. */
+const AttractionCardFooter = ({ attraction }) => {
+  if (!attraction.recommendedDuration && !attraction.price) return null;
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, pt: 2, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+      {attraction.recommendedDuration ? (
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <TimeIcon sx={{ fontSize: 16, color: 'text.secondary', mr: 0.5 }} />
+          <Typography variant="caption" color="text.secondary">
+            {attraction.recommendedDuration}
+          </Typography>
+        </Box>
+      ) : <span />}
+      {attraction.price ? (
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <EuroIcon sx={{ fontSize: 16, color: 'text.secondary', mr: 0.5 }} />
+          <Typography variant="caption" color="text.secondary">
+            {attraction.price}
+          </Typography>
+        </Box>
+      ) : <span />}
+    </Box>
+  );
+};
+
+/**
+ * הכתובת הרשמית של מקום, מ-OpenStreetMap.
+ *
+ * מסעדה ואטרקציה שואלות בדיוק את אותה שאלה, ולכן הן שואלות אותה
+ * במקום אחד: שתי גרסאות של אותו אחזור היו נפרדות בשינוי הבא.
+ * הכתובת נמשכת פעם אחת לכל מקום ונשמרת במטמון שבועי בשירות עצמו.
+ *
+ * השם המוצג מספיק כחיפוש. דרישה ל-nameEn בלבד הסתירה בעבר את
+ * הכפתור מכל המסעדות, משום שאין בנתונים שדה כזה.
+ */
+const useOfficialSite = (name, nameEn, city, country) => {
+  const [site, setSite] = useState('');
+
+  useEffect(() => {
+    let alive = true;
+    const lookup = nameEn || name;
+    if (!lookup) return undefined;
+
+    getPlaceMedia(lookup, city || '', country || '')
+      .then((m) => { if (alive) setSite((m && m.website) || ''); });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, nameEn, city, country]);
+
+  return site;
+};
+
+/**
+ * הערה על מקור התוכן.
+ *
+ * שלוש הלשוניות האלה נכתבות בידי מודל ולא בידי אדם, בעוד שאר העמוד
+ * נכתב ידנית. הקורא אינו יכול להבחין בכך לבד, ומחיר ליום שנראה כמו
+ * עובדה בדוקה נכנס לתקציב אמיתי. אמירה קצרה עדיפה על ודאות מדומה.
+ */
+const AiFilledNote = ({ section, filled }) => {
+  const { t } = useTranslation();
+  if (!(filled || []).includes(section)) return null;
+  return (
+    <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'text.secondary' }}>
+      {t('destInfo.aiDisclaimer')}
+    </Typography>
+  );
+};
+
+/**
+ * הכפתורים בתחתית כרטיס אטרקציה.
+ *
+ * "אתר" נוסף כאן משום שהוא מה שמאפשר להזמין כרטיסים: המפה מראה איפה
+ * זה, והאתר הרשמי הוא המקום שבו קונים. אותו כלל כמו במסעדות — אין
+ * כתובת, אין כפתור. כתובת שהמודל ייצר נראית סבירה ומובילה לדף שגיאה,
+ * ולכן המקור הוא OpenStreetMap בלבד.
+ */
+const AttractionActions = ({ attraction, cityName, cityEn, country }) => {
+  const { t } = useTranslation();
+  const officialSite = useOfficialSite(attraction.name, attraction.nameEn, cityEn, country);
+  const mapQuery = encodeURIComponent(`${attraction.name} ${cityName}`);
+
+  return (
+    <Box sx={{ p: 2, pt: 0, borderTop: '1px solid rgba(0, 0, 0, 0.05)', display: 'flex', gap: 1 }}>
+      <Button
+        fullWidth={!officialSite}
+        variant={officialSite ? 'outlined' : 'contained'}
+        disableElevation
+        size="small"
+        startIcon={officialSite ? <PlaceIcon /> : null}
+        onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${mapQuery}`)}
+        sx={{ borderRadius: '8px', textTransform: 'none', fontSize: '0.9rem', flex: officialSite ? 1 : undefined }}
+      >
+        {officialSite ? t('destInfo.map') : t('destInfo.show_map')}
+      </Button>
+
+      {officialSite && (
+        <Button
+          variant="contained"
+          disableElevation
+          size="small"
+          onClick={() => window.open(officialSite, '_blank', 'noopener,noreferrer')}
+          sx={{ borderRadius: '8px', textTransform: 'none', fontSize: '0.9rem', flex: 1 }}
+        >
+          {t('destInfo.website_short')}
+        </Button>
+      )}
+    </Box>
+  );
+};
+
+// חלק כרטיס מסעדה
+const RestaurantCard = ({ restaurant, cityName, cityEn, country }) => {
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const officialSite = useOfficialSite(restaurant.name, restaurant.nameEn, cityEn, country);
+
+  return (
+  <Card sx={{ 
+    height: '100%', 
+    borderRadius: '16px', 
+    overflow: 'hidden',
+    boxShadow: '0 6px 20px rgba(0,0,0,0.05)',
+    transition: 'transform 0.3s, box-shadow 0.3s',
+    '&:hover': {
+      transform: 'translateY(-4px)',
+      boxShadow: '0 12px 25px rgba(0,0,0,0.1)'
+    }
+  }}>
+    <CardContent sx={{ textAlign: 'right', direction: 'rtl' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+        <Typography variant="h6" component="h3" fontWeight="600">
+          {restaurant.name}
+        </Typography>
+        <Chip 
+          label={restaurant.priceRange} 
+          size="small" 
+          sx={{ 
+            backgroundColor: theme.palette.background.default, 
+            fontWeight: 'bold'
+          }}
+        />
+      </Box>
+      
+      {/* ── דירוג רק כשיש כזה ──
+          `<Rating value={undefined}>` מצייר חמישה כוכבים ריקים — כלומר
+          נראה כמו דירוג אפס, ערך שאיש לא מדד. מאז שהשירות מסיר את
+          `rating` מתוצאות ה-AI, זה היה המצב של כל מסעדה שנטענה משם. */}
+      {restaurant.rating > 0 && (
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 0.5 }}>
+          <Rating value={restaurant.rating} precision={0.1} size="small" readOnly />
+          <Typography variant="body2" color="text.secondary">
+            {restaurant.rating}
+          </Typography>
+        </Box>
+      )}
+      
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+        <strong>{t('destInfo.cuisine_label')}:</strong> {restaurant.cuisine}
+      </Typography>
+      
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+        <strong>{t('destInfo.area_label')}:</strong> {restaurant.area}
+      </Typography>
+      
+      <Typography variant="body2" paragraph>
+        {restaurant.description}
+      </Typography>
+      
+      <Box sx={{ display: 'flex', gap: 1, mt: 'auto' }}>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<PlaceIcon />}
+          onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${restaurant.name} ${cityName}`)}`)}
+          sx={{ 
+            borderRadius: '8px', 
+            flex: 1,
+            textTransform: 'none',
+          }}
+        >
+          {t('destInfo.map')}
+        </Button>
+        
+        {/* ── הקישור מגיע מ-OpenStreetMap ולא מהנתונים ──
+            שדה website שהגיע עם המסעדה נוצר על ידי המודל, ולכן נראה
+            סביר ומוביל לדף שגיאה: "אתר זה לא נתמך". הכתובת שנמשכת
+            כאן נתרמה ומתוחזקת בידי אדם. אין כתובת — אין כפתור, שזה
+            עדיף על כפתור שמאכזב. */}
+        {officialSite && (
+          <Button
+            variant="contained"
+            size="small"
+            disableElevation
+            onClick={() => window.open(officialSite, '_blank', 'noopener,noreferrer')}
+            sx={{ 
+              borderRadius: '8px', 
+              flex: 1,
+              textTransform: 'none',
+            }}
+          >
+            {t('destInfo.website_short')}
+          </Button>
+        )}
+      </Box>
+    </CardContent>
+  </Card>
+  );
+};
+
 /* ── רקעים פסטליים שהולכים אחרי הערכה, 08.09.2026 ──
    `#fff8e1` (ענבר), `#e8f5e9` (ירוק) ו-`#e3f2fd` (כחול) היו קשיחים
    מתחת לטקסט שאינו מגדיר `color` ולכן יורש `text.primary`. במצב כהה
@@ -84,6 +307,34 @@ const DestinationInfoPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
+  // `{ text, severity }` ולא מחרוזת: החומרה נקבעה קודם ב-`includes('נכשל')`,
+  // חיפוש בטקסט עברי שהיה נשבר ברגע שההודעה תתורגם.
+  const [shareMsg, setShareMsg] = useState(null);
+
+  /**
+   * שיתוף היעד.
+   *
+   * ההודעה נגזרת ממה שקרה בפועל ולא נאמרת מראש — זה הכלל שנשבר כאן
+   * שלוש פעמים בסקירות קודמות. `navigator.share` אינו קיים בדסקטופ
+   * ברוב הדפדפנים, ולכן הנפילה היא ללוח; וביטול על ידי המשתמש
+   * (`AbortError`) אינו כישלון ואינו מציג דבר.
+   */
+  const handleShare = async () => {
+    const url = window.location.href;
+    const title = destinationData?.name || document.title;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, url });
+        return;                       // הצלחה — המערכת כבר הציגה משוב
+      }
+      await navigator.clipboard.writeText(url);
+      setShareMsg({ text: 'הקישור הועתק', severity: 'success' });
+    } catch (err) {
+      if (err?.name === 'AbortError') return;   // המשתמש ביטל
+      setShareMsg({ text: 'השיתוף נכשל. אפשר להעתיק את הכתובת משורת הדפדפן.', severity: 'warning' });
+    }
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
   // מזג אוויר חי. עד 01.09.2026 ישב כאן קבוע — 22°C ו"בהיר" —
   // שהוצג זהה לרומא, ללונדון ולבנגקוק. נמדד על המסך בשלושתם.
@@ -863,7 +1114,10 @@ const DestinationInfoPage = () => {
       food: d.food,
       transportation: d.transportation,
       tips: d.tips,
-      nearbyDestinations: d.nearbyDestinations
+      nearbyDestinations: d.nearbyDestinations,
+      // `accommodations` קיים בכל יעד במאגר ולא הועבר הלאה, ולכן
+      // כפתור "מלונות מומלצים" הצביע על שדה שלא הגיע למסך מעולם.
+      accommodations: d.accommodations
     };
   };
 
@@ -875,204 +1129,6 @@ const DestinationInfoPage = () => {
    * שאינה שם: המשתמש מתכנן תקציב לפיו. כשאין מחיר ודאי, הכפתור "אתר"
    * הוא התשובה — הוא מוביל למקום שבו המחיר תמיד מעודכן.
    */
-  const AttractionCardFooter = ({ attraction }) => {
-    if (!attraction.recommendedDuration && !attraction.price) return null;
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, pt: 2, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-        {attraction.recommendedDuration ? (
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <TimeIcon sx={{ fontSize: 16, color: 'text.secondary', mr: 0.5 }} />
-            <Typography variant="caption" color="text.secondary">
-              {attraction.recommendedDuration}
-            </Typography>
-          </Box>
-        ) : <span />}
-        {attraction.price ? (
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <EuroIcon sx={{ fontSize: 16, color: 'text.secondary', mr: 0.5 }} />
-            <Typography variant="caption" color="text.secondary">
-              {attraction.price}
-            </Typography>
-          </Box>
-        ) : <span />}
-      </Box>
-    );
-  };
-
-  /**
-   * הכתובת הרשמית של מקום, מ-OpenStreetMap.
-   *
-   * מסעדה ואטרקציה שואלות בדיוק את אותה שאלה, ולכן הן שואלות אותה
-   * במקום אחד: שתי גרסאות של אותו אחזור היו נפרדות בשינוי הבא.
-   * הכתובת נמשכת פעם אחת לכל מקום ונשמרת במטמון שבועי בשירות עצמו.
-   *
-   * השם המוצג מספיק כחיפוש. דרישה ל-nameEn בלבד הסתירה בעבר את
-   * הכפתור מכל המסעדות, משום שאין בנתונים שדה כזה.
-   */
-  const useOfficialSite = (name, nameEn) => {
-    const [site, setSite] = useState('');
-
-    useEffect(() => {
-      let alive = true;
-      const lookup = nameEn || name;
-      if (!lookup) return undefined;
-
-      getPlaceMedia(lookup, destinationData?.nameEn || destinationData?.name || '', destinationData?.country || '')
-        .then((m) => { if (alive) setSite((m && m.website) || ''); });
-      return () => { alive = false; };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [name, nameEn]);
-
-    return site;
-  };
-
-  /**
-   * הערה על מקור התוכן.
-   *
-   * שלוש הלשוניות האלה נכתבות בידי מודל ולא בידי אדם, בעוד שאר העמוד
-   * נכתב ידנית. הקורא אינו יכול להבחין בכך לבד, ומחיר ליום שנראה כמו
-   * עובדה בדוקה נכנס לתקציב אמיתי. אמירה קצרה עדיפה על ודאות מדומה.
-   */
-  const AiFilledNote = ({ section }) => {
-    if (!(destinationData?.aiFilledSections || []).includes(section)) return null;
-    return (
-      <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'text.secondary' }}>
-        {t('destInfo.aiDisclaimer')}
-      </Typography>
-    );
-  };
-
-  /**
-   * הכפתורים בתחתית כרטיס אטרקציה.
-   *
-   * "אתר" נוסף כאן משום שהוא מה שמאפשר להזמין כרטיסים: המפה מראה איפה
-   * זה, והאתר הרשמי הוא המקום שבו קונים. אותו כלל כמו במסעדות — אין
-   * כתובת, אין כפתור. כתובת שהמודל ייצר נראית סבירה ומובילה לדף שגיאה,
-   * ולכן המקור הוא OpenStreetMap בלבד.
-   */
-  const AttractionActions = ({ attraction, cityName }) => {
-    const officialSite = useOfficialSite(attraction.name, attraction.nameEn);
-    const mapQuery = encodeURIComponent(`${attraction.name} ${cityName}`);
-
-    return (
-      <Box sx={{ p: 2, pt: 0, borderTop: '1px solid rgba(0, 0, 0, 0.05)', display: 'flex', gap: 1 }}>
-        <Button
-          fullWidth={!officialSite}
-          variant={officialSite ? 'outlined' : 'contained'}
-          disableElevation
-          size="small"
-          startIcon={officialSite ? <PlaceIcon /> : null}
-          onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${mapQuery}`)}
-          sx={{ borderRadius: '8px', textTransform: 'none', fontSize: '0.9rem', flex: officialSite ? 1 : undefined }}
-        >
-          {officialSite ? t('destInfo.map') : t('destInfo.show_map')}
-        </Button>
-
-        {officialSite && (
-          <Button
-            variant="contained"
-            disableElevation
-            size="small"
-            onClick={() => window.open(officialSite, '_blank', 'noopener,noreferrer')}
-            sx={{ borderRadius: '8px', textTransform: 'none', fontSize: '0.9rem', flex: 1 }}
-          >
-            {t('destInfo.website_short')}
-          </Button>
-        )}
-      </Box>
-    );
-  };
-
-  // חלק כרטיס מסעדה
-  const RestaurantCard = ({ restaurant }) => {
-    const officialSite = useOfficialSite(restaurant.name, restaurant.nameEn);
-
-    return (
-    <Card sx={{ 
-      height: '100%', 
-      borderRadius: '16px', 
-      overflow: 'hidden',
-      boxShadow: '0 6px 20px rgba(0,0,0,0.05)',
-      transition: 'transform 0.3s, box-shadow 0.3s',
-      '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: '0 12px 25px rgba(0,0,0,0.1)'
-      }
-    }}>
-      <CardContent sx={{ textAlign: 'right', direction: 'rtl' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-          <Typography variant="h6" component="h3" fontWeight="600">
-            {restaurant.name}
-          </Typography>
-          <Chip 
-            label={restaurant.priceRange} 
-            size="small" 
-            sx={{ 
-              backgroundColor: theme.palette.background.default, 
-              fontWeight: 'bold'
-            }}
-          />
-        </Box>
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 0.5 }}>
-          <Rating value={restaurant.rating} precision={0.1} size="small" readOnly />
-          <Typography variant="body2" color="text.secondary">
-            {restaurant.rating}
-          </Typography>
-        </Box>
-        
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          <strong>{t('destInfo.cuisine_label')}:</strong> {restaurant.cuisine}
-        </Typography>
-        
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          <strong>{t('destInfo.area_label')}:</strong> {restaurant.area}
-        </Typography>
-        
-        <Typography variant="body2" paragraph>
-          {restaurant.description}
-        </Typography>
-        
-        <Box sx={{ display: 'flex', gap: 1, mt: 'auto' }}>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<PlaceIcon />}
-            onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${restaurant.name} ${destinationData.name}`)}`)}
-            sx={{ 
-              borderRadius: '8px', 
-              flex: 1,
-              textTransform: 'none',
-            }}
-          >
-            {t('destInfo.map')}
-          </Button>
-          
-          {/* ── הקישור מגיע מ-OpenStreetMap ולא מהנתונים ──
-              שדה website שהגיע עם המסעדה נוצר על ידי המודל, ולכן נראה
-              סביר ומוביל לדף שגיאה: "אתר זה לא נתמך". הכתובת שנמשכת
-              כאן נתרמה ומתוחזקת בידי אדם. אין כתובת — אין כפתור, שזה
-              עדיף על כפתור שמאכזב. */}
-          {officialSite && (
-            <Button
-              variant="contained"
-              size="small"
-              disableElevation
-              onClick={() => window.open(officialSite, '_blank', 'noopener,noreferrer')}
-              sx={{ 
-                borderRadius: '8px', 
-                flex: 1,
-                textTransform: 'none',
-              }}
-            >
-              {t('destInfo.website_short')}
-            </Button>
-          )}
-        </Box>
-      </CardContent>
-    </Card>
-    );
-  };
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -1235,9 +1291,21 @@ const DestinationInfoPage = () => {
               <Grid item xs={6} sm={4} key={dest.name}>
                 <Paper
                   elevation={3}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={dest.slug ? t(`cities.${dest.slug}`) : dest.name}
                   onClick={() => navigate(`/destination-info/${dest.name}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      // בלי `preventDefault` הרווח פותח את היעד *וגם*
+                      // מגלגל את הדף עמוד.
+                      e.preventDefault();
+                      navigate(`/destination-info/${dest.name}`);
+                    }
+                  }}
                   sx={{
                     p: 4,
+                    '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
                     textAlign: 'center',
                     borderRadius: 4,
                     cursor: 'pointer',
@@ -1340,7 +1408,9 @@ const DestinationInfoPage = () => {
                 </Box>
                 
                 <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
-                  <IconButton 
+                  <IconButton
+                    aria-label={isFavorite ? 'הסר ממועדפים' : 'הוסף למועדפים'}
+                    aria-pressed={isFavorite}
                     onClick={() => setIsFavorite(!isFavorite)}
                     sx={{ 
                       bgcolor: 'rgba(255, 255, 255, 0.2)', 
@@ -1351,9 +1421,11 @@ const DestinationInfoPage = () => {
                     {isFavorite ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
                   </IconButton>
                   
-                  <IconButton 
-                    sx={{ 
-                      bgcolor: 'rgba(255, 255, 255, 0.2)', 
+                  <IconButton
+                    aria-label={`שתף את ${destinationData.name}`}
+                    onClick={handleShare}
+                    sx={{
+                      bgcolor: 'rgba(255, 255, 255, 0.2)',
                       color: 'white',
                       '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' }
                     }}
@@ -1613,22 +1685,22 @@ const DestinationInfoPage = () => {
                       {destinationData.description}
                     </Typography>
                     
-                    <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                      <Button
-                        variant="outlined"
-                        startIcon={<HotelIcon />}
-                        sx={{ borderRadius: '8px', textTransform: 'none' }}
-                      >
-                        {t('destInfo.recommended_hotels')}
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        startIcon={<ImageIcon />}
-                        sx={{ borderRadius: '8px', textTransform: 'none' }}
-                      >
-                        {t('destInfo.photo_gallery')}
-                      </Button>
-                    </Box>
+                    {/* ── שני הכפתורים כאן הוסרו, 08.09.2026 ──
+                        "גלריית תמונות" ו"מלונות מומלצים" היו ללא
+                        `onClick` כלל — נראים זמינים ואינם עושים דבר.
+
+                        לגלריה אין מקור: `ImageGallery.js` הוא קוד מת
+                        ואין שדה תמונות ביעד.
+
+                        למלונות **כן** יש נתונים — אבל ב-`destination-service.js`,
+                        **שאיש אינו מייבא** (קוד מת, אומת ב-grep). הדף בונה את
+                        `destinationData` מ-`destinationsData` המקומי,
+                        ובו `accommodations` קיים ליעד אחד בלבד. חיווט
+                        נוסה ונמדד: הכפתור לא הופיע לפריז, לרומא ולא
+                        לסינגפור. איחוד שני המאגרים הוא עבודה בפני
+                        עצמה, ונרשם ב-STATUS.md.
+
+                        עד אז — כפתור שאינו עושה דבר גרוע מהיעדרו. */}
                   </Box>
                   
                   <Box 
@@ -1864,7 +1936,7 @@ const DestinationInfoPage = () => {
                             <AttractionCardFooter attraction={attraction} />
                           </CardContent>
                           
-                          <AttractionActions attraction={attraction} cityName={destinationData.name} />
+                          <AttractionActions attraction={attraction} cityName={destinationData.name} cityEn={destinationData.nameEn || destinationData.name} country={destinationData.country} />
                         </Card>
                       </Grid>
                     ))}
@@ -1950,7 +2022,7 @@ const DestinationInfoPage = () => {
                     <Grid container spacing={3}>
                       {destinationData.food.restaurants.map((restaurant, idx) => (
                         <Grid item xs={12} sm={6} md={4} key={idx}>
-                          <RestaurantCard restaurant={restaurant} />
+                          <RestaurantCard restaurant={restaurant} cityName={destinationData.name} cityEn={destinationData.nameEn || destinationData.name} country={destinationData.country} />
                         </Grid>
                       ))}
                     </Grid>
@@ -2328,7 +2400,7 @@ const DestinationInfoPage = () => {
                 ) : (
                   <>
                     <Typography variant="h5" fontWeight="bold" mb={3}>{t('destInfo.itinerary_title')}</Typography>
-                    <AiFilledNote section="itinerary" />
+                    <AiFilledNote section="itinerary" filled={destinationData.aiFilledSections} />
                     {['3days', '5days'].map((plan) => {
                       const days = destinationData.itinerary[plan];
                       if (!days) return null;
@@ -2395,7 +2467,7 @@ const DestinationInfoPage = () => {
                 ) : (
                   <>
                     <Typography variant="h5" fontWeight="bold" mb={1}>{t('destInfo.budget_title')}</Typography>
-                    <AiFilledNote section="budget" />
+                    <AiFilledNote section="budget" filled={destinationData.aiFilledSections} />
                     {destinationData.budget.note && (
                       <Typography variant="body2" color="text.secondary" mb={3}>{destinationData.budget.note}</Typography>
                     )}
@@ -2465,7 +2537,7 @@ const DestinationInfoPage = () => {
                   </Box>
                 ) : (
                   <>
-                  <AiFilledNote section="practical" />
+                  <AiFilledNote section="practical" filled={destinationData.aiFilledSections} />
                   <Grid container spacing={3}>
                     {/* ויזה + בטיחות */}
                     <Grid item xs={12} md={6}>
@@ -2508,7 +2580,7 @@ const DestinationInfoPage = () => {
                         <Typography variant="h6" fontWeight="bold" mb={2}>{t('destInfo.practical_title')}</Typography>
                         <Grid container spacing={2}>
                           {[
-                            { label: t('destInfo.power_outlet'), val: `${destinationData.practical.plugType} | ${destinationData.practical.voltage}` },
+                            { label: t('destInfo.power_outlet'), val: [destinationData.practical.plugType, destinationData.practical.voltage].filter(Boolean).join(' | ') },
                             { label: t('destInfo.sim_card'), val: destinationData.practical.simCard },
                             { label: t('destInfo.currency_exchange'), val: destinationData.practical.currencyTips },
                             { label: t('destInfo.health'), val: destinationData.practical.health },
@@ -2636,6 +2708,7 @@ const DestinationInfoPage = () => {
                       borderRadius: '16px',
                       overflow: 'hidden',
                       cursor: 'pointer',
+                      '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
                       '&:hover': {
                         '& .MuiCardMedia-root': {
                           transform: 'scale(1.05)',
@@ -2649,7 +2722,16 @@ const DestinationInfoPage = () => {
                         }
                       }
                     }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={destination.name}
                     onClick={() => navigate(`/destination-info/${destination.name}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        navigate(`/destination-info/${destination.name}`);
+                      }
+                    }}
                   >
                     {/* כאן ישבו תמונות picsum אקראיות: תחת "סיינה"
                         הופיע תצלום שרירותי. עיר נמצאת בוויקיפדיה
@@ -2778,12 +2860,28 @@ const DestinationInfoPage = () => {
                   borderColor: 'white'
                 }
               }}
+              onClick={() => navigate(`/trip-planner?destination=${encodeURIComponent(destinationData.name)}`)}
             >
               {t('destInfo.route_consultation')}
             </Button>
           </Box>
         </Paper>
       </Container>
+
+
+      {/* ההודעה נגזרת מתוצאת השיתוף, ולא נאמרת מראש */}
+      <Snackbar
+        open={!!shareMsg}
+        autoHideDuration={shareMsg?.severity === 'warning' ? 8000 : 4000}
+        onClose={() => setShareMsg(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={shareMsg?.severity || 'success'} onClose={() => setShareMsg(null)}>
+          {shareMsg?.text}
+        </Alert>
+      </Snackbar>
+
+
     </Box>
   );
 };
