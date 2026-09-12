@@ -364,12 +364,14 @@ class GooglePlacesService {
     });
   }
 
-  /**
-   * קבלת תמונה של מקום
-   */
-  getPhotoUrl(photoReference, maxWidth = 400) {
-    return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photoreference=${photoReference}&key=${this.apiKey}`;
-  }
+  // ── getPhotoUrl נמחקה ב-13.09.2026, ובכוונה ──
+  // פילוח ה-SKU בחשבון של ספטמבר: `Places Photo` — 3,167 בקשות, ₪45.07,
+  // שהם **84% מכל החשבון**. כל שאר ה-SKU של Places (Nearby Search, Basic
+  // Data) עלו ₪0.00, וגם Firestore עם 4,591 קריאות עלה ₪0.00.
+  //
+  // המתודה כבר לא נקראה מאף מקום ו-'photos' כבר לא מבוקש כשדה, אבל
+  // פונקציה חיה ששולפת את ה-SKU היקר ביותר היא הזמנה לחווט מחדש.
+  // מי שצריך תמונת מקום: `PlaceImage.jsx`, שאינו עולה דבר.
 }
 
 const googlePlacesService = new GooglePlacesService();
