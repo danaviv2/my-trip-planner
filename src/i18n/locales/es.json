@@ -970,5 +970,28 @@
       "other_one": "1 reserva",
       "other_other": "{{count}} reservas"
     }
+  },
+  "onboarding": {
+    "step1": {
+      "title": "No escribas nada",
+      "body": "¿Tienes una confirmación de vuelo u hotel en el correo? Un clic aquí y la IA extrae los datos y los ordena."
+    },
+    "step2": {
+      "title": "Esto salió de tus correos",
+      "body": "Tus correos se convirtieron en un horario diario: vuelos, alojamiento y trayectos, en orden."
+    },
+    "step3": {
+      "title": "¿Y qué se hace allí?",
+      "body": "Elige el carácter del viaje — gastronomía, aventura o ambos — y recibe recomendaciones locales."
+    },
+    "next": "Siguiente",
+    "prev": "Atrás",
+    "done": "¡Vamos!",
+    "skip": "Omitir la guía",
+    "muteOn": "Silenciar la voz",
+    "muteOff": "Activar la voz",
+    "replay": "Reproducir de nuevo",
+    "progress": "{{current}} de {{total}}",
+    "restart": "Ver la guía otra vez"
   }
 }

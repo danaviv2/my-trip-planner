@@ -970,5 +970,28 @@
       "other_one": "1 réservation",
       "other_other": "{{count}} réservations"
     }
+  },
+  "onboarding": {
+    "step1": {
+      "title": "Ne tapez rien",
+      "body": "Une confirmation de vol ou d’hôtel par e-mail ? Un clic ici et l’IA en extrait les détails et les classe."
+    },
+    "step2": {
+      "title": "Voici ce qui est sorti de vos e-mails",
+      "body": "Vos e-mails sont devenus un planning quotidien : vols, hébergements et trajets, dans l’ordre."
+    },
+    "step3": {
+      "title": "Et sur place, on fait quoi ?",
+      "body": "Choisissez le caractère du voyage — gastronomie, aventure ou les deux — et recevez des conseils locaux."
+    },
+    "next": "Suivant",
+    "prev": "Retour",
+    "done": "C’est parti",
+    "skip": "Passer le guide",
+    "muteOn": "Couper la voix",
+    "muteOff": "Activer la voix",
+    "replay": "Rejouer",
+    "progress": "{{current}} sur {{total}}",
+    "restart": "Revoir le guide"
   }
 }

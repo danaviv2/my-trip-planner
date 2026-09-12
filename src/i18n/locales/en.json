@@ -970,5 +970,28 @@
       "other_one": "1 booking",
       "other_other": "{{count}} bookings"
     }
+  },
+  "onboarding": {
+    "step1": {
+      "title": "Don’t type a thing",
+      "body": "Got a flight or hotel confirmation by email? One click here and the AI pulls the details out and files them."
+    },
+    "step2": {
+      "title": "This came out of your emails",
+      "body": "Your emails became a day-by-day schedule. Flights, stays and travel times, in order."
+    },
+    "step3": {
+      "title": "So what do you actually do there?",
+      "body": "Pick the trip’s character — food, adventure, or both — and get local recommendations."
+    },
+    "next": "Next",
+    "prev": "Back",
+    "done": "Let’s go",
+    "skip": "Skip the tour",
+    "muteOn": "Mute the voice-over",
+    "muteOff": "Unmute the voice-over",
+    "replay": "Play again",
+    "progress": "{{current}} of {{total}}",
+    "restart": "Show the tour again"
   }
 }

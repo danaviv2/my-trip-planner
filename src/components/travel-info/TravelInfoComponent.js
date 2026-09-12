@@ -316,13 +316,18 @@ const TravelInfoComponent = () => {
                     {c.detail}
                   </Alert>
                 ))}
-                {/* הנסיעה כרצף ולא כרשימה מקובצת לפי סוג */}
-                <TripTimeline
-                  bookings={trip.bookings || []}
-                  onDelete={removeBooking}
-                  onEditEvent={handleEditEvent}
-                  onResetEvent={handleResetEvent}
-                />
+                {/* הנסיעה כרצף ולא כרשימה מקובצת לפי סוג.
+                    `data-tour` על העטיפה ולא על TripTimeline עצמו: הוא
+                    רכיב React ואינו מעביר attributes ל-DOM. יעד תחנה 2,
+                    שנורית רק כשיש כאן ציר זמן — למשתמש חדש אין. */}
+                <Box data-tour="timeline">
+                  <TripTimeline
+                    bookings={trip.bookings || []}
+                    onDelete={removeBooking}
+                    onEditEvent={handleEditEvent}
+                    onResetEvent={handleResetEvent}
+                  />
+                </Box>
 
                 {/* זכויות הנוסע לכל טיסה. מוצג גם כשהכול תקין — הידיעה
                     שווה דווקא מראש, שכן הסף האירופי נמוך בהרבה מהישראלי
@@ -355,6 +360,9 @@ const TravelInfoComponent = () => {
           color="primary"
           startIcon={<i className="material-icons">email</i>}
           onClick={() => setEmailImportModalOpen(true)}
+          // יעד תחנה 1 במדריך. `data-*` ולא מחלקה: מחלקות MUI מיוצרות
+          // ומשתנות בכל בנייה, וסלקטור כזה שובר את המדריך בשקט.
+          data-tour="email-import"
         >
           {t('travelInfoPage.import_email')}
         </Button>

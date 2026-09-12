@@ -492,8 +492,9 @@ const HomePage = () => {
           </Box>
         </Box>
 
-        {/* VibeMatcher */}
-        <Paper elevation={3} sx={{ p: { xs: 2.5, md: 5 }, borderRadius: 4, mb: { xs: 4, md: 6 } }}>
+        {/* VibeMatcher — יעד תחנה 3 במדריך. `data-tour` על ה-Paper ולא
+            על VibeMatcher: הוא רכיב React ואינו מעביר attributes ל-DOM. */}
+        <Paper data-tour="vibe" elevation={3} sx={{ p: { xs: 2.5, md: 5 }, borderRadius: 4, mb: { xs: 4, md: 6 } }}>
           <VibeMatcher />
         </Paper>
 

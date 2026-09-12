@@ -25,6 +25,7 @@ import AppRoutes from './routes';
 import { purgeStaleDestinationCache } from './services/aiDestinationService';
 import Header from './components/layout/Header';
 import ThemeWrapper from './components/layout/ThemeWrapper';
+import OnboardingTour from './components/onboarding/OnboardingTour';
 import OfflineBanner from './components/shared/OfflineBanner';
 import UpdateBanner from './components/UpdateBanner';
 import TripChatWidget from './components/chat/TripChatWidget';
@@ -115,6 +116,12 @@ useEffect(() => {
 
             {/* AI Trip Chat Widget - צ'אט חכם עם ידע על הטיולים */}
             <TripChatWidget />
+
+            {/* מדריך המשתמש החדש. יושב כאן ולא גבוה יותר כי הוא זקוק
+                ל-useLocation (בתוך ה-Router) ול-t() (בתוך LanguageProvider).
+                מחזיר null — driver.js מזריק את הבועה ישירות ל-body.
+                אינו רץ אם אין לתחנה יעד על המסך; ראה onboardingTourService. */}
+            <OnboardingTour />
 
             {/* באנר עדכון גרסה */}
             <Snackbar
