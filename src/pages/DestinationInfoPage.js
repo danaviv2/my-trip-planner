@@ -1181,6 +1181,7 @@ const DestinationInfoPage = () => {
       // עד שמוסיפים אותו גם כאן. בדיוק מה שקרה ל-`accommodations`:
       // הנתונים היו, והכפתור הצביע על שדה שמעולם לא עבר.
       hiddenGems: d.hiddenGems,
+      about: d.about,
       food: d.food,
       transportation: d.transportation,
       tips: d.tips,
@@ -1751,9 +1752,43 @@ const DestinationInfoPage = () => {
                     <Typography variant="h5" fontWeight="bold" gutterBottom>
                       {t('destInfo.about_title', { dest: destinationData.name })}
                     </Typography>
+                    {/* ── "אודות" הוא שלושה חלקים, לא משפט ──
+                        משפט אחד יפה הוא הוק, לא מידע: מי שמעולם לא היה
+                        ביעד יוצא מהדף וממשיך לחפש במקום אחר, וזה בדיוק
+                        הכישלון — הדף שלח אותו החוצה.
+                        ההוק נשאר בגודל מלא כי הוא הרושם הראשון; שני
+                        החלקים שאחריו נותנים את העומק. מרונדרים רק
+                        כשקיימים, כך שיעד בלי `about` מציג את
+                        ה-`description` כשהיה. */}
                     <Typography variant="body1" paragraph>
-                      {destinationData.description}
+                      {destinationData.about?.hook || destinationData.description}
                     </Typography>
+
+                    {destinationData.about?.layout && (
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="subtitle2" fontWeight={800} sx={{ color: 'primary.main', mb: 0.5 }}>
+                          {t('destInfo.aboutLayout')}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8 }}>
+                          {destinationData.about.layout}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {destinationData.about?.firstTime && (
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="subtitle2" fontWeight={800} sx={{ color: 'primary.main', mb: 0.5 }}>
+                          {t('destInfo.aboutFirstTime')}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8 }}>
+                          {destinationData.about.firstTime}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {/* גילוי נאות: ליעד שאינו במאגר שלושת החלקים נכתבים
+                        בידי מודל, והקורא אינו יכול להבחין בכך לבד. */}
+                    <AiFilledNote section="about" filled={destinationData.aiFilledSections} />
                     
                     {/* ── שני הכפתורים כאן הוסרו, 08.09.2026 ──
                         "גלריית תמונות" ו"מלונות מומלצים" היו ללא
@@ -2024,6 +2059,7 @@ const DestinationInfoPage = () => {
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
                       {t('destInfo.hiddenGemsSub')}
                     </Typography>
+                    <AiFilledNote section="hiddenGems" filled={destinationData.aiFilledSections} />
                     <Grid container spacing={2}>
                       {destinationData.hiddenGems.map((gem) => (
                         <Grid item xs={12} sm={6} md={4} key={gem.nameEn || gem.name}>
@@ -2088,9 +2124,10 @@ const DestinationInfoPage = () => {
                     אינן מציגות כותרת ריקה. */}
                 {(destinationData.food?.honeyTraps?.length > 0 || destinationData.food?.localVault?.length > 0) && (
                   <Box sx={{ mb: 5 }}>
-                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 0.5 }}>
                       {t('destInfo.survivalGuide')}
                     </Typography>
+                    <AiFilledNote section="food" filled={destinationData.aiFilledSections} />
                     <Grid container spacing={2}>
                       {[
                         { items: destinationData.food.honeyTraps, title: t('destInfo.honeyTrap'), sub: t('destInfo.honeyTrapSub'),

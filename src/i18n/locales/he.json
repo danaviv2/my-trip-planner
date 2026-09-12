@@ -609,7 +609,9 @@
     "localVaultSub": "לשם הולכים מי שגר כאן",
     "hiddenGems": "פנינות נסתרות",
     "hiddenGemsSub": "לא בכל מדריך, ושווים את הדרך",
-    "queueTip": "עקיפת תור"
+    "queueTip": "עקיפת תור",
+    "aboutLayout": "איך העיר בנויה",
+    "aboutFirstTime": "מה מפתיע בפעם הראשונה"
   },
   "tripPlanner": {
     "title": "תכנון טיול ל{{location}}",

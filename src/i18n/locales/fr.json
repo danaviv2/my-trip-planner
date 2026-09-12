@@ -609,7 +609,9 @@
     "localVaultSub": "Où vont ceux qui vivent ici",
     "hiddenGems": "Trésors cachés",
     "hiddenGemsSub": "Pas dans tous les guides, et ça vaut le détour",
-    "queueTip": "Éviter la file"
+    "queueTip": "Éviter la file",
+    "aboutLayout": "Comment la ville est agencée",
+    "aboutFirstTime": "Ce qui surprend la première fois"
   },
   "tripPlanner": {
     "title": "Planification de voyage à {{location}}",

@@ -13,7 +13,7 @@ const GEMINI_URL = geminiEndpoint(GEMINI_MODEL);
 // **הגרסה במפתח היא חלק מהתיקון, לא קישוט.** המטמון חי שבעה ימים,
 // ובלי העלאת הקידומת מי שכבר טען יעד היה ממשיך לראות את הדירוגים
 // המומצאים עד שהתפוגה תעבור — בדיוק מה שקרה כאן עם `PARSER_VERSION`.
-const CACHE_PREFIX = 'dest_ai_v2_';
+const CACHE_PREFIX = 'dest_ai_v3_';
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 function getCached(name) {
@@ -54,11 +54,25 @@ wrong value there means the place is shown without a photo. Never translate it t
 English if the place is known locally by another language. Do NOT invent website
 addresses — that field was removed.
 
+"about", "honeyTraps", "localVault", "hiddenGems" and "queueTip" describe experience
+and structure, never measurements. Do NOT write prices, opening hours, durations,
+distances, wait times, percentages, or superlatives ("the best", "the only") in them.
+A queueTip must be structural advice only — "book ahead on the official site",
+"arrive at opening" — never a number.
+For "hiddenGems" include only places you are confident actually exist; four certain
+places are better than eight where half are invented. A wrong "nameEn" means the map
+opens somewhere else entirely.
+
 Required JSON structure:
 {
   "country": "country name in Hebrew",
   "tags": ["tag1","tag2","tag3"],
   "description": "2-3 sentence description in Hebrew",
+  "about": {
+    "hook": "one sentence, 85-115 chars: what happens to you there, not what is there",
+    "layout": "200-320 chars: the shape of the city, how to think about the map, what divides it",
+    "firstTime": "250-400 chars: local custom, routine trap, something closed when you assumed open"
+  },
   "language": "official language",
   "currency": "currency (symbol)",
   "timezone": "GMT+X",
@@ -67,11 +81,16 @@ Required JSON structure:
   "seasons": {"summer": "summer description with temps", "winter": "winter description with temps"},
   "events": [{"name":"event","date":"month","description":"desc"}],
   "attractions": [
-    {"name":"name in Hebrew","nameEn":"official local/English name","description":"desc in Hebrew","recommendedDuration":"X hours","price":"price","tips":"tip"}
+    {"name":"name in Hebrew","nameEn":"official local/English name","description":"desc in Hebrew","recommendedDuration":"X hours","price":"price","tips":"tip","queueTip":"structural advice only, no numbers"}
+  ],
+  "hiddenGems": [
+    {"name":"name in Hebrew","nameEn":"official local name","description":"desc in Hebrew, up to 95 chars"}
   ],
   "food": {
     "intro": "cuisine intro in Hebrew",
     "dishes": [{"name":"dish","description":"desc"}],
+    "honeyTraps": [{"name":"up to 28 chars","note":"what tourists do and why it disappoints, up to 95 chars"}],
+    "localVault": [{"name":"up to 28 chars","note":"where people who live there go, up to 95 chars"}],
     "restaurants": [{"name":"name in Hebrew","nameEn":"official local name","description":"desc","cuisine":"type","priceRange":"$$","area":"area"}],
     "markets": [{"name":"name in Hebrew","nameEn":"official local name","description":"desc","hours":"hours"}]
   },
@@ -190,13 +209,35 @@ Required JSON structure:
     // שהוסר מהפרויקט ב-`placeMediaService` ("תמונת מקום שגויה תחת שם
     // נכון"), ונשאר כאן בחמישה מקומות.
     const coverImage = null;
+
+    /**
+     * ניקוי טיפ שהמודל הכניס בו מספר.
+     *
+     * הפרומפט אוסר מחירים, שעות ומשכי המתנה — אבל הוראה בפרומפט היא
+     * בקשה ולא ערובה, בדיוק כמו `rating` שהמשיך לחזור אחרי שהוסר
+     * מהסכימה. טיפ עם מספר נקרא כעובדה בדוקה ונכנס לתכנון אמיתי,
+     * ולכן הוא נזרק ולא "מתוקן": תיקון הוא ניחוש בתחפושת של ידע.
+     */
+    const NUMERIC = /\d|[₪$€£]|%/;
+    const cleanTip = (tip) => (typeof tip === 'string' && tip.trim() && !NUMERIC.test(tip) ? tip.trim() : undefined);
+
+    /** פריטי {name, note} — נזרקים כשחסר אחד מהם. */
+    const cleanPairs = (arr) => (Array.isArray(arr) ? arr : [])
+      .filter((x) => x && typeof x.name === 'string' && typeof x.note === 'string' && x.name.trim() && x.note.trim())
+      .map(({ name, note }) => ({ name: name.trim(), note: note.trim() }));
+
+    /** פנינה בלי `nameEn` נזרקת: בלעדיו המפה נפתחת במקום אחר לגמרי. */
+    const hiddenGems = (Array.isArray(parsed.hiddenGems) ? parsed.hiddenGems : [])
+      .filter((g) => g && g.name && g.nameEn && g.description)
+      .map(({ name, nameEn, description }) => ({ name, nameEn, description }));
     // ── `rating` נמחק גם כאן, לא רק מהסכימה ──
     // הסרת השדה מהפרומפט היא בקשה, לא ערובה: מודל שראה אלפי דפי
     // אטרקציות עם כוכבים נוטה להוסיף אותם גם כשלא ביקשו. השומר האמיתי
     // הוא הקוד, באותו מקום שכבר מסיר `image` מומצא מאותה סיבה בדיוק.
     // eslint-disable-next-line no-unused-vars
-    const attractions = (parsed.attractions || []).map(({ rating, ...a }) => ({
+    const attractions = (parsed.attractions || []).map(({ rating, queueTip, ...a }) => ({
       ...a,
+      queueTip: cleanTip(queueTip),
       image: null
     }));
     const food = {
@@ -205,6 +246,8 @@ Required JSON structure:
       // כולל `rating`, הגיע למסך כפי שהוא.
       // eslint-disable-next-line no-unused-vars
       restaurants: (parsed.food?.restaurants || []).map(({ rating, ...r }) => r),
+      honeyTraps: cleanPairs(parsed.food?.honeyTraps),
+      localVault: cleanPairs(parsed.food?.localVault),
       dishes: (parsed.food?.dishes || []).map((d, i) => ({
         ...d,
         image: null
@@ -225,8 +268,13 @@ Required JSON structure:
       coverImage,
       attractions,
       food,
+      hiddenGems,
+      about: parsed.about,
       nearbyDestinations,
       isAIGenerated: true,
+      // אותו גילוי נאות שכבר קיים ללשוניות שממולאות ב-AI: הקורא אינו
+      // יכול להבחין לבד בין פסקה שנכתבה בידי אדם לאחת שנוצרה עכשיו.
+      aiFilledSections: ['about', 'hiddenGems', 'food'],
       generalInfo: {
         language: parsed.language,
         currency: parsed.currency,

@@ -609,7 +609,9 @@
     "localVaultSub": "Where the people who live here go",
     "hiddenGems": "Hidden gems",
     "hiddenGemsSub": "Not in every guidebook, and worth the detour",
-    "queueTip": "Skip the queue"
+    "queueTip": "Skip the queue",
+    "aboutLayout": "How the city is laid out",
+    "aboutFirstTime": "What surprises first-timers"
   },
   "tripPlanner": {
     "title": "Trip Planning to {{location}}",
