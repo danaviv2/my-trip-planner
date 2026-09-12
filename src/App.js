@@ -22,6 +22,7 @@ import AppRoutes from './routes';
 
 // ספקי ההקשר והמעטפת. זה כל מה ש-`App` עושה מאז שהבלוק הישן ירד:
 // הוא מרכיב את הספקים, את הכותרת ואת הנתיבים — והתוכן חי במסכים עצמם.
+import { purgeStaleDestinationCache } from './services/aiDestinationService';
 import Header from './components/layout/Header';
 import ThemeWrapper from './components/layout/ThemeWrapper';
 import OfflineBanner from './components/shared/OfflineBanner';
@@ -58,6 +59,15 @@ useEffect(() => {
 
 
 
+
+  // ── ניקוי מטמון יעדים מגרסאות קודמות, פעם אחת בטעינה ──
+  // העלאת גרסת מטמון יוצרת מפתחות חדשים ומשאירה את הישנים לנצח.
+  // נמדד אצל משתמש: 38 מפתחות `dest_ai_*`, רובם שרידי v1 ו-v2.
+  // המכסה היא ~5MB לדומיין, ואותה מכסה כבר הפילה שמירת צ׳ק-אין ביומן.
+  useEffect(() => {
+    const { removed } = purgeStaleDestinationCache();
+    if (removed) console.info(`🧹 נוקו ${removed} מפתחות מטמון יעדים מגרסאות קודמות`);
+  }, []);
 
   // חשוב מאוד - זהו ה-return הראשי של הרכיב App
   return (

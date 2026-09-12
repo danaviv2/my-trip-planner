@@ -16,6 +16,41 @@ const GEMINI_URL = geminiEndpoint(GEMINI_MODEL);
 const CACHE_PREFIX = 'dest_ai_v3_';
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
+/**
+ * מחיקת מטמון יעדים מגרסאות קודמות.
+ *
+ * העלאת `CACHE_PREFIX` יוצרת מפתחות חדשים אך **אינה נוגעת בישנים**,
+ * והם נשארים ב-`localStorage` לנצח. נמדד אצל משתמש ב-12.09.2026:
+ * 38 מפתחות `dest_ai_*`, רובם שרידי v1 ו-v2 של ערים שכבר נטענו
+ * מחדש. כל אחד מהם הוא אובייקט יעד מלא, והמכסה היא ~5MB לדומיין —
+ * אותה מכסה שכבר הפילה שמירת צ׳ק-אין ביומן.
+ *
+ * הניקוי גנרי בכוונה: הוא מוחק כל `dest_ai_*` שאינו בקידומת
+ * הנוכחית, ולכן ימשיך לעבוד גם בהעלאת הגרסה הבאה בלי לגעת בו.
+ *
+ * ── מה במפורש אינו נמחק ──
+ * `itinerary_ai_` ו-`rolling_trip_` הם מטמונים **בלי גרסה**, ולכן
+ * לכל מפתח שם יש בדיוק ערך אחד תקף. מחיקתם הייתה מוחקת מטמון חי
+ * ומאלצת קריאה מחדש למודל — נזק, לא ניקיון.
+ *
+ * @returns {{removed: number, keys: string[]}}
+ */
+export function purgeStaleDestinationCache() {
+  const stale = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('dest_ai_') && !k.startsWith(CACHE_PREFIX)) stale.push(k);
+    }
+    // המחיקה בלולאה נפרדת: הסרה תוך כדי מעבר על `localStorage.key(i)`
+    // מזיזה את האינדקסים ומדלגת על מפתחות.
+    stale.forEach((k) => { try { localStorage.removeItem(k); } catch {} });
+  } catch {
+    // דפדפן שחוסם אחסון — אין מה לנקות, ואין סיבה להפיל טעינה
+  }
+  return { removed: stale.length, keys: stale };
+}
+
 function getCached(name) {
   try {
     const raw = localStorage.getItem(CACHE_PREFIX + name.toLowerCase());
