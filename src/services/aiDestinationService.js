@@ -105,7 +105,7 @@ Required JSON structure:
     "hours": {"shopping":"hours","restaurants":"hours","attractions":"hours"},
     "local": [{"title":"title","description":"desc"}]
   },
-  "nearbyDestinations": [{"name":"city","distance":"km"}],
+  "nearbyDestinations": [{"name":"city","distance":"number only, digits, no unit"}],
   "itinerary": {
     "3days": [
       {"day":1,"title":"Day title","morning":"morning activity","afternoon":"afternoon activity","evening":"evening activity","food":"food recommendation","tip":"tip"},
@@ -257,8 +257,17 @@ Required JSON structure:
         image: null
       }))
     };
-    const nearbyDestinations = (parsed.nearbyDestinations || []).map((n, i) => ({
+    // ── היחידה מגיעה מהתצוגה, לא מהמודל ──
+    // המסך מרנדר `t('destInfo.km', { dist })`, והתבנית כבר מוסיפה את
+    // היחידה. המודל החזיר את המרחק עם היחידה בפנים למרות שהסכימה
+    // ביקשה מספר, והמסך הציג אותה פעמיים. נמדד על ליסבון באתר החי.
+    const kmOnly = (v) => {
+      const m = String(v ?? '').match(/\d+(?:\.\d+)?/);
+      return m ? m[0] : undefined;
+    };
+    const nearbyDestinations = (parsed.nearbyDestinations || []).map(({ distance, ...n }, i) => ({
       ...n,
+      distance: kmOnly(distance),
       image: null
     }));
 
