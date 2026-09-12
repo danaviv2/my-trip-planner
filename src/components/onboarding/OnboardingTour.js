@@ -32,6 +32,8 @@ const AUDIO = {
     'onboarding-1': require('../../assets/audio/onboarding-1-he.mp3'),
     'onboarding-2': require('../../assets/audio/onboarding-2-he.mp3'),
     'onboarding-3': require('../../assets/audio/onboarding-3-he.mp3'),
+    'onboarding-4': require('../../assets/audio/onboarding-4-he.mp3'),
+    'onboarding-5': require('../../assets/audio/onboarding-5-he.mp3'),
   },
 };
 

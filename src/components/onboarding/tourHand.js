@@ -19,11 +19,19 @@ const place = (el) => {
   const r = el.getBoundingClientRect();
   if (r.height <= 0) { host.style.display = 'none'; return; }
   host.style.display = 'block';
-  // יושבת על הפינה התחתונה של היעד, בצד שממנו מתחילה הקריאה —
-  // כלומר מתהפכת יחד עם כיוון המסמך ולא נשארת שמאלה תמיד.
-  const rtl = (document.documentElement.dir || 'rtl') === 'rtl';
-  const x = rtl ? r.left - 18 : r.right - 38;
-  host.style.transform = `translate(${Math.round(x)}px, ${Math.round(r.bottom - 18)}px)`;
+  // ── ממורכזת על היעד, לא נצמדת לפינה ──
+  // המיקום הקודם היה `r.left - 18` (או `r.right - 38` ב-LTR), כלומר
+  // הפינה התחתונה בצד הקריאה. על כפתור צר זה נראה סביר, אבל שתי
+  // התחנות בדף הבית הן בלוקים ברוחב מלא — והיד נחתה בקצה הרחוק,
+  // רחוק מהדבר שעליו הקול מדבר. מרכז אופקי עובד בשני המקרים.
+  //
+  // אנכית: מעט מעל הקצה התחתון, כך שהיא נוגעת ביעד ולא מרחפת מתחתיו,
+  // ונשמרת בתוך המסך — אחרת היא נחתכת ביעד שיושב בתחתית.
+  const size = 56;
+  const x = r.left + r.width / 2 - size / 2;
+  const y = Math.min(r.bottom - size * 0.55, window.innerHeight - size);
+  host.style.transform =
+    `translate(${Math.round(Math.max(4, x))}px, ${Math.round(Math.max(4, y))}px)`;
 };
 
 // ── ההדגשה מסומנת במחלקה משלנו, לא ב-.driver-active-element ──

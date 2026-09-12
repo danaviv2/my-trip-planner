@@ -25,15 +25,14 @@ const KEY = 'onboardingTour';
 export const TOUR_STEPS = [
   // ── שלוש תחנות בדף הבית, לא אחת ──
   // עד 13.09.2026 היה כאן `vibe` בלבד, ולכן המדריך בדף הבית היה
-  // תחנה יחידה והמשתמש ראה "רק את נושא המייל". שתי אלה אינן דורשות
-  // הקלטה: שפה בלי אודיו ממשיכה בטקסט, וזה המצב גם בעברית כאן.
+  // תחנה יחידה והמשתמש ראה "רק את נושא המייל".
   {
     id: 'search',
     route: '/',
     selector: '[data-tour="search"]',
     titleKey: 'onboarding.step4.title',
     bodyKey: 'onboarding.step4.body',
-    audio: null,
+    audio: 'onboarding-4',
     side: 'bottom',
   },
   {
@@ -42,7 +41,7 @@ export const TOUR_STEPS = [
     selector: '[data-tour="surprise"]',
     titleKey: 'onboarding.step5.title',
     bodyKey: 'onboarding.step5.body',
-    audio: null,
+    audio: 'onboarding-5',
     side: 'top',
   },
   {
