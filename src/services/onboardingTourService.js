@@ -42,7 +42,11 @@ export const TOUR_STEPS = [
     titleKey: 'onboarding.step5.title',
     bodyKey: 'onboarding.step5.body',
     audio: 'onboarding-5',
-    side: 'top',
+    // 'bottom' ולא 'top': נמדד על האתר החי — עם 'top' הבועה נחתה
+    // ב-332 בעוד היעד מתחיל ב-317, כלומר חפיפה של 15 פיקסלים,
+    // והטקסט נראה מעורבב עם התוכן שמאחוריו. הבלוק גבוה (188px)
+    // ויש מתחתיו יותר משלוש מאות פיקסלים פנויים.
+    side: 'bottom',
   },
   {
     id: 'emailImport',
