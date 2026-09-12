@@ -974,7 +974,7 @@
   "onboarding": {
     "step1": {
       "title": "No escribas nada",
-      "body": "¿Tienes una confirmación de vuelo u hotel en el correo? Un clic aquí y la IA extrae los datos y los ordena."
+      "body": "Un clic aquí y extraemos los datos y los ordenamos por ti."
     },
     "step2": {
       "title": "Esto salió de tus correos",
