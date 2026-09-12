@@ -472,13 +472,10 @@
     "extract": "Extract Details",
     "gmail_instructions": "Direct connection to your Gmail inbox to extract booking details:",
     "gmail_click_text": "Click the button below to connect to your Gmail account",
-    "gmail_search_text": "The app will search for flight and car rental booking emails",
+    "gmail_search_text": "We look for flight, stay, car, transfer, activity, restaurant and insurance confirmations",
     "connect_gmail": "Connect to Gmail",
-    "privacy_note": "* Your data is not stored on our servers and is used only to extract your travel details",
     "close": "Close",
-    "file_instructions": "Upload your booking confirmation file (PDF or saved email):",
-    "upload_click": "Click to upload or drag file here",
-    "file_types": "Supports PDF, EML or TXT files",
+    "file_instructions": "Upload a booking confirmation saved from your email:",
     "gmail_success": "Gmail connection successful! You can now import details.",
     "extract_success": "Flight and car rental details found and extracted!",
     "file_success": "File read successfully!"
@@ -911,5 +908,67 @@
     },
     "savedOk": "✅ Check-in saved",
     "deletedOk": "Entry deleted"
+  },
+  "emailImport": {
+    "success": {
+      "headline": "Imported {{added}} new bookings from {{matched}} scanned emails.",
+      "cached": "{{n}} emails were scanned before and were skipped.",
+      "cancelled": "{{n}} cancelled bookings were removed.",
+      "merged": "{{n}} records were not added as new (duplicate or merged into an existing booking).",
+      "missed": "{{n}} emails yielded no booking. See the list below."
+    },
+    "nothingNew": "Nothing new — {{matched}} emails scanned, no new bookings added.",
+    "noneFound": "We scanned and found no booking confirmations from the last year. You can paste one manually in the first tab.",
+    "allCached": "Every matching email was already scanned. Nothing new to import.",
+    "scannedNoBookings": "We scanned {{n}} emails and none was a booking confirmation. The search may have caught marketing mail.",
+    "error": {
+      "consentExpired": "Inbox access expired. Click again to renew it — your existing bookings are safe.",
+      "popupClosed": "The consent window closed before you approved. Click again to retry.",
+      "forbidden": "Google denied inbox access. Try again and tick the read permission on Google's screen.",
+      "network": "Looks like some turbulence on the connection. The request did not go through — try again shortly.",
+      "scanFailed": "We could not scan your inbox. That does not mean it holds no bookings — try again.",
+      "parseFailed": "Our AI got confused by the format. Try again, or paste a shorter excerpt.",
+      "extractFailed": "We could not process the text. Try again in a moment.",
+      "pdfUnsupported": "PDF upload is not supported. Scan your inbox, or paste the email body.",
+      "fileRead": "We could not read the file. Re-save it as EML or TXT and upload again.",
+      "details": "Technical details"
+    },
+    "paste": {
+      "notABooking": "No booking details in the pasted text. Try pasting the full email body.",
+      "emptyResult": "We found a booking but could not extract any details. Try again with the full email body.",
+      "success": "Saved: {{parts}}. Added to your trip automatically — edit them on the trip screen."
+    },
+    "progress": {
+      "renewing": "Renewing access…",
+      "working": "Our AI is on it — reading the fine print on your confirmations."
+    },
+    "file": {
+      "loaded": "File loaded, content below. Click \"{{action}}\" to process it."
+    },
+    "unrecognized": {
+      "heading": "Scanned but not imported ({{n}}):",
+      "noSubject": "(no subject)"
+    },
+    "privacyNote": "* Read-only. Email bodies are sent for parsing and not stored; extracted booking details are saved to your account.",
+    "fileTypes": "EML or TXT. PDF — via Gmail scan",
+    "uploadClick": "Click to choose a file",
+    "type": {
+      "flight_one": "1 flight",
+      "flight_other": "{{count}} flights",
+      "hotel_one": "1 stay",
+      "hotel_other": "{{count}} stays",
+      "car_rental_one": "1 car rental",
+      "car_rental_other": "{{count}} car rentals",
+      "transfer_one": "1 transfer",
+      "transfer_other": "{{count}} transfers",
+      "activity_one": "1 activity",
+      "activity_other": "{{count}} activities",
+      "restaurant_one": "1 restaurant",
+      "restaurant_other": "{{count}} restaurants",
+      "insurance_one": "1 insurance policy",
+      "insurance_other": "{{count}} insurance policies",
+      "other_one": "1 booking",
+      "other_other": "{{count}} bookings"
+    }
   }
 }

@@ -472,13 +472,10 @@
     "extract": "Extraire les détails",
     "gmail_instructions": "Connexion directe à votre boîte Gmail pour extraire les détails de réservation :",
     "gmail_click_text": "Cliquez sur le bouton ci-dessous pour vous connecter à votre compte Gmail",
-    "gmail_search_text": "L'application recherchera des emails de réservation de vols et de location de voiture",
+    "gmail_search_text": "Nous cherchons les confirmations de vol, hébergement, voiture, transfert, activité, restaurant et assurance",
     "connect_gmail": "Connecter Gmail",
-    "privacy_note": "* Vos données ne sont pas stockées sur nos serveurs et sont utilisées uniquement pour extraire vos détails de voyage",
     "close": "Fermer",
-    "file_instructions": "Téléchargez votre fichier de confirmation de réservation (PDF ou email sauvegardé) :",
-    "upload_click": "Cliquez pour télécharger ou glissez le fichier ici",
-    "file_types": "Supporte les fichiers PDF, EML ou TXT",
+    "file_instructions": "Importez une confirmation enregistrée depuis votre e-mail :",
     "gmail_success": "Connexion Gmail réussie ! Vous pouvez maintenant importer des détails.",
     "extract_success": "Détails de vol et de location de voiture trouvés et extraits !",
     "file_success": "Fichier lu avec succès !"
@@ -911,5 +908,67 @@
     },
     "savedOk": "✅ Check-in enregistré",
     "deletedOk": "Entrée supprimée"
+  },
+  "emailImport": {
+    "success": {
+      "headline": "{{added}} nouvelles réservations importées sur {{matched}} e-mails.",
+      "cached": "{{n}} e-mails déjà analysés ont été ignorés.",
+      "cancelled": "{{n}} réservations annulées ont été retirées.",
+      "merged": "{{n}} enregistrements non ajoutés (doublons ou fusionnés).",
+      "missed": "{{n}} e-mails sans réservation. Liste ci-dessous."
+    },
+    "nothingNew": "Rien de nouveau : {{matched}} e-mails analysés, aucune réservation ajoutée.",
+    "noneFound": "Analyse terminée, aucune confirmation sur l'année écoulée. Collez-en une dans le premier onglet.",
+    "allCached": "Tous les e-mails ont déjà été analysés. Rien de nouveau.",
+    "scannedNoBookings": "{{n}} e-mails analysés, aucune confirmation. La recherche a pu inclure des promotions.",
+    "error": {
+      "consentExpired": "L'accès a expiré. Recliquez pour le renouveler — vos réservations sont conservées.",
+      "popupClosed": "La fenêtre s'est fermée avant validation. Recliquez pour réessayer.",
+      "forbidden": "Google a refusé l'accès. Réessayez en cochant l'autorisation de lecture.",
+      "network": "Un peu de turbulence sur la connexion. La requête n'est pas passée — réessayez.",
+      "scanFailed": "Impossible d'analyser votre boîte. Cela ne signifie pas qu'elle est vide — réessayez.",
+      "parseFailed": "Notre IA a buté sur le format. Réessayez ou collez un extrait plus court.",
+      "extractFailed": "Impossible de traiter le texte. Réessayez dans un instant.",
+      "pdfUnsupported": "Le PDF n'est pas pris en charge ici. Analysez la boîte ou collez l'e-mail.",
+      "fileRead": "Impossible de lire le fichier. Enregistrez-le en EML ou TXT et réessayez.",
+      "details": "Détails techniques"
+    },
+    "paste": {
+      "notABooking": "Aucune réservation dans le texte collé. Collez le-mail complet.",
+      "emptyResult": "Réservation détectée, aucun détail extrait. Réessayez avec le message complet.",
+      "success": "Enregistré : {{parts}}. Ajouté automatiquement au voyage, modifiable sur son écran."
+    },
+    "progress": {
+      "renewing": "Renouvellement de l'accès…",
+      "working": "Notre IA s'en occupe — elle lit les petits caractères."
+    },
+    "file": {
+      "loaded": "Fichier chargé. Cliquez sur « {{action}} » pour le traiter."
+    },
+    "unrecognized": {
+      "heading": "Analysés, non importés ({{n}}) :",
+      "noSubject": "(sans objet)"
+    },
+    "privacyNote": "* Lecture seule. L'e-mail est envoyé pour analyse et non conservé ; les données extraites sont enregistrées sur votre compte.",
+    "fileTypes": "EML ou TXT. PDF — via l'analyse Gmail",
+    "uploadClick": "Cliquez pour choisir un fichier",
+    "type": {
+      "flight_one": "1 vol",
+      "flight_other": "{{count}} vols",
+      "hotel_one": "1 hébergement",
+      "hotel_other": "{{count}} hébergements",
+      "car_rental_one": "1 location de voiture",
+      "car_rental_other": "{{count}} locations de voiture",
+      "transfer_one": "1 transfert",
+      "transfer_other": "{{count}} transferts",
+      "activity_one": "1 activité",
+      "activity_other": "{{count}} activités",
+      "restaurant_one": "1 restaurant",
+      "restaurant_other": "{{count}} restaurants",
+      "insurance_one": "1 assurance",
+      "insurance_other": "{{count}} assurances",
+      "other_one": "1 réservation",
+      "other_other": "{{count}} réservations"
+    }
   }
 }

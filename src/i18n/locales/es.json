@@ -472,13 +472,10 @@
     "extract": "Extraer detalles",
     "gmail_instructions": "Conexión directa a tu buzón de Gmail para extraer detalles de reserva:",
     "gmail_click_text": "Haz clic en el botón de abajo para conectarte a tu cuenta de Gmail",
-    "gmail_search_text": "La aplicación buscará emails de reservas de vuelos y alquiler de auto",
+    "gmail_search_text": "Buscamos confirmaciones de vuelo, alojamiento, coche, traslado, actividad, restaurante y seguro",
     "connect_gmail": "Conectar Gmail",
-    "privacy_note": "* Tus datos no se almacenan en nuestros servidores y se usan solo para extraer tus detalles de viaje",
     "close": "Cerrar",
-    "file_instructions": "Sube tu archivo de confirmación de reserva (PDF o email guardado):",
-    "upload_click": "Haz clic para subir o arrastra el archivo aquí",
-    "file_types": "Soporta archivos PDF, EML o TXT",
+    "file_instructions": "Sube una confirmación de reserva guardada del correo:",
     "gmail_success": "¡Conexión a Gmail exitosa! Ya puedes importar detalles.",
     "extract_success": "¡Detalles de vuelo y alquiler de auto encontrados y extraídos!",
     "file_success": "¡Archivo leído con éxito!"
@@ -911,5 +908,67 @@
     },
     "savedOk": "✅ Registro guardado",
     "deletedOk": "Entrada eliminada"
+  },
+  "emailImport": {
+    "success": {
+      "headline": "Importadas {{added}} reservas nuevas de {{matched}} correos.",
+      "cached": "{{n}} correos ya se habían escaneado y se omitieron.",
+      "cancelled": "Se eliminaron {{n}} reservas canceladas.",
+      "merged": "{{n}} registros no se añadieron como nuevos (duplicados o fusionados).",
+      "missed": "{{n}} correos no dieron reserva. Lista abajo."
+    },
+    "nothingNew": "Nada nuevo: {{matched}} correos escaneados, sin reservas nuevas.",
+    "noneFound": "Escaneamos y no hay confirmaciones del último año. Pega una manualmente en la primera pestaña.",
+    "allCached": "Todos los correos ya se escanearon. Nada nuevo que importar.",
+    "scannedNoBookings": "Escaneamos {{n}} correos y ninguno era una reserva. Quizá se colaron promociones.",
+    "error": {
+      "consentExpired": "El acceso caducó. Pulsa otra vez para renovarlo; tus reservas siguen guardadas.",
+      "popupClosed": "La ventana se cerró antes de aprobar. Pulsa otra vez.",
+      "forbidden": "Google denegó el acceso. Reinténtalo y marca el permiso de lectura.",
+      "network": "Parece que hay turbulencias en la conexión. La solicitud no se completó; reinténtalo.",
+      "scanFailed": "No pudimos escanear tu bandeja. No significa que no haya reservas; reinténtalo.",
+      "parseFailed": "Nuestra IA se lió con el formato. Reinténtalo o pega un fragmento más corto.",
+      "extractFailed": "No pudimos procesar el texto. Reinténtalo en un momento.",
+      "pdfUnsupported": "No se admite subir PDF. Escanea tu bandeja o pega el correo.",
+      "fileRead": "No pudimos leer el archivo. Guárdalo como EML o TXT e inténtalo.",
+      "details": "Detalles técnicos"
+    },
+    "paste": {
+      "notABooking": "No hay datos de reserva en el texto pegado. Pega el correo completo.",
+      "emptyResult": "Detectamos una reserva pero no pudimos extraer datos. Reinténtalo con el correo completo.",
+      "success": "Guardado: {{parts}}. Se añadieron al viaje automáticamente; puedes editarlas allí."
+    },
+    "progress": {
+      "renewing": "Renovando el acceso…",
+      "working": "Nuestra IA está en ello: leyendo la letra pequeña de tus reservas."
+    },
+    "file": {
+      "loaded": "Archivo cargado. Pulsa \"{{action}}\" para procesarlo."
+    },
+    "unrecognized": {
+      "heading": "Escaneados, no importados ({{n}}):",
+      "noSubject": "(sin asunto)"
+    },
+    "privacyNote": "* Solo lectura. El correo se envía para su análisis y no se almacena; los datos extraídos se guardan en tu cuenta.",
+    "fileTypes": "EML o TXT. PDF: mediante el escaneo de Gmail",
+    "uploadClick": "Haz clic para elegir un archivo",
+    "type": {
+      "flight_one": "1 vuelo",
+      "flight_other": "{{count}} vuelos",
+      "hotel_one": "1 alojamiento",
+      "hotel_other": "{{count}} alojamientos",
+      "car_rental_one": "1 alquiler de coche",
+      "car_rental_other": "{{count}} alquileres de coche",
+      "transfer_one": "1 traslado",
+      "transfer_other": "{{count}} traslados",
+      "activity_one": "1 actividad",
+      "activity_other": "{{count}} actividades",
+      "restaurant_one": "1 restaurante",
+      "restaurant_other": "{{count}} restaurantes",
+      "insurance_one": "1 seguro",
+      "insurance_other": "{{count}} seguros",
+      "other_one": "1 reserva",
+      "other_other": "{{count}} reservas"
+    }
   }
 }
