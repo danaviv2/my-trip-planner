@@ -21,7 +21,30 @@ const KEY = 'onboardingTour';
 
 // `data-tour` ולא סלקטור מבני: מחלקות MUI מיוצרות (css-zubzze) ומשתנות
 // בכל בנייה, וסלקטור כזה שובר את המדריך בלי שדבר ייכשל בקומפילציה.
+// הסדר כאן הוא סדר ההצגה בתוך מסלול. דף הבית ראשון, כי שם נוחתים.
 export const TOUR_STEPS = [
+  // ── שלוש תחנות בדף הבית, לא אחת ──
+  // עד 13.09.2026 היה כאן `vibe` בלבד, ולכן המדריך בדף הבית היה
+  // תחנה יחידה והמשתמש ראה "רק את נושא המייל". שתי אלה אינן דורשות
+  // הקלטה: שפה בלי אודיו ממשיכה בטקסט, וזה המצב גם בעברית כאן.
+  {
+    id: 'search',
+    route: '/',
+    selector: '[data-tour="search"]',
+    titleKey: 'onboarding.step4.title',
+    bodyKey: 'onboarding.step4.body',
+    audio: null,
+    side: 'bottom',
+  },
+  {
+    id: 'surprise',
+    route: '/',
+    selector: '[data-tour="surprise"]',
+    titleKey: 'onboarding.step5.title',
+    bodyKey: 'onboarding.step5.body',
+    audio: null,
+    side: 'top',
+  },
   {
     id: 'emailImport',
     route: '/travel-info',

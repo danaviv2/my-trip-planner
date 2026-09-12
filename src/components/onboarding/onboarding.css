@@ -91,6 +91,24 @@
 .driver-popover.trip-tour .driver-popover-arrow-side-left.driver-popover-arrow { border-left-color: var(--tour-bg, #fff); }
 .driver-popover.trip-tour .driver-popover-arrow-side-right.driver-popover-arrow { border-right-color: var(--tour-bg, #fff); }
 
+/* כפתור הקול. יושב מתחת לכותרת ולא בשורת הכפתורים, כדי שלא ייקרא
+   כניווט — הוא אינו מקדם את המדריך. */
+.driver-popover.trip-tour .tour-audio-btn {
+  background: none;
+  border: 1px solid var(--tour-border, #d8d8d8);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 5px 10px;
+  margin-bottom: 8px;
+  color: inherit;
+}
+.driver-popover.trip-tour .tour-audio-btn:hover { border-color: #667eea; }
+.driver-popover.trip-tour .tour-audio-btn:focus-visible {
+  outline: 2px solid #667eea; outline-offset: 2px;
+}
+
 /* ── מצב כהה ──
  * שני המסלולים: בחירה מפורשת של המשתמש, והעדפת המערכת כשאין בחירה.
  * הגדרת צבע רק בתוך media היא בדיוק הכשל שתוקן בסריקה של 08.09. */

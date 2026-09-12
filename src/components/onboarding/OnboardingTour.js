@@ -54,19 +54,63 @@ export default function OnboardingTour() {
   // דפדפנים חוסמים ניגון אוטומטי לפני אינטראקציה, ו-play() מחזיר
   // Promise שנדחה. catch ריק כאן היה מייצר מדריך אילם שנראה תקין בקוד,
   // ולכן התוצאה נרשמת על ה-DOM וניתנת למדידה.
-  const playAudio = useCallback((name) => {
+  // ── כפתור קול בתוך הבועה, כי אוטופליי באמת נחסם ──
+  // נמדד על האתר החי ב-12.09.2026: `NotAllowedError`, ו-tourAudio קיבל
+  // את הערך `blocked`. דפדפנים דורשים מחווה של המשתמש לפני ניגון,
+  // ומשתמש שזה עתה נחת על העמוד לא נגע בו. בפיתוח זה "עבד" רק מפני
+  // שכבר לחצתי על הדף קודם — בדיקה שהעידה על הבודק ולא על המוצר.
+  //
+  // לכן הניגון אינו מסתמך על אוטופליי: בכל תחנה מוזרק כפתור לבועה.
+  // אם האוטומטי הצליח הוא מציע השתקה, ואם נחסם הוא הדרך היחידה פנימה.
+  // לחיצה אחת פותחת את הדף לניגון, ומשם התחנות הבאות מתנגנות מעצמן.
+  const playRef = useRef(null);
+
+  const renderAudioButton = useCallback((popover, name, state) => {
+    if (!popover) return;
+    const title = popover.querySelector('.driver-popover-title');
+    if (!title) return;
+    popover.querySelector('.tour-audio-btn')?.remove();
+    if (state === 'none') return; // אין הקלטה בשפה הזו — אין מה להציע
+
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tour-audio-btn';
+    const paint = (s) => {
+      const on = s === 'playing';
+      b.textContent = on ? '🔊' : '🔈';
+      b.setAttribute('aria-label', t(on ? 'onboarding.muteOn' : 'onboarding.replay'));
+      b.title = b.getAttribute('aria-label');
+    };
+    paint(state);
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const a = audioRef.current;
+      if (a && !a.paused) { a.pause(); setMuted(true); paint('paused'); return; }
+      setMuted(false);
+      // המחווה הזו היא בדיוק מה שהדפדפן חיכה לו
+      playRef.current?.(name, popover);
+    });
+    title.insertAdjacentElement('afterend', b);
+  }, [t]);
+
+  // ── האודיו הוא בונוס, לא תנאי ──
+  // התוצאה נרשמת על ה-DOM וניתנת למדידה; catch ריק כאן היה מייצר
+  // מדריך אילם שנראה תקין בקוד.
+  const playAudio = useCallback((name, popover) => {
     stopAudio();
     const root = document.documentElement;
-    if (isMuted()) { root.dataset.tourAudio = 'muted'; return; }
-    // שפה בלי הקלטה ממשיכה בטקסט בלבד — זה אינו כשל.
     const mod = AUDIO[i18n.language]?.[name];
-    if (!mod) { root.dataset.tourAudio = 'none'; return; }
+    if (!mod) { root.dataset.tourAudio = 'none'; renderAudioButton(popover, name, 'none'); return; }
+    if (isMuted()) { root.dataset.tourAudio = 'muted'; renderAudioButton(popover, name, 'muted'); return; }
+
     const a = new Audio(mod.default || mod);
     audioRef.current = a;
     a.play()
-      .then(() => { root.dataset.tourAudio = 'playing'; })
-      .catch(() => { root.dataset.tourAudio = 'blocked'; });
-  }, [i18n.language, stopAudio]);
+      .then(() => { root.dataset.tourAudio = 'playing'; renderAudioButton(popover, name, 'playing'); })
+      .catch(() => { root.dataset.tourAudio = 'blocked'; renderAudioButton(popover, name, 'blocked'); });
+  }, [i18n.language, stopAudio, renderAudioButton]);
+
+  playRef.current = playAudio;
 
   useEffect(() => {
     // ה-DOM צריך רגע להתייצב: העמודים הם React.lazy, והיעד נולד אחרי
@@ -117,8 +161,8 @@ export default function OnboardingTour() {
             description: t(s.bodyKey),
             side: s.side,
             align: 'center',
-            onPopoverRender: () => {
-              playAudio(s.audio);
+            onPopoverRender: (popover) => {
+              playAudio(s.audio, popover.wrapper || popover);
               showHand(s.selector);
             },
           },

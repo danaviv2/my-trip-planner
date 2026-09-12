@@ -992,6 +992,14 @@
     "muteOff": "Ativar a voz",
     "replay": "Reproduzir de novo",
     "progress": "{{current}} de {{total}}",
-    "restart": "Ver o guia outra vez"
+    "restart": "Ver o guia outra vez",
+    "step4": {
+      "title": "Comece aqui",
+      "body": "Escreva uma cidade ou país: informação, locais e dicas — sem registo."
+    },
+    "step5": {
+      "title": "Sem ideia do destino?",
+      "body": "Um clique sorteia um destino com orçamento, duração e lista de bagagem."
+    }
   }
 }

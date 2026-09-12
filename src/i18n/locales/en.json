@@ -992,6 +992,14 @@
     "muteOff": "Unmute the voice-over",
     "replay": "Play again",
     "progress": "{{current}} of {{total}}",
-    "restart": "Show the tour again"
+    "restart": "Show the tour again",
+    "step4": {
+      "title": "Start here",
+      "body": "Type a city or country for info, sights and local tips — no sign-up."
+    },
+    "step5": {
+      "title": "No idea where to go?",
+      "body": "One click draws a destination with a budget, a length and a packing list."
+    }
   }
 }

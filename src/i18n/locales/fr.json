@@ -992,6 +992,14 @@
     "muteOff": "Activer la voix",
     "replay": "Rejouer",
     "progress": "{{current}} sur {{total}}",
-    "restart": "Revoir le guide"
+    "restart": "Revoir le guide",
+    "step4": {
+      "title": "Commencez ici",
+      "body": "Tapez une ville ou un pays : infos, sites et conseils locaux, sans inscription."
+    },
+    "step5": {
+      "title": "Aucune idée de destination ?",
+      "body": "Un clic tire un destin avec budget, durée et liste de bagages."
+    }
   }
 }
