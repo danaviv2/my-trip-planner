@@ -25,7 +25,21 @@ const RUNNING = process.env.REACT_APP_BUILD_TIME || '';
  * `cache: 'no-store'` אינו קישוט: בלעדיו הבקשה עצמה מוגשת מהמטמון,
  * והבדיקה הייתה משווה גרסה ישנה לעצמה ומדווחת תמיד שהכול מעודכן.
  */
-const fetchServerStamp = async () => {
+// ── בקשה אחת בכל רגע נתון ──
+// נמדד בלשונית הרשת אצל המשתמש ב-12.09.2026: שתי קריאות ל-version.json
+// במרווח של מילישנייה אחת, שתיהן מכאן. `watchForUpdates` מריץ `run()`
+// מיד וגם רושם מאזין ל-`focus`, ואם החלון מקבל פוקוס באותו רגע שתיהן
+// יוצאות יחד. מטמון הדפדפן מכוון כאן ל-`no-store` בכוונה, ולכן אין שום
+// שכבה שתבלע את השנייה — היא באמת הולכת לרשת.
+let stampInFlight = null;
+
+const fetchServerStamp = () => {
+  if (stampInFlight) return stampInFlight;
+  stampInFlight = fetchServerStampOnce().finally(() => { stampInFlight = null; });
+  return stampInFlight;
+};
+
+const fetchServerStampOnce = async () => {
   try {
     const res = await fetch(`/version.json?t=${Date.now()}`, { cache: 'no-store' });
     if (!res.ok) return null;

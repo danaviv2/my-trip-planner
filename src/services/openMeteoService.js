@@ -117,9 +117,30 @@ const CURRENT_TTL_MS = 30 * 60 * 1000; // חצי שעה: מזג אוויר עכ�
  *
  * Open-Meteo אינו דורש מפתח, ולכן אין כאן מפתח שיכול להתייתם.
  */
-export async function getCurrentWeather(cityName) {
-  if (!cityName) return null;
+// ── איחוד בקשות שנמצאות באוויר ──
+// המטמון ב-localStorage עוזר רק *אחרי* שתשובה חזרה. שני צרכנים
+// שמבקשים את אותה עיר באותו רגע שניהם מחטיאים אותו ושניהם יוצאים
+// לרשת. נמדד ב-12.09.2026 ב-`/destination-info`: שתי קריאות מקבילות,
+// וכל אחת מהן גיאוקוד ועוד תחזית — ארבע בקשות במקום שתיים.
+//
+// המפה מחזיקה את ה-Promise עצמו, כך שהקורא השני ממתין לראשון.
+// הרשומה נמחקת בסיום, כדי שקריאה עתידית לא תקבל תשובה מאובנת —
+// תפקיד הטריות שייך ל-TTL של המטמון, לא כאן.
+const inFlight = new Map();
+const dedupe = (key, run) => {
+  const open = inFlight.get(key);
+  if (open) return open;
+  const p = run().finally(() => inFlight.delete(key));
+  inFlight.set(key, p);
+  return p;
+};
 
+export function getCurrentWeather(cityName) {
+  if (!cityName) return Promise.resolve(null);
+  return dedupe(`current:${cityName}`, () => currentWeatherUncached(cityName));
+}
+
+async function currentWeatherUncached(cityName) {
   const cacheKey = `om_current_${cityName}`;
   try {
     const cached = localStorage.getItem(cacheKey);
@@ -183,7 +204,13 @@ export async function getCurrentWeather(cityName) {
  */
 const searchLanguageFor = (name) => (/[\u0590-\u05FF]/.test(name) ? 'he' : 'en');
 
-async function geocodeCity(name) {
+// אותה עיר מגיאוקודדת גם מ-getCurrentWeather וגם מ-fetchTripWeather.
+// הקואורדינטות אינן משתנות, ולכן אין סיבה לשאול פעמיים באותו רגע.
+function geocodeCity(name) {
+  return dedupe(`geo:${name}`, () => geocodeCityUncached(name));
+}
+
+async function geocodeCityUncached(name) {
   try {
     const language = searchLanguageFor(name);
     const res = await fetch(`${GEOCODE_URL}?name=${encodeURIComponent(name)}&count=1&language=${language}&format=json`);

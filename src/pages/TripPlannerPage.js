@@ -160,19 +160,46 @@ const TripPlannerPage = () => {
     }
   }, [accommodations]);
 
-  // טען הזמנות מ-Firestore כשמשתמש מתחבר
+  // ── טעינה מ-Firestore: פעם אחת לכל משתמש ──
+  // שלושה דברים היו שבורים כאן, וכולם באותו כיוון — קריאות מיותרות
+  // למסד שמחויב לפי קריאת מסמך:
+  //
+  // 1. התלות הייתה `[user]`, כלומר אובייקט. `onAuthStateChanged` יורה
+  //    גם ברענון טוקן ומוסר אובייקט חדש, וכל רענון כזה היה מריץ שליפה
+  //    מלאה מחדש. `user?.uid` הוא מחרוזת ומשתנה רק כשהמשתמש באמת מתחלף.
+  // 2. `syncedBookings` נקרא מתוך סגירה מיושנת ש-eslint-disable הסתיר.
+  //    עדכון פונקציונלי קורא את הערך העדכני ואינו זקוק לתלות.
+  // 3. `setSyncedBookings` קיבל מערך חדש תמיד, גם כשדבר לא השתנה —
+  //    ולכן כל שליפה גררה רינדור מחדש של העמוד ושל כל צרכני `useAuth`.
+  //    עכשיו הזהות נשמרת כשהתוכן זהה, והשרשרת נעצרת.
+  const uid = user?.uid;
   useEffect(() => {
-    if (!user) return;
-    loadBookings(user.uid)
-      .then(fb => {
-        const local = syncedBookings;
-        const fbIds = new Set(fb.map(b => String(b.id)));
-        const merged = [...fb, ...local.filter(b => !fbIds.has(String(b.id)))];
-        setSyncedBookings(merged);
-        localStorage.setItem('syncedBookings', JSON.stringify(merged));
+    if (!uid) return;
+    let cancelled = false;
+
+    loadBookings(uid)
+      .then((fb) => {
+        if (cancelled) return;
+        setSyncedBookings((prev) => {
+          const fbIds = new Set(fb.map((b) => String(b.id)));
+          const merged = [...fb, ...prev.filter((b) => !fbIds.has(String(b.id)))];
+          // אותו אורך ואותם מזהים באותו סדר — אין מה לעדכן.
+          const same =
+            merged.length === prev.length &&
+            merged.every((b, i) => String(b.id) === String(prev[i].id));
+          if (same) return prev;
+          try {
+            localStorage.setItem('syncedBookings', JSON.stringify(merged));
+          } catch {
+            // מכסת אחסון מלאה: הרשימה עדיין עובדת בזיכרון
+          }
+          return merged;
+        });
       })
       .catch(() => {});
-  }, [user]); // eslint-disable-line
+
+    return () => { cancelled = true; };
+  }, [uid]);
 
   const handleBookingAdded = async (booking) => {
     const updated = [...syncedBookings.filter(b => b.id !== booking.id), booking];

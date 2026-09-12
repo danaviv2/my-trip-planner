@@ -365,20 +365,32 @@ const DestinationInfoPage = () => {
     }
   }, [destination]);
 
+  // ── שם אחד, קריאה אחת ──
+  // התלות הייתה `[destination, destinationData?.nameEn, destinationData?.name]`,
+  // ולכן ההשפעה רצה פעמיים בכל טעינה: בראשונה `destinationData` עדיין
+  // ריק והשם הוא העברי ("פריז"), ואחרי שהנתונים נטענים `nameEn` הופך
+  // ל-"Paris" והתלות משתנה. שתי הקריאות נשלחו במקביל, ומכיוון שהשמות
+  // שונים גם המטמון לא איחד אותן — וכל קריאה היא גיאוקוד ועוד תחזית,
+  // כלומר ארבע בקשות במקום שתיים. זה מה שנראה בלשונית הרשת ככפל.
+  //
+  // עכשיו השם מחושב מחוץ להשפעה כמחרוזת אחת, וההשפעה תלויה רק בו.
+  const weatherName = destinationData
+    ? (destinationData.nameEn || destinationData.name || destination)
+    : null;
+
   // Open-Meteo, בלי מפתח. `null` נשאר `null`: כשאין תשובה הכרטיס אינו
   // מוצג כלל, במקום ליפול חזרה למספר קבוע שנראה כמו מדידה.
   useEffect(() => {
-    let cancelled = false;
     setLiveWeather(null);
-    const name = destinationData?.nameEn || destinationData?.name || destination;
-    if (!name) return;
+    if (!weatherName) return; // עד שהיעד נטען אין שם סופי לשאול עליו
+    let cancelled = false;
 
-    getCurrentWeather(name).then((data) => {
+    getCurrentWeather(weatherName).then((data) => {
       if (!cancelled) setLiveWeather(data);
     });
 
     return () => { cancelled = true; };
-  }, [destination, destinationData?.nameEn, destinationData?.name]);
+  }, [weatherName]);
   
   /**
    * השלמת החלקים שהמאגר הסטטי אינו מכיל.
