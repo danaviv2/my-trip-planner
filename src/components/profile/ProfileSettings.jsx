@@ -9,6 +9,7 @@
 // טקסט קשיח, והשחרור חייב להיות בשני הכיוונים.
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import {
   Box, Grid, Card, CardContent, Typography, TextField, Button, MenuItem,
   Alert, Divider, Stack, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -19,6 +20,7 @@ import { useUserPreferences } from '../../contexts/UserPreferencesContext';
 import { useTripSave } from '../../contexts/TripSaveContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { deleteAccountAndData } from '../../services/accountService';
+import { resetTour } from '../../services/onboardingTourService';
 
 const TRIP_STYLES = ['balanced', 'culinary', 'adventure', 'culture', 'relax'];
 const CURRENCIES = ['ILS', 'USD', 'EUR', 'GBP'];
@@ -78,6 +80,19 @@ export default function ProfileSettings() {
   const [delWord, setDelWord] = useState('');
   const [delBusy, setDelBusy] = useState(false);
   const [delError, setDelError] = useState(null);
+  const [tourFailed, setTourFailed] = useState(false);
+  const navigate = useNavigate();
+
+  // ── המדריך רץ פעם אחת בחיי המשתמש ──
+  // מי שדילג בשנייה הראשונה, או בעל האפליקציה שרוצה לראות מה משתמש
+  // חדש רואה, לא יכול היה להגיע אליו שוב בלי למחוק אחסון בדפדפן.
+  // האיפוס מוחק רק את רשימת התחנות שנצפו — לא נתון אחר. המעבר לדף
+  // הבית קורה רק אם הכתיבה הצליחה: אחסון חסום היה מוביל לדף שבו לא
+  // קורה דבר, ונראה כמו כפתור שבור.
+  const replayTour = () => {
+    if (!resetTour()) { setTourFailed(true); return; }
+    navigate('/');
+  };
 
   // ── המספר בדיאלוג מגיע מהנתונים, ולא מהעיצוב ──
   // "כל 63 הנסיעות" הוא מספר שנשמע משכנע ואינו נכון לאיש. מספר
@@ -257,6 +272,22 @@ export default function ProfileSettings() {
                     {t('settings.security.logout')}
                   </Button>
                 </>
+              )}
+            </Stack>
+          </SettingsCard>
+        </Grid>
+
+        {/* ── המדריך ── */}
+        <Grid item xs={12} md={6}>
+          <SettingsCard title={t('settings.tour.title')} subtitle={t('settings.tour.sub')}>
+            <Stack spacing={1.5} alignItems="flex-start">
+              <Button variant="outlined" sx={TOUCH} onClick={replayTour}>
+                {t('settings.tour.replay')}
+              </Button>
+              {tourFailed && (
+                <Alert severity="error" sx={{ borderRadius: 2, alignSelf: 'stretch' }}>
+                  {t('settings.tour.failed')}
+                </Alert>
               )}
             </Stack>
           </SettingsCard>

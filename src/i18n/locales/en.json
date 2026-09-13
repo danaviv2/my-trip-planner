@@ -1088,6 +1088,12 @@
       "nothing": "You have no saved trips yet, but the account and its preferences will be deleted.",
       "scope_one": "Deleting your account permanently removes 1 trip, along with your bookings, journal and preferences.",
       "scope_other": "Deleting your account permanently removes all {{count}} of your trips, along with your bookings, journal and preferences."
+    },
+    "tour": {
+      "title": "Guided tour",
+      "sub": "Five short stops on the home page and in trip details. The timeline stop appears only once you have an imported booking.",
+      "replay": "Show the tour again",
+      "failed": "Your browser is blocking local storage, so the tour can't be restarted. Try leaving private browsing."
     }
   }
 }

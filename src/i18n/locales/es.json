@@ -1088,6 +1088,12 @@
       "nothing": "Aún no tienes viajes guardados, pero se eliminará la cuenta y sus preferencias.",
       "scope_one": "Eliminar la cuenta borra para siempre 1 viaje, junto con tus reservas, diario y preferencias.",
       "scope_other": "Eliminar la cuenta borra para siempre tus {{count}} viajes, junto con reservas, diario y preferencias."
+    },
+    "tour": {
+      "title": "Guía",
+      "sub": "Cinco paradas breves en la página de inicio y en los detalles del viaje. La parada de la línea de tiempo solo aparece cuando ya hay una reserva importada.",
+      "replay": "Ver la guía de nuevo",
+      "failed": "Tu navegador bloquea el almacenamiento local, así que no se puede reiniciar la guía. Prueba a salir de la navegación privada."
     }
   }
 }

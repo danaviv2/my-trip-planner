@@ -1088,6 +1088,12 @@
       "nothing": "Vous n’avez pas encore de voyages, mais le compte et ses préférences seront supprimés.",
       "scope_one": "Supprimer le compte efface définitivement 1 voyage, ainsi que vos réservations, votre journal et vos préférences.",
       "scope_other": "Supprimer le compte efface définitivement vos {{count}} voyages, ainsi que vos réservations, votre journal et vos préférences."
+    },
+    "tour": {
+      "title": "Visite guidée",
+      "sub": "Cinq courtes étapes sur la page d’accueil et dans les détails du voyage. L’étape de la chronologie n’apparaît qu’une fois une réservation importée.",
+      "replay": "Revoir la visite guidée",
+      "failed": "Votre navigateur bloque le stockage local, la visite ne peut donc pas être relancée. Essayez de quitter la navigation privée."
     }
   }
 }

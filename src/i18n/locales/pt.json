@@ -1088,6 +1088,12 @@
       "nothing": "Ainda não tem viagens, mas a conta e as preferências serão eliminadas.",
       "scope_one": "Eliminar a conta apaga definitivamente 1 viagem, com as reservas, o diário e as preferências.",
       "scope_other": "Eliminar a conta apaga definitivamente as suas {{count}} viagens, com as reservas, o diário e as preferências."
+    },
+    "tour": {
+      "title": "Tour guiado",
+      "sub": "Cinco paradas curtas na página inicial e nos detalhes da viagem. A parada da linha do tempo só aparece quando já existe uma reserva importada.",
+      "replay": "Ver o tour novamente",
+      "failed": "Seu navegador está bloqueando o armazenamento local, então não é possível reiniciar o tour. Tente sair da navegação privada."
     }
   }
 }
