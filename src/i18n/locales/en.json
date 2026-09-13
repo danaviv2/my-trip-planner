@@ -212,7 +212,9 @@
     "err_no_room": "No room found. Create a new room.",
     "err_select": "Please select at least one destination",
     "vote_saved": "Your vote has been saved! 🎉",
-    "link_copied": "Link copied! Share with friends 🔗"
+    "link_copied": "Link copied! Share with friends 🔗",
+    "no_votes_title": "No one has voted yet",
+    "no_votes_subtitle": "Send your friends the link, or the room code {{code}}. Results will appear here after the first vote."
   },
   "advancedSearch": {
     "title": "🔍 Advanced Search",
@@ -275,7 +277,16 @@
   },
   "statistics": {
     "title": "📊 Reports & Statistics",
-    "subtitle": "In-depth analysis of your trip history, interactive charts and personal recommendations"
+    "subtitle": "In-depth analysis of your trip history, interactive charts and personal recommendations",
+    "none_title": "Nothing to show yet",
+    "none_subtitle": "Reports are built from your saved trips: days, costs and destinations. Save your first trip and the charts will fill in here.",
+    "none_btn": "Plan a trip",
+    "incomplete_title": "Days or cost are missing",
+    "incomplete_subtitle": "Saved trips: {{count}}. None of them has a number of days or a cost yet, and without those there is nothing to calculate.",
+    "incomplete_btn": "Go to my trips",
+    "error_title": "We couldn't calculate your statistics",
+    "error_subtitle": "Something went wrong while loading. Your trips are safe. Please try again.",
+    "retry": "Try again"
   },
   "travelInfo": {
     "title": "Your Travel Details",
@@ -692,7 +703,10 @@
     "delete": "Delete",
     "noLogs": "No saved trip logs",
     "openTrip": "Open Trip",
-    "days": "days"
+    "days": "days",
+    "bookings_none": "No bookings here yet. Paste a booking confirmation email using the button above, and we will pick out flights, hotels and cars.",
+    "bookings_unmatched": "You have {{count}} imported bookings, but none of them belongs to {{dest}}.",
+    "bookings_unmatched_nodest": "You have {{count}} imported bookings. Choose a destination to see the ones that belong to it."
   },
   "airportModal": {
     "invalidCode": "Invalid airport code",

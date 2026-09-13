@@ -211,6 +211,9 @@ export default function RollingTripPage() {
         err.message === 'NO_API_KEY'  ? 'מפתח Gemini API חסר' :
         err.message === 'RATE_LIMIT'  ? 'חרגת ממכסת בקשות AI. נסה שוב בעוד דקה.' :
         err.message === 'TIMEOUT'     ? 'הבקשה פגה — נסה שוב' :
+        // "לא בדקנו" ולא "אין כאן": תשובה ריקה היא כשל של ה-AI, לא מסלול
+        // בלי עצירות, ולכן הניסוח מסתיים בהזמנה לנסות שוב.
+        err.message === 'EMPTY_ROUTE' ? `לא הצלחנו למצוא עצירות בין ${startPoint.trim()} ל-${endPoint.trim()}. בדוק את שמות המקומות ונסה שוב.` :
         'שגיאה בחיבור ל-AI. בדוק אינטרנט ונסה שוב.'
       );
       setActiveStep(0);

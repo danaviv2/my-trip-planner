@@ -36,7 +36,9 @@ export const discoverRouteStops = async (start, end, waypoints = [], preferences
 
   const cacheKey = `${routeStr}_${pace}_${interests.join(',')}`.toLowerCase().replace(/\s+/g, '_');
   const cached = getCached(cacheKey);
-  if (cached) { console.log('📦 טוען עצירות מסלול מהמטמון'); return cached; }
+  // מערך ריק במטמון הוא שארית מלפני השומר שלמטה, לא תוצאה. `[]` הוא
+  // truthy, ולכן בלי הבדיקה הזו הוא היה מוגש שוב עד שיפוג.
+  if (Array.isArray(cached) && cached.length) { console.log('📦 טוען עצירות מסלול מהמטמון'); return cached; }
 
   const paceLabel = pace === 'slow' ? 'relaxed (prefer fewer, deeper experiences)'
     : pace === 'fast' ? 'fast-paced (many stops, efficient)'
@@ -124,6 +126,14 @@ Rules:
     let parsed;
     try { parsed = JSON.parse(cleaned); }
     catch { parsed = JSON.parse(jsonrepair(cleaned)); }
+
+    // תשובה שאינה רשימת עצירות היא כשל, לא "אין עצירות בדרך". הפרומפט
+    // דורש את נקודת המוצא והיעד כעצירות, כך שמסלול אמיתי אינו ריק לעולם.
+    // לפני השומר, `[]` נשמר במטמון ל-24 שעות ושלב 3 הציג "0 ימים · 0
+    // עצירות" עם כפתור נעול — כשל שנראה כהצלחה, בלי שגיאה ובלי דרך
+    // להבדיל. אותו תיקון כמו ב-`aiHotelService` (f3bbecb).
+    if (Array.isArray(parsed)) parsed = parsed.filter((s) => s && s.name);
+    if (!Array.isArray(parsed) || !parsed.length) throw new Error('EMPTY_ROUTE');
 
     setCache(cacheKey, parsed);
     console.log(`✅ התגלו ${parsed.length} עצירות לאורך המסלול`);

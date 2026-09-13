@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import LottieArt from '../common/LottieArt';
 import { useTripSave } from '../../contexts/TripSaveContext';
 import { useBookings } from '../../contexts/BookingsContext';
 import { tripCost, formatTotals } from '../../services/tripCostService';
@@ -17,7 +20,8 @@ import {
   TableHead,
   TableRow,
   Chip,
-  Alert
+  Alert,
+  Button
 } from '@mui/material';
 import {
   TrendingUp as TrendingIcon,
@@ -61,6 +65,14 @@ const StatisticsPanel = () => {
   const { trips: importedTrips } = useBookings();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  // למה אין סטטיסטיקה — שלושה מצבים שהמסך הציג עד כה כמשפט אחד:
+  // 'none' אין טיולים שמורים; 'incomplete' יש, אך לאף אחד אין ימים או
+  // עלות, ולכן הם מסוננים; 'error' החישוב נכשל. "שמור טיול ראשון" היה
+  // שגוי בשני האחרונים — למשתמש כבר יש טיולים, או שלא בדקנו בכלל.
+  const [emptyReason, setEmptyReason] = useState('none');
+  const [savedCount, setSavedCount] = useState(0);
+  const { t } = useTranslation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log('📊 טוען סטטיסטיקות...');
@@ -84,7 +96,9 @@ const StatisticsPanel = () => {
         }))
         .filter((t) => t.days > 0 || t.cost > 0);
 
+      setSavedCount((savedTrips || []).length);
       if (!trips.length) {
+        setEmptyReason((savedTrips || []).length ? 'incomplete' : 'none');
         setStats(null);
         setLoading(false);
         return;
@@ -138,6 +152,7 @@ const StatisticsPanel = () => {
       });
     } catch (error) {
       console.error('שגיאה בטעינת סטטיסטיקות:', error);
+      setEmptyReason('error');
       setStats(null);
     } finally {
       setLoading(false);
@@ -154,14 +169,24 @@ const StatisticsPanel = () => {
   }
 
   if (!stats) {
+    const copy = {
+      none: { btn: t('statistics.none_btn'), go: () => navigate('/trip-planner') },
+      incomplete: { btn: t('statistics.incomplete_btn'), go: () => navigate('/my-trips') },
+      error: { btn: t('statistics.retry'), go: loadStatistics },
+    }[emptyReason];
     return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>
-          אין עדיין נתונים להצגה
+      <Box sx={{ py: 6, textAlign: 'center' }}>
+        {/* בכשל אין אנימציה: קישוט עליז מעל "לא הצלחנו" סותר את ההודעה. */}
+        {emptyReason !== 'error' && <LottieArt name="map-line" height={160} sx={{ mb: 1 }} />}
+        <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
+          {t(`statistics.${emptyReason}_title`)}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          הסטטיסטיקה מחושבת מהטיולים השמורים שלך. שמור טיול ראשון והוא יופיע כאן.
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 480, mx: 'auto' }}>
+          {t(`statistics.${emptyReason}_subtitle`, { count: savedCount })}
         </Typography>
+        <Button variant="contained" size="large" onClick={copy.go} sx={{ px: 4 }}>
+          {copy.btn}
+        </Button>
       </Box>
     );
   }

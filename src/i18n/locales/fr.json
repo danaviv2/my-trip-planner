@@ -212,7 +212,9 @@
     "err_no_room": "Aucune salle trouvée. Créez une nouvelle salle.",
     "err_select": "Veuillez sélectionner au moins une destination",
     "vote_saved": "Votre vote a été enregistré ! 🎉",
-    "link_copied": "Lien copié ! Partagez avec vos amis 🔗"
+    "link_copied": "Lien copié ! Partagez avec vos amis 🔗",
+    "no_votes_title": "Personne n’a encore voté",
+    "no_votes_subtitle": "Envoyez le lien à vos amis, ou le code de salle {{code}}. Les résultats apparaîtront ici après le premier vote."
   },
   "advancedSearch": {
     "title": "🔍 Recherche avancée",
@@ -275,7 +277,16 @@
   },
   "statistics": {
     "title": "📊 Rapports et statistiques",
-    "subtitle": "Analyse approfondie de votre historique de voyages, graphiques interactifs et recommandations personnelles"
+    "subtitle": "Analyse approfondie de votre historique de voyages, graphiques interactifs et recommandations personnelles",
+    "none_title": "Rien à afficher pour le moment",
+    "none_subtitle": "Les rapports sont calculés à partir de vos voyages enregistrés : jours, coûts et destinations. Enregistrez un premier voyage et les graphiques apparaîtront ici.",
+    "none_btn": "Planifier un voyage",
+    "incomplete_title": "Il manque les jours ou le coût",
+    "incomplete_subtitle": "Voyages enregistrés : {{count}}. Aucun n’indique encore de nombre de jours ni de coût, et sans cela il n’y a rien à calculer.",
+    "incomplete_btn": "Voir mes voyages",
+    "error_title": "Impossible de calculer les statistiques",
+    "error_subtitle": "Un problème est survenu pendant le chargement. Vos voyages ne sont pas affectés. Réessayez.",
+    "retry": "Réessayer"
   },
   "travelInfo": {
     "title": "Vos informations de voyage",
@@ -692,7 +703,10 @@
     "delete": "Supprimer",
     "noLogs": "Aucun journal de voyage sauvegardé",
     "openTrip": "Ouvrir le voyage",
-    "days": "jours"
+    "days": "jours",
+    "bookings_none": "Aucune réservation pour l’instant. Collez un e-mail de confirmation avec le bouton ci-dessus, et nous repérerons vols, hôtels et voitures.",
+    "bookings_unmatched": "Vous avez {{count}} réservations importées, mais aucune ne concerne {{dest}}.",
+    "bookings_unmatched_nodest": "Vous avez {{count}} réservations importées. Choisissez une destination pour voir celles qui la concernent."
   },
   "airportModal": {
     "invalidCode": "Code d'aéroport invalide",

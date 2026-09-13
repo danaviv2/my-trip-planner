@@ -531,9 +531,14 @@ const TripPlannerPage = () => {
                   borderRadius: 2, p: 2, textAlign: 'center',
                 }}>
                   <Typography variant="body2" color="text.secondary">
+                    {/* שני מצבים שונים: אין הזמנות כלל, או שיש ואף אחת אינה ליעד
+                        הזה. הראשון מזמין לסנכרן; השני לא — סנכרון נוסף לא ישייך
+                        הזמנה ליעד אחר. */}
                     {syncedBookings.length > 0
-                      ? `יש לך ${syncedBookings.length} הזמנות מיובאות, אך אף אחת מהן אינה משויכת ל${plannerDestination || 'יעד הזה'}.`
-                      : 'לחץ על "סנכרן מ-Gmail" כדי לייבא הזמנות טיסה, מלון ורכב אוטומטית'}
+                      ? (plannerDestination
+                        ? t('tripPlanner.bookings_unmatched', { count: syncedBookings.length, dest: plannerDestination })
+                        : t('tripPlanner.bookings_unmatched_nodest', { count: syncedBookings.length }))
+                      : t('tripPlanner.bookings_none')}
                   </Typography>
                 </Box>
               ) : (

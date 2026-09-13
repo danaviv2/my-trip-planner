@@ -212,7 +212,9 @@
     "err_no_room": "Nenhuma sala encontrada. Crie uma nova sala.",
     "err_select": "Por favor, selecione pelo menos um destino",
     "vote_saved": "Seu voto foi salvo! 🎉",
-    "link_copied": "Link copiado! Compartilhe com seus amigos 🔗"
+    "link_copied": "Link copiado! Compartilhe com seus amigos 🔗",
+    "no_votes_title": "Ninguém votou ainda",
+    "no_votes_subtitle": "Envie o link aos seus amigos, ou o código da sala {{code}}. Os resultados aparecerão aqui após o primeiro voto."
   },
   "advancedSearch": {
     "title": "🔍 Pesquisa avançada",
@@ -275,7 +277,16 @@
   },
   "statistics": {
     "title": "📊 Relatórios e estatísticas",
-    "subtitle": "Análise detalhada do histórico de viagens, gráficos interativos e recomendações pessoais"
+    "subtitle": "Análise detalhada do histórico de viagens, gráficos interativos e recomendações pessoais",
+    "none_title": "Ainda não há nada para mostrar",
+    "none_subtitle": "Os relatórios são gerados a partir das suas viagens salvas: dias, custos e destinos. Salve sua primeira viagem e os gráficos aparecerão aqui.",
+    "none_btn": "Planejar uma viagem",
+    "incomplete_title": "Faltam dias ou custo",
+    "incomplete_subtitle": "Viagens salvas: {{count}}. Nenhuma tem ainda número de dias ou custo, e sem isso não há o que calcular.",
+    "incomplete_btn": "Ir para minhas viagens",
+    "error_title": "Não foi possível calcular as estatísticas",
+    "error_subtitle": "Algo deu errado durante o carregamento. Suas viagens estão seguras. Tente novamente.",
+    "retry": "Tentar novamente"
   },
   "travelInfo": {
     "title": "Seus detalhes de viagem",
@@ -692,7 +703,10 @@
     "delete": "Eliminar",
     "noLogs": "Nenhum diário de viagem salvo",
     "openTrip": "Abrir viagem",
-    "days": "dias"
+    "days": "dias",
+    "bookings_none": "Ainda não há reservas. Cole um e-mail de confirmação com o botão acima e identificaremos voos, hotéis e carros.",
+    "bookings_unmatched": "Você tem {{count}} reservas importadas, mas nenhuma pertence a {{dest}}.",
+    "bookings_unmatched_nodest": "Você tem {{count}} reservas importadas. Escolha um destino para ver as que pertencem a ele."
   },
   "airportModal": {
     "invalidCode": "Código de aeroporto inválido",

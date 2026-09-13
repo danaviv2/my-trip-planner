@@ -14,6 +14,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import LottieArt from '../components/common/LottieArt';
 import {
   createRoom, joinRoom, submitVote, subscribeRoom,
   tallyVotes, participantsOf,
@@ -438,13 +439,30 @@ export default function GroupTripPage() {
               </Box>
             )}
 
-            {sortedResults.length === 0 && (
-              <Typography textAlign="center" color="text.secondary">
-                {t('groupTrip.no_votes')}
-              </Typography>
+            {/* בלי הצבעות, הכותרת "כל התוצאות" עמדה מעל רשימה ריקה — שני
+                אותות סותרים באותו מסך. המצב הריק מחליף את שניהם, ומוביל
+                לפעולה היחידה שתשנה אותו: להזמין את השאר. */}
+            {sortedResults.length === 0 ? (
+              <Box textAlign="center" py={3}>
+                <LottieArt name="map-line" height={140} sx={{ mb: 1 }} />
+                <Typography variant="h6" fontWeight={700} mb={1}>
+                  {t('groupTrip.no_votes_title')}
+                </Typography>
+                <Typography color="text.secondary" mb={3} sx={{ maxWidth: 420, mx: 'auto' }}>
+                  {t('groupTrip.no_votes_subtitle', { code: session.code })}
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<ContentCopyIcon />}
+                  onClick={copyLink}
+                  sx={{ borderRadius: 2, px: 4 }}
+                >
+                  {t('groupTrip.copy_link')}
+                </Button>
+              </Box>
+            ) : (
+              <Typography variant="h6" fontWeight="bold" mb={2}>{t('groupTrip.all_results')}</Typography>
             )}
-
-            <Typography variant="h6" fontWeight="bold" mb={2}>{t('groupTrip.all_results')}</Typography>
             {sortedResults.map(([dest, votes], i) => {
               const destObj = DESTINATION_OPTIONS.find(d => d.name === dest);
               const pct = Math.round((votes / maxVotes) * 100);
