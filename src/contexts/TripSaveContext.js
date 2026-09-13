@@ -6,6 +6,7 @@ import {
   deleteTrip as fdeleteTrip,
   loadDeletedTripIds as floadDeletedTripIds,
 } from '../services/firestoreService';
+import { migrateTripLogs } from '../services/tripLogMigrationService';
 
 const TripSaveContext = createContext();
 
@@ -28,6 +29,12 @@ export const TripSaveProvider = ({ children }) => {
 
   // כאשר משתמש מתחבר — טען טיולים מ-Firestore
   useEffect(() => {
+    // ── קודם ההעברה, אחר כך הקריאה ──
+    // הרשומות הישנות של "שמור מסלול" נכנסות ל-`savedTrips` המקומי לפני
+    // שהוא נקרא. משם הזרימה הקיימת עושה את השאר: אורח רואה אותן, ומשתמש
+    // מחובר מעלה אותן לענן כ"טיולים שטרם סונכרנו" (`onlyLocal` למטה).
+    const migration = migrateTripLogs();
+    if (!migration.ok) console.error('העברת tripLogs נכשלה — הרשומות נשארו במקומן');
     if (!user) {
       // טעינת טיולים מ-localStorage כ-fallback כאשר לא מחובר
       const local = localStorage.getItem('savedTrips');

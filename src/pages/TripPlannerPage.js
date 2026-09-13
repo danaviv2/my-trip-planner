@@ -52,8 +52,7 @@ const TripPlannerPage = () => {
   const [shareOpen, setShareOpen] = useState(false);
   const [mainTab, setMainTab] = useState('plan');
   const [servicesTab, setServicesTab] = useState(0);
-  const [tripLogs, setTripLogs] = useState(JSON.parse(localStorage.getItem('tripLogs')) || []);
-  // נשמר ב-localStorage כמו `syncedBookings` ו-`tripLogs` שלידו. עד
+  // נשמר ב-localStorage כמו `syncedBookings` שלידו. עד
   // 04.09.2026 זה היה `useState([])` בלבד, ולכן מלון שנוסף נעלם ברענון —
   // מה שהיה הופך את תיקון הכפתור להצלחה מדומה.
   const [accommodations, setAccommodations] = useState(() => {
@@ -272,60 +271,8 @@ const TripPlannerPage = () => {
     };
     const trip = await saveTripToList(tripData, lastSavedTripId || null);
     if (trip?.id) setLastSavedTripId(String(trip.id));
-    saveTripLog(lastSavedTripId);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
-  };
-
-  const saveTripLog = (existingLogId = null) => {
-    const dest = tripPlan?.destination || userPreferences.location;
-    const itinerary = tripPlan?.dailyItinerary || [];
-
-    const existingIndex = existingLogId
-      ? tripLogs.findIndex(l => String(l.id) === String(existingLogId))
-      : -1;
-
-    if (existingIndex >= 0) {
-      // עדכן רשומה קיימת
-      const updated = tripLogs.map((l, i) =>
-        i === existingIndex
-          ? { ...l, destination: dest, dailyItinerary: itinerary, date: new Date().toISOString() }
-          : l
-      );
-      setTripLogs(updated);
-      localStorage.setItem('tripLogs', JSON.stringify(updated));
-    } else {
-      // צור רשומה חדשה
-      // ── המזהה חייב להיות מספר תקין ──
-      // כאן נוצר `NaN`: הכפתור העביר את אירוע הלחיצה כ-`existingLogId`,
-      // הוא truthy, ו-`Number(PointerEvent)` הוא `NaN`. משם זה התגלגל:
-      // `deleteTripLog` סינן ב-`log.id !== id`, ו-`NaN !== NaN` הוא
-      // `true` — כלומר הרשומה **לעולם לא סוננה** וכפתור "מחק" לא עשה
-      // דבר, בשקט. גם `key={log.id ?? li}` קיבל `NaN` לכל השורות, כי
-      // `NaN` אינו nullish.
-      // השומר נשאר גם אחרי תיקון הקורא: מזהה פגום נכתב לאחסון ושורד
-      // רענונים, ואין ממנו דרך חזרה מהמסך.
-      const parsedId = Number(existingLogId);
-      const newLog = {
-        id: Number.isFinite(parsedId) && parsedId > 0 ? parsedId : Date.now(),
-        date: new Date().toISOString(),
-        destination: dest,
-        dailyItinerary: itinerary,
-      };
-      const updated = [...tripLogs, newLog];
-      setTripLogs(updated);
-      localStorage.setItem('tripLogs', JSON.stringify(updated));
-    }
-  };
-
-  const deleteTripLog = (id) => {
-    // השוואה כמחרוזות, כמו ב-`handleDelete` ביומן: מזהים מגיעים גם
-    // מפרמטרים וגם מהאחסון ולא תמיד באותו טיפוס. זה גם מנקה רשומות
-    // שנשמרו עם `id: null` לפני התיקון — `String(null)` שווה לעצמו,
-    // בעוד `NaN !== NaN` הותיר אותן תקועות על המסך לנצח.
-    const updatedLogs = tripLogs.filter(log => String(log.id) !== String(id));
-    setTripLogs(updatedLogs);
-    localStorage.setItem('tripLogs', JSON.stringify(updatedLogs));
   };
 
   // --- חישוב src המפה לפי הקשר ---
@@ -590,11 +537,13 @@ const TripPlannerPage = () => {
                   </Button>
                 </Grid>
                 <Grid item>
-                  {/* ── `() => saveTripLog()` ולא `saveTripLog` ──
-                      React מעביר את אירוע הלחיצה כארגומנט הראשון, כלומר
-                      `existingLogId` קיבל אובייקט אירוע. הוא truthy, ולכן
-                      `Number(existingLogId)` בשורה 273 החזיר `NaN`. ראה שם. */}
-                  <Button variant="contained" color="primary" onClick={() => saveTripLog()} startIcon={<i className="material-icons">save</i>}>
+                  {/* ── שמירה אחת, לא שתיים ──
+                      עד 13.09.2026 הכפתור הזה כתב ל-`tripLogs`, רשימה נפרדת
+                      בדפדפן בלבד, בעוד "שמור" למעלה כתב ל-`savedTrips` ולענן.
+                      טיול שנשמר כאן לא הגיע לענן, לא הופיע ביומן המסע ונעלם
+                      בסגירת חלון גלישה בסתר. עכשיו שני הכפתורים הם אותה פעולה;
+                      מה שכבר נכתב עובר ב-`tripLogMigrationService`. */}
+                  <Button variant="contained" color="primary" onClick={handleSaveTrip} disabled={!userPreferences.location} startIcon={<i className="material-icons">save</i>}>
                     {t('tripPlanner.saveRoute')}
                   </Button>
                 </Grid>
@@ -612,41 +561,9 @@ const TripPlannerPage = () => {
               }
             />
 
-            <Box mt={3} mb={3}>
-              <Typography variant="h6" sx={{ mb: 2 }}>{t('tripPlanner.tripLogs')}</Typography>
-              {tripLogs.length === 0 && (
-                <Typography variant="body2" color="text.secondary">{t('tripPlanner.noLogs')}</Typography>
-              )}
-              {tripLogs.map((log, li) => (
-                <Paper key={log.id ?? li} sx={{ p: 2, m: '5px 0', bgcolor: (t) => (t.palette.mode === 'dark' ? '#242424' : '#f9f9f9'), borderRadius: '8px', boxShadow: 1 }}>
-                  <Typography fontWeight={700}>{log.destination}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {t('tripPlanner.date')}: {new Date(log.date).toLocaleDateString()}
-                    {log.dailyItinerary?.length > 0 && ` · ${log.dailyItinerary.length} ${t('tripPlanner.days')}`}
-                    {(log.waypoints || []).length > 0 && ` · ${(log.waypoints || []).join(', ')}`}
-                  </Typography>
-                  <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {log.dailyItinerary?.length > 0 && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
-                        onClick={() => {
-                          updateTripPlan({ destination: log.destination, dailyItinerary: log.dailyItinerary });
-                          updateLocation(log.destination);
-                          setMainTab('plan');
-                        }}
-                      >
-                        {t('tripPlanner.openTrip')}
-                      </Button>
-                    )}
-                    <Button variant="outlined" color="error" size="small" onClick={() => deleteTripLog(log.id)}>
-                      {t('tripPlanner.delete')}
-                    </Button>
-                  </Box>
-                </Paper>
-              ))}
-            </Box>
+            {/* הסעיף "יומני טיול" הוסר בהחלטת המשתמש (13.09.2026): אחרי איחוד
+                השמירה הוא הציג את אותם טיולים כמו "הטיולים שלי", ושמו התבלבל
+                עם "יומן המסע" — שאינו קורא ממנו. */}
           </>
         )}
 

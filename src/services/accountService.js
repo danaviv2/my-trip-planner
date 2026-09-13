@@ -15,10 +15,26 @@ import { deleteUser } from 'firebase/auth';
 import { collection, getDocs, deleteDoc, doc, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase';
 
-// תת-האוספים שמתחת ל-`users/{uid}`. נגזר ממה שהקוד באמת כותב:
-// firestoreService (trips, bookings, dismissedBookings, deletedBookings)
-// ו-journalService (journal).
-const SUBCOLLECTIONS = ['trips', 'bookings', 'dismissedBookings', 'deletedBookings', 'journal'];
+// תת-האוספים שמתחת ל-`users/{uid}`.
+//
+// ── הרשימה הקודמת נגזרה מקריאה, ופספסה חמישה ──
+// נמדד 13.09.2026 בחשבון הבעלים: שבעה אוספים בענן, שלושה מהם מחוץ
+// לרשימה (`deletedTrips`, `cancelledBookings`, `pushSubscriptions`).
+// בקוד נמצאו עוד שניים: `deletedJournal`, ו-`flightAlerts` שהשרת
+// (`api/check-flights.mjs`) כותב בעצמו. מחיקה "מוצלחת" הייתה משאירה
+// מינויי התראות למכשיר של מי שמחק את חשבונו — והשרת עובר על
+// `users` ב-`listDocuments`, שמחזיר גם מסמך שורש שנמחק ויש לו ילדים.
+//
+// הדפדפן אינו יכול למנות תת-אוספים (`listCollections` קיים רק ב-Admin
+// SDK), ולכן זו רשימה מפורשת. `scripts/check-account-deletion.mjs`
+// משווה אותה לכל נתיב שהקוד כותב, כדי שאוסף חדש לא יישכח שוב.
+// `deletedBookings` אינו נכתב היום; נשאר בשביל נתונים מגרסאות קודמות.
+const SUBCOLLECTIONS = [
+  'trips', 'deletedTrips',
+  'bookings', 'dismissedBookings', 'cancelledBookings', 'deletedBookings',
+  'journal', 'deletedJournal',
+  'pushSubscriptions', 'flightAlerts',
+];
 
 // מפתחות מקומיים שנמחקים יחד עם החשבון. `appLanguage` נשאר בכוונה:
 // אחרי המחיקה המשתמש עדיין קורא את המסך, ואיפוס השפה לעברית באמצע
@@ -27,6 +43,9 @@ const LOCAL_KEYS = [
   'savedTrips', 'importedBookings', 'syncedBookings', 'accommodations',
   'journal_entries', 'userPreferences', 'currentTrip', 'favorites',
   'onboardingTour', 'onboardingMuted',
+  // הרשימה הישנה של "שמור מסלול". אמורה להיעלם בהעברה, אבל העברה שנכשלה
+  // משאירה אותה — ומחיקת חשבון לא יכולה להסתמך על כך שהצליחה.
+  'tripLogs',
 ];
 
 const deleteCollection = async (uid, name) => {

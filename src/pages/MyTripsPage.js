@@ -134,28 +134,17 @@ const MyTripsPage = () => {
   const navigate = useNavigate();
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [shareTarget, setShareTarget] = useState(null);
-  const [tripLogs, setTripLogs] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('tripLogs') || '[]'); } catch { return []; }
-  });
-
-  // מיזוג savedTrips + tripLogs (ללא כפילויות)
-  const savedIds = new Set(savedTrips.map(t => String(t.id)));
-  const logsNotInSaved = tripLogs.filter(l => !savedIds.has(String(l.id)));
-  const allTrips = [...savedTrips, ...logsNotInSaved].sort((a, b) =>
+  // רשימה אחת. עד 13.09.2026 המסך מיזג כאן גם את `tripLogs`, ולכן הציג
+  // טיולים שהיומן והסטטיסטיקה לא ראו — ואת אותו טיול פעמיים או שלוש,
+  // כי "שמור" כתב לשתי הרשימות במזהים שונים. הרשומות הישנות עוברות
+  // ל-`savedTrips` ב-`tripLogMigrationService`, בטעינת `TripSaveContext`.
+  const allTrips = [...savedTrips].sort((a, b) =>
     new Date(b.savedAt || b.date || 0) - new Date(a.savedAt || a.date || 0)
   );
 
   const handleDeleteConfirm = () => {
     if (deleteTarget === null) return;
-    // מחק מ-savedTrips אם שם
-    if (savedIds.has(String(deleteTarget))) {
-      deleteTrip(deleteTarget);
-    } else {
-      // מחק מ-tripLogs
-      const updated = tripLogs.filter(l => l.id !== deleteTarget);
-      setTripLogs(updated);
-      localStorage.setItem('tripLogs', JSON.stringify(updated));
-    }
+    deleteTrip(deleteTarget);
     setDeleteTarget(null);
   };
 
