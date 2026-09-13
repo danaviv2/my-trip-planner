@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { useAIChat } from '../../contexts/AIChatContext';
 import { streamOpenAI, getErrorMessage } from '../../services/openaiService';
 
+import { noflip } from '../../utils/noflip';
 const SYSTEM_PROMPT = `אתה "טריפי" — עוזר נסיעות חכם ואמפתי לישראלים.
 תענה בעברית בלבד, בצורה קצרה (עד 200 מילה), ידידותית ומעשית.
 אם שואלים על יעד ספציפי — תן 3-4 עצות בולטות + מחיר משוער.
@@ -58,8 +59,8 @@ function ChatBubble({ message }) {
             whiteSpace: 'pre-wrap',
             lineHeight: 1.65,
             fontSize: '0.88rem',
-            direction: 'rtl',
-            textAlign: 'right'
+            direction: noflip('rtl'),
+            textAlign: noflip('right')
           }}
         >
           {message.content}
@@ -255,7 +256,7 @@ export default function TravelAIChat() {
         </Box>
 
         {/* Messages Area */}
-        <Box sx={{ flex: 1, overflowY: 'auto', p: 2, direction: 'rtl' }}>
+        <Box sx={{ flex: 1, overflowY: 'auto', p: 2, direction: noflip('rtl') }}>
           {messages.map((msg, i) => (
             <ChatBubble key={i} message={msg} />
           ))}
@@ -288,7 +289,7 @@ export default function TravelAIChat() {
         <Divider />
 
         {/* Input */}
-        <Box sx={{ p: 1.5, flexShrink: 0, direction: 'rtl' }}>
+        <Box sx={{ p: 1.5, flexShrink: 0, direction: noflip('rtl') }}>
           {error && (
             <Typography variant="caption" color="error" display="block" mb={0.5} textAlign="center">
               {error}
@@ -313,7 +314,7 @@ export default function TravelAIChat() {
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 3,
-                  direction: 'rtl',
+                  direction: noflip('rtl'),
                   '&.Mui-focused fieldset': { borderColor: '#667eea' }
                 }
               }}

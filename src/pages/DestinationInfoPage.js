@@ -71,6 +71,7 @@ import PlaceImage from '../components/destination-info/PlaceImage';
 import { getPlaceMedia } from '../services/placeMediaService';
 import { getCurrentWeather } from '../services/openMeteoService';
 
+import { noflip } from '../utils/noflip';
 /* ── רכיבי משנה ברמת המודול, 08.09.2026 ──
    חמשת אלה הוגדרו בתוך `DestinationInfoPage`. בכל רנדר נוצרה זהות רכיב
    חדשה, ו-React פירק ובנה מחדש את כל תת-העץ שלהם: לחיצה על הלב — שהיא
@@ -221,7 +222,7 @@ const RestaurantCard = ({ restaurant, cityName, cityEn, country }) => {
       boxShadow: '0 12px 25px rgba(0,0,0,0.1)'
     }
   }}>
-    <CardContent sx={{ textAlign: 'right', direction: 'rtl' }}>
+    <CardContent sx={{ textAlign: noflip('right'), direction: noflip('rtl') }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
         <Typography variant="h6" component="h3" fontWeight="600">
           {restaurant.name}
@@ -1652,8 +1653,8 @@ const DestinationInfoPage = () => {
               p: { xs: 3, md: 6 },
               background: 'linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0))',
               color: 'white',
-              textAlign: 'right',
-              direction: 'rtl'
+              textAlign: noflip('right'),
+              direction: noflip('rtl')
             }}
           >
             <Container maxWidth="lg">
@@ -1728,7 +1729,7 @@ const DestinationInfoPage = () => {
               flexWrap: 'wrap',
               gap: { xs: 2, md: 3 },
               justifyContent: 'space-around',
-              direction: 'rtl'
+              direction: noflip('rtl')
             }}
           >
             {/* מזג אוויר נוכחי */}
@@ -1883,49 +1884,49 @@ const DestinationInfoPage = () => {
               label={t('destInfo.tab_general')}
               icon={<LanguageIcon />}
               iconPosition="start"
-              sx={{ direction: 'rtl' }}
+              sx={{ direction: noflip('rtl') }}
             />
             <Tab
               label={t('destInfo.tab_attractions')}
               icon={<AttractionsIcon />}
               iconPosition="start"
-              sx={{ direction: 'rtl' }}
+              sx={{ direction: noflip('rtl') }}
             />
             <Tab
               label={t('destInfo.tab_food')}
               icon={<RestaurantIcon />}
               iconPosition="start"
-              sx={{ direction: 'rtl' }}
+              sx={{ direction: noflip('rtl') }}
             />
             <Tab
               label={t('destInfo.tab_transport')}
               icon={<TransportIcon />}
               iconPosition="start"
-              sx={{ direction: 'rtl' }}
+              sx={{ direction: noflip('rtl') }}
             />
             <Tab
               label={t('destInfo.tab_tips')}
               icon={<TipsIcon />}
               iconPosition="start"
-              sx={{ direction: 'rtl' }}
+              sx={{ direction: noflip('rtl') }}
             />
             <Tab
               label={t('destInfo.tab_itinerary')}
               icon={<ItineraryIcon />}
               iconPosition="start"
-              sx={{ direction: 'rtl' }}
+              sx={{ direction: noflip('rtl') }}
             />
             <Tab
               label={t('destInfo.tab_budget')}
               icon={<BudgetIcon />}
               iconPosition="start"
-              sx={{ direction: 'rtl' }}
+              sx={{ direction: noflip('rtl') }}
             />
             <Tab
               label={t('destInfo.tab_practical')}
               icon={<PracticalIcon />}
               iconPosition="start"
-              sx={{ direction: 'rtl' }}
+              sx={{ direction: noflip('rtl') }}
             />
           </Tabs>
           
@@ -1939,7 +1940,7 @@ const DestinationInfoPage = () => {
               בעברית הבאג בלתי נראה, כי הכל יורש `rtl` מהמסמך — ולכן
               הוא שרד. חמש ההצהרות הכפולות הוסרו: שני מקומות שמחשבים
               את אותה עובדה סוטים זה מזה בשינוי הבא, וכך הוא נולד. */}
-          <Box sx={{ p: 3, direction: 'rtl' }}>
+          <Box sx={{ p: 3, direction: noflip('rtl') }}>
             {/* תוכן לשונית מידע כללי */}
             {activeTab === 0 && (
               <Box>
@@ -3083,7 +3084,7 @@ const DestinationInfoPage = () => {
         {/* יעדים קרובים */}
         {destinationData.nearbyDestinations && destinationData.nearbyDestinations.length > 0 && (
           <Box sx={{ mb: 6 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, direction: 'rtl' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, direction: noflip('rtl') }}>
               <Typography variant="h5" fontWeight="bold">
                 {t('destInfo.nearby')}
               </Typography>
@@ -3161,8 +3162,8 @@ const DestinationInfoPage = () => {
                         background: 'linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.3), transparent)',
                         transition: 'all 0.3s ease',
                         color: 'white',
-                        textAlign: 'right',
-                        direction: 'rtl'
+                        textAlign: noflip('right'),
+                        direction: noflip('rtl')
                       }}
                     >
                       <Typography variant="h6" fontWeight="bold">
@@ -3209,7 +3210,7 @@ const DestinationInfoPage = () => {
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             color: 'white',
             textAlign: 'center',
-            direction: 'rtl'
+            direction: noflip('rtl')
           }}
         >
           <Typography variant="h5" fontWeight="bold" gutterBottom>

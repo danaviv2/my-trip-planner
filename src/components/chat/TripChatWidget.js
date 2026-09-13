@@ -24,6 +24,7 @@ import { useTripSave } from '../../contexts/TripSaveContext';
 import { geminiEndpoint } from '../../services/geminiClient';
 
 
+import { noflip } from '../../utils/noflip';
 const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
 
 const MAX_MESSAGES = 20;
@@ -156,8 +157,8 @@ function ChatBubble({ message }) {
             lineHeight: 1.6,
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
-            textAlign: 'right',
-            direction: 'rtl',
+            textAlign: noflip('right'),
+            direction: noflip('rtl'),
           }}
         >
           {message.text}
@@ -168,9 +169,9 @@ function ChatBubble({ message }) {
             opacity: 0.65,
             fontSize: '0.65rem',
             display: 'block',
-            textAlign: isUser ? 'left' : 'right',
+            textAlign: noflip(isUser ? 'left' : 'right'),
             mt: 0.4,
-            direction: 'ltr',
+            direction: noflip('ltr'),
           }}
         >
           {new Date(message.timestamp).toLocaleTimeString('he-IL', {
@@ -223,7 +224,7 @@ function TypingIndicator() {
         <CircularProgress size={14} thickness={5} sx={{ color: '#667eea' }} />
         <Typography
           variant="caption"
-          sx={{ color: '#667eea', fontWeight: 600, direction: 'rtl' }}
+          sx={{ color: '#667eea', fontWeight: 600, direction: noflip('rtl') }}
         >
           מקליד...
         </Typography>
@@ -405,13 +406,13 @@ export default function TripChatWidget() {
               <Box>
                 <Typography
                   variant="subtitle1"
-                  sx={{ fontWeight: 700, lineHeight: 1.2, direction: 'rtl' }}
+                  sx={{ fontWeight: 700, lineHeight: 1.2, direction: noflip('rtl') }}
                 >
                   🤖 עוזר הטיול שלך
                 </Typography>
                 <Typography
                   variant="caption"
-                  sx={{ opacity: 0.85, direction: 'rtl' }}
+                  sx={{ opacity: 0.85, direction: noflip('rtl') }}
                 >
                   {loading ? 'מקליד...' : 'מוכן לעזור ✨'}
                 </Typography>
@@ -462,7 +463,7 @@ export default function TripChatWidget() {
               >
                 <Typography
                   variant="caption"
-                  sx={{ color: '#c62828', direction: 'rtl' }}
+                  sx={{ color: '#c62828', direction: noflip('rtl') }}
                 >
                   ⚠️ {error}
                 </Typography>
@@ -481,8 +482,8 @@ export default function TripChatWidget() {
                   color: '#888',
                   display: 'block',
                   mb: 1,
-                  textAlign: 'right',
-                  direction: 'rtl',
+                  textAlign: noflip('right'),
+                  direction: noflip('rtl'),
                 }}
               >
                 שאל אותי:
@@ -506,7 +507,7 @@ export default function TripChatWidget() {
                       fontWeight: 600,
                       fontSize: '0.78rem',
                       cursor: 'pointer',
-                      direction: 'rtl',
+                      direction: noflip('rtl'),
                       '&:hover': {
                         bgcolor: 'rgba(102,126,234,0.08)',
                         borderColor: '#764ba2',
@@ -580,14 +581,14 @@ export default function TripChatWidget() {
               '& .MuiOutlinedInput-root': {
                 borderRadius: 3,
                 fontSize: '0.9rem',
-                direction: 'rtl',
+                direction: noflip('rtl'),
                 bgcolor: '#f8f8fc',
                 '& fieldset': { borderColor: '#e0e0f0' },
                 '&:hover fieldset': { borderColor: '#667eea' },
                 '&.Mui-focused fieldset': { borderColor: '#667eea' },
               },
               '& .MuiInputBase-input': {
-                textAlign: 'right',
+                textAlign: noflip('right'),
               },
             }}
           />

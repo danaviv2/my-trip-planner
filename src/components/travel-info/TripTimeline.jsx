@@ -12,6 +12,7 @@ import { buildTimeline, humanGap, timeBetween } from '../../services/tripTimelin
 import DayMiniMap, { groundPoints } from './DayMiniMap';
 import EventEditDialog from './EventEditDialog';
 
+import { noflip } from '../../utils/noflip';
 /**
  * הנסיעה כרצף אירועים לפי זמן.
  *
@@ -71,7 +72,7 @@ const EventRow = ({ ev, onDelete, onEdit, onMove, canUp, canDown, mapNumber }) =
   <Box sx={{ display: 'flex', gap: { xs: 0.75, sm: 1.5 }, alignItems: 'flex-start', mb: 0.5 }}>
     <Box
       sx={{
-        width: { xs: 38, sm: 46 }, pt: 1.5, textAlign: 'left', flexShrink: 0,
+        width: { xs: 38, sm: 46 }, pt: 1.5, textAlign: noflip('left'), flexShrink: 0,
         fontSize: ev.allDay ? '0.8rem' : '0.875rem',
         fontWeight: ev.allDay ? 500 : 600,
         color: ev.allDay ? 'text.disabled' : 'text.primary',

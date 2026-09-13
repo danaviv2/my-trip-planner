@@ -12,6 +12,7 @@ import {
   Button
 } from '@mui/material';
 
+import { noflip } from '../../utils/noflip';
 const AirportInfoModal = ({ open, onClose, airportCode }) => {
   const { t } = useTranslation();
   const [airportData, setAirportData] = useState(null);
@@ -112,8 +113,8 @@ const AirportInfoModal = ({ open, onClose, airportCode }) => {
         borderRadius: '12px',
         boxShadow: 24,
         p: 4,
-        textAlign: 'right',
-        direction: 'rtl',
+        textAlign: noflip('right'),
+        direction: noflip('rtl'),
         maxHeight: '90vh',
         overflow: 'auto'
       }}>

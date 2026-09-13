@@ -4,6 +4,7 @@ import { normalizeBooking } from '../../services/tripGroupingService';
 import { identifyReference, referenceConflict } from '../../services/referenceIdentityService';
 import { contradictions, crossContradictions } from '../../services/bookingConsistencyService';
 
+import { noflip } from '../../utils/noflip';
 /**
  * למה נסיעה מתחילה ונגמרת מתי שהיא נגמרת.
  *
@@ -78,7 +79,7 @@ const TripBoundsReport = ({ trips = [] }) => {
           component="pre"
           sx={{
             mt: 1, p: 1.25, bgcolor: '#f5f7fa', borderRadius: 2,
-            fontSize: '0.62rem', lineHeight: 1.55, direction: 'ltr', textAlign: 'left',
+            fontSize: '0.62rem', lineHeight: 1.55, direction: noflip('ltr'), textAlign: noflip('left'),
             overflowX: 'auto', whiteSpace: 'pre', userSelect: 'text',
           }}
         >

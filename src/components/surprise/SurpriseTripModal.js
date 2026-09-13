@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AIDestinationInsights from '../ai/AIDestinationInsights';
 
+import { noflip } from '../../utils/noflip';
 const DESTINATIONS = [
   {
     name: 'Bali', emoji: '🏖️', description: 'Tropical paradise with white beaches, ancient temples and amazing food',
@@ -171,7 +172,7 @@ export default function SurpriseTripModal({ open, onClose }) {
             {current.description}
           </Typography>
 
-          <Box sx={{ textAlign: 'left', mb: 2 }}>
+          <Box sx={{ textAlign: noflip('left'), mb: 2 }}>
             <Typography variant="subtitle1" fontWeight="bold" mb={1}>{t('surprise.days_plan')}</Typography>
             {current.itinerary.map((day, i) => (
               <Typography key={i} variant="body2" sx={{ opacity: 0.9, mb: 0.5 }}>

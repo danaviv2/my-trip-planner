@@ -82,7 +82,8 @@ const LoginPage = () => {
         maxWidth: 420,
         width: '100%',
         borderRadius: 3,
-        direction: currentLang.dir,
+        // בלי `direction`: הוא עובר בירושה מ-`<html dir>` שנגזר מהשפה.
+        // הצהרה מפורשת כאן הייתה נהפכת ל-ltr בעברית ב-stylis-plugin-rtl.
       }}>
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           <Typography variant="h5" fontWeight={700}>✈️ My Trip Planner</Typography>

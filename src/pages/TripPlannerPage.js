@@ -40,6 +40,7 @@ import { findDrivingRestrictions } from '../services/drivingRestrictionsService'
 import { findTicketConflicts } from '../services/ticketConflictService';
 import DeleteIcon from '@mui/icons-material/Delete';
 
+import { noflip } from '../utils/noflip';
 const TripPlannerPage = () => {
   const { userPreferences, updateLocation, updateDays, updateBudget, updateStartDate } = useUserPreferences();
   const { saveTripToList, savedTrips } = useTripSave();
@@ -506,7 +507,7 @@ const TripPlannerPage = () => {
                         <Typography variant="body2" fontWeight={700} noWrap>{bookingHeadline(b)}</Typography>
                         {/* dir="ltr" נדרש: טווח תאריכים לטיני בתוך פסקה בעברית
                             סודר מימין לשמאל, והוצג כאילו היציאה קודמת לכניסה. */}
-                        <Typography variant="caption" color="text.secondary" component="div" dir="ltr" sx={{ textAlign: 'right' }}>
+                        <Typography variant="caption" color="text.secondary" component="div" dir="ltr" sx={{ textAlign: noflip('right') }}>
                           {bookingSubline(b)}
                         </Typography>
                       </Box>

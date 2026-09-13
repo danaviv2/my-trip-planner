@@ -2,6 +2,7 @@
 import React, { Component } from 'react';
 import { Box, Typography, Button, Paper } from '@mui/material';
 
+import { noflip } from '../../utils/noflip';
 /**
  * ErrorBoundary - קומפוננט לתפיסת שגיאות בזמן ריצה
  * מציג הודעת שגיאה ידידותית למשתמש במקום קריסת האפליקציה
@@ -69,7 +70,7 @@ class ErrorBoundary extends Component {
             
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <Box sx={{ 
-                textAlign: 'left', 
+                textAlign: noflip('left'), 
                 p: 2, 
                 bgcolor: '#f5f5f5', 
                 borderRadius: '8px',

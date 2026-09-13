@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Button, Modal, Typography, TextField, Alert, Snackbar } from '@mui/material';
 
+import { noflip } from '../../utils/noflip';
 /**
  * כפתור הזמנת חבר לטיול.
  *
@@ -64,7 +65,7 @@ const InviteButton = ({ destination = '' }) => {
           sx={{
             position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
             width: { xs: '90%', sm: 440 }, bgcolor: 'background.paper',
-            boxShadow: 24, p: 3, borderRadius: '12px', direction: 'rtl', textAlign: 'right',
+            boxShadow: 24, p: 3, borderRadius: '12px', direction: noflip('rtl'), textAlign: noflip('right'),
           }}
           role="dialog"
           aria-label="חלון הזמנת חבר"
@@ -79,7 +80,7 @@ const InviteButton = ({ destination = '' }) => {
           <Box
             sx={{
               p: 1, mb: 2, bgcolor: 'action.hover', borderRadius: 1,
-              fontSize: '0.78rem', wordBreak: 'break-all', direction: 'ltr', textAlign: 'left',
+              fontSize: '0.78rem', wordBreak: 'break-all', direction: noflip('ltr'), textAlign: noflip('left'),
             }}
           >
             {inviteLink}
