@@ -11,3 +11,4 @@
 - [Empty state over tour](empty-state-over-tour.md) — למה המדריך לא מורחב לכל עמוד, ומה כן
 - [Lottie and asset weight](lottie-and-asset-weight.md) — השרת רשום בשם גנרי, וגודל מוצהר אינו הגודל האמיתי
 - [Reply in Hebrew](reply-in-hebrew.md) — תשובות למשתמש בעברית, גם כשההקשר באנגלית
+- [RTL noflip](rtl-noflip.md) — בעברית ה-CSS נהפך; ערך פיזי מכוון חייב noflip

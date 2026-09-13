@@ -358,6 +358,22 @@ Five failure patterns recur; check for them in any change:
    very thing that caused this. Cleared, the record stops contradicting its twin,
    the two merge, and each supplies the field the other lacks.
 
+### RTL: styles are authored left-to-right, and flipped in Hebrew
+
+In Hebrew, all Emotion CSS (`sx`, `styled`) passes through `stylis-plugin-rtl`
+(`ThemeWrapper`), which flips every left/right — margins, `left:`/`right:`,
+`translate`, `box-shadow`, and also `direction: rtl` → `ltr` and
+`text-align: right` → `left`. So write `mr` for "space after the icon" as in
+LTR, and MUI internals come out right.
+
+A value that is **physical on purpose** — content that is always Hebrew, a URL
+or email in LTR, a floating button placed in a specific corner — must be
+wrapped: `direction: noflip('rtl')`, `right: noflip('16px')` (a string with
+units; a bare number becomes invalid). Logical values (`textAlign: 'start'`)
+need nothing. Inline `style={{}}` and HTML strings bypass Emotion and are not
+flipped. Measured 13.09.2026: without `noflip`, the login Paper's own
+`direction` was flipped to `ltr` and the overlap it was meant to fix stayed.
+
 Backup files (`*.backup_*`, `*.bak2`, `*_old_backup.js`) sit next to live code in
 `src/pages`; they are dead. `src/bookingAPI.js` and
 `src/components/route-planner/RoutePlanner.js` contain known dead or broken code.
