@@ -1084,11 +1084,18 @@
       "cancel": "Ficar",
       "confirm": "Eliminar tudo",
       "deleting": "A eliminar…",
-      "needsRecentLogin": "Por segurança, inicie sessão novamente antes de eliminar.",
-      "failed": "A eliminação falhou e nada foi removido. Tente de novo.",
+      "failed": "A exclusão falhou e nada foi excluído. Tente novamente.",
       "nothing": "Ainda não tem viagens, mas a conta e as preferências serão eliminadas.",
       "scope_one": "Eliminar a conta apaga definitivamente 1 viagem, com as reservas, o diário e as preferências.",
-      "scope_other": "Eliminar a conta apaga definitivamente as suas {{count}} viagens, com as reservas, o diário e as preferências."
+      "scope_other": "Eliminar a conta apaga definitivamente as suas {{count}} viagens, com as reservas, o diário e as preferências.",
+      "passwordLabel": "Sua senha",
+      "passwordHelp": "Apenas para verificação. Conferida antes de qualquer exclusão.",
+      "googleHelp": "Uma janela do Google será aberta para confirmar sua identidade. Nada é excluído antes da sua confirmação.",
+      "wrongPassword": "Senha incorreta. Nada foi excluído.",
+      "needsPassword": "Digite sua senha para confirmar. Nada foi excluído.",
+      "reauthCancelled": "A janela de verificação foi fechada. Nada foi excluído.",
+      "partial": "Seus dados foram excluídos, mas a conta ainda existe. Toque novamente para concluir a exclusão.",
+      "partialScope": "Suas viagens, reservas e diário já foram excluídos. Resta apenas a conta."
     },
     "tour": {
       "title": "Tour guiado",

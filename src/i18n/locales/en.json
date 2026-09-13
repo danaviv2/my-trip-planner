@@ -1084,11 +1084,18 @@
       "cancel": "Stay",
       "confirm": "Delete everything",
       "deleting": "Deleting…",
-      "needsRecentLogin": "For security you must sign in again before deleting. Sign out, sign back in, and return here.",
-      "failed": "Deletion failed and nothing was removed. Try again.",
+      "failed": "Deletion failed and nothing was deleted. Please try again.",
       "nothing": "You have no saved trips yet, but the account and its preferences will be deleted.",
       "scope_one": "Deleting your account permanently removes 1 trip, along with your bookings, journal and preferences.",
-      "scope_other": "Deleting your account permanently removes all {{count}} of your trips, along with your bookings, journal and preferences."
+      "scope_other": "Deleting your account permanently removes all {{count}} of your trips, along with your bookings, journal and preferences.",
+      "passwordLabel": "Your password",
+      "passwordHelp": "For verification only. Checked before anything is deleted.",
+      "googleHelp": "A Google window will open to confirm it’s you. Nothing is deleted until you confirm.",
+      "wrongPassword": "Wrong password. Nothing was deleted.",
+      "needsPassword": "Enter your password to confirm. Nothing was deleted.",
+      "reauthCancelled": "The verification window was closed. Nothing was deleted.",
+      "partial": "Your data was deleted, but the account itself still exists. Press again to finish deleting it.",
+      "partialScope": "Your trips, bookings and journal are already deleted. Only the account itself remains."
     },
     "tour": {
       "title": "Guided tour",

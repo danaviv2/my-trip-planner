@@ -1084,11 +1084,18 @@
       "cancel": "Quedarme",
       "confirm": "Eliminar todo",
       "deleting": "Eliminando…",
-      "needsRecentLogin": "Por seguridad debes iniciar sesión de nuevo antes de eliminar.",
-      "failed": "La eliminación falló y no se borró nada. Reinténtalo.",
+      "failed": "El borrado falló y no se borró nada. Inténtalo de nuevo.",
       "nothing": "Aún no tienes viajes guardados, pero se eliminará la cuenta y sus preferencias.",
       "scope_one": "Eliminar la cuenta borra para siempre 1 viaje, junto con tus reservas, diario y preferencias.",
-      "scope_other": "Eliminar la cuenta borra para siempre tus {{count}} viajes, junto con reservas, diario y preferencias."
+      "scope_other": "Eliminar la cuenta borra para siempre tus {{count}} viajes, junto con reservas, diario y preferencias.",
+      "passwordLabel": "Tu contraseña",
+      "passwordHelp": "Solo para verificar. Se comprueba antes de borrar nada.",
+      "googleHelp": "Se abrirá una ventana de Google para confirmar tu identidad. No se borra nada hasta que confirmes.",
+      "wrongPassword": "Contraseña incorrecta. No se borró nada.",
+      "needsPassword": "Escribe tu contraseña para confirmar. No se borró nada.",
+      "reauthCancelled": "Se cerró la ventana de verificación. No se borró nada.",
+      "partial": "Tus datos se borraron, pero la cuenta todavía existe. Pulsa de nuevo para terminar de borrarla.",
+      "partialScope": "Tus viajes, reservas y diario ya se borraron. Solo queda la cuenta."
     },
     "tour": {
       "title": "Guía",

@@ -1084,11 +1084,18 @@
       "cancel": "Rester",
       "confirm": "Tout supprimer",
       "deleting": "Suppression…",
-      "needsRecentLogin": "Par sécurité, reconnectez-vous avant de supprimer.",
       "failed": "La suppression a échoué et rien n’a été supprimé. Réessayez.",
       "nothing": "Vous n’avez pas encore de voyages, mais le compte et ses préférences seront supprimés.",
       "scope_one": "Supprimer le compte efface définitivement 1 voyage, ainsi que vos réservations, votre journal et vos préférences.",
-      "scope_other": "Supprimer le compte efface définitivement vos {{count}} voyages, ainsi que vos réservations, votre journal et vos préférences."
+      "scope_other": "Supprimer le compte efface définitivement vos {{count}} voyages, ainsi que vos réservations, votre journal et vos préférences.",
+      "passwordLabel": "Votre mot de passe",
+      "passwordHelp": "Pour vérification uniquement. Vérifié avant toute suppression.",
+      "googleHelp": "Une fenêtre Google va s’ouvrir pour confirmer votre identité. Rien n’est supprimé avant votre confirmation.",
+      "wrongPassword": "Mot de passe incorrect. Rien n’a été supprimé.",
+      "needsPassword": "Saisissez votre mot de passe pour confirmer. Rien n’a été supprimé.",
+      "reauthCancelled": "La fenêtre de vérification a été fermée. Rien n’a été supprimé.",
+      "partial": "Vos données ont été supprimées, mais le compte existe encore. Appuyez à nouveau pour terminer la suppression.",
+      "partialScope": "Vos voyages, réservations et journal sont déjà supprimés. Il ne reste que le compte."
     },
     "tour": {
       "title": "Visite guidée",

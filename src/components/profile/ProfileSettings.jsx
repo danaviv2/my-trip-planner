@@ -19,7 +19,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useUserPreferences } from '../../contexts/UserPreferencesContext';
 import { useTripSave } from '../../contexts/TripSaveContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { deleteAccountAndData } from '../../services/accountService';
+import { deleteAccountAndData, signInMethod } from '../../services/accountService';
 import { resetTour } from '../../services/onboardingTourService';
 
 const TRIP_STYLES = ['balanced', 'culinary', 'adventure', 'culture', 'relax'];
@@ -80,6 +80,12 @@ export default function ProfileSettings() {
   const [delWord, setDelWord] = useState('');
   const [delBusy, setDelBusy] = useState(false);
   const [delError, setDelError] = useState(null);
+  const [delPassword, setDelPassword] = useState('');
+  // איך נפתח הסשן: סיסמה מבקשת שדה, Google פותח חלון. נקבע בפתיחת
+  // הדיאלוג ולא מ-`providerData`, שבחשבון הבעלים מכיל את שניהם.
+  const [delMethod, setDelMethod] = useState(null);
+  // אחרי מחיקה חלקית המספר בתיאור כבר אינו נכון — הנסיעות נמחקו.
+  const [delPartial, setDelPartial] = useState(false);
   const [tourFailed, setTourFailed] = useState(false);
   const navigate = useNavigate();
 
@@ -137,22 +143,40 @@ export default function ProfileSettings() {
   };
 
   const confirmWord = t('settings.danger.confirmWord');
-  const canDelete = delWord.trim().toLowerCase() === confirmWord.toLowerCase() && !delBusy;
+  const canDelete = delWord.trim().toLowerCase() === confirmWord.toLowerCase()
+    && !delBusy
+    && delMethod !== null
+    && (delMethod !== 'password' || delPassword.length > 0);
+
+  const openDelete = async () => {
+    setDelOpen(true);
+    setDelWord('');
+    setDelPassword('');
+    setDelError(null);
+    setDelMethod(await signInMethod(user));
+  };
 
   const handleDelete = async () => {
     setDelBusy(true);
     setDelError(null);
-    const res = await deleteAccountAndData(user);
+    const res = await deleteAccountAndData(user, { password: delPassword });
     setDelBusy(false);
     if (res.ok) { window.location.href = '/'; return; }
-    setDelError(
-      res.reason === 'recent-login'
-        ? t('settings.danger.needsRecentLogin')
-        : t('settings.danger.failed')
-    );
+    // ── ההודעה נגזרת ממה שקרה, ואומרת מה נמחק ──
+    // "המחיקה נכשלה ושום דבר לא נמחק" הוצג עד היום גם כשהנתונים כבר
+    // נמחקו. כאן כל ענף אומר את מצב הנתונים במפורש.
+    if (res.reason === 'partial') setDelPartial(true);
+    setDelError({
+      'wrong-password': t('settings.danger.wrongPassword'),
+      'needs-password': t('settings.danger.needsPassword'),
+      'reauth-cancelled': t('settings.danger.reauthCancelled'),
+      partial: t('settings.danger.partial'),
+    }[res.reason] || t('settings.danger.failed'));
   };
 
-  const scopeText = tripCount > 0
+  const scopeText = delPartial
+    ? t('settings.danger.partialScope')
+    : tripCount > 0
     ? t('settings.danger.scope', { count: tripCount })
     : t('settings.danger.nothing');
 
@@ -316,7 +340,7 @@ export default function ProfileSettings() {
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 {scopeText}
               </Typography>
-              <Button color="error" variant="outlined" sx={TOUCH} onClick={() => { setDelOpen(true); setDelWord(''); setDelError(null); }}>
+              <Button color="error" variant="outlined" sx={TOUCH} onClick={openDelete}>
                 {t('settings.danger.deleteBtn')}
               </Button>
             </SettingsCard>
@@ -345,6 +369,25 @@ export default function ProfileSettings() {
             label={confirmWord}
             disabled={delBusy}
           />
+          {delMethod === 'password' && (
+            <TextField
+              fullWidth
+              size="small"
+              type="password"
+              autoComplete="current-password"
+              value={delPassword}
+              onChange={(e) => setDelPassword(e.target.value)}
+              label={t('settings.danger.passwordLabel')}
+              helperText={t('settings.danger.passwordHelp')}
+              disabled={delBusy}
+              sx={{ mt: 2 }}
+            />
+          )}
+          {delMethod === 'google.com' && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              {t('settings.danger.googleHelp')}
+            </Typography>
+          )}
           {delError && <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>{delError}</Alert>}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

@@ -7,11 +7,20 @@
 // משאיר יתומים לנצח: אחרי `deleteUser` אין עוד `uid` מאומת, וכללי
 // `firestore.rules` חוסמים כתיבה לתת-האוסף של משתמש שאינו מחובר.
 //
-// ── למה זה לא נבדק מקצה לקצה ──
-// אימות אמיתי דורש מחיקת חשבון אמיתי, ואין דרך לבטל. מה שכן נבדק:
-// סדר הקריאות, הטיפול ב-requires-recent-login, וששום שלב אינו נבלע
-// בשקט. **אל תכריז שזה "עובד" לפני שמישהו מחק חשבון בדיקה אמיתי.**
-import { deleteUser } from 'firebase/auth';
+// ── אימות מחדש לפני כל מחיקה, לא אחרי ──
+// נבדק מקצה לקצה ב-13.09.2026 בחשבון בדיקה אמיתי. הניסיון הראשון
+// (התחברות מלפני שעה) מחק את כל הנתונים, ואז `deleteUser` זרק
+// `requires-recent-login`. הנתונים אבדו, החשבון נשאר, וההודעה אמרה
+// "צריך להתחבר מחדש לפני מחיקה" — משתמש שמתחרט באותו רגע היה חושב
+// שדבר לא נמחק. הסף של "התחברות טרייה" אינו מתועד ב-Firebase, ולכן
+// אין בדיקת זמן מקדימה: האימות נעשה **תמיד**, ומצב ביניים לא נוצר.
+import {
+  deleteUser,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
+  EmailAuthProvider,
+  GoogleAuthProvider,
+} from 'firebase/auth';
 import { collection, getDocs, deleteDoc, doc, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -66,15 +75,59 @@ const deleteCollection = async (uid, name) => {
 };
 
 /**
+ * באיזו דרך המשתמש התחבר בסשן הזה. `providerData` אינו התשובה: בחשבון
+ * הבעלים מקושרים גם Google וגם סיסמה, והוא מתחבר ב-Google — בקשת
+ * סיסמה שהוא אולי לא זוכר הייתה חוסמת אותו מלמחוק.
+ *
+ * @returns {Promise<'password'|'google.com'|string|null>}
+ */
+export const signInMethod = async (user) => {
+  if (!user) return null;
+  try {
+    const { signInProvider } = await user.getIdTokenResult();
+    return signInProvider || null;
+  } catch {
+    return null;
+  }
+};
+
+const REAUTH_CANCELLED = ['auth/popup-closed-by-user', 'auth/cancelled-popup-request', 'auth/user-cancelled'];
+const WRONG_PASSWORD = ['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'];
+
+/**
  * מוחק את כל נתוני המשתמש ואת חשבונו.
  *
  * @param {import('firebase/auth').User} user המשתמש המחובר
+ * @param {{password?: string}} opts סיסמה, כשהסשן נפתח בסיסמה
  * @returns {Promise<{ok: true, removed: number} | {ok: false, reason: string, detail?: string, removed?: number}>}
- *          `reason` הוא 'recent-login' או 'failed'. **אין זריקה** — הקורא
- *          מציג הודעה, ומצב שבו חלק נמחק וחלק לא חייב להיאמר במפורש.
+ *   `reason`:
+ *   - 'needs-password' / 'wrong-password' / 'reauth-cancelled' — **שום דבר לא נמחק**
+ *   - 'failed' עם `removed: 0` — שום דבר לא נמחק
+ *   - 'partial' — הנתונים (או חלקם) נמחקו והחשבון לא. חייב להיאמר במפורש.
+ *   **אין זריקה**: הקורא גוזר את ההודעה מהתוצאה.
  */
-export const deleteAccountAndData = async (user) => {
-  if (!user) return { ok: false, reason: 'failed', detail: 'no user' };
+export const deleteAccountAndData = async (user, { password } = {}) => {
+  if (!user) return { ok: false, reason: 'failed', detail: 'no user', removed: 0 };
+
+  // ── שלב 1: אימות. כשל כאן אינו נוגע בנתון אחד ──
+  try {
+    const method = await signInMethod(user);
+    if (method === 'password') {
+      if (!password) return { ok: false, reason: 'needs-password', removed: 0 };
+      await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+    } else if (method === 'google.com') {
+      await reauthenticateWithPopup(user, new GoogleAuthProvider());
+    } else {
+      // ספק שלא טופל כאן. עדיף לסרב מראש מאשר למחוק נתונים ולהיתקע
+      // על `deleteUser` — בדיוק המצב שהשינוי הזה נועד למנוע.
+      return { ok: false, reason: 'failed', detail: `unsupported provider: ${method}`, removed: 0 };
+    }
+  } catch (err) {
+    const code = err?.code || '';
+    if (WRONG_PASSWORD.includes(code)) return { ok: false, reason: 'wrong-password', removed: 0 };
+    if (REAUTH_CANCELLED.includes(code)) return { ok: false, reason: 'reauth-cancelled', removed: 0 };
+    return { ok: false, reason: 'failed', detail: String(err?.message || code || err), removed: 0 };
+  }
 
   let removed = 0;
   try {
@@ -84,20 +137,22 @@ export const deleteAccountAndData = async (user) => {
     // מסמך השורש עצמו, אם קיים
     try { await deleteDoc(doc(db, 'users', user.uid)); } catch { /* ייתכן שאינו קיים */ }
   } catch (err) {
-    // הנתונים נמחקו חלקית והחשבון עדיין חי. זה מצב שחייב להיאמר,
-    // ולא להיבלע — משתמש שיחשוב שנמחק הכול יופתע בהתחברות הבאה.
-    return { ok: false, reason: 'failed', detail: String(err?.message || err), removed };
+    // אוספים נמחקים לפי הסדר, ולכן כשל באמצע משאיר חלק. `removed` אומר
+    // כמה; אפס פירושו ששום דבר לא נמחק, וההודעה חייבת להבדיל.
+    return {
+      ok: false,
+      reason: removed > 0 ? 'partial' : 'failed',
+      detail: String(err?.message || err),
+      removed,
+    };
   }
 
   try {
     await deleteUser(user);
   } catch (err) {
-    // Firebase דורש התחברות טרייה לפעולות רגישות. זו אינה תקלה אלא
-    // דרישה, והניסוח למשתמש חייב להבדיל בין השתיים.
-    if (err?.code === 'auth/requires-recent-login') {
-      return { ok: false, reason: 'recent-login', removed };
-    }
-    return { ok: false, reason: 'failed', detail: String(err?.message || err), removed };
+    // שלב הנתונים הושלם — גם אם היו בו אפס מסמכים — והחשבון נשאר.
+    // אחרי אימות מוצלח זה לא אמור לקרות; אם קרה, זה מצב חלקי ונאמר כך.
+    return { ok: false, reason: 'partial', detail: String(err?.code || err?.message || err), removed };
   }
 
   for (const k of LOCAL_KEYS) {
