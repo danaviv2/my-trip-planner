@@ -478,7 +478,13 @@
     "file_instructions": "Sube una confirmación de reserva guardada del correo:",
     "gmail_success": "¡Conexión a Gmail exitosa! Ya puedes importar detalles.",
     "extract_success": "¡Detalles de vuelo y alquiler de auto encontrados y extraídos!",
-    "file_success": "¡Archivo leído con éxito!"
+    "file_success": "¡Archivo leído con éxito!",
+    "empty": {
+      "title": "Esta pantalla se llena sola",
+      "body": "Cada confirmación de vuelo, hotel o coche se convierte aquí en un único horario ordenado, sin escribir nada.",
+      "primary": "Escanear mi correo",
+      "secondary": "O añadir algo a mano"
+    }
   },
   "destInfo": {
     "tab_general": "Info general",

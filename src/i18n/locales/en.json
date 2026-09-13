@@ -478,7 +478,13 @@
     "file_instructions": "Upload a booking confirmation saved from your email:",
     "gmail_success": "Gmail connection successful! You can now import details.",
     "extract_success": "Flight and car rental details found and extracted!",
-    "file_success": "File read successfully!"
+    "file_success": "File read successfully!",
+    "empty": {
+      "title": "This screen fills itself",
+      "body": "Every flight, hotel or car confirmation in your inbox becomes one ordered schedule here — with no typing.",
+      "primary": "Scan my inbox",
+      "secondary": "Or add something by hand"
+    }
   },
   "destInfo": {
     "tab_general": "General Info",

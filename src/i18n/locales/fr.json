@@ -478,7 +478,13 @@
     "file_instructions": "Importez une confirmation enregistrée depuis votre e-mail :",
     "gmail_success": "Connexion Gmail réussie ! Vous pouvez maintenant importer des détails.",
     "extract_success": "Détails de vol et de location de voiture trouvés et extraits !",
-    "file_success": "Fichier lu avec succès !"
+    "file_success": "Fichier lu avec succès !",
+    "empty": {
+      "title": "Cet écran se remplit tout seul",
+      "body": "Chaque confirmation de vol, d'hôtel ou de voiture devient ici un planning unique et ordonné, sans rien saisir.",
+      "primary": "Analyser ma boîte",
+      "secondary": "Ou ajouter quelque chose à la main"
+    }
   },
   "destInfo": {
     "tab_general": "Infos générales",

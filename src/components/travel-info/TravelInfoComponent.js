@@ -8,6 +8,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
 import EmailImportModal from './EmailImportModal';
+import LottieArt from '../common/LottieArt';
 import { findConflicts } from '../../services/itineraryConflictService';
 import { findDrivingRestrictions } from '../../services/drivingRestrictionsService';
 import { useBookings } from '../../contexts/BookingsContext';
@@ -459,6 +460,54 @@ const TravelInfoComponent = () => {
       <FlightAlertsCard
         hasFlights={upcoming.some((t) => (t.bookings || []).some((b) => b.type === 'flight'))}
       />
+
+      {/* ── מצב ריק ──
+          ממצא #4 בסקירת 07.09.2026, ונמדד שוב ב-12.09: למשתמש חדש כל
+          הבלוקים מחזירים null, ונשארים כותרת, שלושה כפתורים וחותמת
+          גרסה. אין משפט שמסביר מה העמוד הזה עושה.
+          זה גם התיקון הנכון יותר ממדריך: מדריך נסגר בשנייה הראשונה
+          ומשאיר את המשתמש מול אותו מסך, והמצב הריק נשאר. */}
+      {upcoming.length === 0 && past.length === 0 && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2.5, md: 4 }, mb: 3, borderRadius: 3, textAlign: 'center',
+            border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper',
+          }}
+        >
+          <LottieArt name="flying-plane" height={150} sx={{ mb: 1 }} />
+          <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>
+            {t('travelInfoPage.empty.title')}
+          </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 2.5, maxWidth: 460, mx: 'auto', lineHeight: 1.7 }}
+          >
+            {t('travelInfoPage.empty.body')}
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<i className="material-icons">email</i>}
+            onClick={() => setEmailImportModalOpen(true)}
+            sx={{ minHeight: 44, fontWeight: 700 }}
+          >
+            {t('travelInfoPage.empty.primary')}
+          </Button>
+          <Typography
+            variant="caption"
+            component="button"
+            onClick={() => setAddOpen(true)}
+            sx={{
+              display: 'block', mx: 'auto', mt: 1.5, border: 0, background: 'none',
+              color: 'text.secondary', cursor: 'pointer', textDecoration: 'underline',
+              font: 'inherit', fontSize: '0.8rem', minHeight: 44,
+            }}
+          >
+            {t('travelInfoPage.empty.secondary')}
+          </Typography>
+        </Paper>
+      )}
 
       {/* טיולים שנגזרו מההזמנות שיובאו. אישורים שהגיעו בנפרד —
           טיסה, מלון ורכב — מתאחדים כאן לנסיעה אחת. */}

@@ -478,7 +478,13 @@
     "file_instructions": "Carregue uma confirmação guardada do seu e-mail:",
     "gmail_success": "Conexão com Gmail bem-sucedida! Agora você pode importar detalhes.",
     "extract_success": "Detalhes de voo e aluguel de carro encontrados e extraídos!",
-    "file_success": "Arquivo lido com sucesso!"
+    "file_success": "Arquivo lido com sucesso!",
+    "empty": {
+      "title": "Este ecrã enche-se sozinho",
+      "body": "Cada confirmação de voo, hotel ou carro torna-se aqui num horário único e ordenado, sem escrever nada.",
+      "primary": "Analisar a minha caixa",
+      "secondary": "Ou adicionar algo à mão"
+    }
   },
   "destInfo": {
     "tab_general": "Informações gerais",
