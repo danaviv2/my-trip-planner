@@ -8,3 +8,5 @@
 - [Pipeline is not the obvious function](pipeline-not-the-obvious-function.md) — שם משכנע אינו הוכחה שזה המסלול שרץ
 - [Bump parser version](bump-parser-version.md) — שינוי בפרומפט בלי העלאת הגרסה = סריקה שמחזירה אפס
 - [i18n decision pending](i18n-decision-pending.md) — שפת התוכן: עבודה מתוזמנת להשקה, ולמה לא לפני
+- [Empty state over tour](empty-state-over-tour.md) — למה המדריך לא מורחב לכל עמוד, ומה כן
+- [Lottie and asset weight](lottie-and-asset-weight.md) — השרת רשום בשם גנרי, וגודל מוצהר אינו הגודל האמיתי
