@@ -2215,7 +2215,7 @@ const DestinationInfoPage = () => {
                               sx={{
                                 position: 'absolute',
                                 top: 10,
-                                right: 10,
+                                right: noflip('10px'),
                                 backgroundColor: 'rgba(0,0,0,0.7)',
                                 borderRadius: '12px',
                                 px: 1,
@@ -3181,7 +3181,7 @@ const DestinationInfoPage = () => {
                       sx={{
                         position: 'absolute',
                         top: 10,
-                        right: 10,
+                        right: noflip('10px'),
                         px: 1,
                         py: 0.5,
                         backgroundColor: 'rgba(0,0,0,0.6)',

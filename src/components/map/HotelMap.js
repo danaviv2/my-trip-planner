@@ -4,6 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Box, Typography, Chip } from '@mui/material';
 
+import { noflip } from '../../utils/noflip';
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -82,7 +83,7 @@ const HotelMap = ({ hotels, destination }) => {
       {/* אגדת צבעים */}
       {markers.length > 0 && (
         <Box sx={{
-          position: 'absolute', bottom: 24, left: 8, zIndex: 1000,
+          position: 'absolute', bottom: 24, left: noflip('8px'), zIndex: 1000,
           bgcolor: 'rgba(255,255,255,0.95)', p: 1, borderRadius: 2, boxShadow: 2,
         }}>
           <Typography variant="caption" fontWeight={700} display="block" sx={{ mb: 0.5 }}>

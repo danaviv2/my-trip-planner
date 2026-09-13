@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { Box, Typography, Chip, Button } from '@mui/material';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
+import { noflip } from '../../utils/noflip';
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -413,7 +414,7 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
           הרעיון הגיע מ-`/trip-map`, מסך מוקאפ שנמחק: שם "לוויין" היה
           כפתור שלא עשה דבר מעל תצלום סטוק. כאן זו שכבת אריחים אמיתית. */}
       <Box sx={{
-        position: 'absolute', top: 10, left: 10, zIndex: 1000,
+        position: 'absolute', top: 10, left: noflip('10px'), zIndex: 1000,
         bgcolor: 'rgba(255,255,255,0.95)', borderRadius: 2, boxShadow: 2,
         display: 'flex', overflow: 'hidden',
       }}>
@@ -437,7 +438,7 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
       {/* כותרת המבט המלא */}
       {whole && groups.length > 0 && (
         <Box sx={{
-          position: 'absolute', top: 10, right: 10, zIndex: 1000,
+          position: 'absolute', top: 10, right: noflip('10px'), zIndex: 1000,
           // אותו תיקון כמו במקרא שמתחת: רקע קשיח בהיר מתחת ל-
           // `text.secondary`. נמדד 1.91 במצב כהה.
           bgcolor: (t) => (t.palette.mode === 'dark'
@@ -463,7 +464,7 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
       {/* כותרת יום */}
       {day && (
         <Box sx={{
-          position: 'absolute', top: 10, right: 10, zIndex: 1000,
+          position: 'absolute', top: 10, right: noflip('10px'), zIndex: 1000,
           // אותו תיקון כמו במקרא שמתחת: רקע קשיח בהיר מתחת ל-
           // `text.secondary`. נמדד 1.91 במצב כהה.
           bgcolor: (t) => (t.palette.mode === 'dark'
@@ -491,7 +492,7 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
           על הסיכה וזו האגדה. */}
       {!whole && markers.length > 0 && (
         <Box sx={{
-          position: 'absolute', bottom: 24, left: 8, zIndex: 1000,
+          position: 'absolute', bottom: 24, left: noflip('8px'), zIndex: 1000,
           // ── רקע המקרא הולך אחרי הערכה ──
           // היה `rgba(255,255,255,0.95)` קשיח, בזמן שה-`Typography`
           // שבתוכו אינו מגדיר `color` ולכן יורש `text.primary`.

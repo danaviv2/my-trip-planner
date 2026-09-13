@@ -31,6 +31,8 @@
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^7.18.3",
     "react-share": "4.4.1",
+    "stylis": "4.2.0",
+    "stylis-plugin-rtl": "2.1.1",
     "uuid": "9.0.1",
     "web-push": "^3.6.7",
     "which": "^6.0.0"

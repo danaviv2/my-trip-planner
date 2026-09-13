@@ -295,7 +295,7 @@ const ShareTripDialog = ({ open, onClose, trip = {}, shareUrl: shareUrlProp, lab
           <IconButton
             onClick={onClose}
             size="small"
-            sx={{ position: 'absolute', top: 12, right: 12 }}
+            sx={{ position: 'absolute', top: 12, right: noflip('12px') }}
           >
             <CloseIcon />
           </IconButton>

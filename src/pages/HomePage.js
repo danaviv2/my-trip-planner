@@ -24,6 +24,7 @@ import SurpriseTripModal from '../components/surprise/SurpriseTripModal';
 import VibeMatcher from '../components/vibe/VibeMatcher';
 import ShareTripDialog from '../components/shared/ShareTripDialog';
 
+import { noflip } from '../utils/noflip';
 const HomePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -597,7 +598,7 @@ const HomePage = () => {
                       aria-label={`${t('share.title')} — ${t(`cities.${dest.name}`)}`}
                       onClick={() => setShareTarget(dest.name)}
                       sx={{
-                        position: 'absolute', top: 2, right: 2,
+                        position: 'absolute', top: 2, right: noflip('2px'),
                         width: 44, height: 44, color: 'white',
                         textShadow: '0 1px 3px rgba(0,0,0,.6)',
                         '&:hover': { bgcolor: 'rgba(0,0,0,0.25)' },

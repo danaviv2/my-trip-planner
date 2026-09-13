@@ -36,6 +36,7 @@ import { analyzeRoute, formatDuration } from '../services/routeGeometryService';
 import { geminiEndpoint } from '../services/geminiClient';
 import bookingLinks from '../utils/bookingLinks';
 
+import { noflip } from '../utils/noflip';
 // ─── קבועים ────────────────────────────────────────────────────
 
 const PACE_OPTIONS = [
@@ -528,7 +529,7 @@ export default function RollingTripPage() {
                     position: 'absolute', inset: 0,
                     background: `linear-gradient(to bottom, transparent 40%, ${color}cc 100%)`,
                   }} />
-                  <Box sx={{ position: 'absolute', bottom: 8, right: 10, display: 'flex', gap: 1, alignItems: 'center' }}>
+                  <Box sx={{ position: 'absolute', bottom: 8, right: noflip('10px'), display: 'flex', gap: 1, alignItems: 'center' }}>
                     <Typography sx={{ color: 'white', fontWeight: 800, fontSize: 18, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
                       {stop.emoji} {stop.name}
                     </Typography>
@@ -538,7 +539,7 @@ export default function RollingTripPage() {
                   {/* מזג אוויר */}
                   {weather && (
                     <Box sx={{
-                      position: 'absolute', top: 8, left: 10,
+                      position: 'absolute', top: 8, left: noflip('10px'),
                       bgcolor: 'rgba(0,0,0,0.45)', borderRadius: 2, px: 1, py: 0.3,
                       display: 'flex', alignItems: 'center', gap: 0.5,
                     }}>
@@ -1041,7 +1042,7 @@ export default function RollingTripPage() {
       <Dialog open={phrasesOpen} onClose={() => setPhrasesOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle sx={{ background: 'linear-gradient(135deg,#43e97b,#38f9d7)', color: 'white', pb: 1 }}>
           🌍 ביטויים שימושיים — {phrasesStop?.name}
-          <IconButton onClick={() => setPhrasesOpen(false)} sx={{ position: 'absolute', right: 8, top: 8, color: 'white' }}>
+          <IconButton onClick={() => setPhrasesOpen(false)} sx={{ position: 'absolute', right: noflip('8px'), top: 8, color: 'white' }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>

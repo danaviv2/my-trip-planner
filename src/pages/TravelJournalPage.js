@@ -43,6 +43,7 @@ import {
 } from '../services/journalService';
 import { geminiEndpoint } from '../services/geminiClient';
 
+import { noflip } from '../utils/noflip';
 const MAX_PHOTOS = 5;
 
 // ─── Resize photo via canvas ──────────────────────────────────────────────────
@@ -903,7 +904,7 @@ ${summary}
           <Chip
             label={`${idx + 1} / ${reelEntries.length}`}
             size="small"
-            sx={{ position: 'absolute', top: 12, right: 12, bgcolor: 'rgba(0,0,0,0.5)', color: 'white', fontWeight: 700 }}
+            sx={{ position: 'absolute', top: 12, right: noflip('12px'), bgcolor: 'rgba(0,0,0,0.5)', color: 'white', fontWeight: 700 }}
           />
         </Box>
 
@@ -1520,7 +1521,7 @@ ${summary}
                       <Box component="img" src={src} alt={`תמונה ${i + 1}`}
                         sx={{ width: 80, height: 80, borderRadius: 1.5, objectFit: 'cover', display: 'block' }} />
                       <Box onClick={() => setCheckinPhotos(prev => prev.filter((_, j) => j !== i))}
-                        sx={{ position: 'absolute', top: -6, right: -6, width: 20, height: 20,
+                        sx={{ position: 'absolute', top: -6, right: noflip('-6px'), width: 20, height: 20,
                           bgcolor: 'error.main', borderRadius: '50%', cursor: 'pointer',
                           display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Typography fontSize="0.6rem" color="white" fontWeight={700} lineHeight={1}>✕</Typography>
@@ -1551,7 +1552,7 @@ ${summary}
       <Dialog open={reportOpen} onClose={() => setReportOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle sx={{ background: 'linear-gradient(135deg,#f7971e,#e74c3c)', color: 'white', pb: 1 }}>
           📊 דוח טיול — {selectedTrip?.destination || 'הטיול שלי'}
-          <IconButton onClick={() => setReportOpen(false)} sx={{ position: 'absolute', right: 8, top: 8, color: 'white' }}>
+          <IconButton onClick={() => setReportOpen(false)} sx={{ position: 'absolute', right: noflip('8px'), top: 8, color: 'white' }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -1630,7 +1631,7 @@ ${summary}
       <Dialog open={expenseOpen} onClose={() => setExpenseOpen(false)} fullWidth maxWidth="xs">
         <DialogTitle sx={{ background: 'linear-gradient(135deg,#667eea,#764ba2)', color: 'white' }}>
           💸 הוסף הוצאה
-          <IconButton onClick={() => setExpenseOpen(false)} sx={{ position: 'absolute', right: 8, top: 8, color: 'white' }}>
+          <IconButton onClick={() => setExpenseOpen(false)} sx={{ position: 'absolute', right: noflip('8px'), top: 8, color: 'white' }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -1670,7 +1671,7 @@ ${summary}
         <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
           width: '100vw', height: '100vh' }}>
           <IconButton onClick={() => setLightboxOpen(false)}
-            sx={{ position: 'absolute', top: 12, right: 12, color: 'white', bgcolor: 'rgba(0,0,0,0.5)', zIndex: 10 }}>
+            sx={{ position: 'absolute', top: 12, right: noflip('12px'), color: 'white', bgcolor: 'rgba(0,0,0,0.5)', zIndex: 10 }}>
             <CloseIcon />
           </IconButton>
           {lightboxPhotos[lightboxIdx] && (
@@ -1680,11 +1681,11 @@ ${summary}
           {lightboxPhotos.length > 1 && (
             <>
               <IconButton onClick={() => setLightboxIdx(i => (i - 1 + lightboxPhotos.length) % lightboxPhotos.length)}
-                sx={{ position: 'absolute', left: 8, color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}>
+                sx={{ position: 'absolute', left: noflip('8px'), color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}>
                 <ChevronRightIcon />
               </IconButton>
               <IconButton onClick={() => setLightboxIdx(i => (i + 1) % lightboxPhotos.length)}
-                sx={{ position: 'absolute', right: 8, color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}>
+                sx={{ position: 'absolute', right: noflip('8px'), color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}>
                 <ChevronLeftIcon />
               </IconButton>
             </>

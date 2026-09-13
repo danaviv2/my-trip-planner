@@ -25,6 +25,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ClearIcon from '@mui/icons-material/Clear';
 import debounce from 'lodash/debounce';
 
+import { noflip } from '../../utils/noflip';
 /**
  * קומפוננטת חיפוש מתקדם עם סינון תוצאות
  * תומכת בחיפוש טקסט, מיקום, דירוג, מחיר וקטגוריות
@@ -597,7 +598,7 @@ const AdvancedSearch = ({
                     sx={{
                       position: 'absolute',
                       top: 8,
-                      right: 8,
+                      right: noflip('8px'),
                       backgroundColor: 'rgba(255, 255, 255, 0.7)',
                       '&:hover': {
                         backgroundColor: 'rgba(255, 255, 255, 0.9)'

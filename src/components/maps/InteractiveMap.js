@@ -17,6 +17,7 @@ import AddLocationIcon from '@mui/icons-material/AddLocation';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 
+import { noflip } from '../../utils/noflip';
 /**
  * קומפוננטת מפה אינטראקטיבית משופרת
  * תומכת בסינון מקומות, נתיבים, איתור מיקום ועוד
@@ -632,7 +633,7 @@ const InteractiveMap = ({
         sx={{
           position: 'absolute',
           bottom: 80,
-          right: 20,
+          right: noflip('20px'),
           zIndex: isFullscreen ? 1301 : 2
         }}
         onClick={() => {

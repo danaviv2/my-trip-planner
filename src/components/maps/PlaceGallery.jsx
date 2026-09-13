@@ -16,6 +16,7 @@ import {
   ZoomIn as ZoomInIcon
 } from '@mui/icons-material';
 
+import { noflip } from '../../utils/noflip';
 const PlaceGallery = ({ photos, placeName }) => {
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -105,7 +106,7 @@ const PlaceGallery = ({ photos, placeName }) => {
             sx={{
               position: 'absolute',
               top: 10,
-              right: 10,
+              right: noflip('10px'),
               bgcolor: 'rgba(255,255,255,0.9)',
               zIndex: 1,
               '&:hover': { bgcolor: 'white' }
@@ -120,7 +121,7 @@ const PlaceGallery = ({ photos, placeName }) => {
             sx={{
               position: 'absolute',
               top: '50%',
-              left: 10,
+              left: noflip('10px'),
               transform: 'translateY(-50%)',
               bgcolor: 'rgba(255,255,255,0.9)',
               zIndex: 1,
@@ -136,7 +137,7 @@ const PlaceGallery = ({ photos, placeName }) => {
             sx={{
               position: 'absolute',
               top: '50%',
-              right: 10,
+              right: noflip('10px'),
               transform: 'translateY(-50%)',
               bgcolor: 'rgba(255,255,255,0.9)',
               zIndex: 1,

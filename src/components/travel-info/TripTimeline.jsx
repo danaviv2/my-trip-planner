@@ -100,7 +100,7 @@ const EventRow = ({ ev, onDelete, onEdit, onMove, canUp, canDown, mapNumber }) =
         {mapNumber != null && (
           <Box
             sx={{
-              position: 'absolute', top: -3, left: -3,
+              position: 'absolute', top: -3, left: noflip('-3px'),
               width: 15, height: 15, borderRadius: '50%',
               bgcolor: ev.color, color: '#fff',
               fontSize: '0.6rem', fontWeight: 700,
@@ -332,7 +332,7 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent }) =>
             <Box sx={{ position: 'relative' }}>
               <Box
                 sx={{
-                  position: 'absolute', top: 14, bottom: 14, right: 62,
+                  position: 'absolute', top: 14, bottom: 14, right: noflip('62px'),
                   width: '2px', bgcolor: 'divider',
                 }}
               />

@@ -334,7 +334,7 @@ export default function TripChatWidget() {
           sx={{
             position: 'fixed',
             bottom: 80,
-            right: 16,
+            right: noflip('16px'),
             zIndex: 1200,
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             color: '#fff',

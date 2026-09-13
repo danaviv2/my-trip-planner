@@ -20,6 +20,7 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
+import { noflip } from '../utils/noflip';
 const ImageGallery = ({ images = [] }) => {
   const { t } = useTranslation();
   const [selectedImage, setSelectedImage] = useState(0);
@@ -114,7 +115,7 @@ const ImageGallery = ({ images = [] }) => {
             sx={{
               position: 'absolute',
               top: '50%',
-              left: '10px',
+              left: noflip('10px'),
               transform: 'translateY(-50%)',
               backgroundColor: 'rgba(0, 0, 0, 0.5)',
               color: 'white',
@@ -134,7 +135,7 @@ const ImageGallery = ({ images = [] }) => {
             sx={{
               position: 'absolute',
               top: '50%',
-              right: '10px',
+              right: noflip('10px'),
               transform: 'translateY(-50%)',
               backgroundColor: 'rgba(0, 0, 0, 0.5)',
               color: 'white',
@@ -154,7 +155,7 @@ const ImageGallery = ({ images = [] }) => {
             sx={{
               position: 'absolute',
               top: '10px',
-              right: '10px',
+              right: noflip('10px'),
               backgroundColor: 'rgba(0, 0, 0, 0.5)',
               color: 'white',
               '&:hover': {
@@ -243,7 +244,7 @@ const ImageGallery = ({ images = [] }) => {
             sx={{
               position: 'absolute',
               top: 8,
-              right: 8,
+              right: noflip('8px'),
               zIndex: 10,
               color: 'white',
               bgcolor: 'rgba(0, 0, 0, 0.5)',
@@ -260,7 +261,7 @@ const ImageGallery = ({ images = [] }) => {
             sx={{
               position: 'absolute',
               top: '50%',
-              left: 16,
+              left: noflip('16px'),
               transform: 'translateY(-50%)',
               zIndex: 10,
               color: 'white',
@@ -278,7 +279,7 @@ const ImageGallery = ({ images = [] }) => {
             sx={{
               position: 'absolute',
               top: '50%',
-              right: 16,
+              right: noflip('16px'),
               transform: 'translateY(-50%)',
               zIndex: 10,
               color: 'white',

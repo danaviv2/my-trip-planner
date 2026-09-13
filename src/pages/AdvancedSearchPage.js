@@ -25,6 +25,7 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
+import { noflip } from '../utils/noflip';
 const parsePrice = (priceStr) => {
   if (!priceStr) return 0;
   const s = String(priceStr);
@@ -535,21 +536,21 @@ const AdvancedSearchPage = () => {
                     <Chip
                       label={categories.find(c => c.value === result.category)?.label}
                       size="small"
-                      sx={{ position: 'absolute', top: 10, left: 10, bgcolor: getCategoryColor(result.category), color: 'white', fontWeight: 600 }}
+                      sx={{ position: 'absolute', top: 10, left: noflip('10px'), bgcolor: getCategoryColor(result.category), color: 'white', fontWeight: 600 }}
                     />
 
                     <IconButton
                       onClick={(e) => { e.stopPropagation(); toggleFavorite(result.id); }}
-                      sx={{ position: 'absolute', top: 10, right: 10, bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'white' } }}
+                      sx={{ position: 'absolute', top: 10, right: noflip('10px'), bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'white' } }}
                     >
                       {favorites.includes(result.id) ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
                     </IconButton>
 
                     {result.price > 0 && (
-                      <Chip label={`€${result.price}`} size="small" sx={{ position: 'absolute', bottom: 10, right: 10, bgcolor: 'rgba(0,0,0,0.7)', color: 'white', fontWeight: 700 }} />
+                      <Chip label={`€${result.price}`} size="small" sx={{ position: 'absolute', bottom: 10, right: noflip('10px'), bgcolor: 'rgba(0,0,0,0.7)', color: 'white', fontWeight: 700 }} />
                     )}
                     {result.price === 0 && (
-                      <Chip label={t('advancedSearch.free')} size="small" sx={{ position: 'absolute', bottom: 10, right: 10, bgcolor: '#43e97b', color: 'white', fontWeight: 700 }} />
+                      <Chip label={t('advancedSearch.free')} size="small" sx={{ position: 'absolute', bottom: 10, right: noflip('10px'), bgcolor: '#43e97b', color: 'white', fontWeight: 700 }} />
                     )}
                   </Box>
 
@@ -658,7 +659,7 @@ const AdvancedSearchPage = () => {
       <Collapse in={showScrollTop}>
         <Fab
           onClick={scrollToTop}
-          sx={{ position: 'fixed', bottom: 24, right: 24, bgcolor: '#667eea', color: 'white', '&:hover': { bgcolor: '#5568d3' } }}
+          sx={{ position: 'fixed', bottom: 24, right: noflip('24px'), bgcolor: '#667eea', color: 'white', '&:hover': { bgcolor: '#5568d3' } }}
         >
           <ArrowUpIcon />
         </Fab>

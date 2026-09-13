@@ -186,7 +186,7 @@ export default function TravelAIChat() {
             sx={{
               position: 'fixed',
               bottom: { xs: 'calc(64px + env(safe-area-inset-bottom))', md: 24 },
-              right: { xs: 16, md: 24 },
+              right: { xs: noflip('16px'), md: noflip('24px') },
               width: 60,
               height: 60,
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',

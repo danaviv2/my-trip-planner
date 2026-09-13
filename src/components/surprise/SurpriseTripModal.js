@@ -140,7 +140,7 @@ export default function SurpriseTripModal({ open, onClose }) {
       }}>
         <IconButton
           onClick={onClose}
-          sx={{ position: 'absolute', top: 12, right: 12, color: 'white' }}
+          sx={{ position: 'absolute', top: 12, right: noflip('12px'), color: 'white' }}
         >
           <CloseIcon />
         </IconButton>

@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import { geminiEndpoint } from '../services/geminiClient';
 
+import { noflip } from '../utils/noflip';
 const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
 
 const QUESTIONS = [
@@ -152,7 +153,7 @@ function DestinationCard({ destination, rank }) {
           sx={{
             position: 'absolute',
             top: -18,
-            right: 24,
+            right: noflip('24px'),
             background: 'linear-gradient(135deg, #f7971e 0%, #e74c3c 100%)',
             color: '#fff',
             borderRadius: 20,
