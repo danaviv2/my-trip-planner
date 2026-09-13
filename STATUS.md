@@ -17,18 +17,9 @@
 ואחרי — כמה מסמכים בכל תת-אוסף, מה קרה ל-Auth, ואם
 `requires-recent-login` נורה. **הענף הזה נכתב ולא נצפה ולו פעם אחת.**
 
-**2. שתי הדבקות בהגדרות שהמשתמש צריך לבצע בעצמו.**
-מסנן ההרשאות חוסם ממני לערוך את `.claude/settings.json` ושני קבצי
-סוכן — וזה נכון, זו הגדרת ההרשאות שלי עצמי.
-- ב-`.claude/settings.json`, מיד אחרי `{`:
-  ```json
-  "env": {
-    "GATEGUARD_EXEMPT_GLOBS": "src/**,.claude/**,scripts/**,/private/tmp/**",
-    "GATEGUARD_BASH_ROUTINE_DISABLED": "1"
-  },
-  ```
-- `.claude/agents/fabricated-data-hunter.md` → `model: haiku`
-- `.claude/agents/onboarding-wizard.md` → `model: sonnet`
+**2. ~~הדבקות בהגדרות~~ — נסגר.** `env` של GateGuard ב-`.claude/settings.json`
+ו-`model` בארבעת קבצי הסוכן נכנסו ב-`02920d5`. אומת 13.09 בקריאת הקבצים.
+**נכנס לתוקף רק בשיחה חדשה.**
 
 **3. מצבי ריק שנותרו.** `/trip-planner`, `/statistics`, `/group-trip`
 ו-`/rolling-trip` לא נבדקו למצב ריק. הדפוס והרכיב (`LottieArt`) כבר
