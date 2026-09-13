@@ -24,6 +24,7 @@ import {
   Language as LanguageIcon,
   Route as RouteIcon,
   ExpandMore as MoreIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import NotificationCenter from '../notifications/NotificationCenter';
@@ -190,6 +191,11 @@ const Header = () => {
                     <MenuItem onClick={() => { handleMenuClose(); navigate('/my-trips'); }}>
                       <TripsIcon sx={{ mr: 1 }} fontSize="small" /> {t('nav.myTrips')}
                     </MenuItem>
+                    {/* `/settings` נבנה ונפרס ב-13.09.2026 בלי קישור מאף מקום —
+                        המשתמש חיפש אותו ולא מצא, כי הדרך היחידה הייתה להקליד כתובת. */}
+                    <MenuItem onClick={() => { handleMenuClose(); navigate('/settings'); }}>
+                      <SettingsIcon sx={{ mr: 1 }} fontSize="small" /> {t('nav.settings')}
+                    </MenuItem>
                     <MenuItem onClick={handleLogout}>
                       <LogoutIcon sx={{ mr: 1 }} fontSize="small" /> {t('nav.logout')}
                     </MenuItem>
@@ -293,6 +299,11 @@ const Header = () => {
                   <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                     <MenuItem onClick={() => { handleMenuClose(); navigate('/my-trips'); }}>
                       <TripsIcon sx={{ mr: 1 }} fontSize="small" /> {t('nav.myTrips')}
+                    </MenuItem>
+                    {/* `/settings` נבנה ונפרס ב-13.09.2026 בלי קישור מאף מקום —
+                        המשתמש חיפש אותו ולא מצא, כי הדרך היחידה הייתה להקליד כתובת. */}
+                    <MenuItem onClick={() => { handleMenuClose(); navigate('/settings'); }}>
+                      <SettingsIcon sx={{ mr: 1 }} fontSize="small" /> {t('nav.settings')}
                     </MenuItem>
                     <MenuItem onClick={handleLogout}>
                       <LogoutIcon sx={{ mr: 1 }} fontSize="small" /> {t('nav.logout')}
