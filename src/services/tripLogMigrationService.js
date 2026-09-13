@@ -45,6 +45,21 @@ export const tripsFromLogs = (savedTrips, logs) => {
     norm(a.destination || a.endPoint) === norm(destination)
     && Math.abs(at(a.savedAt || a.date) - when) <= TWIN_WINDOW_MS;
 
+  // ── אותו מסלול, בכל זמן ──
+  // נמצא בחשבון הבדיקה: טיול מתגלגל נשמר, נפתח במסך התכנון עם
+  // `?tripId`, ושם כל לחיצה על "שמור מסלול" הוסיפה עותק — אותו יעד,
+  // אותו פירוט יומי, מזהה וזמן אחרים. "הטיולים שלי" הציג פלורנס שלוש
+  // פעמים, בעוד בענן יש אחת. חלון הזמן לבדו לא תפס זאת, וההעברה הייתה
+  // מעלה את העותקים לענן כטיולים נפרדים.
+  // פירוט ריק אינו הסכמה: שני טיולים לפריז בלי תוכנית הם לא בהכרח אחד.
+  const plan = (t) => {
+    const d = Array.isArray(t.dailyItinerary) ? t.dailyItinerary : [];
+    return d.length ? JSON.stringify(d) : null;
+  };
+  const isSameRoute = (a, log) =>
+    norm(a.destination || a.endPoint) === norm(log.destination)
+    && plan(a) !== null && plan(a) === plan(log);
+
   for (const log of Array.isArray(logs) ? logs : []) {
     if (!log || typeof log !== 'object') continue;
     // רשומה בלי יעד היא שארית של שמירה ריקה, לא טיול.
@@ -53,7 +68,7 @@ export const tripsFromLogs = (savedTrips, logs) => {
     const id = String(log.id ?? '');
     const known = [...saved, ...out];
     if (id && known.some((t) => String(t.id) === id)) continue;
-    if (known.some((t) => isTwin(t, log.destination, when))) continue;
+    if (known.some((t) => isTwin(t, log.destination, when) || isSameRoute(t, log))) continue;
 
     out.push({
       // מזהה מספרי תקין נשמר; `NaN` שנכתב בבאג הישן מוחלף.
