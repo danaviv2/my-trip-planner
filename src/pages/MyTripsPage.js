@@ -20,6 +20,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useTripSave } from '../contexts/TripSaveContext';
 import { useAuth } from '../contexts/AuthContext';
 import ShareTripDialog from '../components/shared/ShareTripDialog';
+import LottieArt from '../components/common/LottieArt';
 
 const DESTINATION_EMOJIS = ['🗼', '🏖️', '🗽', '🏯', '🌋', '🏔️', '🌊', '🏛️', '🌴', '🎡'];
 const getEmoji = (id) => DESTINATION_EMOJIS[id % DESTINATION_EMOJIS.length];
@@ -112,7 +113,9 @@ const EmptyState = () => {
   const { t } = useTranslation();
   return (
     <Box sx={{ textAlign: 'center', py: 10 }}>
-      <Typography variant="h1" sx={{ fontSize: '5rem', mb: 2 }}>✈️</Typography>
+      {/* היה אמוג'י ✈️ ב-5rem בתוך `h1` — כותרת ראשית שכל תוכנה
+          אמוג'י, שקורא מסך מקריא כ"מטוס" ואינו אומר דבר. */}
+      <LottieArt name="flying-plane" height={160} sx={{ mb: 1 }} />
       <Typography variant="h5" fontWeight={700} gutterBottom>{t('myTrips.empty_title')}</Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>{t('myTrips.empty_subtitle')}</Typography>
       <Button variant="contained" size="large" startIcon={<AddIcon />}

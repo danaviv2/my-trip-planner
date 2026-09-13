@@ -913,7 +913,14 @@
       "ctaHint": "Da origem ao destino — a IA sugere as paradas no caminho"
     },
     "savedOk": "✅ Check-in salvo",
-    "deletedOk": "Registro excluído"
+    "deletedOk": "Registro excluído",
+    "reels": {
+      "empty": {
+        "title": "Ainda sem memórias",
+        "body": "Faça check-in em atividades para criar o seu reel.",
+        "cta": "Ir para Hoje"
+      }
+    }
   },
   "emailImport": {
     "success": {

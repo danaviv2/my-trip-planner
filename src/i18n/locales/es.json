@@ -913,7 +913,14 @@
       "ctaHint": "De origen a destino — la IA sugiere las paradas del camino"
     },
     "savedOk": "✅ Registro guardado",
-    "deletedOk": "Entrada eliminada"
+    "deletedOk": "Entrada eliminada",
+    "reels": {
+      "empty": {
+        "title": "Aún no hay recuerdos",
+        "body": "Haz check-in en actividades para crear tu reel.",
+        "cta": "Ir a Hoy"
+      }
+    }
   },
   "emailImport": {
     "success": {

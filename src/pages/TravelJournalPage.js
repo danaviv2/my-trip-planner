@@ -32,6 +32,7 @@ import {
   Collections as GalleryIcon,
 } from '@mui/icons-material';
 import WeatherMiniCard from '../components/weather/WeatherMiniCard';
+import LottieArt from '../components/common/LottieArt';
 import { useTranslation } from 'react-i18next';
 import { useTripSave } from '../contexts/TripSaveContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -495,7 +496,9 @@ const TravelJournalPage = () => {
 
   const renderTripsEmpty = () => (
     <Box textAlign="center" py={8}>
-      <TripIcon sx={{ fontSize: 64, color: '#ccc', mb: 2 }} />
+      {/* היה `TripIcon` ב-#ccc קשיח — אפור בהיר שנעלם כמעט לגמרי
+          במצב כהה. האנימציה מחליפה אותו ונצבעת לפי הערכה. */}
+      <LottieArt name="map-line" height={180} sx={{ mb: 1, maxWidth: 320, mx: "auto" }} />
       <Typography variant="h6" color="text.secondary">{t('journal.empty.title')}</Typography>
       {/* maxWidth: בלי זה הטקסט נפרס על מלוא 680 הפיקסלים בדסקטופ,
           ושורה ארוכה מדי נקראת רע. */}
@@ -834,11 +837,13 @@ ${summary}
     if (reelEntries.length === 0) {
       return (
         <Box textAlign="center" py={8}>
-          <ReelIcon sx={{ fontSize: 64, color: '#ccc', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">אין עדיין זיכרונות</Typography>
-          <Typography variant="body2" color="text.secondary" mt={1} mb={2}>עשה צ׳ק-אין לפעילויות כדי לבנות את הרילס שלך</Typography>
-          <Button variant="contained" onClick={() => setActiveTab(0)} sx={{ background: 'linear-gradient(135deg,#667eea,#764ba2)' }}>
-            📅 עבור לטאב היום
+          {/* שלוש המחרוזות כאן היו עברית קשיחה ולא עברו ב-t() —
+              משתמש צרפתי ראה אותן כמו שהן. והאייקון היה #ccc קשיח. */}
+          <LottieArt name="flying-plane" height={130} sx={{ mb: 1 }} />
+          <Typography variant="h6" color="text.secondary">{t('journal.reels.empty.title')}</Typography>
+          <Typography variant="body2" color="text.secondary" mt={1} mb={2}>{t('journal.reels.empty.body')}</Typography>
+          <Button variant="contained" onClick={() => setActiveTab(0)} sx={{ background: 'linear-gradient(135deg,#667eea,#764ba2)', minHeight: 44 }}>
+            📅 {t('journal.reels.empty.cta')}
           </Button>
         </Box>
       );

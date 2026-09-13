@@ -913,7 +913,14 @@
       "ctaHint": "D'un point de départ à une destination — l'IA propose les arrêts"
     },
     "savedOk": "✅ Check-in enregistré",
-    "deletedOk": "Entrée supprimée"
+    "deletedOk": "Entrée supprimée",
+    "reels": {
+      "empty": {
+        "title": "Pas encore de souvenirs",
+        "body": "Enregistrez-vous sur des activités pour créer votre reel.",
+        "cta": "Aller à Aujourd'hui"
+      }
+    }
   },
   "emailImport": {
     "success": {

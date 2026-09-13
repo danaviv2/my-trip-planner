@@ -913,7 +913,14 @@
       "ctaHint": "From origin to destination — AI suggests the stops along the way"
     },
     "savedOk": "✅ Check-in saved",
-    "deletedOk": "Entry deleted"
+    "deletedOk": "Entry deleted",
+    "reels": {
+      "empty": {
+        "title": "No memories yet",
+        "body": "Check in to activities to build your reel.",
+        "cta": "Go to Today"
+      }
+    }
   },
   "emailImport": {
     "success": {
