@@ -1001,5 +1001,66 @@
       "title": "No idea where to go?",
       "body": "One click draws a destination with a budget, a length and a packing list."
     }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Your profile, preferences and connections — all in one place.",
+    "profile": {
+      "title": "Your profile",
+      "name": "What should we call you",
+      "namePlaceholder": "The name shown on shared trips",
+      "email": "Email",
+      "emailLocked": "Your email comes from your sign-in account and cannot be changed here.",
+      "guest": "You are browsing as a guest. Sign in to keep a profile and preferences."
+    },
+    "vibe": {
+      "title": "Your travel vibe",
+      "sub": "These shape the recommendations you get.",
+      "languageLabel": "Interface language",
+      "styleLabel": "Preferred trip type",
+      "style": {
+        "balanced": "Balanced",
+        "culinary": "Food first",
+        "adventure": "Adventure",
+        "culture": "Culture and history",
+        "relax": "Slow and easy"
+      },
+      "currencyLabel": "Currency",
+      "unitsLabel": "Units",
+      "units": {
+        "metric": "Metric (km, °C)",
+        "imperial": "Imperial (mi, °F)"
+      }
+    },
+    "security": {
+      "title": "Security and connections",
+      "gmail": "Gmail connection",
+      "gmailOn": "Connected. We read booking confirmations only, and do not store email bodies.",
+      "gmailOff": "Not connected. Connecting saves you copying every confirmation by hand.",
+      "connect": "Connect Gmail",
+      "disconnect": "Disconnect",
+      "logout": "Sign out"
+    },
+    "save": "Save changes",
+    "saving": "Updating your digital passport…",
+    "saved": "Boom! Your changes are saved.",
+    "saveFailed": "We could not save. Your changes are still on screen — try again.",
+    "nothingToSave": "Nothing changed yet.",
+    "danger": {
+      "title": "Danger zone",
+      "deleteBtn": "Delete my account",
+      "dialogTitle": "There is no return flight from this one",
+      "irreversible": "This is final. No undo, no trash bin, and we keep no copy.",
+      "typeToConfirm": "To confirm, type <1>{{word}}</1>",
+      "confirmWord": "DELETE",
+      "cancel": "Stay",
+      "confirm": "Delete everything",
+      "deleting": "Deleting…",
+      "needsRecentLogin": "For security you must sign in again before deleting. Sign out, sign back in, and return here.",
+      "failed": "Deletion failed and nothing was removed. Try again.",
+      "nothing": "You have no saved trips yet, but the account and its preferences will be deleted.",
+      "scope_one": "Deleting your account permanently removes 1 trip, along with your bookings, journal and preferences.",
+      "scope_other": "Deleting your account permanently removes all {{count}} of your trips, along with your bookings, journal and preferences."
+    }
   }
 }

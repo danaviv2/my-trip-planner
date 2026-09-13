@@ -1001,5 +1001,66 @@
       "title": "Sem ideia do destino?",
       "body": "Um clique sorteia um destino com orçamento, duração e lista de bagagem."
     }
+  },
+  "settings": {
+    "title": "Definições",
+    "subtitle": "O seu perfil, preferências e ligações num só lugar.",
+    "profile": {
+      "title": "O seu perfil",
+      "name": "Como o tratamos",
+      "namePlaceholder": "O nome nas viagens partilhadas",
+      "email": "E-mail",
+      "emailLocked": "O e-mail vem da conta de acesso e não se edita aqui.",
+      "guest": "Está a navegar como convidado. Inicie sessão para guardar o perfil."
+    },
+    "vibe": {
+      "title": "O seu estilo de viagem",
+      "sub": "As recomendações são escolhidas com base nisto.",
+      "languageLabel": "Idioma",
+      "styleLabel": "Tipo de viagem",
+      "style": {
+        "balanced": "Equilibrado",
+        "culinary": "Gastronomia",
+        "adventure": "Aventura",
+        "culture": "Cultura e história",
+        "relax": "Tranquilo"
+      },
+      "currencyLabel": "Moeda",
+      "unitsLabel": "Unidades",
+      "units": {
+        "metric": "Métrico (km, °C)",
+        "imperial": "Imperial (mi, °F)"
+      }
+    },
+    "security": {
+      "title": "Segurança e ligações",
+      "gmail": "Ligação ao Gmail",
+      "gmailOn": "Ligado. Lemos apenas confirmações e não guardamos o conteúdo do e-mail.",
+      "gmailOff": "Não ligado. Ligar evita copiar cada confirmação à mão.",
+      "connect": "Ligar Gmail",
+      "disconnect": "Desligar",
+      "logout": "Terminar sessão"
+    },
+    "save": "Guardar alterações",
+    "saving": "A atualizar o seu passaporte digital…",
+    "saved": "Pronto! Alterações guardadas.",
+    "saveFailed": "Não foi possível guardar. As alterações continuam aqui — tente de novo.",
+    "nothingToSave": "Ainda não alterou nada.",
+    "danger": {
+      "title": "Zona perigosa",
+      "deleteBtn": "Eliminar a minha conta",
+      "dialogTitle": "Deste voo não se regressa",
+      "irreversible": "É definitivo. Sem anular, sem reciclagem e sem cópia do nosso lado.",
+      "typeToConfirm": "Para confirmar, escreva <1>{{word}}</1>",
+      "confirmWord": "ELIMINAR",
+      "cancel": "Ficar",
+      "confirm": "Eliminar tudo",
+      "deleting": "A eliminar…",
+      "needsRecentLogin": "Por segurança, inicie sessão novamente antes de eliminar.",
+      "failed": "A eliminação falhou e nada foi removido. Tente de novo.",
+      "nothing": "Ainda não tem viagens, mas a conta e as preferências serão eliminadas.",
+      "scope_one": "Eliminar a conta apaga definitivamente 1 viagem, com as reservas, o diário e as preferências.",
+      "scope_other": "Eliminar a conta apaga definitivamente as suas {{count}} viagens, com as reservas, o diário e as preferências."
+    }
   }
 }

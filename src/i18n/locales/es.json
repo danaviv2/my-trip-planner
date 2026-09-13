@@ -1001,5 +1001,66 @@
       "title": "¿Sin idea de destino?",
       "body": "Un clic sortea un destino con presupuesto, duración y lista de equipaje."
     }
+  },
+  "settings": {
+    "title": "Ajustes",
+    "subtitle": "Tu perfil, preferencias y conexiones, todo en un lugar.",
+    "profile": {
+      "title": "Tu perfil",
+      "name": "¿Cómo te llamamos?",
+      "namePlaceholder": "El nombre en los viajes compartidos",
+      "email": "Correo",
+      "emailLocked": "Tu correo viene de la cuenta de acceso y no se edita aquí.",
+      "guest": "Navegas como invitado. Inicia sesión para guardar perfil y preferencias."
+    },
+    "vibe": {
+      "title": "Tu estilo de viaje",
+      "sub": "Con esto se eligen tus recomendaciones.",
+      "languageLabel": "Idioma",
+      "styleLabel": "Tipo de viaje",
+      "style": {
+        "balanced": "Equilibrado",
+        "culinary": "Gastronomía",
+        "adventure": "Aventura",
+        "culture": "Cultura e historia",
+        "relax": "Tranquilo"
+      },
+      "currencyLabel": "Moneda",
+      "unitsLabel": "Unidades",
+      "units": {
+        "metric": "Métrico (km, °C)",
+        "imperial": "Imperial (mi, °F)"
+      }
+    },
+    "security": {
+      "title": "Seguridad y conexiones",
+      "gmail": "Conexión con Gmail",
+      "gmailOn": "Conectado. Solo leemos confirmaciones; no guardamos el contenido del correo.",
+      "gmailOff": "Sin conectar. Conectarlo evita copiar cada confirmación a mano.",
+      "connect": "Conectar Gmail",
+      "disconnect": "Desconectar",
+      "logout": "Cerrar sesión"
+    },
+    "save": "Guardar cambios",
+    "saving": "Actualizando tu pasaporte digital…",
+    "saved": "¡Listo! Cambios guardados.",
+    "saveFailed": "No pudimos guardar. Tus cambios siguen aquí; reinténtalo.",
+    "nothingToSave": "Aún no has cambiado nada.",
+    "danger": {
+      "title": "Zona peligrosa",
+      "deleteBtn": "Eliminar mi cuenta",
+      "dialogTitle": "De este vuelo no se vuelve",
+      "irreversible": "Es definitivo. Sin deshacer, sin papelera y sin copia por nuestra parte.",
+      "typeToConfirm": "Para confirmar, escribe <1>{{word}}</1>",
+      "confirmWord": "ELIMINAR",
+      "cancel": "Quedarme",
+      "confirm": "Eliminar todo",
+      "deleting": "Eliminando…",
+      "needsRecentLogin": "Por seguridad debes iniciar sesión de nuevo antes de eliminar.",
+      "failed": "La eliminación falló y no se borró nada. Reinténtalo.",
+      "nothing": "Aún no tienes viajes guardados, pero se eliminará la cuenta y sus preferencias.",
+      "scope_one": "Eliminar la cuenta borra para siempre 1 viaje, junto con tus reservas, diario y preferencias.",
+      "scope_other": "Eliminar la cuenta borra para siempre tus {{count}} viajes, junto con reservas, diario y preferencias."
+    }
   }
 }

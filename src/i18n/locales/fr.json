@@ -1001,5 +1001,66 @@
       "title": "Aucune idée de destination ?",
       "body": "Un clic tire un destin avec budget, durée et liste de bagages."
     }
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Votre profil, vos préférences et vos connexions au même endroit.",
+    "profile": {
+      "title": "Votre profil",
+      "name": "Comment vous appeler",
+      "namePlaceholder": "Le nom affiché sur les voyages partagés",
+      "email": "E-mail",
+      "emailLocked": "L'e-mail provient de votre compte de connexion et ne se modifie pas ici.",
+      "guest": "Vous naviguez en invité. Connectez-vous pour enregistrer un profil."
+    },
+    "vibe": {
+      "title": "Votre style de voyage",
+      "sub": "Vos recommandations en découlent.",
+      "languageLabel": "Langue",
+      "styleLabel": "Type de voyage",
+      "style": {
+        "balanced": "Équilibré",
+        "culinary": "Gastronomie",
+        "adventure": "Aventure",
+        "culture": "Culture et histoire",
+        "relax": "Tranquille"
+      },
+      "currencyLabel": "Devise",
+      "unitsLabel": "Unités",
+      "units": {
+        "metric": "Métrique (km, °C)",
+        "imperial": "Impérial (mi, °F)"
+      }
+    },
+    "security": {
+      "title": "Sécurité et connexions",
+      "gmail": "Connexion Gmail",
+      "gmailOn": "Connecté. Nous lisons uniquement les confirmations, sans conserver les e-mails.",
+      "gmailOff": "Non connecté. La connexion évite de recopier chaque confirmation.",
+      "connect": "Connecter Gmail",
+      "disconnect": "Déconnecter",
+      "logout": "Se déconnecter"
+    },
+    "save": "Enregistrer",
+    "saving": "Mise à jour de votre passeport numérique…",
+    "saved": "Et voilà ! Vos modifications sont enregistrées.",
+    "saveFailed": "L'enregistrement a échoué. Vos modifications sont toujours là — réessayez.",
+    "nothingToSave": "Rien n'a changé pour l'instant.",
+    "danger": {
+      "title": "Zone sensible",
+      "deleteBtn": "Supprimer mon compte",
+      "dialogTitle": "Ce vol-là est sans retour",
+      "irreversible": "C’est définitif. Aucune annulation, aucune corbeille, aucune copie de notre côté.",
+      "typeToConfirm": "Pour confirmer, tapez <1>{{word}}</1>",
+      "confirmWord": "SUPPRIMER",
+      "cancel": "Rester",
+      "confirm": "Tout supprimer",
+      "deleting": "Suppression…",
+      "needsRecentLogin": "Par sécurité, reconnectez-vous avant de supprimer.",
+      "failed": "La suppression a échoué et rien n’a été supprimé. Réessayez.",
+      "nothing": "Vous n’avez pas encore de voyages, mais le compte et ses préférences seront supprimés.",
+      "scope_one": "Supprimer le compte efface définitivement 1 voyage, ainsi que vos réservations, votre journal et vos préférences.",
+      "scope_other": "Supprimer le compte efface définitivement vos {{count}} voyages, ainsi que vos réservations, votre journal et vos préférences."
+    }
   }
 }

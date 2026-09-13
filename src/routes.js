@@ -8,6 +8,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 const TravelServicesBooking = React.lazy(() => import('./components/booking/TravelServicesBooking'));
 // ייבוא הדפים השונים (lazy)
 const HomePage = React.lazy(() => import('./pages/HomePage'));
+const ProfileSettings = React.lazy(() => import('./components/profile/ProfileSettings'));
 const SharedTripPage = React.lazy(() => import('./pages/SharedTripPage'));
 const TravelInfoPage = React.lazy(() => import('./pages/TravelInfoPage'));
 const AdvancedSearchPage = React.lazy(() => import('./pages/AdvancedSearchPage'));
@@ -62,6 +63,10 @@ const AppRoutes = () => {
       
       {/* מידע על נסיעה */}
       <Route path="/travel-info" element={<TravelInfoPage />} />
+
+      {/* הגדרות פרופיל וחשבון. מוגן: המסך עורך שם משתמש, מחבר Gmail
+          ומכיל מחיקת חשבון — אין לו משמעות בלי משתמש מחובר. */}
+      <Route path="/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
       
       {/* הזמנות */}
       <Route path="/booking" element={<TravelServicesBooking />} />

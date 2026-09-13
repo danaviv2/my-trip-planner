@@ -28,6 +28,44 @@ const flatten = (obj, prefix = '', out = new Set()) => {
   return out;
 };
 
+// ── סיומות ריבוי אינן מפתחות חסרים ──
+// i18next בוחר סיומת לפי Intl.PluralRules של השפה. לעברית יש
+// one/two/other ולאנגלית רק one/other, ולכן `flight_two` *אמור*
+// להיעדר מאנגלית — i18next לעולם לא יחפש אותו שם.
+// השוואה שטוחה סימנה תשעה מפתחות כאלה כחסרים בארבע שפות, וזו
+// אזהרה על מצב תקין: בודק שצועק על מה שנכון מאמן להתעלם ממנו.
+//
+// לכן מפתח עם סיומת ריבוי נבדק מול הקטגוריות שהשפה *באמת* מכירה.
+const PLURAL = ['zero', 'one', 'two', 'few', 'many', 'other'];
+const catsFor = (lang) => {
+  const pr = new Intl.PluralRules(lang);
+  const seen = new Set();
+  for (const n of [0, 1, 2, 3, 6, 11, 20, 100, 101]) seen.add(pr.select(n));
+  seen.add('other'); // תמיד קיימת כברירת מחדל
+  return seen;
+};
+
+/** מפצל `a.b.flight_two` ל-{ stem: 'a.b.flight', cat: 'two' }, או cat=null. */
+const splitPlural = (key) => {
+  const i = key.lastIndexOf('_');
+  if (i < 0) return { stem: key, cat: null };
+  const cat = key.slice(i + 1);
+  return PLURAL.includes(cat) ? { stem: key.slice(0, i), cat } : { stem: key, cat: null };
+};
+
+/** המפתחות שהשפה הזו אמורה להחזיק, בהינתן מה שיש בשפת הבסיס. */
+const expectedFor = (baseKeys, lang) => {
+  const cats = catsFor(lang);
+  const out = new Set();
+  for (const k of baseKeys) {
+    const { stem, cat } = splitPlural(k);
+    if (!cat) { out.add(k); continue; }
+    // גזע ריבוי: מצפים לו פעם אחת לכל קטגוריה שהשפה מכירה
+    for (const c of cats) out.add(`${stem}_${c}`);
+  }
+  return out;
+};
+
 const keys = {};
 let failed = false;
 
@@ -43,8 +81,9 @@ for (const lang of LOCALES) {
 
 for (const lang of LOCALES) {
   if (lang === BASE) continue;
-  const missing = [...keys[BASE]].filter((k) => !keys[lang].has(k));
-  const extra = [...keys[lang]].filter((k) => !keys[BASE].has(k));
+  const expected = expectedFor(keys[BASE], lang);
+  const missing = [...expected].filter((k) => !keys[lang].has(k));
+  const extra = [...keys[lang]].filter((k) => !expected.has(k));
   if (missing.length || extra.length) {
     failed = true;
     console.error(`✘ ${lang}: חסרים ${missing.length}, עודפים ${extra.length}`);
