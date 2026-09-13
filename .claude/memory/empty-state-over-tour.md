@@ -17,7 +17,7 @@ metadata:
 **How to apply:** כשמסך לא מסביר את עצמו — בנה לו מצב ריק, לא תחנת
 מדריך. הרכיב `LottieArt` וארבעה מצבי ריק קיימים כדפוס:
 `/travel-info`, `/journal` (היום + רילס), `/my-trips`.
-נותרו: `/trip-planner`, `/statistics`, `/group-trip`, `/rolling-trip`.
+כל שמונת העמודים כוסו (13.09.2026, `24342e5`).
 
 **שתי החלטות נלוות מאותו יום:**
 
