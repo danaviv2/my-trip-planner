@@ -49,6 +49,9 @@ https://claude.ai/code/artifact/cc6ca719-2bf6-4e59-a3fb-cecd2939c6e0 —
 ל-`tripLogs`, בדפדפן בלבד. אוחדו, ורשומות קיימות עוברות ב-
 `tripLogMigrationService`. רשימת המחיקה הושלמה (חמישה אוספים חסרו,
 נמדד בחשבון הבעלים), ו-`scripts/check-account-deletion.mjs` שומר עליה.
+**נמדד על מכשיר אמיתי:** ב-18:03 ההעברה רצה בחשבון הבדיקה והעלתה לענן את
+פריז וטוקיו שנשמרו בכפתור התחתון; פלורנס לא הוכפלה. `34531f9` הוסיף
+זיהוי "אותו יעד + אותו פירוט" אחרי שנמצאה פלורנס ×3 ב"הטיולים שלי".
 *החשבון לבדיקה:* `danaviv24+tripcheck@gmail.com`, uid
 `6FgB87gVQGdVCh4rvNKgXoHkb2C3`. לפני המחיקה: `list_collections` על
 המשתמש, ואחריה שוב + `auth_get_users`.
