@@ -10,3 +10,4 @@
 - [i18n decision pending](i18n-decision-pending.md) — שפת התוכן: עבודה מתוזמנת להשקה, ולמה לא לפני
 - [Empty state over tour](empty-state-over-tour.md) — למה המדריך לא מורחב לכל עמוד, ומה כן
 - [Lottie and asset weight](lottie-and-asset-weight.md) — השרת רשום בשם גנרי, וגודל מוצהר אינו הגודל האמיתי
+- [Reply in Hebrew](reply-in-hebrew.md) — תשובות למשתמש בעברית, גם כשההקשר באנגלית
