@@ -1,5 +1,5 @@
-import { callGemini, geminiEndpoint } from './geminiClient';
-const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
+import { callGemini, geminiEndpoint, GEMINI_MODELS, generationFor } from './geminiClient';
+const GEMINI_URL = geminiEndpoint(GEMINI_MODELS.parse);
 
 /**
  * מפענח מייל הזמנה ומחלץ פרטים מובנים
@@ -57,11 +57,7 @@ in the user's own mailbox rather than guessing the format:
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        maxOutputTokens: 600,
-        temperature: 0.1,
-        thinkingConfig: { thinkingBudget: 0 },
-      },
+      generationConfig: generationFor(GEMINI_MODELS.parse, { maxOutputTokens: 600, temperature: 0.1 }),
     }),
   });
 
@@ -403,12 +399,8 @@ export const parseTravelDocument = async (text) => {
 
   const response = await callGemini({
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    generationConfig: {
-      maxOutputTokens: 1500,
-      temperature: 0.1,
-      thinkingConfig: { thinkingBudget: 0 },
-    },
-  });
+    generationConfig: generationFor(GEMINI_MODELS.parse, { maxOutputTokens: 1500, temperature: 0.1 }),
+  }, { model: GEMINI_MODELS.parse });
 
   if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
 
@@ -440,12 +432,8 @@ export const parseTravelDocumentFromPdf = async (base64Pdf) => {
         ],
       },
     ],
-    generationConfig: {
-      maxOutputTokens: 1500,
-      temperature: 0.1,
-      thinkingConfig: { thinkingBudget: 0 },
-    },
-  });
+    generationConfig: generationFor(GEMINI_MODELS.parse, { maxOutputTokens: 1500, temperature: 0.1 }),
+  }, { model: GEMINI_MODELS.parse });
 
   if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
 

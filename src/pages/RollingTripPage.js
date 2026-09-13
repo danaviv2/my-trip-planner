@@ -33,7 +33,7 @@ import { getStopWeatherSummary } from '../services/openMeteoService';
 import { analyzeItinerary, summarizeAnalysis, autoOptimize } from '../services/dayOptimizerService';
 import RouteShapeMap from '../components/rolling/RouteShapeMap';
 import { analyzeRoute, formatDuration } from '../services/routeGeometryService';
-import { geminiEndpoint } from '../services/geminiClient';
+import { geminiEndpoint, GEMINI_MODELS } from '../services/geminiClient';
 import bookingLinks from '../utils/bookingLinks';
 
 import { noflip } from '../utils/noflip';
@@ -303,7 +303,7 @@ export default function RollingTripPage() {
 
   // ── ביטויים מקומיים ──
   const fetchLocalPhrases = async (stop) => {
-    const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
+    const GEMINI_URL = geminiEndpoint(GEMINI_MODELS.content);
     setPhraseStop(stop);
     setPhrasesData([]);
     setPhrasesLoading(true);

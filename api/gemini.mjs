@@ -7,16 +7,43 @@
 
 import { rejectForeign, rejectOversized } from './_lib/guard.mjs';
 
-// רשימת היתר — מונע ממישהו לשלוח model שרירותי דרך ה-query string
+// רשימת היתר — מונע ממישהו לשלוח model שרירותי דרך ה-query string.
+// 2.0 ו-1.5 הוסרו: 2.0 נסגר ב-01.06.2026 ו-1.5 אינו מופיע עוד ברשימת
+// המודלים של Google (נבדק 14.09.2026). הלקוח אינו מבקש אף אחד מהם.
 const ALLOWED_MODELS = new Set([
   'gemini-2.5-flash',
   'gemini-2.5-pro',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
+  'gemini-3.5-flash-lite',
+  'gemini-3.5-flash',
+  'gemini-3.6-flash',
+  'gemini-3.7-flash',
+  'gemini-3.8-flash',
 ]);
 
 const DEFAULT_MODEL = 'gemini-2.5-flash';
+
+// ── חזרה אחורה בלי שינוי קוד ──
+// `GEMINI_FORCE_MODEL` ב-Vercel מחליף כל מודל שהלקוח ביקש. הוא קיים בשביל
+// יום אחד: מעבר למודל חדש שמתגלה כשגוי באתר החי. משנים משתנה, פורסים מחדש,
+// וכל הקריאות חוזרות למודל הקודם — בלי revert ובלי בילד של הלקוח.
+//
+// הלקוח בונה `thinkingConfig` לפי המשפחה שחשב שהוא מקבל, ושתי המשפחות
+// אינן מקבלות את אותו שדה: 2.5 מכבה חשיבה ב-`thinkingBudget: 0`, ו-3
+// מקבל `thinkingLevel` בלבד ואינו מאפשר לכבות. בלי תרגום, חזרה אחורה
+// הייתה נכשלת בדיוק ברגע שהיא נחוצה.
+const familyOf = (m) => (/^gemini-3/.test(m) ? 3 : 2);
+
+export const adaptBody = (body, requested, model) => {
+  if (!body || typeof body !== 'object' || familyOf(requested) === familyOf(model)) return body;
+  const cfg = { ...(body.generationConfig || {}) };
+  if (familyOf(model) === 2) {
+    cfg.thinkingConfig = { thinkingBudget: 0 };
+  } else {
+    cfg.thinkingConfig = { thinkingLevel: 'low' };
+    delete cfg.temperature; // Google: מתחת ל-1.0 עלול לגרום ללולאות ב-Gemini 3
+  }
+  return { ...body, generationConfig: cfg };
+};
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -37,8 +64,10 @@ export default async function handler(req, res) {
     });
   }
 
-  const requested = req.query.model;
-  const model = ALLOWED_MODELS.has(requested) ? requested : DEFAULT_MODEL;
+  const requested = ALLOWED_MODELS.has(req.query.model) ? req.query.model : DEFAULT_MODEL;
+  const forced = process.env.GEMINI_FORCE_MODEL;
+  const model = forced && ALLOWED_MODELS.has(forced) ? forced : requested;
+  const body = adaptBody(req.body, requested, model);
   const stream = req.query.stream === '1';
 
   const method = stream ? 'streamGenerateContent' : 'generateContent';
@@ -50,7 +79,7 @@ export default async function handler(req, res) {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(req.body),
+        body: JSON.stringify(body),
       }
     );
 

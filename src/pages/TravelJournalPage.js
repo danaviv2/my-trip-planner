@@ -41,7 +41,7 @@ import {
   loadEntriesLocal, saveEntriesLocal, safeLocalWrite,
   saveEntry, loadEntries, deleteEntryFirestore, loadDeletedEntryIds,
 } from '../services/journalService';
-import { geminiEndpoint } from '../services/geminiClient';
+import { geminiEndpoint, GEMINI_MODELS } from '../services/geminiClient';
 
 import { noflip } from '../utils/noflip';
 const MAX_PHOTOS = 5;
@@ -776,7 +776,7 @@ const TravelJournalPage = () => {
 
   // ─── AI Report Card ───────────────────────────────────────────────────────────
   const generateReportCard = async () => {
-    const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
+    const GEMINI_URL = geminiEndpoint(GEMINI_MODELS.content);
     setLoadingReport(true);
     setReportOpen(true);
     setReportCard(null);
@@ -942,7 +942,7 @@ ${summary}
 
   // ── AI expense summary ──
   const generateExpenseSummary = async (tripExpenses) => {
-    const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
+    const GEMINI_URL = geminiEndpoint(GEMINI_MODELS.content);
 
     setLoadingAiSummary(true);
     setAiSummary('');

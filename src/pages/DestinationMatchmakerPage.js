@@ -14,10 +14,10 @@ import {
   CircularProgress,
   Grid,
 } from '@mui/material';
-import { geminiEndpoint } from '../services/geminiClient';
+import { geminiEndpoint, GEMINI_MODELS, generationFor } from '../services/geminiClient';
 
 import { noflip } from '../utils/noflip';
-const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
+const GEMINI_URL = geminiEndpoint(GEMINI_MODELS.content);
 
 const QUESTIONS = [
   {
@@ -345,12 +345,11 @@ export default function DestinationMatchmakerPage() {
             // בלי thinkingConfig, Gemini 2.5 Flash מוציא חלק ניכר מתקציב
             // הטוקנים על חשיבה, ה-JSON נקטע באמצע, הפרסור נכשל והמסך נפל
             // בשקט לרשימת יעדים קבועה — תוך שהוא מציג אותה כהמלצת AI.
-            generationConfig: {
+            generationConfig: generationFor(GEMINI_MODELS.content, {
               temperature: 0.9,
               maxOutputTokens: 2500,
               responseMimeType: 'application/json',
-              thinkingConfig: { thinkingBudget: 0 },
-            },
+            }),
           }),
         });
 

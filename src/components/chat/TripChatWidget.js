@@ -21,11 +21,11 @@ import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTripSave } from '../../contexts/TripSaveContext';
-import { geminiEndpoint } from '../../services/geminiClient';
+import { geminiEndpoint, GEMINI_MODELS, generationFor } from '../../services/geminiClient';
 
 
 import { noflip } from '../../utils/noflip';
-const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
+const GEMINI_URL = geminiEndpoint(GEMINI_MODELS.chat);
 
 const MAX_MESSAGES = 20;
 
@@ -78,14 +78,9 @@ async function callGemini(messages, systemPrompt) {
       parts: [{ text: systemPrompt }],
     },
     contents,
-    generationConfig: {
-      temperature: 0.8,
-      maxOutputTokens: 2048,
-      // Gemini 2.5 Flash "חושב" לפני שהוא עונה, וטוקני החשיבה נספרים בתוך
-      // maxOutputTokens. בלי השורה הזו הוא שרף 487 מתוך 512 טוקנים על חשיבה
-      // והחזיר תשובות באורך משפט אחד. שאר השירותים בפרויקט כבר מאפסים אותה.
-      thinkingConfig: { thinkingBudget: 0 },
-    },
+    // טוקני החשיבה נספרים בתוך maxOutputTokens; בלי כיבוי הוא שרף 487 מתוך
+    // 512 על חשיבה והחזיר משפט אחד. ההתאמה לכל מודל ב-`generationFor`.
+    generationConfig: generationFor(GEMINI_MODELS.chat, { temperature: 0.8, maxOutputTokens: 2048 }),
   };
 
   const res = await fetch(GEMINI_URL, {

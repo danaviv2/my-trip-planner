@@ -1,7 +1,7 @@
 import { jsonrepair } from 'jsonrepair';
-import { geminiEndpoint } from './geminiClient';
+import { geminiEndpoint, GEMINI_MODELS, generationFor } from './geminiClient';
 
-const GEMINI_URL = geminiEndpoint('gemini-2.5-flash');
+const GEMINI_URL = geminiEndpoint(GEMINI_MODELS.itinerary);
 
 const CACHE_PREFIX = 'rolling_trip_';
 const CACHE_TTL = 24 * 60 * 60 * 1000;
@@ -93,11 +93,7 @@ Rules:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: {
-          maxOutputTokens: 4000,
-          temperature: 0.7,
-          thinkingConfig: { thinkingBudget: 0 },
-        },
+        generationConfig: generationFor(GEMINI_MODELS.itinerary, { maxOutputTokens: 4000, temperature: 0.7 }),
       }),
     });
 

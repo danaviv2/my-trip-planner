@@ -1,7 +1,7 @@
 import { jsonrepair } from 'jsonrepair';
-import { geminiEndpoint } from './geminiClient';
+import { geminiEndpoint, GEMINI_MODELS, generationFor } from './geminiClient';
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = GEMINI_MODELS.content;
 const GEMINI_URL = geminiEndpoint(GEMINI_MODEL);
 
 // ── v2, 08.09.2026 ──
@@ -190,7 +190,7 @@ Required JSON structure:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 8192, temperature: 0.5, thinkingConfig: { thinkingBudget: 0 } }
+        generationConfig: generationFor(GEMINI_MODEL, { maxOutputTokens: 8192, temperature: 0.5 })
       })
     });
 

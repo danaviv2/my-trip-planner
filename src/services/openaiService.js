@@ -1,6 +1,6 @@
-import { geminiEndpoint, geminiStreamEndpoint } from './geminiClient';
+import { geminiEndpoint, geminiStreamEndpoint, GEMINI_MODELS, generationFor } from './geminiClient';
 
-const MODEL = 'gemini-2.5-flash';
+const MODEL = GEMINI_MODELS.chat;
 
 /**
  * Convert OpenAI-style messages to Gemini format.
@@ -34,7 +34,7 @@ export async function callOpenAI(messages, { maxTokens = 4096, temperature = 0.7
   const { systemInstruction, contents } = convertMessages(messages);
   const body = {
     contents,
-    generationConfig: { maxOutputTokens: maxTokens, temperature, thinkingConfig: { thinkingBudget: 0 } },
+    generationConfig: generationFor(MODEL, { maxOutputTokens: maxTokens, temperature }),
   };
   if (systemInstruction) body.systemInstruction = systemInstruction;
 
@@ -74,7 +74,7 @@ export function streamOpenAI(messages, onChunk, onDone, onError, { maxTokens = 4
   const { systemInstruction, contents } = convertMessages(messages);
   const body = {
     contents,
-    generationConfig: { maxOutputTokens: maxTokens, temperature, thinkingConfig: { thinkingBudget: 0 } },
+    generationConfig: generationFor(MODEL, { maxOutputTokens: maxTokens, temperature }),
   };
   if (systemInstruction) body.systemInstruction = systemInstruction;
 

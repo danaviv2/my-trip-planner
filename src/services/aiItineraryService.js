@@ -1,8 +1,8 @@
 import { jsonrepair } from 'jsonrepair';
-import { geminiEndpoint } from './geminiClient';
+import { geminiEndpoint, GEMINI_MODELS, generationFor } from './geminiClient';
 import { locatePlace, isGoodCoord } from './placeLookupService';
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = GEMINI_MODELS.itinerary;
 const GEMINI_URL = geminiEndpoint(GEMINI_MODEL);
 
 const CACHE_PREFIX = 'itinerary_ai_';
@@ -155,12 +155,11 @@ CRITICAL RULES:
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           // ראה ההסבר ב-DestinationMatchmakerPage: בלי איפוס תקציב החשיבה
           // התשובה נקטעת ומגיעה שבורה, וכאן מדובר במסלול הטיול עצמו.
-          generationConfig: {
+          generationConfig: generationFor(GEMINI_MODEL, {
             maxOutputTokens: 10000,
             temperature,
             responseMimeType: 'application/json',
-            thinkingConfig: { thinkingBudget: 0 }
-          }
+          })
         })
       });
       clearTimeout(timeout);
