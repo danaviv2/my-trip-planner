@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc, onSnapshot, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, onSnapshot, deleteDoc, deleteField } from 'firebase/firestore';
 import { db } from '../firebase';
 
 /**
@@ -43,6 +43,22 @@ export const generateRoomCode = () => {
 
 const roomRef = (code) => doc(db, COLLECTION, String(code).toUpperCase());
 
+// ── אינדקס החדרים של המשתמש ──
+// חדר שהמשתמש רק הצטרף אליו אינו ניתן למציאה בשאילתה: אין דרך לסנן לפי
+// מפתח במפת `votes`. בלי אינדקס, מחיקת חשבון משאירה את שמו בכל חדר
+// שהצביע בו. האינדקס יושב תחת `users/{uid}` ולכן נמחק יחד עם החשבון —
+// אחרי שנקרא. חדרים מלפני 13.09.2026 אינם באינדקס.
+const indexRef = (uid, code) => doc(db, 'users', uid, 'groupRooms', String(code).toUpperCase());
+
+const rememberRoom = async (uid, code) => {
+  try {
+    await setDoc(indexRef(uid, code), { code: String(code).toUpperCase(), at: new Date().toISOString() });
+  } catch (err) {
+    // החדר עצמו תקין; רק המחיקה העתידית לא תמצא אותו. נרשם ולא נבלע.
+    console.error('שמירת החדר באינדקס נכשלה:', err);
+  }
+};
+
 /**
  * יוצר חדר חדש.
  * @returns {Promise<object>} מסמך החדר
@@ -63,6 +79,7 @@ export const createRoom = async (uid, displayName) => {
   };
 
   await setDoc(roomRef(code), room);
+  await rememberRoom(uid, code);
   return room;
 };
 
@@ -89,6 +106,7 @@ export const joinRoom = async (code, uid, displayName) => {
   await updateDoc(roomRef(code), {
     [`votes.${uid}`]: { name: displayName, choices: existing?.choices || [] },
   });
+  await rememberRoom(uid, code);
 
   return getRoom(code);
 };
@@ -114,6 +132,13 @@ export const subscribeRoom = (code, onChange, onError) =>
     (snap) => onChange(snap.exists() ? snap.data() : null),
     (err) => onError?.(err)
   );
+
+/**
+ * מסיר את ההצבעה והשם של המשתמש מחדר של אחר. מותר לפי החוקים: המפתח
+ * היחיד שמשתנה הוא של המשתמש עצמו.
+ */
+export const leaveRoom = (code, uid) =>
+  updateDoc(roomRef(code), { [`votes.${uid}`]: deleteField() });
 
 /** מוחק חדר. מותר ליוצר בלבד, ונאכף בחוקים. */
 export const deleteRoom = (code) => deleteDoc(roomRef(code));

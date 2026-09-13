@@ -21,7 +21,7 @@ import {
   EmailAuthProvider,
   GoogleAuthProvider,
 } from 'firebase/auth';
-import { collection, getDocs, deleteDoc, doc, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, getDoc, deleteDoc, doc, writeBatch, query, where, updateDoc, deleteField } from 'firebase/firestore';
 import { db } from '../firebase';
 
 // תת-האוספים שמתחת ל-`users/{uid}`.
@@ -43,6 +43,8 @@ const SUBCOLLECTIONS = [
   'bookings', 'dismissedBookings', 'cancelledBookings', 'deletedBookings',
   'journal', 'deletedJournal',
   'pushSubscriptions', 'flightAlerts',
+  // אינדקס החדרים הקבוצתיים; נקרא ב-`deleteSharedData` לפני שנמחק.
+  'groupRooms',
 ];
 
 // מפתחות מקומיים שנמחקים יחד עם החשבון. `appLanguage` נשאר בכוונה:
@@ -51,27 +53,64 @@ const SUBCOLLECTIONS = [
 const LOCAL_KEYS = [
   'savedTrips', 'importedBookings', 'syncedBookings', 'accommodations',
   'journal_entries', 'userPreferences', 'currentTrip', 'favorites',
-  'onboardingTour', 'onboardingMuted',
+  'onboardingTour', 'onboardingMuted', 'groupTrip_lastRoom',
   // הרשימה הישנה של "שמור מסלול". אמורה להיעלם בהעברה, אבל העברה שנכשלה
   // משאירה אותה — ומחיקת חשבון לא יכולה להסתמך על כך שהצליחה.
   'tripLogs',
 ];
 
-const deleteCollection = async (uid, name) => {
+const deleteCollection = async (uid, name, tally) => {
   const snap = await getDocs(collection(db, 'users', uid, name));
-  if (snap.empty) return 0;
+  if (snap.empty) return;
   // batch ולא מחיקה-לכל-מסמך: פחות סיבובים, והכול-או-כלום לכל חבילה.
   // התקרה של Firestore היא 500 פעולות לחבילה.
+  // המונה מתעדכן אחרי כל חבילה: חבילה שנייה שנכשלת אחרי שהראשונה
+  // נמחקה לא תדווח "שום דבר לא נמחק".
   const docs = snap.docs;
-  let n = 0;
   for (let i = 0; i < docs.length; i += 400) {
     const batch = writeBatch(db);
     const slice = docs.slice(i, i + 400);
     slice.forEach((d) => batch.delete(d.ref));
     await batch.commit();
-    n += slice.length;
+    tally.n += slice.length;
   }
-  return n;
+};
+
+// ── מה שהמשתמש השאיר מחוץ ל-users/{uid} ──
+// קישורי שיתוף (`sharedTrips`) וחדרי הצבעה (`groupTrips`). עד 13.09.2026
+// המחיקה לא נגעה בהם: עותק הטיול נשאר פתוח לכל מחזיק קישור, ושם המשתמש
+// נשאר בחדרים. `list` הותר בחוקים רק בסינון לפי הבעלים.
+const LAST_ROOM_KEY = 'groupTrip_lastRoom';
+
+// `tally` ולא ערך מוחזר: כשל באמצע (אחרי שנמחקו שני שיתופים) היה זורק
+// לפני ה-return, והקורא היה מדווח "שום דבר לא נמחק". המונה משותף.
+const deleteSharedData = async (uid, tally) => {
+
+  const shares = await getDocs(query(collection(db, 'sharedTrips'), where('ownerUid', '==', uid)));
+  for (const d of shares.docs) { await deleteDoc(d.ref); tally.n += 1; }
+
+  const created = await getDocs(query(collection(db, 'groupTrips'), where('createdBy', '==', uid)));
+  const createdCodes = new Set(created.docs.map((d) => d.id));
+  for (const d of created.docs) { await deleteDoc(d.ref); tally.n += 1; }
+
+  // חדרים שהצטרף אליהם: מהאינדקס, ומהחדר האחרון שבמכשיר — שמכסה גם
+  // חדר מלפני שהאינדקס נוסף.
+  const joined = new Set();
+  const index = await getDocs(collection(db, 'users', uid, 'groupRooms'));
+  index.docs.forEach((d) => joined.add(d.id));
+  try {
+    const last = localStorage.getItem(LAST_ROOM_KEY);
+    if (last) joined.add(String(last).toUpperCase());
+  } catch { /* אחסון חסום */ }
+
+  for (const code of joined) {
+    if (createdCodes.has(code)) continue;
+    const ref = doc(db, 'groupTrips', code);
+    const snap = await getDoc(ref);
+    if (!snap.exists() || !snap.data()?.votes?.[uid]) continue;
+    await updateDoc(ref, { [`votes.${uid}`]: deleteField() });
+    tally.n += 1;
+  }
 };
 
 /**
@@ -129,16 +168,21 @@ export const deleteAccountAndData = async (user, { password } = {}) => {
     return { ok: false, reason: 'failed', detail: String(err?.message || code || err), removed: 0 };
   }
 
+  const tally = { n: 0 };
   let removed = 0;
   try {
+    // לפני תת-האוספים: אינדקס החדרים נקרא כאן, ונמחק רק אחר כך.
+    await deleteSharedData(user.uid, tally);
     for (const name of SUBCOLLECTIONS) {
-      removed += await deleteCollection(user.uid, name);
+      await deleteCollection(user.uid, name, tally);
     }
     // מסמך השורש עצמו, אם קיים
     try { await deleteDoc(doc(db, 'users', user.uid)); } catch { /* ייתכן שאינו קיים */ }
+    removed = tally.n;
   } catch (err) {
     // אוספים נמחקים לפי הסדר, ולכן כשל באמצע משאיר חלק. `removed` אומר
     // כמה; אפס פירושו ששום דבר לא נמחק, וההודעה חייבת להבדיל.
+    removed = tally.n;
     return {
       ok: false,
       reason: removed > 0 ? 'partial' : 'failed',
