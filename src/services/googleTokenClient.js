@@ -73,6 +73,39 @@ const loadGis = () => {
  *                                 יידרש לבחור חשבון כשיש כמה בדפדפן.
  * @returns {Promise<string>} access token
  */
+/**
+ * שולל את ההרשאה אצל Google עצמה, ולא רק בדפדפן.
+ *
+ * עד 14.09.2026 "ניתוק" רק שכח את הטוקן. ההרשאה נשארה פעילה בחשבון
+ * Google, ובקשה שקטה הייתה מנפיקה טוקן חדש בלי לשאול. מדיניות הפרטיות
+ * מבטיחה ניתוק, ו-Google דורשת שהמדיניות תתאר את מה שקורה בפועל.
+ *
+ * `revoke` דורש טוקן תקף, וטוקן פג אחרי שעה. לכן, אם הוא פג, מנפיקים
+ * טוקן חדש בשקט ושוללים שוב. התוצאה מוחזרת כמו שהיא, כדי שהמסך יאמר
+ * "נותק" רק כשזה באמת קרה.
+ *
+ * @returns {Promise<{revoked: boolean, error?: string}>}
+ */
+export const revokeGmailAccess = async (token, { loginHint = '' } = {}) => {
+  await loadGis();
+  const revoke = (t) => new Promise((resolve) => {
+    window.google.accounts.oauth2.revoke(t, (res) => resolve(res || {}));
+  });
+
+  let res = token ? await revoke(token) : { error: 'invalid_token' };
+  if (!res.successful && res.error === 'invalid_token') {
+    try {
+      const fresh = await requestGmailToken({ silent: true, loginHint });
+      res = await revoke(fresh);
+    } catch (e) {
+      // אין דרך להנפיק טוקן בשקט — ההרשאה כבר אינה פעילה, או שהדפדפן חוסם.
+      // שני המקרים שונים, ואין לדווח על אף אחד מהם כהצלחה.
+      return { revoked: false, error: e.message };
+    }
+  }
+  return res.successful ? { revoked: true } : { revoked: false, error: res.error || 'REVOKE_FAILED' };
+};
+
 export const requestGmailToken = async ({ silent = false, loginHint = '', chooseAccount = false } = {}) => {
   const clientId = getClientId();
   if (!clientId) throw new Error('NO_CLIENT_ID');

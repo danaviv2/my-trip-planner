@@ -20,7 +20,11 @@
     "matchmaker": "Matchmaker",
     "more": "More",
     "moreDestinations": "More destinations",
-    "user": "User"
+    "user": "User",
+    "language": "Language",
+    "close": "Close",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "home": {
     "hero": {
@@ -1067,7 +1071,9 @@
       "gmailOff": "Not connected. Connecting saves you copying every confirmation by hand.",
       "connect": "Connect Gmail",
       "disconnect": "Disconnect",
-      "logout": "Sign out"
+      "logout": "Sign out",
+      "revoked": "Gmail access was revoked in your Google account too. You will be asked to approve again before the next scan.",
+      "revokeFailed": "Scanning stopped on this device, but we could not revoke the permission in your Google account. You can revoke it manually here:"
     },
     "save": "Save changes",
     "saving": "Updating your digital passport…",
@@ -1109,5 +1115,12 @@
     "body": "The link may be outdated or mistyped. The address you asked for:",
     "home": "Go to home",
     "trips": "Go to my trips"
+  },
+  "legal": {
+    "draft": "Draft — this text is pending legal review and may change.",
+    "hebrewOnly": "This document is currently available in Hebrew only.",
+    "privacy": "Privacy policy",
+    "terms": "Terms of use",
+    "accessibility": "Accessibility statement"
   }
 }

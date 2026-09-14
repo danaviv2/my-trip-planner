@@ -12,6 +12,7 @@ import {
 import { auth, googleProvider } from '../firebase';
 import {
   requestGmailToken,
+  revokeGmailAccess,
   setGmailConsent,
   getClientId,
   GMAIL_SCOPE,
@@ -122,10 +123,16 @@ export const AuthProvider = ({ children }) => {
     } catch {}
   };
 
-  /** ניתוק יזום של המשתמש — כאן כן נכון לשכוח גם את ההסכמה. */
-  const disconnectGmail = () => {
+  /**
+   * ניתוק יזום של המשתמש: שוללים את ההרשאה אצל Google, ושוכחים מקומית
+   * בכל מקרה. מחזיר את תוצאת השלילה — אם נכשלה, הגישה עדיין פעילה
+   * בחשבון Google והמשתמש חייב לדעת זאת.
+   */
+  const disconnectGmail = async () => {
+    const result = await revokeGmailAccess(gmailToken, { loginHint: user?.email || '' });
     clearGmailToken();
     setGmailConsent(false);
+    return result;
   };
 
   const loginWithEmail = (email, password) =>

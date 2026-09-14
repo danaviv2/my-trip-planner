@@ -3107,7 +3107,7 @@ const DestinationInfoPage = () => {
                       borderRadius: '16px',
                       overflow: 'hidden',
                       cursor: 'pointer',
-                      '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
+                      '&:has(> button:focus-visible)': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
                       '&:hover': {
                         '& .MuiCardMedia-root': {
                           transform: 'scale(1.05)',
@@ -3121,16 +3121,6 @@ const DestinationInfoPage = () => {
                         }
                       }
                     }}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={destination.name}
-                    onClick={() => navigate(`/destination-info/${destination.name}`)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        navigate(`/destination-info/${destination.name}`);
-                      }
-                    }}
                   >
                     {/* כאן ישבו תמונות picsum אקראיות: תחת "סיינה"
                         הופיע תצלום שרירותי. עיר נמצאת בוויקיפדיה
@@ -3142,13 +3132,20 @@ const DestinationInfoPage = () => {
                         הראשונה שהכילה את המילה. יעד הוא תמיד מקום, ולכן
                         ערך בלי קואורדינטות נפסל, והשם הלועזי מביא את
                         הערך הנכון. */}
-                    <Box sx={{ filter: 'brightness(0.8)' }}>
+                    {/* ── הקרדיט היה מוסתר ב-4 מתוך 4 כרטיסים (נמדד 14.09.2026) ──
+                        `filter` על העוטף יצר הקשר ערימה, ורצועת הכיתוב שעוגנת
+                        לתחתית כיסתה את הקרדיט — `elementFromPoint` על מרכזו
+                        החזיר את הרצועה. חובת הרישיון מולאה בקוד ולא על המסך.
+                        ההבהרה עברה לתמונה עצמה, והקרדיט עלה לפינה העליונה,
+                        מול המרחק. */}
+                    <Box sx={{ '& img': { filter: 'brightness(0.8)' } }}>
                       <PlaceImage
                         name={destination.name}
                         lookup={destination.lookup || ''}
                         height={200}
                         icon="🏙️"
                         mustBePlace
+                        creditSx={{ top: 4, bottom: 'auto', maxWidth: 'calc(100% - 90px)' }}
                       />
                     </Box>
                     <Box
@@ -3194,6 +3191,16 @@ const DestinationInfoPage = () => {
                         {t('destInfo.km', { dist: destination.distance })}
                       </Typography>
                     </Box>
+                    {/* כפתור אמיתי שנמתח על הכרטיס, ולא `role="button"` על
+                        הכרטיס: בתוכו יושב עכשיו קישור הקרדיט, ו-Enter עליו
+                        בעבע לכרטיס וניווט. שכבה אחות — כמו בדף הבית. */}
+                    <Box
+                      component="button"
+                      type="button"
+                      aria-label={destination.name}
+                      onClick={() => navigate(`/destination-info/${destination.name}`)}
+                      sx={{ all: 'unset', position: 'absolute', inset: 0, zIndex: 1, cursor: 'pointer' }}
+                    />
                   </Card>
                 </Grid>
               ))}

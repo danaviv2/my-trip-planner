@@ -96,6 +96,7 @@ const Header = () => {
           color="inherit"
           size="small"
           onClick={(e) => setLangAnchorEl(e.currentTarget)}
+          aria-label={t('nav.language')}
           sx={{ gap: 0.5, minWidth: 44, minHeight: 44 }}
         >
           <LanguageIcon fontSize="small" />
@@ -169,7 +170,7 @@ const Header = () => {
               <InstallPWAButton />
               {LanguageSwitcher()}
               <Tooltip title={userPreferences.darkMode ? t('nav.lightMode') : t('nav.darkMode')}>
-                <IconButton color="inherit" onClick={toggleDarkMode} size="small" sx={{ minWidth: 44, minHeight: 44 }}>
+                <IconButton color="inherit" onClick={toggleDarkMode} aria-label={userPreferences.darkMode ? t('nav.lightMode') : t('nav.darkMode')} size="small" sx={{ minWidth: 44, minHeight: 44 }}>
                   {userPreferences.darkMode ? <LightModeIcon /> : <DarkModeIcon />}
                 </IconButton>
               </Tooltip>
@@ -178,7 +179,7 @@ const Header = () => {
               {user ? (
                 <>
                   <Tooltip title={user.displayName || user.email}>
-                    <IconButton onClick={handleAvatarClick} size="small" sx={{ ml: 0.5, minWidth: 44, minHeight: 44 }}>
+                    <IconButton onClick={handleAvatarClick} aria-label={t('nav.user')} size="small" sx={{ ml: 0.5, minWidth: 44, minHeight: 44 }}>
                       <Avatar
                         src={user.photoURL}
                         sx={{ width: 32, height: 32, bgcolor: '#764ba2', fontSize: 14 }}
@@ -281,14 +282,14 @@ const Header = () => {
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               {LanguageSwitcher()}
               <Tooltip title={userPreferences.darkMode ? t('nav.lightMode') : t('nav.darkMode')}>
-                <IconButton color="inherit" onClick={toggleDarkMode} size="small" sx={{ minWidth: 44, minHeight: 44 }}>
+                <IconButton color="inherit" onClick={toggleDarkMode} aria-label={userPreferences.darkMode ? t('nav.lightMode') : t('nav.darkMode')} size="small" sx={{ minWidth: 44, minHeight: 44 }}>
                   {userPreferences.darkMode ? <LightModeIcon /> : <DarkModeIcon />}
                 </IconButton>
               </Tooltip>
               <NotificationCenter />
               {user ? (
                 <>
-                  <IconButton onClick={handleAvatarClick} size="small" sx={{ ml: 0.5, minWidth: 44, minHeight: 44 }}>
+                  <IconButton onClick={handleAvatarClick} aria-label={t('nav.user')} size="small" sx={{ ml: 0.5, minWidth: 44, minHeight: 44 }}>
                     <Avatar
                       src={user.photoURL}
                       sx={{ width: 28, height: 28, bgcolor: '#764ba2', fontSize: 12 }}
@@ -311,11 +312,11 @@ const Header = () => {
                   </Menu>
                 </>
               ) : (
-                <IconButton color="inherit" component={Link} to="/login" size="small" sx={{ ml: 0.5, minWidth: 44, minHeight: 44 }}>
+                <IconButton color="inherit" component={Link} to="/login" aria-label={t('nav.login')} size="small" sx={{ ml: 0.5, minWidth: 44, minHeight: 44 }}>
                   <LoginIcon />
                 </IconButton>
               )}
-              <IconButton color="inherit" onClick={() => setDrawerOpen(true)} sx={{ ml: 1, minWidth: 44, minHeight: 44 }}>
+              <IconButton color="inherit" onClick={() => setDrawerOpen(true)} aria-label={t('nav.menu')} sx={{ ml: 1, minWidth: 44, minHeight: 44 }}>
                 <MenuIcon />
               </IconButton>
             </Box>
@@ -339,7 +340,7 @@ const Header = () => {
           alignItems: 'center'
         }}>
           <Typography variant="h6" fontWeight="bold">✈️ {t('nav.menu')}</Typography>
-          <IconButton color="inherit" onClick={() => setDrawerOpen(false)} sx={{ minWidth: 44, minHeight: 44 }}>
+          <IconButton color="inherit" onClick={() => setDrawerOpen(false)} aria-label={t('nav.close')} sx={{ minWidth: 44, minHeight: 44 }}>
             <CloseIcon />
           </IconButton>
         </Box>

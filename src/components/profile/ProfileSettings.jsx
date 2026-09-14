@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, Grid, Card, CardContent, Typography, TextField, Button, MenuItem,
   Alert, Divider, Stack, Dialog, DialogTitle, DialogContent, DialogActions,
-  CircularProgress, Chip,
+  CircularProgress, Chip, Link,
 } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserPreferences } from '../../contexts/UserPreferencesContext';
@@ -21,6 +21,8 @@ import { useTripSave } from '../../contexts/TripSaveContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { deleteAccountAndData, signInMethod } from '../../services/accountService';
 import { resetTour } from '../../services/onboardingTourService';
+import { hasGmailConsent } from '../../services/googleTokenClient';
+import LegalLinks from '../common/LegalLinks';
 
 const TRIP_STYLES = ['balanced', 'culinary', 'adventure', 'culture', 'relax'];
 const CURRENCIES = ['ILS', 'USD', 'EUR', 'GBP'];
@@ -117,6 +119,23 @@ export default function ProfileSettings() {
 
   const set = (k) => (e) => setDraft((d) => ({ ...d, [k]: e.target.value }));
 
+  // תוצאת הניתוק מוצגת ליד הכפתור, ולא בראש העמוד: הכפתור נמצא בתחתית
+  // המסך, והודעה למעלה לא נראית בלי גלילה — כלומר לא נראית בכלל.
+  const [gmailNote, setGmailNote] = useState(null);
+  const [gmailBusy, setGmailBusy] = useState(false);
+  const handleDisconnectGmail = async () => {
+    setGmailBusy(true);
+    setGmailNote(null);
+    try {
+      const { revoked } = await disconnectGmail();
+      setGmailNote(revoked
+        ? { severity: 'success', text: t('settings.security.revoked') }
+        : { severity: 'warning', text: t('settings.security.revokeFailed') });
+    } finally {
+      setGmailBusy(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!dirty) { setStatus({ severity: 'info', text: t('settings.nothingToSave') }); return; }
     setBusy(true);
@@ -161,7 +180,15 @@ export default function ProfileSettings() {
     setDelError(null);
     const res = await deleteAccountAndData(user, { password: delPassword });
     setDelBusy(false);
-    if (res.ok) { window.location.href = '/'; return; }
+    if (res.ok) {
+      // חשבון שנמחק לא אמור להשאיר אחריו הרשאת Gmail פעילה אצל Google.
+      // הניסיון נעשה רק אחרי מחיקה מוצלחת — סיסמה שגויה לא תנתק את הסריקה.
+      if (gmailToken || hasGmailConsent()) {
+        await disconnectGmail().catch(() => {});
+      }
+      window.location.href = '/';
+      return;
+    }
     // ── ההודעה נגזרת ממה שקרה, ואומרת מה נמחק ──
     // "המחיקה נכשלה ושום דבר לא נמחק" הוצג עד היום גם כשהנתונים כבר
     // נמחקו. כאן כל ענף אומר את מצב הנתונים במפורש.
@@ -283,11 +310,25 @@ export default function ProfileSettings() {
                 <Button
                   variant={gmailToken ? 'outlined' : 'contained'}
                   size="small"
+                  disabled={gmailBusy}
                   sx={{ mt: 1.5, ...TOUCH }}
-                  onClick={() => (gmailToken ? disconnectGmail() : connectGmail())}
+                  onClick={() => (gmailToken ? handleDisconnectGmail() : connectGmail())}
                 >
                   {gmailToken ? t('settings.security.disconnect') : t('settings.security.connect')}
                 </Button>
+                {gmailNote && (
+                  <Alert severity={gmailNote.severity} sx={{ mt: 1.5, borderRadius: 2 }} onClose={() => setGmailNote(null)}>
+                    {gmailNote.text}
+                    {gmailNote.severity === 'warning' && (
+                      <>
+                        {' '}
+                        <Link href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">
+                          myaccount.google.com/permissions
+                        </Link>
+                      </>
+                    )}
+                  </Alert>
+                )}
               </Box>
               {user && (
                 <>
@@ -347,6 +388,7 @@ export default function ProfileSettings() {
           </Grid>
         )}
       </Grid>
+      <LegalLinks sx={{ mt: 3 }} />
 
       {/* ── דיאלוג המחיקה ──
           הכפתור ההרסני מושבת עד שמוקלדת מילת אישור. לחיצה אחת על

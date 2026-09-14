@@ -7,14 +7,12 @@ import {
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
-import { useLanguage } from '../../contexts/LanguageContext';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { loginWithGoogle, loginWithEmail, registerWithEmail, resetPassword } = useAuth();
   const { t } = useTranslation();
-  const { currentLang } = useLanguage();
 
   const [mode, setMode] = useState('login');
   const [email, setEmail] = useState('');
@@ -136,7 +134,7 @@ const LoginPage = () => {
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword((p) => !p)} edge="end">
+                    <IconButton onClick={() => setShowPassword((p) => !p)} edge="end" aria-label={showPassword ? t('nav.hidePassword') : t('nav.showPassword')}>
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>

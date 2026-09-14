@@ -20,7 +20,11 @@
     "matchmaker": "Trouveur",
     "more": "Plus",
     "moreDestinations": "Plus de destinations",
-    "user": "Utilisateur"
+    "user": "Utilisateur",
+    "language": "Langue",
+    "close": "Fermer",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
   },
   "home": {
     "hero": {
@@ -1067,7 +1071,9 @@
       "gmailOff": "Non connecté. La connexion évite de recopier chaque confirmation.",
       "connect": "Connecter Gmail",
       "disconnect": "Déconnecter",
-      "logout": "Se déconnecter"
+      "logout": "Se déconnecter",
+      "revoked": "L’accès à Gmail a aussi été révoqué dans votre compte Google. Une nouvelle autorisation vous sera demandée avant la prochaine analyse.",
+      "revokeFailed": "L’analyse est arrêtée sur cet appareil, mais l’autorisation n’a pas pu être révoquée dans votre compte Google. Vous pouvez la révoquer manuellement ici :"
     },
     "save": "Enregistrer",
     "saving": "Mise à jour de votre passeport numérique…",
@@ -1109,5 +1115,12 @@
     "body": "Le lien est peut-être ancien ou mal saisi. L’adresse demandée :",
     "home": "Aller à l’accueil",
     "trips": "Voir mes voyages"
+  },
+  "legal": {
+    "draft": "Brouillon : ce texte est en attente de validation juridique et peut changer.",
+    "hebrewOnly": "Ce document est pour l’instant disponible uniquement en hébreu.",
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions d’utilisation",
+    "accessibility": "Déclaration d’accessibilité"
   }
 }

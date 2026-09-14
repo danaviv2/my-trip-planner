@@ -25,6 +25,7 @@ import VibeMatcher from '../components/vibe/VibeMatcher';
 import ShareTripDialog from '../components/shared/ShareTripDialog';
 
 import { noflip } from '../utils/noflip';
+import LegalLinks from '../components/common/LegalLinks';
 const HomePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -560,18 +561,25 @@ const HomePage = () => {
                     '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover': { transform: 'none' } },
                   }}
                 >
+                  {/* ── הכפתור שכבה מעל הכרטיס, ולא עוטף אותו ──
+                      ב-14.09.2026 נכנס לתמונה קישור הקרדיט (חובת הרישיון),
+                      וחזר בדיוק המבנה הפסול שתואר למעלה: קישור בתוך
+                      `<button>`. axe מדד 6 הפרות nested-interactive בדף
+                      הבית. הכפתור נמתח כעת על כל הכרטיס (z-index 1), והקרדיט
+                      והשיתוף יושבים מעליו (z-index 2) — אחים, לא מקוננים. */}
                   <Box
                     component="button"
                     type="button"
+                    aria-label={t(`cities.${dest.name}`)}
                     onClick={() => navigate(`/destination-info/${dest.name}`)}
                     sx={{
                       all: 'unset',
-                      display: 'block', width: '100%', cursor: 'pointer',
+                      position: 'absolute', inset: 0, zIndex: 1, cursor: 'pointer',
                       // offset שלילי: ל-`overflow: hidden` של האב, טבעת
                       // שמצוירת בחוץ פשוט נחתכת ואינה נראית.
                       '&:focus-visible': { outline: '3px solid', outlineColor: dest.color, outlineOffset: -3 },
                     }}
-                  >
+                  />
                   {/* ── התווית מתורגמת, השאילתה לא ──
                       שמות הערים הוצגו בעברית בכל השפות: משתמש בצרפתית
                       ראה שישה כרטיסים ובהם "פריז" ו"רומא", מתחת לממשק
@@ -592,13 +600,12 @@ const HomePage = () => {
                       {t(`cities.${dest.name}`)}
                     </Typography>
                   </Box>
-                  </Box>
                   <Tooltip title={`${t('share.title')} — ${t(`cities.${dest.name}`)}`}>
                     <IconButton
                       aria-label={`${t('share.title')} — ${t(`cities.${dest.name}`)}`}
                       onClick={() => setShareTarget(dest.name)}
                       sx={{
-                        position: 'absolute', top: 2, right: noflip('2px'),
+                        position: 'absolute', top: 2, right: noflip('2px'), zIndex: 2,
                         width: 44, height: 44, color: 'white',
                         textShadow: '0 1px 3px rgba(0,0,0,.6)',
                         '&:hover': { bgcolor: 'rgba(0,0,0,0.25)' },
@@ -613,6 +620,7 @@ const HomePage = () => {
           </Grid>
         </Paper>
 
+        <LegalLinks sx={{ mt: 2 }} />
       </Container>
 
       {/* Modals */}

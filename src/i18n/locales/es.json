@@ -20,7 +20,11 @@
     "matchmaker": "Buscador",
     "more": "Más",
     "moreDestinations": "Más destinos",
-    "user": "Usuario"
+    "user": "Usuario",
+    "language": "Idioma",
+    "close": "Cerrar",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña"
   },
   "home": {
     "hero": {
@@ -1067,7 +1071,9 @@
       "gmailOff": "Sin conectar. Conectarlo evita copiar cada confirmación a mano.",
       "connect": "Conectar Gmail",
       "disconnect": "Desconectar",
-      "logout": "Cerrar sesión"
+      "logout": "Cerrar sesión",
+      "revoked": "El acceso a Gmail también se revocó en tu cuenta de Google. Se te pedirá autorizarlo de nuevo antes del próximo escaneo.",
+      "revokeFailed": "El escaneo se detuvo en este dispositivo, pero no pudimos revocar el permiso en tu cuenta de Google. Puedes revocarlo manualmente aquí:"
     },
     "save": "Guardar cambios",
     "saving": "Actualizando tu pasaporte digital…",
@@ -1109,5 +1115,12 @@
     "body": "Puede que el enlace sea antiguo o tenga un error. La dirección que pediste:",
     "home": "Ir al inicio",
     "trips": "Ir a mis viajes"
+  },
+  "legal": {
+    "draft": "Borrador: este texto está pendiente de revisión legal y puede cambiar.",
+    "hebrewOnly": "Este documento está disponible por ahora solo en hebreo.",
+    "privacy": "Política de privacidad",
+    "terms": "Términos de uso",
+    "accessibility": "Declaración de accesibilidad"
   }
 }

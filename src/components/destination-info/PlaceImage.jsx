@@ -43,10 +43,12 @@ const tintOf = (text) => {
  *   צריך להופיע "Paris" ולא "פריז". בלי ההפרדה הזו כל תרגום של
  *   התווית היה שובר את חיפוש התמונה. ברירת המחדל היא `name`, ולכן
  *   כל קריאה קיימת מתנהגת בדיוק כשהייתה.
+ * @param {object} creditSx  מיקום אחר לקרדיט, כשהפינה התחתונה מכוסה —
+ *   למשל ברצועת כיתוב שעוגנת לתחתית הכרטיס.
  */
 const PlaceImage = ({
   name, lookup = '', city = '', height = 180, icon = '📍', mustBePlace = false,
-  label = '',
+  label = '', creditSx,
 }) => {
   const shown = String(label || name || '').trim();
   const query = String(name || '').trim();
@@ -86,7 +88,7 @@ const PlaceImage = ({
           onError={() => setState({ loading: false, photo: null })}
           sx={{ width: '100%', height, objectFit: 'cover', display: 'block' }}
         />
-        <ImageCredit src={state.photo} onNonFree={() => setState({ loading: false, photo: null })} />
+        <ImageCredit src={state.photo} sx={creditSx} onNonFree={() => setState({ loading: false, photo: null })} />
       </Box>
     );
   }
