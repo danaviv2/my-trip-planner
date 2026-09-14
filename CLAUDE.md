@@ -147,6 +147,12 @@ is signal-based, never a hash key** over fields that may be absent:
   (`ONE_PER_DOCUMENT`), since one ticket carries several flights.
 - `sameFlight` — flight number + date is absolute identity; a record with no date
   contradicts no date.
+- References are a **set**, not one field (`referencesOf` in `bookingIdentity`):
+  `confirmationNumber` plus `otherReferences`. A broker and a supplier each issue a
+  number for one booking, and each email carries only some of them. Same booking =
+  one shared number; conflict = both have numbers and none is shared. Merging is
+  transitive, because a record that gains a number can now match one already
+  stored. Flights are excluded — one PNR covers outbound and return.
 - Everything else — same type, no contradicting identity/time field, and at least one
   positive agreement. No shared field means *not* the same booking.
 - `mergeBookings` unions fields rather than picking a winner, **except** for
