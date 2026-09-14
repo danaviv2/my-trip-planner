@@ -1186,5 +1186,152 @@
     "gap_other": "{{count}} days with no bookings",
     "staying": "overnight stay",
     "free": "no bookings"
+  },
+  "rolling": {
+    "restart": "Start over",
+    "steps": {
+      "define": "Set route",
+      "discover": "AI finds stops",
+      "adjust": "Adjust stops",
+      "full": "Full itinerary"
+    },
+    "pace": {
+      "slow": "Slow",
+      "slowDesc": "Fewer stops, more depth",
+      "medium": "Moderate",
+      "mediumDesc": "Balance of quantity and quality",
+      "fast": "Fast",
+      "fastDesc": "Many stops, wide coverage"
+    },
+    "interest": {
+      "nature": "Nature",
+      "culture": "Culture",
+      "food": "Food",
+      "adventure": "Adventure",
+      "history": "History",
+      "beach": "Beaches",
+      "wine": "Wine & wineries",
+      "castles": "Castles"
+    },
+    "stopType": {
+      "city": "City",
+      "nature": "Nature",
+      "viewpoint": "Viewpoint",
+      "historic": "Historic",
+      "beach": "Beach",
+      "adventure": "Adventure",
+      "food": "Culinary"
+    },
+    "header": {
+      "subtitle": "Set a route — AI will find the perfect stops"
+    },
+    "define": {
+      "title": "Set your trip route",
+      "subtitle": "Enter a start and a destination, and AI will find the best stops along the way",
+      "start": "Starting point",
+      "end": "Final destination",
+      "waypoint": "Stop {{n}}",
+      "example": "e.g. {{place}}",
+      "addWaypoint": "Add a stop",
+      "date": "Departure date (optional — for the weather forecast)",
+      "dateHelp": "If the trip is within two weeks, we will show a forecast for each stop",
+      "pace": "Trip pace",
+      "interests": "Interests",
+      "discover": "Discover my route"
+    },
+    "loading": {
+      "title": "AI is scanning your route",
+      "scan": "AI is scanning the route...",
+      "cities": "Finding interesting towns along the way...",
+      "attractions": "Checking unique attractions...",
+      "order": "Ordering stops geographically..."
+    },
+    "err": {
+      "missingEnds": "Please enter a starting point and a final destination",
+      "noKey": "Gemini API key is missing",
+      "rateLimit": "AI request limit reached. Try again in a minute.",
+      "timeout": "The request timed out — try again",
+      "emptyRoute": "We could not find stops between {{from}} and {{to}}. Check the place names and try again.",
+      "generic": "Could not reach the AI. Check your connection and try again."
+    },
+    "stops": {
+      "title": "Stops we found",
+      "total": "{{days}} days · {{stops}} stops in total",
+      "route": "Trip route",
+      "openMaps": "Open in Google Maps",
+      "removed": "Removed",
+      "days_one": "1 day",
+      "days_other": "{{count}} days",
+      "remove": "Remove stop",
+      "detourTitle": "This stop takes you off the route",
+      "detourBody": "+{{km}} km compared with driving straight from the previous stop to the next — about {{time}} of extra driving, there and back.",
+      "build": "Build a detailed itinerary"
+    },
+    "build": {
+      "title": "Building a detailed itinerary...",
+      "subtitle": "AI is creating a daily plan for each stop, with hotels, wineries and castles",
+      "progress": "{{p}}% done"
+    },
+    "full": {
+      "title": "Your full itinerary",
+      "summary": "{{days}} days · {{stops}} stops",
+      "hint": "Tap a stop to open it · tap 🗑️ to delete an activity · tap ✏️ to edit · add activities manually",
+      "balanced": "{{n}} balanced",
+      "busy": "{{n}} busy",
+      "tooBusy": "{{n}} too busy",
+      "moved": "Moved {{n}} activities to balance the itinerary",
+      "alreadyBalanced": "The itinerary is already balanced — no changes needed",
+      "optimize": "Auto-balance",
+      "dayRange": "Days {{from}}–{{to}}",
+      "hours": "{{h}} hours",
+      "hoursShort": "{{h}}h",
+      "lodging": "Suggested stay",
+      "searchBooking": "Search on Booking.com",
+      "stopFailed": "We could not create an itinerary for this stop",
+      "saving": "Saving...",
+      "saveAndOpen": "Save and open in planner"
+    },
+    "act": {
+      "time": "Time",
+      "name": "Name",
+      "activityName": "Activity name",
+      "type": "Type",
+      "description": "Description",
+      "shortDescription": "Short description (optional)",
+      "price": "Price",
+      "edit": "Edit",
+      "delete": "Delete activity",
+      "save": "Save",
+      "add": "Add",
+      "cancel": "Cancel",
+      "addToDay": "Add an activity to day {{n}}",
+      "attraction": "Attraction",
+      "food": "Food",
+      "nature": "Nature",
+      "museum": "Museum",
+      "winery": "Winery",
+      "castle": "Castle",
+      "beach": "Beach",
+      "shopping": "Shopping",
+      "nightlife": "Nightlife",
+      "rest": "Rest"
+    },
+    "phrases": {
+      "button": "Phrases",
+      "title": "Useful phrases — {{place}}",
+      "loading": "AI is preparing local phrases...",
+      "none": "No phrases available",
+      "close": "Close",
+      "shareTitle": "Phrases in {{place}}",
+      "whatsapp": "Send on WhatsApp"
+    },
+    "shape": {
+      "title": "Route shape",
+      "total": "{{km}} km as the crow flies",
+      "extra": "+{{km}} km over the direct line",
+      "aria": "Sketch of the route by stop locations",
+      "detour": "+{{km}} km",
+      "note": "Straight-line distances, for orientation only. Nearby stops are nudged apart to stay readable — the actual road distance is longer."
+    }
   }
 }

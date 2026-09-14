@@ -1186,5 +1186,152 @@
     "gap_other": "{{count}} jours sans réservation",
     "staying": "nuitée",
     "free": "aucune réservation"
+  },
+  "rolling": {
+    "restart": "Recommencer",
+    "steps": {
+      "define": "Définir l’itinéraire",
+      "discover": "L’IA trouve des étapes",
+      "adjust": "Ajuster les étapes",
+      "full": "Itinéraire complet"
+    },
+    "pace": {
+      "slow": "Lent",
+      "slowDesc": "Moins d’étapes, plus de profondeur",
+      "medium": "Modéré",
+      "mediumDesc": "Équilibre entre quantité et qualité",
+      "fast": "Rapide",
+      "fastDesc": "Beaucoup d’étapes, large couverture"
+    },
+    "interest": {
+      "nature": "Nature",
+      "culture": "Culture",
+      "food": "Gastronomie",
+      "adventure": "Aventure",
+      "history": "Histoire",
+      "beach": "Plages",
+      "wine": "Vin et vignobles",
+      "castles": "Châteaux"
+    },
+    "stopType": {
+      "city": "Ville",
+      "nature": "Nature",
+      "viewpoint": "Point de vue",
+      "historic": "Historique",
+      "beach": "Plage",
+      "adventure": "Aventure",
+      "food": "Gastronomie"
+    },
+    "header": {
+      "subtitle": "Définissez un itinéraire — l’IA trouvera les étapes idéales"
+    },
+    "define": {
+      "title": "Définissez l’itinéraire du voyage",
+      "subtitle": "Saisissez un départ et une destination, et l’IA trouvera les meilleures étapes en chemin",
+      "start": "Point de départ",
+      "end": "Destination finale",
+      "waypoint": "Étape {{n}}",
+      "example": "ex. : {{place}}",
+      "addWaypoint": "Ajouter une étape",
+      "date": "Date de départ (facultatif — pour la météo)",
+      "dateHelp": "Si le voyage a lieu dans les deux semaines, nous afficherons la météo de chaque étape",
+      "pace": "Rythme du voyage",
+      "interests": "Centres d’intérêt",
+      "discover": "Découvrir mon itinéraire"
+    },
+    "loading": {
+      "title": "L’IA analyse votre itinéraire",
+      "scan": "L’IA analyse l’itinéraire...",
+      "cities": "Recherche de villes intéressantes en chemin...",
+      "attractions": "Vérification d’attractions uniques...",
+      "order": "Classement géographique des étapes..."
+    },
+    "err": {
+      "missingEnds": "Veuillez saisir un point de départ et une destination finale",
+      "noKey": "Clé API Gemini manquante",
+      "rateLimit": "Limite de requêtes IA atteinte. Réessayez dans une minute.",
+      "timeout": "La requête a expiré — réessayez",
+      "emptyRoute": "Aucune étape trouvée entre {{from}} et {{to}}. Vérifiez les noms et réessayez.",
+      "generic": "Impossible de joindre l’IA. Vérifiez votre connexion et réessayez."
+    },
+    "stops": {
+      "title": "Étapes trouvées",
+      "total": "{{days}} jours · {{stops}} étapes au total",
+      "route": "Itinéraire du voyage",
+      "openMaps": "Ouvrir dans Google Maps",
+      "removed": "Retirée",
+      "days_one": "1 jour",
+      "days_other": "{{count}} jours",
+      "remove": "Retirer l’étape",
+      "detourTitle": "Cette étape vous éloigne de l’itinéraire",
+      "detourBody": "+{{km}} km par rapport à un trajet direct de l’étape précédente à la suivante — environ {{time}} de conduite en plus, aller-retour.",
+      "build": "Créer un itinéraire détaillé"
+    },
+    "build": {
+      "title": "Création de l’itinéraire détaillé...",
+      "subtitle": "L’IA prépare un programme quotidien pour chaque étape, avec hôtels, domaines viticoles et châteaux",
+      "progress": "{{p}} % terminé"
+    },
+    "full": {
+      "title": "Votre itinéraire complet",
+      "summary": "{{days}} jours · {{stops}} étapes",
+      "hint": "Touchez une étape pour l’ouvrir · touchez 🗑️ pour supprimer une activité · touchez ✏️ pour modifier · ajoutez des activités manuellement",
+      "balanced": "{{n}} équilibré",
+      "busy": "{{n}} chargé",
+      "tooBusy": "{{n}} trop chargé",
+      "moved": "{{n}} activités déplacées pour équilibrer l’itinéraire",
+      "alreadyBalanced": "L’itinéraire est déjà équilibré — aucun changement nécessaire",
+      "optimize": "Équilibrer automatiquement",
+      "dayRange": "Jours {{from}}–{{to}}",
+      "hours": "{{h}} heures",
+      "hoursShort": "{{h}} h",
+      "lodging": "Hébergement suggéré",
+      "searchBooking": "Rechercher sur Booking.com",
+      "stopFailed": "Impossible de créer un itinéraire pour cette étape",
+      "saving": "Enregistrement...",
+      "saveAndOpen": "Enregistrer et ouvrir dans le planificateur"
+    },
+    "act": {
+      "time": "Heure",
+      "name": "Nom",
+      "activityName": "Nom de l’activité",
+      "type": "Type",
+      "description": "Description",
+      "shortDescription": "Courte description (facultatif)",
+      "price": "Prix",
+      "edit": "Modifier",
+      "delete": "Supprimer l’activité",
+      "save": "Enregistrer",
+      "add": "Ajouter",
+      "cancel": "Annuler",
+      "addToDay": "Ajouter une activité au jour {{n}}",
+      "attraction": "Attraction",
+      "food": "Gastronomie",
+      "nature": "Nature",
+      "museum": "Musée",
+      "winery": "Domaine viticole",
+      "castle": "Château",
+      "beach": "Plage",
+      "shopping": "Shopping",
+      "nightlife": "Sorties",
+      "rest": "Repos"
+    },
+    "phrases": {
+      "button": "Expressions",
+      "title": "Expressions utiles — {{place}}",
+      "loading": "L’IA prépare des expressions locales...",
+      "none": "Aucune expression disponible",
+      "close": "Fermer",
+      "shareTitle": "Expressions à {{place}}",
+      "whatsapp": "Envoyer sur WhatsApp"
+    },
+    "shape": {
+      "title": "Forme de l’itinéraire",
+      "total": "{{km}} km à vol d’oiseau",
+      "extra": "+{{km}} km au-delà de la ligne directe",
+      "aria": "Schéma de l’itinéraire selon l’emplacement des étapes",
+      "detour": "+{{km}} km",
+      "note": "Distances à vol d’oiseau, à titre indicatif. Les étapes proches sont légèrement écartées pour rester lisibles — la distance réelle par la route est plus longue."
+    }
   }
 }

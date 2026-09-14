@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Paper, Typography, Chip } from '@mui/material';
 import { projectStops, routeTotals, analyzeRoute } from '../../services/routeGeometryService';
+import { useTranslation } from 'react-i18next';
 
 /**
  * צורת המסלול — שרטוט קל של התחנות לפי מיקומן.
@@ -15,6 +16,7 @@ import { projectStops, routeTotals, analyzeRoute } from '../../services/routeGeo
  * ואינו מחייב להזיז נקודות ממקומן האמיתי.
  */
 const RouteShapeMap = ({ stops = [] }) => {
+  const { t } = useTranslation();
   const W = 640;
   const H = 240;
 
@@ -31,13 +33,13 @@ const RouteShapeMap = ({ stops = [] }) => {
   return (
     <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap', gap: 1 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>🗺️ צורת המסלול</Typography>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>🗺️ {t('rolling.shape.title')}</Typography>
         {totals && (
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            <Chip size="small" label={`${totals.total.toLocaleString()} ק״מ בקו אווירי`} />
+            <Chip size="small" label={t('rolling.shape.total', { km: totals.total.toLocaleString() })} />
             {totals.extra > 50 && (
               <Chip size="small" color="warning" variant="outlined"
-                label={`+${totals.extra.toLocaleString()} ק״מ מעל הקו הישיר`} />
+                label={t('rolling.shape.extra', { km: totals.extra.toLocaleString() })} />
             )}
           </Box>
         )}
@@ -45,7 +47,7 @@ const RouteShapeMap = ({ stops = [] }) => {
 
       <Box sx={{ width: '100%', overflowX: 'auto' }}>
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block', minWidth: 300 }}
-             role="img" aria-label="שרטוט מסלול הנסיעה לפי מיקומי התחנות">
+             role="img" aria-label={t('rolling.shape.aria')}>
           <polyline points={line} fill="none" stroke="#667eea" strokeWidth="2.5"
                     strokeLinejoin="round" strokeDasharray="6 4" />
           {points.map((p, i) => {
@@ -81,7 +83,7 @@ const RouteShapeMap = ({ stops = [] }) => {
                 {p.stop.name}
                 {info.notable && (
                   <Typography component="span" variant="caption" sx={{ color: 'warning.dark', fontWeight: 700 }}>
-                    {' '}+{info.detour} ק״מ
+                    {' '}{t('rolling.shape.detour', { km: info.detour })}
                   </Typography>
                 )}
               </Typography>
@@ -91,7 +93,7 @@ const RouteShapeMap = ({ stops = [] }) => {
       </Box>
 
       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-        מרחקים בקו אווירי, להתמצאות בלבד. תחנות סמוכות מוזזות מעט זו מזו כדי שיישארו קריאות — מרחק הכביש בפועל ארוך יותר.
+        {t('rolling.shape.note')}
       </Typography>
     </Paper>
   );

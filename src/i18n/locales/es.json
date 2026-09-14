@@ -1186,5 +1186,152 @@
     "gap_other": "{{count}} días sin reservas",
     "staying": "alojamiento",
     "free": "sin reservas"
+  },
+  "rolling": {
+    "restart": "Empezar de nuevo",
+    "steps": {
+      "define": "Definir ruta",
+      "discover": "La IA busca paradas",
+      "adjust": "Ajustar paradas",
+      "full": "Itinerario completo"
+    },
+    "pace": {
+      "slow": "Tranquilo",
+      "slowDesc": "Menos paradas, más profundidad",
+      "medium": "Moderado",
+      "mediumDesc": "Equilibrio entre cantidad y calidad",
+      "fast": "Rápido",
+      "fastDesc": "Muchas paradas, gran cobertura"
+    },
+    "interest": {
+      "nature": "Naturaleza",
+      "culture": "Cultura",
+      "food": "Comida",
+      "adventure": "Aventura",
+      "history": "Historia",
+      "beach": "Playas",
+      "wine": "Vino y bodegas",
+      "castles": "Castillos"
+    },
+    "stopType": {
+      "city": "Ciudad",
+      "nature": "Naturaleza",
+      "viewpoint": "Mirador",
+      "historic": "Histórico",
+      "beach": "Playa",
+      "adventure": "Aventura",
+      "food": "Gastronomía"
+    },
+    "header": {
+      "subtitle": "Define una ruta y la IA encontrará las paradas perfectas"
+    },
+    "define": {
+      "title": "Define la ruta de tu viaje",
+      "subtitle": "Introduce un origen y un destino, y la IA encontrará las mejores paradas por el camino",
+      "start": "Punto de partida",
+      "end": "Destino final",
+      "waypoint": "Parada {{n}}",
+      "example": "p. ej.: {{place}}",
+      "addWaypoint": "Añadir parada",
+      "date": "Fecha de salida (opcional, para el pronóstico del tiempo)",
+      "dateHelp": "Si el viaje es en las próximas dos semanas, mostraremos el pronóstico de cada parada",
+      "pace": "Ritmo del viaje",
+      "interests": "Intereses",
+      "discover": "Descubrir mi ruta"
+    },
+    "loading": {
+      "title": "La IA está analizando tu ruta",
+      "scan": "La IA analiza la ruta...",
+      "cities": "Buscando pueblos interesantes en el camino...",
+      "attractions": "Revisando atracciones únicas...",
+      "order": "Ordenando paradas geográficamente..."
+    },
+    "err": {
+      "missingEnds": "Introduce un punto de partida y un destino final",
+      "noKey": "Falta la clave de la API de Gemini",
+      "rateLimit": "Se alcanzó el límite de solicitudes de IA. Inténtalo en un minuto.",
+      "timeout": "La solicitud caducó; inténtalo de nuevo",
+      "emptyRoute": "No encontramos paradas entre {{from}} y {{to}}. Revisa los nombres e inténtalo de nuevo.",
+      "generic": "No se pudo conectar con la IA. Revisa tu conexión e inténtalo de nuevo."
+    },
+    "stops": {
+      "title": "Paradas encontradas",
+      "total": "{{days}} días · {{stops}} paradas en total",
+      "route": "Ruta del viaje",
+      "openMaps": "Abrir en Google Maps",
+      "removed": "Quitada",
+      "days_one": "1 día",
+      "days_other": "{{count}} días",
+      "remove": "Quitar parada",
+      "detourTitle": "Esta parada te aleja de la ruta",
+      "detourBody": "+{{km}} km frente a ir directo de la parada anterior a la siguiente: unos {{time}} más de conducción, ida y vuelta.",
+      "build": "Crear itinerario detallado"
+    },
+    "build": {
+      "title": "Creando itinerario detallado...",
+      "subtitle": "La IA crea un plan diario para cada parada, con hoteles, bodegas y castillos",
+      "progress": "{{p}}% completado"
+    },
+    "full": {
+      "title": "Tu itinerario completo",
+      "summary": "{{days}} días · {{stops}} paradas",
+      "hint": "Toca una parada para abrirla · toca 🗑️ para borrar una actividad · toca ✏️ para editar · añade actividades a mano",
+      "balanced": "{{n}} equilibrado",
+      "busy": "{{n}} cargado",
+      "tooBusy": "{{n}} demasiado cargado",
+      "moved": "Se movieron {{n}} actividades para equilibrar el itinerario",
+      "alreadyBalanced": "El itinerario ya está equilibrado; no hacen falta cambios",
+      "optimize": "Equilibrar automáticamente",
+      "dayRange": "Días {{from}}–{{to}}",
+      "hours": "{{h}} horas",
+      "hoursShort": "{{h}} h",
+      "lodging": "Alojamiento sugerido",
+      "searchBooking": "Buscar en Booking.com",
+      "stopFailed": "No pudimos crear un itinerario para esta parada",
+      "saving": "Guardando...",
+      "saveAndOpen": "Guardar y abrir en el planificador"
+    },
+    "act": {
+      "time": "Hora",
+      "name": "Nombre",
+      "activityName": "Nombre de la actividad",
+      "type": "Tipo",
+      "description": "Descripción",
+      "shortDescription": "Descripción breve (opcional)",
+      "price": "Precio",
+      "edit": "Editar",
+      "delete": "Borrar actividad",
+      "save": "Guardar",
+      "add": "Añadir",
+      "cancel": "Cancelar",
+      "addToDay": "Añadir actividad al día {{n}}",
+      "attraction": "Atracción",
+      "food": "Comida",
+      "nature": "Naturaleza",
+      "museum": "Museo",
+      "winery": "Bodega",
+      "castle": "Castillo",
+      "beach": "Playa",
+      "shopping": "Compras",
+      "nightlife": "Ocio nocturno",
+      "rest": "Descanso"
+    },
+    "phrases": {
+      "button": "Frases",
+      "title": "Frases útiles — {{place}}",
+      "loading": "La IA prepara frases locales...",
+      "none": "No hay frases disponibles",
+      "close": "Cerrar",
+      "shareTitle": "Frases en {{place}}",
+      "whatsapp": "Enviar por WhatsApp"
+    },
+    "shape": {
+      "title": "Forma de la ruta",
+      "total": "{{km}} km en línea recta",
+      "extra": "+{{km}} km sobre la línea directa",
+      "aria": "Esquema de la ruta según la ubicación de las paradas",
+      "detour": "+{{km}} km",
+      "note": "Distancias en línea recta, solo orientativas. Las paradas cercanas se separan un poco para que se lean bien; la distancia real por carretera es mayor."
+    }
   }
 }

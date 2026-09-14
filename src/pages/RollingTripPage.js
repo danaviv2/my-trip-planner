@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box, Container, Typography, TextField, Button, Paper, Stepper, Step, StepLabel,
   Chip, IconButton, Card, CardContent, LinearProgress, Divider, Tooltip,
@@ -41,33 +42,33 @@ import { noflip } from '../utils/noflip';
 // ─── קבועים ────────────────────────────────────────────────────
 
 const PACE_OPTIONS = [
-  { value: 'slow',   label: 'איטי',   desc: 'פחות עצירות, יותר עומק', emoji: '🐢' },
-  { value: 'medium', label: 'בינוני', desc: 'איזון בין כמות לאיכות',   emoji: '🚶' },
-  { value: 'fast',   label: 'מהיר',   desc: 'הרבה עצירות, כיסוי נרחב', emoji: '🏃' },
+  { value: 'slow',   emoji: '🐢' },
+  { value: 'medium', emoji: '🚶' },
+  { value: 'fast',   emoji: '🏃' },
 ];
 
 const INTEREST_OPTIONS = [
-  { value: 'nature',      label: 'טבע',        emoji: '🌿' },
-  { value: 'culture',     label: 'תרבות',       emoji: '🏛️' },
-  { value: 'food',        label: 'אוכל',        emoji: '🍽️' },
-  { value: 'adventure',   label: 'הרפתקאות',    emoji: '🧗' },
-  { value: 'history',     label: 'היסטוריה',    emoji: '🏰' },
-  { value: 'beach',       label: 'חופים',       emoji: '🏖️' },
-  { value: 'wine',        label: 'יין ויקבים',  emoji: '🍷' },
-  { value: 'castles',     label: 'ארמונות',     emoji: '🏯' },
+  { value: 'nature',      emoji: '🌿' },
+  { value: 'culture',     emoji: '🏛️' },
+  { value: 'food',        emoji: '🍽️' },
+  { value: 'adventure',   emoji: '🧗' },
+  { value: 'history',     emoji: '🏰' },
+  { value: 'beach',       emoji: '🏖️' },
+  { value: 'wine',        emoji: '🍷' },
+  { value: 'castles',     emoji: '🏯' },
 ];
 
 const ACT_TYPES = [
-  { type: 'attraction', emoji: '🏛️', label: 'אטרקציה' },
-  { type: 'food',       emoji: '🍽️', label: 'אוכל'     },
-  { type: 'nature',     emoji: '🌿', label: 'טבע'      },
-  { type: 'museum',     emoji: '🖼️', label: 'מוזיאון'  },
-  { type: 'winery',     emoji: '🍷', label: 'יקב'      },
-  { type: 'castle',     emoji: '🏰', label: 'ארמון'    },
-  { type: 'beach',      emoji: '🏖️', label: 'חוף'      },
-  { type: 'shopping',   emoji: '🛍️', label: 'קניות'   },
-  { type: 'nightlife',  emoji: '🌙', label: 'בילוי'    },
-  { type: 'rest',       emoji: '☕', label: 'מנוחה'    },
+  { type: 'attraction', emoji: '🏛️' },
+  { type: 'food',       emoji: '🍽️' },
+  { type: 'nature',     emoji: '🌿' },
+  { type: 'museum',     emoji: '🖼️' },
+  { type: 'winery',     emoji: '🍷' },
+  { type: 'castle',     emoji: '🏰' },
+  { type: 'beach',      emoji: '🏖️' },
+  { type: 'shopping',   emoji: '🛍️' },
+  { type: 'nightlife',  emoji: '🌙' },
+  { type: 'rest',       emoji: '☕' },
 ];
 
 const TYPE_COLORS = {
@@ -80,16 +81,18 @@ const TYPE_COLORS = {
   food:      '#f5576c',
 };
 
-const TYPE_LABELS = {
-  city: 'עיר', nature: 'טבע', viewpoint: 'נוף',
-  historic: 'היסטורי', beach: 'חוף', adventure: 'הרפתקה', food: 'קולינריה',
-};
+const STOP_TYPES = ['city', 'nature', 'viewpoint', 'historic', 'beach', 'adventure', 'food'];
 
-const STEPS = ['הגדר מסלול', 'AI מגלה עצירות', 'התאם עצירות', 'מסלול מלא'];
+const STEPS = ['define', 'discover', 'adjust', 'full'];
 
 // ─── קומפוננטה ראשית ────────────────────────────────────────────
 
 export default function RollingTripPage() {
+  // ── הממשק מתורגם; התוכן שה-AI מייצר נשאר בעברית ──
+  // עד 14.09.2026 המסך כולו היה עברית קשיחה (~90 מחרוזות, STATUS סעיף 12),
+  // ובאנגלית או בצרפתית נשאר בעברית. שפת התוכן היא החלטה נפרדת שמתוזמנת
+  // להשקה (זיכרון i18n-decision-pending) — הפרומפטים כאן לא שונו.
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { saveTripToList } = useTripSave();
 
@@ -180,7 +183,7 @@ export default function RollingTripPage() {
 
   // ── גילוי מסלול
   const handleDiscover = async () => {
-    if (!startPoint.trim() || !endPoint.trim()) { setError('יש למלא נקודת מוצא ויעד סופי'); return; }
+    if (!startPoint.trim() || !endPoint.trim()) { setError(t('rolling.err.missingEnds')); return; }
     setError('');
     setLoading(true);
     setStopPhotos({});
@@ -190,8 +193,8 @@ export default function RollingTripPage() {
     setActiveStep(1);
 
     const msgs = [
-      'AI סורק את המסלול...', 'מגלה ערים מעניינות לאורך הדרך...',
-      'בודק אטרקציות ייחודיות...', 'מסדר עצירות גיאוגרפית...',
+      t('rolling.loading.scan'), t('rolling.loading.cities'),
+      t('rolling.loading.attractions'), t('rolling.loading.order'),
     ];
     let mi = 0;
     setLoadingMsg(msgs[0]);
@@ -210,13 +213,13 @@ export default function RollingTripPage() {
     } catch (err) {
       clearInterval(iv);
       setError(
-        err.message === 'NO_API_KEY'  ? 'מפתח Gemini API חסר' :
-        err.message === 'RATE_LIMIT'  ? 'חרגת ממכסת בקשות AI. נסה שוב בעוד דקה.' :
-        err.message === 'TIMEOUT'     ? 'הבקשה פגה — נסה שוב' :
+        err.message === 'NO_API_KEY'  ? t('rolling.err.noKey') :
+        err.message === 'RATE_LIMIT'  ? t('rolling.err.rateLimit') :
+        err.message === 'TIMEOUT'     ? t('rolling.err.timeout') :
         // "לא בדקנו" ולא "אין כאן": תשובה ריקה היא כשל של ה-AI, לא מסלול
         // בלי עצירות, ולכן הניסוח מסתיים בהזמנה לנסות שוב.
-        err.message === 'EMPTY_ROUTE' ? `לא הצלחנו למצוא עצירות בין ${startPoint.trim()} ל-${endPoint.trim()}. בדוק את שמות המקומות ונסה שוב.` :
-        'שגיאה בחיבור ל-AI. בדוק אינטרנט ונסה שוב.'
+        err.message === 'EMPTY_ROUTE' ? t('rolling.err.emptyRoute', { from: startPoint.trim(), to: endPoint.trim() }) :
+        t('rolling.err.generic')
       );
       setActiveStep(0);
     } finally {
@@ -284,7 +287,7 @@ export default function RollingTripPage() {
 
   const commitAddActivity = (si, di) => {
     if (!newActData.name.trim()) return;
-    const typeInfo = ACT_TYPES.find(t => t.type === newActData.type) || ACT_TYPES[0];
+    const typeInfo = ACT_TYPES.find(x => x.type === newActData.type) || ACT_TYPES[0];
     const act = {
       time: newActData.time,
       name: newActData.name.trim(),
@@ -343,15 +346,15 @@ export default function RollingTripPage() {
   const renderStep1 = () => (
     <Box>
       <Typography variant="h5" fontWeight={700} gutterBottom sx={{ color: '#667eea' }}>
-        🗺️ הגדר את מסלול הטיול
+        🗺️ {t('rolling.define.title')}
       </Typography>
       <Typography variant="body2" color="text.secondary" mb={3}>
-        הזן נקודת מוצא ויעד, ו-AI יגלה את העצירות המושלמות לאורך הדרך
+        {t('rolling.define.subtitle')}
       </Typography>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
         <TextField
-          label="נקודת מוצא" placeholder="למשל: Paris, France"
+          label={t('rolling.define.start')} placeholder={t('rolling.define.example', { place: 'Paris, France' })}
           value={startPoint} onChange={e => setStartPoint(e.target.value)}
           fullWidth onKeyDown={e => e.key === 'Enter' && handleDiscover()}
           InputProps={{ startAdornment: <Typography sx={{ mr: 1 }}>🚀</Typography> }}
@@ -360,7 +363,7 @@ export default function RollingTripPage() {
         {waypoints.map((wp, i) => (
           <Box key={i} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <TextField
-              label={`עצירת ביניים ${i + 1}`} placeholder="למשל: Lyon, France"
+              label={t('rolling.define.waypoint', { n: i + 1 })} placeholder={t('rolling.define.example', { place: 'Lyon, France' })}
               value={wp} onChange={e => updateWaypoint(i, e.target.value)}
               fullWidth
               InputProps={{ startAdornment: <Typography sx={{ mr: 1 }}>📍</Typography> }}
@@ -372,12 +375,12 @@ export default function RollingTripPage() {
         {waypoints.length < 3 && (
           <Button startIcon={<AddIcon />} onClick={addWaypoint} variant="outlined" size="small"
             sx={{ alignSelf: 'flex-start', borderStyle: 'dashed' }}>
-            הוסף עצירת ביניים
+            {t('rolling.define.addWaypoint')}
           </Button>
         )}
 
         <TextField
-          label="יעד סופי" placeholder="למשל: Rome, Italy"
+          label={t('rolling.define.end')} placeholder={t('rolling.define.example', { place: 'Rome, Italy' })}
           value={endPoint} onChange={e => setEndPoint(e.target.value)}
           fullWidth onKeyDown={e => e.key === 'Enter' && handleDiscover()}
           InputProps={{ startAdornment: <Typography sx={{ mr: 1 }}>🏁</Typography> }}
@@ -385,19 +388,19 @@ export default function RollingTripPage() {
 
         {/* תאריך יציאה — לתחזית מזג אוויר */}
         <TextField
-          label="תאריך יציאה (אופציונלי — לתחזית מזג אוויר)"
+          label={t('rolling.define.date')}
           type="date" value={startDate}
           onChange={e => setStartDate(e.target.value)}
           InputLabelProps={{ shrink: true }}
           inputProps={{ min: new Date().toISOString().split('T')[0] }}
-          helperText="אם הטיול בשבועיים הקרובים — נציג תחזית מזג אוויר לכל עצירה"
+          helperText={t('rolling.define.dateHelp')}
           fullWidth
           InputProps={{ startAdornment: <WeatherIcon sx={{ mr: 1, color: '#667eea', fontSize: 20 }} /> }}
         />
       </Box>
 
       {/* קצב */}
-      <Typography variant="subtitle2" fontWeight={600} mb={1}>קצב הטיול</Typography>
+      <Typography variant="subtitle2" fontWeight={600} mb={1}>{t('rolling.define.pace')}</Typography>
       <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
         {PACE_OPTIONS.map(opt => (
           <Paper key={opt.value} onClick={() => setPace(opt.value)} sx={{
@@ -407,17 +410,17 @@ export default function RollingTripPage() {
             transition: 'all 0.2s', '&:hover': { borderColor: '#667eea88' },
           }}>
             <Typography fontSize={24}>{opt.emoji}</Typography>
-            <Typography variant="body2" fontWeight={600}>{opt.label}</Typography>
-            <Typography variant="caption" color="text.secondary">{opt.desc}</Typography>
+            <Typography variant="body2" fontWeight={600}>{t(`rolling.pace.${opt.value}`)}</Typography>
+            <Typography variant="caption" color="text.secondary">{t(`rolling.pace.${opt.value}Desc`)}</Typography>
           </Paper>
         ))}
       </Box>
 
       {/* תחומי עניין */}
-      <Typography variant="subtitle2" fontWeight={600} mb={1}>תחומי עניין</Typography>
+      <Typography variant="subtitle2" fontWeight={600} mb={1}>{t('rolling.define.interests')}</Typography>
       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 3 }}>
         {INTEREST_OPTIONS.map(opt => (
-          <Chip key={opt.value} label={`${opt.emoji} ${opt.label}`}
+          <Chip key={opt.value} label={`${opt.emoji} ${t(`rolling.interest.${opt.value}`)}`}
             onClick={() => toggleInterest(opt.value)}
             color={interests.includes(opt.value) ? 'primary' : 'default'}
             variant={interests.includes(opt.value) ? 'filled' : 'outlined'}
@@ -431,7 +434,7 @@ export default function RollingTripPage() {
       <Button variant="contained" size="large" fullWidth startIcon={<DiscoverIcon />}
         onClick={handleDiscover} disabled={loading}
         sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', py: 1.5, fontSize: '1.1rem', fontWeight: 700, borderRadius: 3 }}>
-        גלה את המסלול שלי 🔍
+        {t('rolling.define.discover')} 🔍
       </Button>
     </Box>
   );
@@ -445,7 +448,7 @@ export default function RollingTripPage() {
         animation: 'float 2s ease-in-out infinite',
         '@keyframes float': { '0%,100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-14px)' } },
       }}>✈️</Typography>
-      <Typography variant="h5" fontWeight={700} mb={1}>AI סורק את המסלול שלך</Typography>
+      <Typography variant="h5" fontWeight={700} mb={1}>{t('rolling.loading.title')}</Typography>
       <Typography variant="body1" color="text.secondary" mb={4}>{loadingMsg}</Typography>
       <LinearProgress sx={{ borderRadius: 4, height: 8, maxWidth: 400, mx: 'auto',
         '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg, #667eea, #764ba2)' } }} />
@@ -461,18 +464,18 @@ export default function RollingTripPage() {
   const renderStep3 = () => (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h5" fontWeight={700} sx={{ color: '#667eea' }}>🛣️ עצירות שהתגלו</Typography>
-        <Chip label={`סה"כ ${totalDays} ימים · ${activeStops.length} עצירות`}
+        <Typography variant="h5" fontWeight={700} sx={{ color: '#667eea' }}>🛣️ {t('rolling.stops.title')}</Typography>
+        <Chip label={t('rolling.stops.total', { days: totalDays, stops: activeStops.length })}
           sx={{ background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', fontWeight: 700 }} />
       </Box>
 
       {/* מסלול ויזואלי */}
       <Paper sx={{ borderRadius: 3, overflow: 'hidden', mb: 3, background: 'linear-gradient(135deg,#667eea11,#764ba211)', border: '1px solid #667eea33' }}>
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee' }}>
-          <Typography fontWeight={700} color="#667eea">🗺️ מסלול הטיול</Typography>
+          <Typography fontWeight={700} color="#667eea">🗺️ {t('rolling.stops.route')}</Typography>
           <Button size="small" variant="outlined" href={getMapUrl()} target="_blank" rel="noopener noreferrer"
             sx={{ borderColor: '#667eea', color: '#667eea', fontSize: '0.75rem' }}>
-            פתח ב-Google Maps ↗
+            {t('rolling.stops.openMaps')} ↗
           </Button>
         </Box>
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 0, overflowX: 'auto', flexWrap: 'nowrap' }}>
@@ -537,7 +540,7 @@ export default function RollingTripPage() {
                     <Typography sx={{ color: 'white', fontWeight: 800, fontSize: 18, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
                       {stop.emoji} {stop.name}
                     </Typography>
-                    <Chip label={TYPE_LABELS[stop.type] || stop.type} size="small"
+                    <Chip label={STOP_TYPES.includes(stop.type) ? t(`rolling.stopType.${stop.type}`) : stop.type} size="small"
                       sx={{ bgcolor: 'rgba(255,255,255,0.25)', color: 'white', fontWeight: 700, fontSize: '0.65rem' }} />
                   </Box>
                   {/* מזג אוויר */}
@@ -571,7 +574,7 @@ export default function RollingTripPage() {
                       <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2}>{stop.name}</Typography>
                       <Typography variant="caption" color="text.secondary">{stop.country}</Typography>
                     </Box>
-                    <Chip label={TYPE_LABELS[stop.type] || stop.type} size="small"
+                    <Chip label={STOP_TYPES.includes(stop.type) ? t(`rolling.stopType.${stop.type}`) : stop.type} size="small"
                       sx={{ background: `${color}22`, color, fontWeight: 600, fontSize: '0.7rem' }} />
                     {weather && (
                       <Chip label={`${weather.emoji} ${weather.avgMin}°–${weather.avgMax}°`} size="small"
@@ -585,11 +588,11 @@ export default function RollingTripPage() {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <IconButton size="small" onClick={() => adjustDays(idx, -1)} disabled={days === 0}><RemoveIcon fontSize="small" /></IconButton>
                     <Typography fontWeight={700} minWidth={36} textAlign="center" fontSize={13}>
-                      {days === 0 ? 'מוסר' : `${days} ${days === 1 ? 'יום' : 'ימים'}`}
+                      {days === 0 ? t('rolling.stops.removed') : t('rolling.stops.days', { count: days })}
                     </Typography>
                     <IconButton size="small" onClick={() => adjustDays(idx, 1)} disabled={days === 10}><AddIcon fontSize="small" /></IconButton>
                   </Box>
-                  <Tooltip title="הסר עצירה">
+                  <Tooltip title={t('rolling.stops.remove')}>
                     <IconButton size="small" onClick={() => removeStop(idx)} color="error"><CloseIcon fontSize="small" /></IconButton>
                   </Tooltip>
                 </Box>
@@ -601,11 +604,10 @@ export default function RollingTripPage() {
                     border: '1px solid', borderColor: 'warning.main',
                   }}>
                     <Typography variant="caption" sx={{ fontWeight: 700, display: 'block' }}>
-                      ⚠️ העצירה הזו מרחיקה אותך מהמסלול
+                      ⚠️ {t('rolling.stops.detourTitle')}
                     </Typography>
                     <Typography variant="caption" sx={{ display: 'block' }}>
-                      +{detour.detour.toLocaleString()} ק״מ לעומת נסיעה ישירה מהתחנה הקודמת לבאה —
-                      כ־{formatDuration(detour.hours)} נהיגה נוספות, הלוך ושוב.
+                      {t('rolling.stops.detourBody', { km: detour.detour.toLocaleString(), time: formatDuration(detour.hours) })}
                     </Typography>
                   </Box>
                 )}
@@ -634,13 +636,13 @@ export default function RollingTripPage() {
       <Box sx={{ display: 'flex', gap: 2 }}>
         <Button variant="outlined" startIcon={<RefreshIcon />}
           onClick={() => { setActiveStep(0); setStops([]); }} sx={{ flex: 1 }}>
-          התחל מחדש
+          {t('rolling.restart')}
         </Button>
         <Button variant="contained" startIcon={<AIIcon />}
           onClick={buildFullItinerary}
           disabled={activeStops.length === 0 || totalDays === 0}
           sx={{ flex: 2, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontWeight: 700 }}>
-          בנה מסלול מפורט ✨
+          {t('rolling.stops.build')} ✨
         </Button>
       </Box>
     </Box>
@@ -651,15 +653,15 @@ export default function RollingTripPage() {
   // ══════════════════════════════════════════════════════════════
   const renderBuilding = () => (
     <Box sx={{ py: 4 }}>
-      <Typography variant="h5" fontWeight={700} mb={1} textAlign="center">✨ בונה מסלול מפורט...</Typography>
+      <Typography variant="h5" fontWeight={700} mb={1} textAlign="center">✨ {t('rolling.build.title')}</Typography>
       <Typography variant="body2" color="text.secondary" textAlign="center" mb={3}>
-        AI מייצר תכנית יומית לכל עצירה עם מלונות, יקבים וארמונות
+        {t('rolling.build.subtitle')}
       </Typography>
       <LinearProgress variant="determinate" value={buildProgress} sx={{
         height: 10, borderRadius: 5, mb: 1,
         '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg, #667eea, #764ba2)' },
       }} />
-      <Typography variant="caption" color="text.secondary" textAlign="center" display="block">{buildProgress}% הושלם</Typography>
+      <Typography variant="caption" color="text.secondary" textAlign="center" display="block">{t('rolling.build.progress', { p: buildProgress })}</Typography>
     </Box>
   );
 
@@ -670,12 +672,12 @@ export default function RollingTripPage() {
     let globalDay = 0;
     return (
       <Box>
-        <Typography variant="h5" fontWeight={700} mb={1} sx={{ color: '#667eea' }}>🗓️ המסלול המלא שלך</Typography>
+        <Typography variant="h5" fontWeight={700} mb={1} sx={{ color: '#667eea' }}>🗓️ {t('rolling.full.title')}</Typography>
         <Typography variant="body2" color="text.secondary" mb={0.5}>
-          {totalDays} ימים · {activeStops.length} עצירות · {startPoint} → {endPoint}
+          {t('rolling.full.summary', { days: totalDays, stops: activeStops.length })} · {startPoint} → {endPoint}
         </Typography>
         <Typography variant="caption" color="text.secondary" mb={2} display="block">
-          💡 לחץ על עצירה לפתיחה · לחץ 🗑️ למחיקת פעילות · לחץ ✏️ לעריכה · הוסף פעילויות ידנית
+          💡 {t('rolling.full.hint')}
         </Typography>
 
         {/* ── Smart Day Optimizer Bar ── */}
@@ -692,22 +694,22 @@ export default function RollingTripPage() {
                 🧠 Smart Optimizer
               </Typography>
               <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-                {optimizeSummary.green  > 0 && <Chip size="small" label={`🟢 ${optimizeSummary.green} מאוזן`}  sx={{ fontSize: '0.65rem', bgcolor: '#43e97b22', color: '#1a7a40' }} />}
-                {optimizeSummary.yellow > 0 && <Chip size="small" label={`🟡 ${optimizeSummary.yellow} עמוס`}  sx={{ fontSize: '0.65rem', bgcolor: '#f5af1922', color: '#a06000' }} />}
-                {optimizeSummary.red    > 0 && <Chip size="small" label={`🔴 ${optimizeSummary.red} עמוס מדי`} sx={{ fontSize: '0.65rem', bgcolor: '#f5576c22', color: '#c0001a' }} />}
+                {optimizeSummary.green  > 0 && <Chip size="small" label={`🟢 ${t('rolling.full.balanced', { n: optimizeSummary.green })}`}  sx={{ fontSize: '0.65rem', bgcolor: '#43e97b22', color: '#1a7a40' }} />}
+                {optimizeSummary.yellow > 0 && <Chip size="small" label={`🟡 ${t('rolling.full.busy', { n: optimizeSummary.yellow })}`}  sx={{ fontSize: '0.65rem', bgcolor: '#f5af1922', color: '#a06000' }} />}
+                {optimizeSummary.red    > 0 && <Chip size="small" label={`🔴 ${t('rolling.full.tooBusy', { n: optimizeSummary.red })}`} sx={{ fontSize: '0.65rem', bgcolor: '#f5576c22', color: '#c0001a' }} />}
               </Box>
               <Button size="small" variant="contained" startIcon={<AIIcon />}
                 onClick={() => {
                   const { newItinerary, movedCount, details } = autoOptimize(fullItinerary);
                   setFullItinerary(newItinerary);
                   setOptimizeMsg(movedCount > 0
-                    ? `✅ הוזזו ${movedCount} פעילויות לאיזון המסלול`
-                    : 'המסלול כבר מאוזן — אין צורך בשינויים'
+                    ? `✅ ${t('rolling.full.moved', { n: movedCount })}`
+                    : t('rolling.full.alreadyBalanced')
                   );
                   setTimeout(() => setOptimizeMsg(''), 5000);
                 }}
                 sx={{ ml: 'auto', background: 'linear-gradient(135deg, #667eea, #764ba2)', fontSize: '0.72rem', py: 0.4 }}>
-                אפטם אוטומטית
+                {t('rolling.full.optimize')}
               </Button>
             </Box>
             {optimizeMsg && (
@@ -744,14 +746,14 @@ export default function RollingTripPage() {
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="h6" fontWeight={700}>{stop.name}</Typography>
                   <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                    ימים {startDay}–{startDay + days - 1} · {stop.country}
+                    {t('rolling.full.dayRange', { from: startDay, to: startDay + days - 1 })} · {stop.country}
                   </Typography>
                 </Box>
                 <Button size="small" variant="outlined"
                   onClick={(e) => { e.stopPropagation(); fetchLocalPhrases(stop); }}
                   sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.6)', fontSize: '0.7rem',
                     whiteSpace: 'nowrap', flexShrink: 0, '&:hover': { bgcolor: 'rgba(255,255,255,0.15)' } }}>
-                  🌍 ביטויים
+                  🌍 {t('rolling.phrases.button')}
                 </Button>
                 {/* badge עומס כולל לעצירה */}
                 {(() => {
@@ -787,10 +789,10 @@ export default function RollingTripPage() {
                           {day.title}
                         </Typography>
                         {dayAnalysis && (
-                          <Tooltip title={dayAnalysis.warning || `${dayAnalysis.hours} שעות · ${dayAnalysis.label}`}>
+                          <Tooltip title={dayAnalysis.warning || `${t('rolling.full.hours', { h: dayAnalysis.hours })} · ${dayAnalysis.label}`}>
                             <Chip
                               size="small"
-                              label={`${dayAnalysis.emoji} ${dayAnalysis.hours}שע'`}
+                              label={`${dayAnalysis.emoji} ${t('rolling.full.hoursShort', { h: dayAnalysis.hours })}`}
                               sx={{
                                 fontSize: '0.65rem', fontWeight: 700,
                                 bgcolor: `${dayAnalysis.color}22`,
@@ -821,34 +823,34 @@ export default function RollingTripPage() {
                               /* ── טופס עריכה inline ── */
                               <Paper sx={{ p: 1.5, mb: 1, borderRadius: 2, bgcolor: '#f8f9ff', border: '1px solid #667eea44' }}>
                                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
-                                  <TextField size="small" label="שעה" value={act.time}
+                                  <TextField size="small" label={t('rolling.act.time')} value={act.time}
                                     onChange={e => updateActivity(si, di, ai, 'time', e.target.value)}
                                     sx={{ width: 80 }} />
-                                  <TextField size="small" label="שם" value={act.name}
+                                  <TextField size="small" label={t('rolling.act.name')} value={act.name}
                                     onChange={e => updateActivity(si, di, ai, 'name', e.target.value)}
                                     sx={{ flex: 1, minWidth: 140 }} />
                                   <FormControl size="small" sx={{ width: 110 }}>
-                                    <InputLabel>סוג</InputLabel>
-                                    <Select value={act.type} label="סוג"
+                                    <InputLabel>{t('rolling.act.type')}</InputLabel>
+                                    <Select value={act.type} label={t('rolling.act.type')}
                                       onChange={e => {
-                                        const t = ACT_TYPES.find(x => x.type === e.target.value);
+                                        const picked = ACT_TYPES.find(x => x.type === e.target.value);
                                         updateActivity(si, di, ai, 'type', e.target.value);
-                                        if (t) updateActivity(si, di, ai, 'emoji', t.emoji);
+                                        if (picked) updateActivity(si, di, ai, 'emoji', picked.emoji);
                                       }}>
-                                      {ACT_TYPES.map(t => <MenuItem key={t.type} value={t.type}>{t.emoji} {t.label}</MenuItem>)}
+                                      {ACT_TYPES.map(x => <MenuItem key={x.type} value={x.type}>{x.emoji} {t(`rolling.act.${x.type}`)}</MenuItem>)}
                                     </Select>
                                   </FormControl>
                                 </Box>
-                                <TextField size="small" label="תיאור" value={act.description}
+                                <TextField size="small" label={t('rolling.act.description')} value={act.description}
                                   onChange={e => updateActivity(si, di, ai, 'description', e.target.value)}
                                   fullWidth multiline rows={1} sx={{ mb: 1 }} />
-                                <TextField size="small" label="מחיר" value={act.price || ''}
+                                <TextField size="small" label={t('rolling.act.price')} value={act.price || ''}
                                   onChange={e => updateActivity(si, di, ai, 'price', e.target.value)}
                                   sx={{ width: 120, mr: 1 }} />
                                 <Button size="small" variant="contained" startIcon={<CheckIcon />}
                                   onClick={() => setEditingAct(null)}
                                   sx={{ background: 'linear-gradient(135deg, #667eea, #764ba2)', mt: 0.5 }}>
-                                  שמור
+                                  {t('rolling.act.save')}
                                 </Button>
                               </Paper>
                             ) : (
@@ -874,12 +876,12 @@ export default function RollingTripPage() {
                                   {act.price && (
                                     <Chip label={act.price} size="small" sx={{ fontSize: '0.6rem', mr: 0.5 }} />
                                   )}
-                                  <Tooltip title="ערוך">
+                                  <Tooltip title={t('rolling.act.edit')}>
                                     <IconButton size="small" onClick={() => setEditingAct({ si, di, ai })}>
                                       <EditIcon sx={{ fontSize: 15 }} />
                                     </IconButton>
                                   </Tooltip>
-                                  <Tooltip title="מחק פעילות">
+                                  <Tooltip title={t('rolling.act.delete')}>
                                     <IconButton size="small" onClick={() => deleteActivity(si, di, ai)} color="error">
                                       <DeleteIcon sx={{ fontSize: 15 }} />
                                     </IconButton>
@@ -895,37 +897,37 @@ export default function RollingTripPage() {
                       {newActForm?.si === si && newActForm?.di === di ? (
                         <Paper sx={{ p: 1.5, mt: 1, borderRadius: 2, bgcolor: '#f0fff4', border: '1px dashed #43e97b' }}>
                           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
-                            <TextField size="small" label="שעה" value={newActData.time}
+                            <TextField size="small" label={t('rolling.act.time')} value={newActData.time}
                               onChange={e => setNewActData(p => ({ ...p, time: e.target.value }))}
                               sx={{ width: 80 }} />
-                            <TextField size="small" label="שם הפעילות" value={newActData.name}
+                            <TextField size="small" label={t('rolling.act.activityName')} value={newActData.name}
                               onChange={e => setNewActData(p => ({ ...p, name: e.target.value }))}
                               sx={{ flex: 1, minWidth: 150 }} autoFocus />
                             <FormControl size="small" sx={{ width: 120 }}>
-                              <InputLabel>סוג</InputLabel>
-                              <Select value={newActData.type} label="סוג"
+                              <InputLabel>{t('rolling.act.type')}</InputLabel>
+                              <Select value={newActData.type} label={t('rolling.act.type')}
                                 onChange={e => setNewActData(p => ({ ...p, type: e.target.value }))}>
-                                {ACT_TYPES.map(t => <MenuItem key={t.type} value={t.type}>{t.emoji} {t.label}</MenuItem>)}
+                                {ACT_TYPES.map(x => <MenuItem key={x.type} value={x.type}>{x.emoji} {t(`rolling.act.${x.type}`)}</MenuItem>)}
                               </Select>
                             </FormControl>
                           </Box>
-                          <TextField size="small" label="תיאור קצר (אופציונלי)" value={newActData.description}
+                          <TextField size="small" label={t('rolling.act.shortDescription')} value={newActData.description}
                             onChange={e => setNewActData(p => ({ ...p, description: e.target.value }))}
                             fullWidth sx={{ mb: 1 }} />
                           <Box sx={{ display: 'flex', gap: 1 }}>
                             <Button size="small" variant="contained" startIcon={<CheckIcon />}
                               onClick={() => commitAddActivity(si, di)}
                               sx={{ background: 'linear-gradient(135deg, #43e97b, #38f9d7)', color: '#000' }}>
-                              הוסף
+                              {t('rolling.act.add')}
                             </Button>
-                            <Button size="small" variant="outlined" onClick={() => setNewActForm(null)}>ביטול</Button>
+                            <Button size="small" variant="outlined" onClick={() => setNewActForm(null)}>{t('rolling.act.cancel')}</Button>
                           </Box>
                         </Paper>
                       ) : (
                         <Button size="small" startIcon={<AddIcon />} variant="text"
                           onClick={() => { setNewActForm({ si, di }); setEditingAct(null); }}
                           sx={{ mt: 0.5, color: '#667eea', fontSize: '0.75rem' }}>
-                          + הוסף פעילות ליום {startDay + di}
+                          + {t('rolling.act.addToDay', { n: startDay + di })}
                         </Button>
                       )}
 
@@ -936,7 +938,7 @@ export default function RollingTripPage() {
                           border: '1px solid #667eea33' }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                             <HotelIcon sx={{ color: '#667eea', fontSize: 18 }} />
-                            <Typography variant="body2" fontWeight={700} color="primary">🌙 לינה מומלצת</Typography>
+                            <Typography variant="body2" fontWeight={700} color="primary">🌙 {t('rolling.full.lodging')}</Typography>
                             <Box sx={{ display: 'flex' }}>
                               {Array.from({ length: day.hotel.stars || 3 }).map((_, i) => (
                                 <StarIcon key={i} sx={{ fontSize: 11, color: '#f5af19' }} />
@@ -956,7 +958,7 @@ export default function RollingTripPage() {
                             href={bookingLinks.hotelSearch(`${day.hotel.name} ${stop.nameEn || stop.name}`)}
                             target="_blank" rel="noopener noreferrer"
                             sx={{ mt: 0.5, fontSize: '0.7rem', p: '2px 8px', color: '#667eea' }}>
-                            חפש ב-Booking.com
+                            {t('rolling.full.searchBooking')}
                           </Button>
                         </Paper>
                       )}
@@ -964,7 +966,7 @@ export default function RollingTripPage() {
                       {di < itinerary.length - 1 && <Divider sx={{ my: 2 }} />}
                     </Box>
                   );}) : (
-                    <Alert severity="warning" sx={{ borderRadius: 2 }}>לא הצלחנו לייצר מסלול לעצירה זו</Alert>
+                    <Alert severity="warning" sx={{ borderRadius: 2 }}>{t('rolling.full.stopFailed')}</Alert>
                   )}
                 </Box>
               </Collapse>
@@ -976,7 +978,7 @@ export default function RollingTripPage() {
         <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
           <Button variant="outlined" startIcon={<RefreshIcon />}
             onClick={() => { setActiveStep(0); setStops([]); setFullItinerary([]); }}>
-            התחל מחדש
+            {t('rolling.restart')}
           </Button>
           <Button variant="contained" startIcon={<SaveIcon />} disabled={saving}
             onClick={async () => {
@@ -1005,7 +1007,7 @@ export default function RollingTripPage() {
               }
             }}
             sx={{ flex: 1, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontWeight: 700 }}>
-            {saving ? 'שומר...' : 'שמור ופתח בתכנון'}
+            {saving ? t('rolling.full.saving') : t('rolling.full.saveAndOpen')}
           </Button>
         </Box>
       </Box>
@@ -1023,15 +1025,15 @@ export default function RollingTripPage() {
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 1,
           }}>
-            🛣️ טיול מתגלגל
+            🛣️ {t('nav.rollingTrip')}
           </Typography>
           <Typography variant="h6" color="text.secondary">
-            הגדר מסלול — AI יגלה את העצירות המושלמות
+            {t('rolling.header.subtitle')}
           </Typography>
         </Box>
 
         <Stepper activeStep={activeStep} sx={{ mb: 4 }} alternativeLabel>
-          {STEPS.map((label, i) => <Step key={i}><StepLabel>{label}</StepLabel></Step>)}
+          {STEPS.map((key, i) => <Step key={i}><StepLabel>{t(`rolling.steps.${key}`)}</StepLabel></Step>)}
         </Stepper>
 
         <Paper sx={{ p: { xs: 2, md: 4 }, borderRadius: 4, boxShadow: '0 8px 40px rgba(102,126,234,0.15)' }}>
@@ -1046,7 +1048,7 @@ export default function RollingTripPage() {
       {/* Local Phrases Dialog */}
       <Dialog open={phrasesOpen} onClose={() => setPhrasesOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle sx={{ background: 'linear-gradient(135deg,#43e97b,#38f9d7)', color: 'white', pb: 1 }}>
-          🌍 ביטויים שימושיים — {phrasesStop?.name}
+          🌍 {t('rolling.phrases.title', { place: phrasesStop?.name })}
           <IconButton onClick={() => setPhrasesOpen(false)} sx={{ position: 'absolute', right: noflip('8px'), top: 8, color: 'white' }}>
             <CloseIcon />
           </IconButton>
@@ -1055,10 +1057,10 @@ export default function RollingTripPage() {
           {phrasesLoading ? (
             <Box textAlign="center" py={5}>
               <CircularProgress sx={{ color: '#43e97b' }} />
-              <Typography mt={2} color="text.secondary">AI מכין ביטויים מקומיים...</Typography>
+              <Typography mt={2} color="text.secondary">{t('rolling.phrases.loading')}</Typography>
             </Box>
           ) : phrasesData.length === 0 ? (
-            <Typography color="text.secondary" textAlign="center" py={3}>אין ביטויים זמינים</Typography>
+            <Typography color="text.secondary" textAlign="center" py={3}>{t('rolling.phrases.none')}</Typography>
           ) : (
             phrasesData.map((p, i) => (
               <Paper key={i} elevation={1} sx={{ p: 1.5, mb: 1, borderRadius: 2, borderRight: '4px solid #43e97b' }}>
@@ -1075,14 +1077,14 @@ export default function RollingTripPage() {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setPhrasesOpen(false)} variant="outlined">סגור</Button>
+          <Button onClick={() => setPhrasesOpen(false)} variant="outlined">{t('rolling.phrases.close')}</Button>
           {phrasesData.length > 0 && (
             <Button variant="contained" onClick={() => {
-              const text = `🌍 ביטויים ב${phrasesStop?.name}:\n\n` +
+              const text = `🌍 ${t('rolling.phrases.shareTitle', { place: phrasesStop?.name })}:\n\n` +
                 phrasesData.map(p => `${p.phrase} — ${p.translation} (${p.pronunciation || ''})`).join('\n');
               window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
             }} sx={{ bgcolor: '#25d366', '&:hover': { bgcolor: '#1da851' } }}>
-              📤 שלח בוואטסאפ
+              📤 {t('rolling.phrases.whatsapp')}
             </Button>
           )}
         </DialogActions>
