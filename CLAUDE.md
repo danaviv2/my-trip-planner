@@ -234,6 +234,12 @@ Two traps that produced real waste here:
   of the change. A negative marker is only evidence when **exactly one** place in the
   tree produces it; `grep -rn` the source first, or the test asserts nothing.
 
+  A third time on 14.09.2026: `a_aid=tripplanner` was removed from the code and still
+  "found" in the live `main.js` — inside the **build stamp, which embeds the last commit
+  message**, and that message described the removal. So a negative marker must not
+  appear in the commit message either; prefer a fragment of the old code's syntax
+  (e.g. the old URL path) that no prose would repeat.
+
 ## Verify before shipping, not after
 
 Measuring only once the user reports that the fix did not appear is the same loop,
