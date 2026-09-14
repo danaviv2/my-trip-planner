@@ -150,7 +150,10 @@ const Header = () => {
               textDecoration: 'none',
               color: 'white',
               fontWeight: 700,
+              // מתחת ל-360px (אנדרואיד צר, iPhone SE ראשון) גם בלי בורר השפה אין
+              // מקום לשם המלא; הסמל נשאר קישור לדף הבית.
               fontSize: { xs: '1rem', md: '1.25rem' },
+              '@media (max-width: 359px)': { '& .brand-text': { display: 'none' } },
               whiteSpace: 'nowrap',
               flexShrink: 0,
               // הלוגו הוא קישור לדף הבית, ונמדד 177×32 — רחב מספיק
@@ -161,7 +164,7 @@ const Header = () => {
               minHeight: 44,
             }}
           >
-            ✈️ My Trip Planner
+            ✈️<Box component="span" className="brand-text">{'\u00a0'}My Trip Planner</Box>
           </Typography>
 
           {/* דסקטופ */}
@@ -278,9 +281,13 @@ const Header = () => {
           )}
 
           {/* מובייל */}
+          {/* ── מובייל: בורר השפה עבר למגירה ──
+              נמדד 14.09.2026 ב-375px: לוגו 142 + שישה כפתורי 44 + ריפוד = 408px,
+              וכפתור התפריט ישב ב-‎-29px — חתוך מחוץ למסך, בשתי השפות. בורר השפה
+              כבר קיים בתחתית המגירה (LANGUAGES.map שם), ולכן הוסר מהסרגל ולא
+              הוקטנו אזורי הלחיצה, שנקבעו ל-44 בכוונה. */}
           {isMobile && (
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              {LanguageSwitcher()}
+            <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
               <Tooltip title={userPreferences.darkMode ? t('nav.lightMode') : t('nav.darkMode')}>
                 <IconButton color="inherit" onClick={toggleDarkMode} aria-label={userPreferences.darkMode ? t('nav.lightMode') : t('nav.darkMode')} size="small" sx={{ minWidth: 44, minHeight: 44 }}>
                   {userPreferences.darkMode ? <LightModeIcon /> : <DarkModeIcon />}
@@ -316,7 +323,7 @@ const Header = () => {
                   <LoginIcon />
                 </IconButton>
               )}
-              <IconButton color="inherit" onClick={() => setDrawerOpen(true)} aria-label={t('nav.menu')} sx={{ ml: 1, minWidth: 44, minHeight: 44 }}>
+              <IconButton color="inherit" onClick={() => setDrawerOpen(true)} aria-label={t('nav.menu')} sx={{ ml: 0.25, minWidth: 44, minHeight: 44 }}>
                 <MenuIcon />
               </IconButton>
             </Box>
