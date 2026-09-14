@@ -1103,5 +1103,11 @@
       "replay": "Revoir la visite guidée",
       "failed": "Votre navigateur bloque le stockage local, la visite ne peut donc pas être relancée. Essayez de quitter la navigation privée."
     }
+  },
+  "notFound": {
+    "title": "Cette page n’existe pas",
+    "body": "Le lien est peut-être ancien ou mal saisi. L’adresse demandée :",
+    "home": "Aller à l’accueil",
+    "trips": "Voir mes voyages"
   }
 }

@@ -33,6 +33,7 @@ import { TripProvider } from './contexts/TripContext';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { TripSaveProvider } from './contexts/TripSaveContext';
 import { Analytics } from '@vercel/analytics/react';
+import { analyticsBeforeSend } from './services/analyticsRedaction';
 import { BookingsProvider } from './contexts/BookingsContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -112,7 +113,7 @@ useEffect(() => {
 
                 **החבילה לבדה אינה מספיקה** — יש להפעיל Web Analytics
                 בלוח הבקרה של Vercel, אחרת הסקריפט רץ ודבר אינו נאסף. */}
-            <Analytics />
+            <Analytics beforeSend={analyticsBeforeSend} />
 
             {/* AI Trip Chat Widget - צ'אט חכם עם ידע על הטיולים */}
             <TripChatWidget />

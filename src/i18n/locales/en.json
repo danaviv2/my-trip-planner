@@ -1103,5 +1103,11 @@
       "replay": "Show the tour again",
       "failed": "Your browser is blocking local storage, so the tour can't be restarted. Try leaving private browsing."
     }
+  },
+  "notFound": {
+    "title": "This page doesn't exist",
+    "body": "The link may be outdated or mistyped. The address you asked for:",
+    "home": "Go to home",
+    "trips": "Go to my trips"
   }
 }

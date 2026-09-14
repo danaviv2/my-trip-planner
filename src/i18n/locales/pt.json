@@ -1103,5 +1103,11 @@
       "replay": "Ver o tour novamente",
       "failed": "Seu navegador está bloqueando o armazenamento local, então não é possível reiniciar o tour. Tente sair da navegação privada."
     }
+  },
+  "notFound": {
+    "title": "Esta página não existe",
+    "body": "O link pode estar desatualizado ou digitado errado. O endereço que você pediu:",
+    "home": "Ir para o início",
+    "trips": "Ir para minhas viagens"
   }
 }

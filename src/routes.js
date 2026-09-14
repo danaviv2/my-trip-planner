@@ -24,6 +24,7 @@ const MyTripsPage = React.lazy(() => import('./pages/MyTripsPage'));
 const RollingTripPage = React.lazy(() => import('./pages/RollingTripPage'));
 const TravelJournalPage = React.lazy(() => import('./pages/TravelJournalPage'));
 const DestinationMatchmakerPage = React.lazy(() => import('./pages/DestinationMatchmakerPage'));
+const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'));
 
 /**
  * רכיב ניתוב ראשי של האפליקציה
@@ -93,8 +94,8 @@ const AppRoutes = () => {
           שדורש הרשמה אינו שיתוף. ההגנה היא הקוד עצמו ו-list חסום. */}
       <Route path="/trip/:code" element={<SharedTripPage />} />
 
-      {/* נתיב ברירת מחדל - מפנה לדף הבית */}
-      <Route path="*" element={<HomePage />} />
+      {/* כתובת שלא קיימת ⟵ "לא נמצא", ולא דף הבית. ראה NotFoundPage. */}
+      <Route path="*" element={<NotFoundPage />} />
       </Routes>
         </div>
       </Fade>

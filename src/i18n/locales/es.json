@@ -1103,5 +1103,11 @@
       "replay": "Ver la guía de nuevo",
       "failed": "Tu navegador bloquea el almacenamiento local, así que no se puede reiniciar la guía. Prueba a salir de la navegación privada."
     }
+  },
+  "notFound": {
+    "title": "Esta página no existe",
+    "body": "Puede que el enlace sea antiguo o tenga un error. La dirección que pediste:",
+    "home": "Ir al inicio",
+    "trips": "Ir a mis viajes"
   }
 }
