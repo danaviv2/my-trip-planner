@@ -187,6 +187,33 @@ const queued = (fn) => {
   return run;
 };
 
+/**
+ * בקשה זהה שכבר בדרך — או שכבר ענתה בשיחה הזו — אינה נכנסת לתור שוב.
+ *
+ * ── למה ──
+ * נמדד 14.09.2026 בדף פריז, לשונית אטרקציות: הערך "Paris" נשלף **עשר פעמים
+ * ברצף** (כל תמונה שאלה על מיקום העיר לפני שהתשובה הראשונה נשמרה), וכל
+ * אטרקציה נשלפה פעמיים. בתור עם רווח של 250ms זה היה ~8 שניות לפני
+ * שהאטרקציה הראשונה בכלל נשאלה — השלד שנשאר "עשרות שניות" (STATUS סעיף 16).
+ *
+ * התוצאה נשמרת לשיחה — חוץ מ-`false` (כשל רשת או 429), שחייב להישאר ניתן
+ * לניסיון חוזר: כשל ששמור היה מקבע "אין תמונה" על מקום שיש לו.
+ */
+const memo = new Map();
+const once = (key, run) => {
+  if (memo.has(key)) return memo.get(key);
+  const p = run().then((v) => {
+    if (v === false) memo.delete(key);
+    return v;
+  }, (err) => { memo.delete(key); throw err; });
+  memo.set(key, p);
+  return p;
+};
+const summaryQueued = (lang, title) =>
+  once(`s|${lang}|${String(title || '').trim()}`, () => queued(() => wikiSummary(lang, title)));
+const searchQueued = (lang, query) =>
+  once(`q|${lang}|${query}`, () => queued(() => searchTitles(lang, query)));
+
 const wikiPhoto = async (lang, title) => {
   const sum = await wikiSummary(lang, title);
   return sum ? sum.photo : null;
@@ -241,16 +268,21 @@ const searchTitles = async (lang, query) => {
  *
  * נשלף פעם אחת לעיר ונשמר, ולכן אינו מוסיף עלות מורגשת.
  */
-const cityCoords = async (city) => {
+const cityCoords = (city) => {
   const name = String(city || '').trim();
-  if (!name) return null;
+  if (!name) return Promise.resolve(null);
+  // כל תמונה בדף שואלת על אותה עיר באותו רגע; השאלה נשאלת פעם אחת.
+  return once(`c|${name}`, () => cityCoordsUncached(name));
+};
+
+const cityCoordsUncached = async (name) => {
 
   const key = `city_${keyOf(name, '')}`;
   const cached = cacheGet(key);
   if (cached !== undefined) return cached;
 
-  const he = await queued(() => wikiSummary('he', name));
-  const sum = he || (await queued(() => wikiSummary('en', name)));
+  const he = await summaryQueued('he', name);
+  const sum = he || (await summaryQueued('en', name));
   if (sum === false || sum === null) return null;
   const coords = (sum && sum.coords) || null;
   cacheSet(key, coords);
@@ -345,7 +377,7 @@ export const getPlacePhotoFast = async (
 
   const tryLang = async (lang, name) => {
     for (const variant of nameVariants(name)) {
-      const sum = await queued(() => wikiSummary(lang, variant));
+      const sum = await summaryQueued(lang, variant);
       if (sum === false) { failed = true; continue; }
       if (!sum || !sum.photo || rejected(sum, false)) continue;
       // תמונה של המקום הנכון בלבד. ערך בעיר אחרת נדחה גם כשהוא תקין.
@@ -365,10 +397,10 @@ export const getPlacePhotoFast = async (
   // חיפוש, כשהכותרת המדויקת לא הספיקה. פותר פירושונים וניסוחים, ולכן
   // הוא זה שמביא את "קתדרלת נוטרדאם" ואת "מוזיאוני הוותיקן".
   if (!photo) {
-    const titles = await queued(() => searchTitles('he', city ? `${displayName} ${city}` : displayName));
+    const titles = await searchQueued('he', city ? `${displayName} ${city}` : displayName);
     for (const title of titles) {
       if (!titleMatches(displayName, title)) continue;
-      const sum = await queued(() => wikiSummary('he', title));
+      const sum = await summaryQueued('he', title);
       if (sum === false) { failed = true; continue; }
       if (!sum || !sum.photo || rejected(sum, true)) continue;
       // כאן נכנסה "פלורנס קלינג הרדינג": הכותרת הכילה את מילת החיפוש,
