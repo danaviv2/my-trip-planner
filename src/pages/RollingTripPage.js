@@ -150,7 +150,7 @@ export default function RollingTripPage() {
       // תמונה
       if (!photoFetched.current[idx]) {
         photoFetched.current[idx] = true;
-        const url = await getPlacePhoto(stop.name, stop.country);
+        const url = await getPlacePhoto(stop.nameEn || stop.name, stop.country);
         setStopPhotos(prev => ({ ...prev, [idx]: url }));
       }
 
@@ -247,7 +247,7 @@ export default function RollingTripPage() {
         const { stop, days } = stopsWithDays[idx];
         try {
           const itinerary = await generateItinerary({
-            destination: `${stop.name}, ${stop.country}`,
+            destination: `${stop.nameEn || stop.name}, ${stop.country}`,
             days, interests, budget: 'medium',
           });
           results.push({ stop, days, itinerary });
@@ -948,7 +948,7 @@ export default function RollingTripPage() {
                             </Typography>
                           )}
                           <Button size="small" endIcon={<OpenInNewIcon fontSize="small" />}
-                            href={bookingLinks.hotelSearch(`${day.hotel.name} ${stop.name}`)}
+                            href={bookingLinks.hotelSearch(`${day.hotel.name} ${stop.nameEn || stop.name}`)}
                             target="_blank" rel="noopener noreferrer"
                             sx={{ mt: 0.5, fontSize: '0.7rem', p: '2px 8px', color: '#667eea' }}>
                             חפש ב-Booking.com
@@ -990,7 +990,7 @@ export default function RollingTripPage() {
                   days: totalDays,
                   dailyItinerary: flatItinerary,
                   rollingTrip: true,
-                  stops: fullItinerary.map(({ stop, days }) => ({ name: stop.name, country: stop.country, days })),
+                  stops: fullItinerary.map(({ stop, days }) => ({ name: stop.name, nameEn: stop.nameEn || stop.name, country: stop.country, days })),
                 });
                 navigate(`/trip-planner?tripId=${trip.id}`);
               } catch {

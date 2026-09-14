@@ -27,21 +27,26 @@ const DEFAULT_MODEL = 'gemini-2.5-flash';
 // יום אחד: מעבר למודל חדש שמתגלה כשגוי באתר החי. משנים משתנה, פורסים מחדש,
 // וכל הקריאות חוזרות למודל הקודם — בלי revert ובלי בילד של הלקוח.
 //
-// הלקוח בונה `thinkingConfig` לפי המשפחה שחשב שהוא מקבל, ושתי המשפחות
-// אינן מקבלות את אותו שדה: 2.5 מכבה חשיבה ב-`thinkingBudget: 0`, ו-3
-// מקבל `thinkingLevel` בלבד ואינו מאפשר לכבות. בלי תרגום, חזרה אחורה
-// הייתה נכשלת בדיוק ברגע שהיא נחוצה.
-const familyOf = (m) => (/^gemini-3/.test(m) ? 3 : 2);
+// הלקוח בונה `thinkingConfig` למודל שחשב שהוא מקבל, וכל מודל מקבל ערך
+// אחר (3.8 דוחה `minimal`, 3.6 דוחה `thinkingBudget`). בלי תרגום, חזרה
+// אחורה הייתה נכשלת בדיוק ברגע שהיא נחוצה.
+// אותה טבלה כמו `THINKING` ב-src/services/geminiClient.js — ראה שם את
+// המדידות. בדיקה ב-scratchpad משווה את שתיהן; אי-התאמה = 400 בחזרה אחורה.
+const THINKING = {
+  'gemini-2.5-flash': { thinkingBudget: 0 },
+  'gemini-2.5-pro': { thinkingBudget: 128 },
+  'gemini-3.5-flash-lite': { thinkingLevel: 'minimal' },
+  'gemini-3.5-flash': { thinkingLevel: 'minimal' },
+  'gemini-3.6-flash': { thinkingLevel: 'minimal' },
+  'gemini-3.7-flash': { thinkingLevel: 'low' },
+  'gemini-3.8-flash': { thinkingLevel: 'low' },
+};
 
 export const adaptBody = (body, requested, model) => {
-  if (!body || typeof body !== 'object' || familyOf(requested) === familyOf(model)) return body;
+  if (!body || typeof body !== 'object' || requested === model) return body;
   const cfg = { ...(body.generationConfig || {}) };
-  if (familyOf(model) === 2) {
-    cfg.thinkingConfig = { thinkingBudget: 0 };
-  } else {
-    cfg.thinkingConfig = { thinkingLevel: 'low' };
-    delete cfg.temperature; // Google: מתחת ל-1.0 עלול לגרום ללולאות ב-Gemini 3
-  }
+  cfg.thinkingConfig = THINKING[model];
+  if (/^gemini-3/.test(model)) delete cfg.temperature; // Google: מתחת ל-1.0 עלול לגרום ללולאות
   return { ...body, generationConfig: cfg };
 };
 

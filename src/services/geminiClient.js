@@ -22,27 +22,48 @@ const DEV_KEY =
 // ההרצה שלו יחד — ב-Gemini 3 אי אפשר לכבות חשיבה, והיא נספרת בתוך
 // `maxOutputTokens`. שני דברים שמשתנים יחד חייבים לגור באותו מקום.
 export const GEMINI_MODELS = {
+  // פענוח נשאר על 2.5 עד שקבצי PDF ייבדקו מול 3.8 — 5 מתוך 14 ההזמנות של
+  // הבעלים נקלטו מ-PDF, ו-Google מזהירה שבדור 3 טיפול ה-PDF השתנה.
   parse: 'gemini-2.5-flash',     // פענוח אישורי הזמנה ממייל ומ-PDF — דיוק קודם לכול
-  content: 'gemini-2.5-flash',   // תוכן יעדים, מלונות, רכב, אטרקציות, ביטויים, יומן
-  itinerary: 'gemini-2.5-flash', // מסלולים יומיים ועצירות בטיול המתגלגל
-  chat: 'gemini-2.5-flash',      // עוזר הטיול בשיחה
+  content: 'gemini-3.8-flash',   // תוכן יעדים, מלונות, רכב, אטרקציות, ביטויים, יומן
+  itinerary: 'gemini-3.8-flash', // מסלולים יומיים ועצירות בטיול המתגלגל
+  chat: 'gemini-2.5-flash',      // עוזר הטיול — טרם נמדד מול 3.x
 };
 
 export const DEFAULT_GEMINI_MODEL = GEMINI_MODELS.content;
+
+// ── הגדרת חשיבה לכל מודל, לא לכל דור ──
+// נמדד 14.09.2026 מול השרת החי, עם בדיקת `modelVersion` בכל קריאה:
+//   3.5-flash-lite: thinkingBudget:0 ⟵ 400;  minimal ⟵ 0 טוקני חשיבה
+//   3.6-flash:      thinkingBudget:0 ⟵ 400;  minimal ⟵ 0;  low ⟵ תשובה נקטעה
+//   3.8-flash:      minimal ⟵ 400;           low ⟵ 0;  בלי הגדרה ⟵ תשובה ריקה
+// כלל "לפי דור" היה שולח `minimal` ל-3.8 ומקבל 400 בכל קריאה.
+// העותק בשרת (`api/gemini.mjs`, `THINKING`) חייב להיות זהה.
+export const THINKING = {
+  'gemini-2.5-flash': { thinkingBudget: 0 },
+  'gemini-2.5-pro': { thinkingBudget: 128 },
+  'gemini-3.5-flash-lite': { thinkingLevel: 'minimal' },
+  'gemini-3.5-flash': { thinkingLevel: 'minimal' },
+  'gemini-3.6-flash': { thinkingLevel: 'minimal' },
+  'gemini-3.7-flash': { thinkingLevel: 'low' },
+  'gemini-3.8-flash': { thinkingLevel: 'low' },
+};
 
 /**
  * הגדרות ההרצה (`generationConfig`) למודל נתון.
  *
  * הקורא מתאר מה הוא צריך — אורך תשובה, יצירתיות, JSON — והפונקציה מתרגמת
- * לשפת המודל. ב-2.5 זה בדיוק מה שנכתב עד היום בכל קובץ: החשיבה כבויה
- * (`thinkingBudget: 0`), כי היא נספרת בתוך `maxOutputTokens` ובלעדיה
- * תשובות נקטעו (נמדד בעוזר הטיול: 487 מתוך 512 טוקנים נשרפו על חשיבה).
+ * לשפת המודל. החשיבה נספרת בתוך `maxOutputTokens`, ובלי הגבלה היא שורפת
+ * את התשובה (נמדד בעוזר הטיול: 487 מתוך 512 טוקנים; ב-3.8 — תשובה ריקה).
+ * בדור 3 `temperature` מושמט: Google ממליצה במפורש להשאיר 1.0, ומתחת לזה
+ * "עלול לגרום ללולאות או לביצועים ירודים".
  */
 export function generationFor(model, { maxOutputTokens, temperature, ...rest } = {}) {
   const cfg = { ...rest };
   if (maxOutputTokens != null) cfg.maxOutputTokens = maxOutputTokens;
-  if (temperature != null) cfg.temperature = temperature;
-  cfg.thinkingConfig = { thinkingBudget: 0 };
+  const gen3 = /^gemini-3/.test(model);
+  if (temperature != null && !gen3) cfg.temperature = temperature;
+  cfg.thinkingConfig = THINKING[model] || (gen3 ? { thinkingLevel: 'low' } : { thinkingBudget: 0 });
   return cfg;
 }
 

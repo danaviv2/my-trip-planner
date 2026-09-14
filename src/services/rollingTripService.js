@@ -53,12 +53,13 @@ Interests: ${interestsStr}
 
 Discover 6 to 10 interesting stops along this route — cities, towns, natural sites, viewpoints, or unique attractions that are actually on or near this route.
 
-Return ONLY a valid JSON array (no markdown, no extra text). Use Hebrew for ALL text values (whyVisit, highlights, drivingFromPrev).
+Return ONLY a valid JSON array (no markdown, no extra text). Use Hebrew for ALL text values (name, whyVisit, highlights, drivingFromPrev). "name" is the place name written in Hebrew (e.g. "ליון"); "nameEn" is the same place's standard English name (e.g. "Lyon"); "country" stays in English.
 
 Required format:
 [
   {
-    "name": "Lyon",
+    "name": "ליון",
+    "nameEn": "Lyon",
     "country": "France",
     "emoji": "🏛️",
     "type": "city",
@@ -130,6 +131,14 @@ Rules:
     // להבדיל. אותו תיקון כמו ב-`aiHotelService` (f3bbecb).
     if (Array.isArray(parsed)) parsed = parsed.filter((s) => s && s.name);
     if (!Array.isArray(parsed) || !parsed.length) throw new Error('EMPTY_ROUTE');
+
+    // ── שני שמות: אחד לתצוגה, אחד לחיפוש ──
+    // נמדד 14.09.2026: `getPlacePhoto` מחפש בוויקיפדיה האנגלית — 6/6 תמונות
+    // לשמות באנגלית, 0/4 לשמות בעברית. Gemini 2.5 התעלם מהדוגמה בפרומפט
+    // ("Lyon") והחזיר עברית, ולכן העצירות הוצגו בלי תמונה; 3.8 ציית והחזיר
+    // אנגלית — תמונות, אבל ממשק עברי עם שמות לועזיים. אותה הפרדה כמו
+    // `name`/`nameEn` ב-PlaceImage. חסר `nameEn` ⟵ נופלים ל-`name`.
+    if (Array.isArray(parsed)) parsed = parsed.map((s) => ({ ...s, nameEn: s.nameEn || s.name }));
 
     setCache(cacheKey, parsed);
     console.log(`✅ התגלו ${parsed.length} עצירות לאורך המסלול`);

@@ -124,9 +124,9 @@ export const generateItinerary = async ({ destination, days = 3, interests = [],
 
   const buildPrompt = (startDay, chunkDays, totalDays) => `Travel expert. Days ${startDay}–${startDay + chunkDays - 1} of ${totalDays}-day trip to ${destination}.
 Budget: ${budgetLabel}. Style: ${styleLabel}. Pace: ${paceLabel}.${specialLines ? '\n' + specialLines : ''}${anchorLines(anchorsByDay, startDay, chunkDays)}
-Output JSON array of EXACTLY ${chunkDays} objects. Hebrew for title/theme/description/tips/bookingTip. description ≤20 Hebrew words, tips ≤10 Hebrew words.
+Output JSON array of EXACTLY ${chunkDays} objects. Hebrew for title/theme/description/tips/bookingTip and for every activity "name" (write the place name in Hebrew, e.g. "מגדל אייפל"); hotel names and addresses stay in English. description ≤20 Hebrew words, tips ≤10 Hebrew words.
 
-[{"day":${startDay},"title":"כותרת","theme":"נושא","activities":[{"time":"09:00","name":"Eiffel Tower","type":"attraction","description":"תיאור קצר","address":"Champ de Mars, Paris, France","lat":48.8584,"lng":2.2945,"duration":"2h","tips":"טיפ","price":"free"}],"hotel":{"name":"Hotel du Louvre","stars":4,"description":"תיאור","priceRange":"€€","address":"Place André Malraux, Paris","lat":48.8638,"lng":2.3363,"bookingTip":"טיפ"}}]
+[{"day":${startDay},"title":"כותרת","theme":"נושא","activities":[{"time":"09:00","name":"מגדל אייפל","type":"attraction","description":"תיאור קצר","address":"Champ de Mars, Paris, France","lat":48.8584,"lng":2.2945,"duration":"2h","tips":"טיפ","price":"free"}],"hotel":{"name":"Hotel du Louvre","stars":4,"description":"תיאור","priceRange":"€€","address":"Place André Malraux, Paris","lat":48.8638,"lng":2.3363,"bookingTip":"טיפ"}}]
 
 CRITICAL RULES:
 - EXACTLY ${chunkDays} day objects, day numbers ${startDay} to ${startDay + chunkDays - 1}
