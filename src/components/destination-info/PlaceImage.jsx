@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Skeleton } from '@mui/material';
 import { getPlacePhotoFast } from '../../services/placeMediaService';
+import ImageCredit from '../common/ImageCredit';
 
 /**
  * תמונה של מקום — או כותרת נקייה כשאין תמונה אמיתית.
@@ -71,17 +72,22 @@ const PlaceImage = ({
   }
 
   if (state.photo) {
+    // הקרדיט יושב על התמונה עצמה ולא בכיתוב נפרד: 32 מתוך 36 התמונות
+    // שנמדדו מחייבות ציון יוצר ורישיון. קובץ שאינו חופשי ⟵ שדה הצבע.
     return (
-      <Box
-        component="img"
-        src={state.photo}
-        alt={shown}
-        loading="lazy"
-        // גם תמונה אמיתית עלולה להיעלם מהמקור. במקרה כזה עוברים לשדה
-        // הצבע, ולא משאירים אייקון של תמונה שבורה.
-        onError={() => setState({ loading: false, photo: null })}
-        sx={{ width: '100%', height, objectFit: 'cover', display: 'block' }}
-      />
+      <Box sx={{ position: 'relative' }}>
+        <Box
+          component="img"
+          src={state.photo}
+          alt={shown}
+          loading="lazy"
+          // גם תמונה אמיתית עלולה להיעלם מהמקור. במקרה כזה עוברים לשדה
+          // הצבע, ולא משאירים אייקון של תמונה שבורה.
+          onError={() => setState({ loading: false, photo: null })}
+          sx={{ width: '100%', height, objectFit: 'cover', display: 'block' }}
+        />
+        <ImageCredit src={state.photo} onNonFree={() => setState({ loading: false, photo: null })} />
+      </Box>
     );
   }
 

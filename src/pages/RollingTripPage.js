@@ -29,6 +29,7 @@ import { discoverRouteStops } from '../services/rollingTripService';
 import { generateItinerary } from '../services/aiItineraryService';
 import { useTripSave } from '../contexts/TripSaveContext';
 import { getPlacePhoto } from '../services/photoService';
+import ImageCredit from '../components/common/ImageCredit';
 import { getStopWeatherSummary } from '../services/openMeteoService';
 import { analyzeItinerary, summarizeAnalysis, autoOptimize } from '../services/dayOptimizerService';
 import RouteShapeMap from '../components/rolling/RouteShapeMap';
@@ -529,6 +530,9 @@ export default function RollingTripPage() {
                     position: 'absolute', inset: 0,
                     background: `linear-gradient(to bottom, transparent 40%, ${color}cc 100%)`,
                   }} />
+                  {/* למעלה ולא למטה: בתחתית יושבים שם העצירה והסוג */}
+                  <ImageCredit src={photo} sx={{ top: 2, bottom: 'auto' }}
+                    onNonFree={() => setStopPhotos((p) => ({ ...p, [idx]: null }))} />
                   <Box sx={{ position: 'absolute', bottom: 8, right: noflip('10px'), display: 'flex', gap: 1, alignItems: 'center' }}>
                     <Typography sx={{ color: 'white', fontWeight: 800, fontSize: 18, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
                       {stop.emoji} {stop.name}
@@ -731,10 +735,11 @@ export default function RollingTripPage() {
                   background: photo
                     ? `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url(${photo}) center/cover`
                     : `linear-gradient(135deg, ${TYPE_COLORS[stop.type] || '#667eea'}dd, #764ba2dd)`,
-                  color: 'white', p: 2, cursor: 'pointer',
+                  color: 'white', p: 2, cursor: 'pointer', position: 'relative',
                   display: 'flex', alignItems: 'center', gap: 1, minHeight: 72,
                 }}
               >
+                {photo && <ImageCredit src={photo} sx={{ top: 2, bottom: 'auto' }} />}
                 <Typography fontSize={28}>{stop.emoji}</Typography>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="h6" fontWeight={700}>{stop.name}</Typography>
