@@ -31,8 +31,17 @@ const ALLOWED = [
   'http://127.0.0.1:3000',
 ];
 
-/** פריסות תצוגה מקדימה של Vercel מקבלות כתובת אקראית בכל דחיפה. */
-const PREVIEW = /^https:\/\/my-trip-planner-[a-z0-9-]+\.vercel\.app$/;
+/**
+ * פריסות תצוגה מקדימה של Vercel מקבלות כתובת אקראית בכל דחיפה.
+ *
+ * ── הסיומת של הצוות היא החלק שמגן ──
+ * עד 14.09.2026 הביטוי קיבל כל `my-trip-planner-*.vercel.app`. נמדד: שני
+ * פרויקטים כפולים (hrhv, w8fk, נמחקו באותו יום) עברו את השומר, וכל מי שמעלה
+ * עותק של הריפו לחשבון Vercel משלו מקבל כתובת באותה צורה בדיוק. כתובת
+ * פריסה של הפרויקט שלנו תמיד מסתיימת ב-`-danaviv2s-projects.vercel.app`,
+ * וסיומת של צוות אחר אינה ניתנת להשגה מחשבון אחר.
+ */
+const PREVIEW = /^https:\/\/my-trip-planner-[a-z0-9-]+-danaviv2s-projects\.vercel\.app$/;
 
 const isAllowed = (value) => {
   if (!value) return false;
