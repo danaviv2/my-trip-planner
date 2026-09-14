@@ -21,6 +21,7 @@ import { geocodeBookings } from '../../services/bookingGeocodeService';
 import FlightAlertsCard from './FlightAlertsCard';
 import FlightRights from './FlightRights';
 import FlightLookupCard from './FlightLookupCard';
+import RetractedBookingsAlert from './RetractedBookingsAlert';
 import { tripCost, formatTotals } from '../../services/tripCostService';
 
 /**
@@ -383,6 +384,9 @@ const TravelInfoComponent = () => {
       {/* בדיקת טיסה פתוחה — גם בלי הרשמה ובלי הזמנות. ראה FlightLookupCard. */}
       <FlightLookupCard />
       
+      {/* רשומות שהסריקה כבר לא מזהה כהזמנה — המשתמש מכריע. ראה staleSourceService. */}
+      <RetractedBookingsAlert />
+
       {cloudError && (
         <Alert severity="warning" sx={{ mb: 2 }}>
           <AlertTitle sx={{ fontWeight: 700, mb: 0.25 }}>הנסיעות שמורות במכשיר הזה בלבד</AlertTitle>

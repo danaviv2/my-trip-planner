@@ -1333,5 +1333,13 @@
       "detour": "+{{km}} km",
       "note": "Distâncias em linha reta, apenas para orientação. Paragens próximas são ligeiramente afastadas para ficarem legíveis — a distância real por estrada é maior."
     }
+  },
+  "retracted": {
+    "title_one": "1 item já não é reconhecido como reserva",
+    "title_other": "{{count}} itens já não são reconhecidos como reservas",
+    "body": "A verificação voltou a ler o e-mail de origem e não encontrou nenhuma reserva — por exemplo, um voucher ou um documento informativo. Remover ou manter?",
+    "source": "Origem: {{subject}}",
+    "remove": "Remover",
+    "keep": "Manter"
   }
 }

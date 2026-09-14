@@ -1333,5 +1333,13 @@
       "detour": "+{{km}} km",
       "note": "Distances à vol d’oiseau, à titre indicatif. Les étapes proches sont légèrement écartées pour rester lisibles — la distance réelle par la route est plus longue."
     }
+  },
+  "retracted": {
+    "title_one": "1 élément n’est plus reconnu comme réservation",
+    "title_other": "{{count}} éléments ne sont plus reconnus comme réservations",
+    "body": "L’analyse a relu l’e-mail d’origine et n’y a trouvé aucune réservation — par exemple un bon ou un document d’information. Les supprimer ou les garder ?",
+    "source": "Source : {{subject}}",
+    "remove": "Supprimer",
+    "keep": "Garder"
   }
 }

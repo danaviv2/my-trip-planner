@@ -1333,5 +1333,13 @@
       "detour": "+{{km}} km",
       "note": "Distancias en línea recta, solo orientativas. Las paradas cercanas se separan un poco para que se lean bien; la distancia real por carretera es mayor."
     }
+  },
+  "retracted": {
+    "title_one": "1 elemento ya no se reconoce como reserva",
+    "title_other": "{{count}} elementos ya no se reconocen como reservas",
+    "body": "El escaneo volvió a leer el correo del que proceden y no encontró ninguna reserva (por ejemplo, un bono o un documento informativo). ¿Eliminarlos o conservarlos?",
+    "source": "Origen: {{subject}}",
+    "remove": "Eliminar",
+    "keep": "Conservar"
   }
 }

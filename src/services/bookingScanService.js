@@ -104,6 +104,10 @@ export const scanMailbox = async (
   // להסרת ההזמנה המקורית שכן נמצאת שם.
   const cancellations = [];
   const unrecognized = [];
+  // מיילים שנקראו עד הסוף, בלי שגיאה, ולא הניבו הזמנה. משמשים לסימון רשומות
+  // ישנות מאותו מסמך שהפענוח הנוכחי כבר לא מפיק (staleSourceService).
+  // מייל שנכשל אינו נכנס: כשל אינו תשובה, ורשומה תקינה לא תסומן בגללו.
+  const retracted = [];
   let parsed = 0;
   let fromPdf = 0;
   // כיסוי הסימון המובנה. נמדד ומוצג, כדי שההחלטה אם להישען עליו תתבסס
@@ -147,6 +151,7 @@ export const scanMailbox = async (
           from: email.from,
           reason: `${blocked.vendor} — ${blocked.why}`,
         });
+        retracted.push({ messageId: email.id, subject: email.subject });
         markProcessed([email.id]);
         continue;
       }
@@ -271,6 +276,7 @@ export const scanMailbox = async (
 
       if (gotSomething) parsed++;
       else unrecognized.push(failure ? { ...email, reason: describeFailure(failure) } : email);
+      if (!gotSomething && !failure) retracted.push({ messageId: email.id, subject: email.subject });
     } catch (err) {
       // רשומות שכבר נאספו מהמייל הזה נשארות; רק הדיווח מתווסף.
       if (!gotSomething) {
@@ -290,6 +296,7 @@ export const scanMailbox = async (
     alreadyKnown: emails.alreadyKnown || 0,
     bookings,
     cancellations,
+    retracted,
     parsed,
     fromPdf,
     schemaDeclared,

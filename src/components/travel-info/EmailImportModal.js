@@ -22,7 +22,7 @@ import {
 
 const EmailImportModal = ({ open, onClose }) => {
   const { t } = useTranslation();
-  const { addBookings, applyCancellations } = useBookings();
+  const { addBookings, applyCancellations, flagRetracted } = useBookings();
   const { gmailToken, connectGmail, clearGmailToken, refreshGmailToken } = useAuth();
   const { ensureGmailDisclosure, gmailDisclosureDialog } = useGmailDisclosure();
   const [scanProgress, setScanProgress] = useState('');
@@ -91,6 +91,9 @@ const EmailImportModal = ({ open, onClose }) => {
       }
 
       const { bookings: collected, cancellations, parsed, fromPdf, matched, unrecognized, alreadyKnown, schemaDeclared = 0 } = result;
+      // לפני היציאות המוקדמות שלמטה: סריקה שלא מצאה אף הזמנה חדשה היא בדיוק
+      // המקרה שבו מסמך ישן נקרא מחדש ונדחה — והסימון חייב להגיע אליו.
+      await flagRetracted(result.retracted || []);
 
       // מוצג תמיד ולא רק בכישלון: סריקה יכולה להצליח ועדיין להחמיץ את
       // אישור המלון, ובלי הרשימה אין דרך לדעת שהוא הוחמץ.

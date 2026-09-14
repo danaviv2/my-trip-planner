@@ -21,6 +21,7 @@ import {
   sameReference,
   referencesConflict,
 } from '../services/bookingIdentity';
+import { matchRetracted } from '../services/staleSourceService';
 
 /**
  * מאגר ההזמנות של המשתמש והטיולים שנגזרים מהן.
@@ -763,6 +764,27 @@ export const BookingsProvider = ({ children }) => {
     [bookings, user]
   );
 
+  /**
+   * מסמן רשומות שהמסמך שלהן נקרא מחדש ולא הניב הזמנה. לא מוחק — ראה
+   * staleSourceService: המשתמש מכריע, דרך removeBooking או keepBooking.
+   * @returns {Promise<number>} כמה סומנו
+   */
+  const flagRetracted = useCallback(
+    async (retracted = []) => {
+      const ids = matchRetracted(bookingsRef.current, retracted);
+      const at = new Date().toISOString();
+      for (const id of ids) await updateBooking(id, { retracted: { at } });
+      return ids.length;
+    },
+    [updateBooking]
+  );
+
+  /** "השאר" — הרשומה נשארת, והסריקה הבאה לא תשאל עליה שוב. */
+  const keepBooking = useCallback(
+    (id) => updateBooking(id, { retracted: null, keepDespiteRetraction: true }),
+    [updateBooking]
+  );
+
   const removeBooking = useCallback(
     async (id) => {
       const gone = bookingsRef.current.find((b) => String(b.id) === String(id));
@@ -876,6 +898,7 @@ export const BookingsProvider = ({ children }) => {
     user,
     addBookings,
     applyCancellations,
+    flagRetracted,
     ready: !loading,
   });
 
@@ -885,11 +908,11 @@ export const BookingsProvider = ({ children }) => {
   const value = useMemo(
     () => ({
       bookings, trips, loading, addBookings, removeBooking, applyCancellations,
-      updateBooking, editEvent, clearEventEdits,
+      updateBooking, editEvent, clearEventEdits, flagRetracted, keepBooking,
       resetAllBookings, autoScanning, autoScanResult, cloudError,
     }),
     [bookings, trips, loading, addBookings, removeBooking, applyCancellations,
-     updateBooking, editEvent, clearEventEdits,
+     updateBooking, editEvent, clearEventEdits, flagRetracted, keepBooking,
      resetAllBookings, autoScanning, autoScanResult, cloudError]
   );
 

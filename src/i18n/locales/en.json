@@ -1333,5 +1333,13 @@
       "detour": "+{{km}} km",
       "note": "Straight-line distances, for orientation only. Nearby stops are nudged apart to stay readable — the actual road distance is longer."
     }
+  },
+  "retracted": {
+    "title_one": "1 item is no longer recognized as a booking",
+    "title_other": "{{count}} items are no longer recognized as bookings",
+    "body": "The scan re-read the email they came from and found no booking in it — for example a voucher or an information document. Remove them, or keep them?",
+    "source": "Source: {{subject}}",
+    "remove": "Remove",
+    "keep": "Keep"
   }
 }

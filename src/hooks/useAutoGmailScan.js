@@ -55,7 +55,7 @@ const writeLastScan = (ts) => {
  * @param {boolean} opts.ready האם המאגר סיים להיטען
  * @returns {{scanning:boolean, lastResult:{added:number, scanned:number}|null}}
  */
-export const useAutoGmailScan = ({ user, addBookings, applyCancellations, ready }) => {
+export const useAutoGmailScan = ({ user, addBookings, applyCancellations, flagRetracted, ready }) => {
   const [scanning, setScanning] = useState(false);
   const [lastResult, setLastResult] = useState(null);
   // מונע סריקה כפולה כשהרכיב נטען מחדש או ש-user מתעדכן
@@ -81,7 +81,7 @@ export const useAutoGmailScan = ({ user, addBookings, applyCancellations, ready 
 
         setScanning(true);
         // טווח קצר: הסריקה השוטפת מחפשת מה שהגיע לאחרונה, לא היסטוריה
-        const { emails, bookings, cancellations, alreadyKnown } = await scanMailbox(token, {
+        const { emails, bookings, cancellations, retracted, alreadyKnown } = await scanMailbox(token, {
           // הטווח הורחב יחד עם קיצור המרווח: העלות נקבעת כעת לפי מספר
           // המיילים החדשים ולא לפי גודל הטווח, ולכן אין סיבה לצמצם אותו.
           maxResults: 40,
@@ -92,6 +92,8 @@ export const useAutoGmailScan = ({ user, addBookings, applyCancellations, ready 
         const { added } = bookings.length ? await addBookings(bookings) : { added: 0 };
         // ביטול שהגיע בזמן שהמשתמש לא הסתכל חשוב לא פחות מהזמנה חדשה
         if (cancellations?.length) await applyCancellations(cancellations);
+        // אחרי ההוספה: רשומה שזה עתה נוספה מאותו מייל לא תסומן, כי המייל לא ברשימה.
+        if (retracted?.length && flagRetracted) await flagRetracted(retracted);
         writeLastScan(Date.now());
         if (!cancelled) {
           setLastResult({
@@ -113,7 +115,7 @@ export const useAutoGmailScan = ({ user, addBookings, applyCancellations, ready 
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [user, ready, addBookings, applyCancellations]);
+  }, [user, ready, addBookings, applyCancellations, flagRetracted]);
 
   return { scanning, lastResult };
 };
