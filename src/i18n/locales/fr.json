@@ -448,7 +448,7 @@
   },
   "travelInfoPage": {
     "title": "Détails du voyage",
-    "import_email": "Importer depuis un email",
+    "import_email": "Importer un document ou un email",
     "print": "Imprimer les détails du voyage",
     "flights_section": "Vols",
     "flight_departure": "Vol aller",
@@ -481,7 +481,7 @@
     "import_title": "Importer les détails du voyage",
     "tab_paste": "Coller l'email",
     "tab_gmail": "Connecter Gmail",
-    "tab_file": "Importer un fichier",
+    "tab_file": "Importer un document",
     "paste_instructions": "Copiez et collez le contenu de votre email de réservation :",
     "paste_placeholder": "Collez ici le contenu de l'email avec vos détails de réservation...",
     "cancel": "Annuler",
@@ -491,7 +491,7 @@
     "gmail_search_text": "Nous cherchons les confirmations de vol, hébergement, voiture, transfert, activité, restaurant et assurance",
     "connect_gmail": "Connecter Gmail",
     "close": "Fermer",
-    "file_instructions": "Importez une confirmation enregistrée depuis votre e-mail :",
+    "file_instructions": "Importez une confirmation : carte d’embarquement, bon d’hôtel, location de voiture ou police d’assurance :",
     "gmail_success": "Connexion Gmail réussie ! Vous pouvez maintenant importer des détails.",
     "extract_success": "Détails de vol et de location de voiture trouvés et extraits !",
     "file_success": "Fichier lu avec succès !",
@@ -982,8 +982,8 @@
       "noSubject": "(sans objet)"
     },
     "privacyNote": "* Lecture seule. L'e-mail est envoyé pour analyse et non conservé ; les données extraites sont enregistrées sur votre compte.",
-    "fileTypes": "EML ou TXT. PDF — via l'analyse Gmail",
-    "uploadClick": "Cliquez pour choisir un fichier",
+    "fileTypes": "PDF, photo ou capture d’écran (JPG, PNG, HEIC), ou EML/TXT. Plusieurs fichiers possibles.",
+    "uploadClick": "Cliquez pour choisir des fichiers ou glissez-les ici",
     "type": {
       "flight_one": "1 vol",
       "flight_other": "{{count}} vols",
@@ -1001,6 +1001,18 @@
       "insurance_other": "{{count}} assurances",
       "other_one": "1 réservation",
       "other_other": "{{count}} réservations"
+    },
+    "upload": {
+      "reading": "Lecture de {{name}} ({{i}}/{{n}})...",
+      "camera": "Photographier un document",
+      "privacy": "Le fichier est envoyé à Google Gemini pour être lu et n’est pas conservé. Seuls les détails de la réservation et le nom du fichier sont enregistrés.",
+      "tooLarge": "plus de 3 Mo",
+      "unsupported": "type de fichier non pris en charge",
+      "network": "problème de connexion",
+      "failed": "lecture impossible",
+      "allKnown": "Toutes les réservations de ces fichiers étaient déjà enregistrées.",
+      "notBooking": "Aucune réservation trouvée dans : {{names}}.",
+      "someFailed": "Non lus : {{names}}."
     }
   },
   "onboarding": {

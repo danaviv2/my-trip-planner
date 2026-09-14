@@ -442,25 +442,39 @@ export const parseTravelDocument = async (text) => {
 };
 
 /**
- * מפענח אישור הזמנה שנמצא בקובץ PDF מצורף.
+ * סוגי הקבצים ש-Gemini קורא ישירות, בלי ספריית פענוח בצד הלקוח.
+ * HEIC נכלל: iPhone שומר צילומים כך, ו-Gemini מתעד אותו כנתמך.
+ */
+export const DOCUMENT_MIME_TYPES = [
+  'application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif',
+];
+
+/**
+ * מפענח אישור הזמנה מקובץ — PDF מצורף, או צילום של כרטיס ומסמך.
  *
  * ספקים רבים שמים את הפרטים רק בקובץ, וגוף המייל אומר "מצורף האישור".
- * Gemini קורא PDF ישירות, כך שאין צורך בספריית פענוח בצד הלקוח — מה
- * שחוסך כמגה־בייט מהבאנדל ומשמר את פריסת הטבלאות שבמסמך.
+ * Gemini קורא PDF ותמונה ישירות, כך שאין צורך בספריית פענוח בצד הלקוח —
+ * מה שחוסך כמגה־בייט מהבאנדל ומשמר את פריסת הטבלאות שבמסמך.
  *
- * @param {string} base64Pdf תוכן הקובץ בקידוד base64
+ * אותה הנחיה בדיוק כמו במייל (`buildExtractionPrompt`): כל כלל שם נולד
+ * מערך שגוי שהגיע למשתמש, ומסלול העלאה עם הנחיה משלו היה מאבד אותם.
+ *
+ * @param {string} base64 תוכן הקובץ בקידוד base64
+ * @param {string} mimeType אחד מ-DOCUMENT_MIME_TYPES
  * @returns {Promise<object>} אותו מבנה שמחזירה parseTravelDocument
  */
-export const parseTravelDocumentFromPdf = async (base64Pdf) => {
-  if (!base64Pdf) throw new Error('NO_PDF');
+export const parseTravelDocumentFromFile = async (base64, mimeType = 'application/pdf') => {
+  if (!base64) throw new Error('NO_FILE');
+  if (!DOCUMENT_MIME_TYPES.includes(mimeType)) throw new Error('UNSUPPORTED_TYPE');
 
+  const what = mimeType === 'application/pdf' ? 'the attached PDF document' : 'the attached photo of a document';
   const response = await callGemini({
     contents: [
       {
         role: 'user',
         parts: [
-          { inline_data: { mime_type: 'application/pdf', data: base64Pdf } },
-          { text: buildExtractionPrompt('the attached PDF document') },
+          { inline_data: { mime_type: mimeType, data: base64 } },
+          { text: buildExtractionPrompt(what) },
         ],
       },
     ],
@@ -473,6 +487,10 @@ export const parseTravelDocumentFromPdf = async (base64Pdf) => {
   const raw = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
   return normalizeParsed(raw);
 };
+
+/** PDF מצורף ממייל. נשמר בשמו כי סריקת Gmail קוראת לו. */
+export const parseTravelDocumentFromPdf = (base64Pdf) =>
+  parseTravelDocumentFromFile(base64Pdf, 'application/pdf');
 
 /** אמוג'י לפי סוג הזמנה */
 export const bookingEmoji = (type) => {

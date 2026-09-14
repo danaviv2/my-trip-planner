@@ -448,7 +448,7 @@
   },
   "travelInfoPage": {
     "title": "Detalhes da viagem",
-    "import_email": "Importar do email",
+    "import_email": "Importar documento ou email",
     "print": "Imprimir detalhes da viagem",
     "flights_section": "Voos",
     "flight_departure": "Voo de ida",
@@ -481,7 +481,7 @@
     "import_title": "Importar detalhes da viagem",
     "tab_paste": "Colar email",
     "tab_gmail": "Conectar Gmail",
-    "tab_file": "Importar arquivo",
+    "tab_file": "Carregar documento",
     "paste_instructions": "Copie e cole o conteúdo do seu email de reserva:",
     "paste_placeholder": "Cole aqui o conteúdo do email com seus detalhes de reserva...",
     "cancel": "Cancelar",
@@ -491,7 +491,7 @@
     "gmail_search_text": "Procuramos confirmações de voo, estadia, carro, transfer, atividade, restaurante e seguro",
     "connect_gmail": "Conectar Gmail",
     "close": "Fechar",
-    "file_instructions": "Carregue uma confirmação guardada do seu e-mail:",
+    "file_instructions": "Carregue uma confirmação de reserva: cartão de embarque, voucher de hotel, aluguer de carro ou apólice:",
     "gmail_success": "Conexão com Gmail bem-sucedida! Agora você pode importar detalhes.",
     "extract_success": "Detalhes de voo e aluguel de carro encontrados e extraídos!",
     "file_success": "Arquivo lido com sucesso!",
@@ -982,8 +982,8 @@
       "noSubject": "(sem assunto)"
     },
     "privacyNote": "* Apenas leitura. O e-mail é enviado para análise e não é guardado; os dados extraídos ficam na sua conta.",
-    "fileTypes": "EML ou TXT. PDF — pela análise do Gmail",
-    "uploadClick": "Clique para escolher um ficheiro",
+    "fileTypes": "PDF, foto ou captura de ecrã (JPG, PNG, HEIC), ou EML/TXT. Pode escolher vários ficheiros.",
+    "uploadClick": "Clique para escolher ficheiros ou arraste-os para aqui",
     "type": {
       "flight_one": "1 voo",
       "flight_other": "{{count}} voos",
@@ -1001,6 +1001,18 @@
       "insurance_other": "{{count}} seguros",
       "other_one": "1 reserva",
       "other_other": "{{count}} reservas"
+    },
+    "upload": {
+      "reading": "A ler {{name}} ({{i}}/{{n}})...",
+      "camera": "Fotografar um documento",
+      "privacy": "O ficheiro é enviado ao Google Gemini para ser lido e não é guardado. Só ficam os dados da reserva e o nome do ficheiro.",
+      "tooLarge": "maior que 3 MB",
+      "unsupported": "tipo de ficheiro não suportado",
+      "network": "problema de ligação",
+      "failed": "não foi possível ler",
+      "allKnown": "Todas as reservas destes ficheiros já estavam guardadas.",
+      "notBooking": "Nenhuma reserva encontrada em: {{names}}.",
+      "someFailed": "Não lidos: {{names}}."
     }
   },
   "onboarding": {

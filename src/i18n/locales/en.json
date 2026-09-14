@@ -448,7 +448,7 @@
   },
   "travelInfoPage": {
     "title": "Travel Details",
-    "import_email": "Import from Email",
+    "import_email": "Import a document or email",
     "print": "Print Travel Details",
     "flights_section": "Flights",
     "flight_departure": "Outbound Flight",
@@ -481,7 +481,7 @@
     "import_title": "Import Travel Details",
     "tab_paste": "Paste Email",
     "tab_gmail": "Connect Gmail",
-    "tab_file": "Import File",
+    "tab_file": "Upload document",
     "paste_instructions": "Copy and paste your booking email content:",
     "paste_placeholder": "Paste the email content with your booking details here...",
     "cancel": "Cancel",
@@ -491,7 +491,7 @@
     "gmail_search_text": "We look for flight, stay, car, transfer, activity, restaurant and insurance confirmations",
     "connect_gmail": "Connect to Gmail",
     "close": "Close",
-    "file_instructions": "Upload a booking confirmation saved from your email:",
+    "file_instructions": "Upload a booking confirmation — boarding pass, hotel voucher, car rental or policy:",
     "gmail_success": "Gmail connection successful! You can now import details.",
     "extract_success": "Flight and car rental details found and extracted!",
     "file_success": "File read successfully!",
@@ -982,8 +982,8 @@
       "noSubject": "(no subject)"
     },
     "privacyNote": "* Read-only. Email bodies are sent for parsing and not stored; extracted booking details are saved to your account.",
-    "fileTypes": "EML or TXT. PDF — via Gmail scan",
-    "uploadClick": "Click to choose a file",
+    "fileTypes": "PDF, photo or screenshot (JPG, PNG, HEIC), or EML/TXT. You can pick several files.",
+    "uploadClick": "Click to choose files, or drag them here",
     "type": {
       "flight_one": "1 flight",
       "flight_other": "{{count}} flights",
@@ -1001,6 +1001,18 @@
       "insurance_other": "{{count}} insurance policies",
       "other_one": "1 booking",
       "other_other": "{{count}} bookings"
+    },
+    "upload": {
+      "reading": "Reading {{name}} ({{i}}/{{n}})...",
+      "camera": "Take a photo of a document",
+      "privacy": "The file is sent to Google Gemini to be read and is not stored. Only the booking details and the file name are saved.",
+      "tooLarge": "larger than 3MB",
+      "unsupported": "unsupported file type",
+      "network": "connection problem",
+      "failed": "could not be read",
+      "allKnown": "All bookings in these files were already saved.",
+      "notBooking": "No booking found in: {{names}}.",
+      "someFailed": "Not read: {{names}}."
     }
   },
   "onboarding": {

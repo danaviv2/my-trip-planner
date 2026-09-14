@@ -1,7 +1,8 @@
 // components/travel-info/EmailImportModal.js
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { parseTravelDocument } from '../../services/bookingParserService';
+import { parseTravelDocument, parseTravelDocumentFromFile } from '../../services/bookingParserService';
+import { documentKind, prepareDocument } from '../../utils/documentUpload';
 import { useBookings } from '../../contexts/BookingsContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { scanMailbox, toBookings } from '../../services/bookingScanService';
@@ -25,6 +26,10 @@ const EmailImportModal = ({ open, onClose }) => {
   const { gmailToken, connectGmail, clearGmailToken, refreshGmailToken } = useAuth();
   const { ensureGmailDisclosure, gmailDisclosureDialog } = useGmailDisclosure();
   const [scanProgress, setScanProgress] = useState('');
+  const [dragOver, setDragOver] = useState(false);
+  // מצלמה רק במכשיר מגע: במחשב `capture` מתעלם ופותח בחירת קובץ, וכפתור
+  // "צלם" שפותח חלון קבצים מבטיח משהו שאינו קורה.
+  const hasTouch = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
   const [scannedSubjects, setScannedSubjects] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
   const [emailContent, setEmailContent] = useState('');
@@ -173,6 +178,96 @@ const EmailImportModal = ({ open, onClose }) => {
     }
   };
   
+  // "טיסה אחת · שתי לינות" — משותף להדבקה ולהעלאת קבצים, כדי שהסיכום לא
+  // יתפצל לשני ניסוחים שמתקנים אחד מהם בלבד.
+  const summarizeTypes = (list) => {
+    const TYPES = ['flight', 'hotel', 'car_rental', 'transfer', 'activity', 'restaurant', 'insurance'];
+    const counts = list.reduce((acc, b) => {
+      const key = TYPES.includes(b.type) ? b.type : 'other';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(counts)
+      .map(([key, n]) => t(`emailImport.type.${key}`, { count: n }))
+      .join(' · ');
+  };
+
+  /**
+   * העלאת מסמכים: PDF, צילום מסך או צילום מהמצלמה.
+   *
+   * עד 14.09.2026 הלשונית קיבלה EML ו-TXT בלבד, ו-PDF נדחה בהודעה. זה היה
+   * המסלול היחיד שעובד לכל משתמש — סריקת Gmail חסומה לציבור עד אימות Google
+   * (STATUS סעיף 9) — וגם הוא לא קרא את הצורה שבה רוב האישורים באמת נמצאים.
+   *
+   * כל קובץ מפוענח לחוד, והשמירה נעשית פעם אחת בסוף: יציאה ברבע הדרך לא
+   * משאירה חצי ייבוא, והסיכום מונה מה נשמר בפועל ולא מה נשלח.
+   */
+  const importFiles = async (fileList) => {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    clearNotice();
+
+    // EML/TXT נשארים במסלול הקיים: טעינה לשדה ההדבקה, קובץ אחד.
+    const textFile = files.find((f) => documentKind(f).kind === 'text');
+    if (textFile && files.length === 1) {
+      try {
+        setEmailContent(await textFile.text());
+        setActiveTab(0);
+        setNotice({ severity: 'success', text: t('emailImport.file.loaded', { action: t('travelInfoPage.extract') }) });
+      } catch (err) {
+        setNotice({ severity: 'error', text: t('emailImport.error.fileRead'), detail: String(err?.message || '') });
+      }
+      return;
+    }
+
+    setIsLoading(true);
+    const collected = [];
+    const notBooking = [];
+    const failed = [];
+    let lastError = '';
+    try {
+      for (let i = 0; i < files.length; i += 1) {
+        const file = files[i];
+        setScanProgress(t('emailImport.upload.reading', { name: file.name, i: i + 1, n: files.length }));
+        try {
+          const { base64, mime } = await prepareDocument(file);
+          const result = await parseTravelDocumentFromFile(base64, mime);
+          if (!result.isBooking || result.cancelled) { notBooking.push(file.name); continue; }
+          const records = toBookings(result, { sourceSubject: file.name, sourceKind: 'upload' });
+          if (records.length) collected.push(...records); else notBooking.push(file.name);
+        } catch (err) {
+          const code = String(err?.message || '');
+          lastError = code;
+          failed.push(`${file.name} (${
+            code === 'TOO_LARGE' ? t('emailImport.upload.tooLarge')
+              : code === 'UNSUPPORTED_TYPE' ? t('emailImport.upload.unsupported')
+              : isNetworkError(code) ? t('emailImport.upload.network')
+              : t('emailImport.upload.failed')
+          })`);
+        }
+      }
+
+      const { added = 0, skipped = 0 } = collected.length ? await addBookings(collected) : {};
+      const lines = [
+        added > 0 && t('emailImport.paste.success', { parts: summarizeTypes(collected) }),
+        added === 0 && collected.length > 0 && t('emailImport.upload.allKnown'),
+        skipped > 0 && t('emailImport.success.merged', { n: skipped }),
+        notBooking.length > 0 && t('emailImport.upload.notBooking', { names: notBooking.join(', ') }),
+        failed.length > 0 && t('emailImport.upload.someFailed', { names: failed.join(', ') }),
+      ].filter(Boolean);
+
+      // החומרה נגזרת ממה שקרה: שמירה = הצלחה, כלום-ובלי-כשל = אזהרה, רק כשלים = שגיאה.
+      const severity = added > 0 ? 'success'
+        : collected.length > 0 ? 'info'
+        : failed.length === files.length ? 'error'
+        : 'warning';
+      setNotice({ severity, text: lines.join(' '), detail: lastError || undefined });
+    } finally {
+      setIsLoading(false);
+      setScanProgress('');
+    }
+  };
+
   // פונקציה לחילוץ פרטים מטקסט מייל
   const extractDataFromEmail = async () => {
     setIsLoading(true);
@@ -220,15 +315,7 @@ const EmailImportModal = ({ open, onClose }) => {
       // הניסוח הקודם מנה שלושה סוגים מתוך שישה, ולכן ייבוא מוצלח של
       // אטרקציה או מסעדה הופיע כמשפט בלי נושא. התוויות היו גם ברבים
       // בלבד, והפיקו "1 טיסות"; כאן הן עוברות דרך צורות הריבוי של i18next.
-      const TYPES = ['flight', 'hotel', 'car_rental', 'transfer', 'activity', 'restaurant', 'insurance'];
-      const counts = toStore.reduce((acc, b) => {
-        const key = TYPES.includes(b.type) ? b.type : 'other';
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {});
-      const parts = Object.entries(counts)
-        .map(([key, n]) => t(`emailImport.type.${key}`, { count: n }))
-        .join(' · ');
+      const parts = summarizeTypes(toStore);
 
       const dupNote = skipped > 0 ? ' ' + t('emailImport.success.merged', { n: skipped }) : '';
 
@@ -294,7 +381,16 @@ const EmailImportModal = ({ open, onClose }) => {
           {t('travelInfoPage.import_title')}
         </Typography>
         
-        <Tabs value={activeTab} onChange={handleTabChange} sx={{ mb: 2 }}>
+        {/* ── שלוש הלשוניות חייבות להיראות ב-375px ──
+            נמדד 14.09.2026 בנייד: "ייבוא מקובץ" התחילה ב-‎-45px, כלומר חתוכה
+            מחוץ לחלון — ובדיוק היא, המסלול היחיד שעובד לכל משתמש. `fullWidth`
+            מחלק את הרוחב שווה, והתווית נשברת לשתי שורות במקום לגלוש. */}
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant="fullWidth"
+          sx={{ mb: 2, '& .MuiTab-root': { minWidth: 0, px: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' }, lineHeight: 1.25 } }}
+        >
           <Tab label={t('travelInfoPage.tab_paste')} />
           <Tab label={t('travelInfoPage.tab_gmail')} />
           <Tab label={t('travelInfoPage.tab_file')} />
@@ -442,15 +538,20 @@ const EmailImportModal = ({ open, onClose }) => {
               {t('travelInfoPage.file_instructions')}
             </Typography>
             
-            <Box 
-              sx={{ 
+            {/* ── שני שערים לאותו מסלול ──
+                בחירת קבצים (PDF, צילום מסך, EML) וצילום ישיר מהמצלמה. בטלפון
+                `capture` פותח את המצלמה האחורית; במחשב הוא נפתח כבחירת קובץ,
+                ולכן הכפתור מוצג רק כשיש מגע — שם הוא אומר מה שהוא עושה. */}
+            <Box
+              sx={{
                 border: '2px dashed',
-                borderColor: 'divider',
+                borderColor: dragOver ? 'primary.main' : 'divider',
+                bgcolor: dragOver ? 'action.hover' : 'transparent',
                 borderRadius: '8px',
                 p: 4,
                 textAlign: 'center',
-                mb: 3,
-                cursor: 'pointer',
+                mb: 2,
+                cursor: isLoading ? 'progress' : 'pointer',
                 '&:hover': { borderColor: 'primary.main' },
                 '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
               }}
@@ -459,51 +560,31 @@ const EmailImportModal = ({ open, onClose }) => {
               role="button"
               tabIndex={0}
               aria-label={t('emailImport.uploadClick')}
-              onClick={() => document.getElementById('fileUpload').click()}
+              aria-disabled={isLoading}
+              onClick={() => !isLoading && document.getElementById('fileUpload').click()}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (!isLoading && (e.key === 'Enter' || e.key === ' ')) {
                   e.preventDefault();
                   document.getElementById('fileUpload').click();
                 }
+              }}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                if (!isLoading) importFiles(e.dataTransfer?.files);
               }}
             >
               <input
                 type="file"
                 id="fileUpload"
                 style={{ display: 'none' }}
-                accept=".eml,.txt"
-                onChange={async (e) => {
-                  const file = e.target.files && e.target.files[0];
-                  if (!file) return;
-                  clearNotice();
-                  // PDF דורש ספריית פענוח ולכן אינו נתמך כרגע — עדיף לומר זאת
-                  // מאשר להעמיד פנים שהקובץ נקרא.
-                  if (/\.pdf$/i.test(file.name)) {
-                    setNotice({ severity: 'warning', text: t('emailImport.error.pdfUnsupported') });
-                    return;
-                  }
-                  try {
-                    const text = await file.text();
-                    setEmailContent(text);
-                    // setActiveTab ישירות, ולא handleTabChange: המעבר הזה
-                    // נועד להראות את הקובץ שנטען, וההודעה עליו חייבת לשרוד.
-                    setActiveTab(0);
-                    setNotice({
-                      severity: 'success',
-                      text: t('emailImport.file.loaded', { action: t('travelInfoPage.extract') }),
-                    });
-                  } catch (err) {
-                    setNotice({
-                      severity: 'error',
-                      text: t('emailImport.error.fileRead'),
-                      detail: String(err?.message || ''),
-                    });
-                  }
-                }}
+                accept=".pdf,application/pdf,image/*,.heic,.eml,.txt"
+                multiple
+                onChange={(e) => { const f = e.target.files; importFiles(f); e.target.value = ''; }}
               />
               <i className="material-icons" aria-hidden="true" style={{ fontSize: '48px', opacity: 0.4 }}>cloud_upload</i>
-              {/* הניסוח הקודם הבטיח גרירה, ואין כאן onDrop — לחיצה בלבד.
-                  והוא מנה PDF בין הסוגים הנתמכים, בזמן ש-accept דוחה אותו. */}
               <Typography variant="subtitle1" sx={{ mt: 1 }}>
                 {t('emailImport.uploadClick')}
               </Typography>
@@ -511,7 +592,34 @@ const EmailImportModal = ({ open, onClose }) => {
                 {t('emailImport.fileTypes')}
               </Typography>
             </Box>
-            
+
+            {hasTouch && (
+              <>
+                <input
+                  type="file"
+                  id="cameraUpload"
+                  style={{ display: 'none' }}
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(e) => { const f = e.target.files; importFiles(f); e.target.value = ''; }}
+                />
+                <Button
+                  fullWidth
+                  variant="contained"
+                  disabled={isLoading}
+                  onClick={() => document.getElementById('cameraUpload').click()}
+                  startIcon={<i className="material-icons" aria-hidden="true">photo_camera</i>}
+                  sx={{ mb: 2, minHeight: 44 }}
+                >
+                  {t('emailImport.upload.camera')}
+                </Button>
+              </>
+            )}
+
+            <Typography variant="caption" component="p" sx={{ color: 'text.secondary', mb: 2 }}>
+              {t('emailImport.upload.privacy')}
+            </Typography>
+
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <Button variant="outlined" onClick={onClose}>
                 {t('travelInfoPage.close')}
