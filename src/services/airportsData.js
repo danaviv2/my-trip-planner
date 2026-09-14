@@ -108,6 +108,20 @@ export const AIRPORTS = {
   BAK: { city: 'באקו', country: 'AZ', lat: 40.4675, lng: 50.0467 },
 };
 
+// שמות ערים (אנגלית, מקומית, עברית) ⟵ שדה. משותף ל-findAirport (הכלה) ול-rentalLocationCode (התאמה מלאה).
+const CITY_NAMES = {
+  naples: 'NAP', napoli: 'NAP', נאפולי: 'NAP',
+  rome: 'FCO', roma: 'FCO', fiumicino: 'FCO', רומא: 'FCO',
+  'tel aviv': 'TLV', 'ben gurion': 'TLV', 'תל אביב': 'TLV',
+  paris: 'CDG', פריז: 'CDG',
+  london: 'LHR', לונדון: 'LHR',
+  milan: 'MXP', milano: 'MXP', מילאנו: 'MXP',
+  athens: 'ATH', אתונה: 'ATH',
+  barcelona: 'BCN', ברצלונה: 'BCN',
+  venice: 'VCE', venezia: 'VCE', ונציה: 'VCE',
+};
+
+
 /**
  * מאתר שדה תעופה לפי קוד או שם.
  *
@@ -127,19 +141,8 @@ export const findAirport = (raw) => {
 
   // התאמה לפי שם עיר, באנגלית או בעברית
   const lower = text.toLowerCase();
-  const NAMES = {
-    naples: 'NAP', napoli: 'NAP', נאפולי: 'NAP',
-    rome: 'FCO', roma: 'FCO', fiumicino: 'FCO', רומא: 'FCO',
-    'tel aviv': 'TLV', 'ben gurion': 'TLV', 'תל אביב': 'TLV',
-    paris: 'CDG', פריז: 'CDG',
-    london: 'LHR', לונדון: 'LHR',
-    milan: 'MXP', milano: 'MXP', מילאנו: 'MXP',
-    athens: 'ATH', אתונה: 'ATH',
-    barcelona: 'BCN', ברצלונה: 'BCN',
-    venice: 'VCE', venezia: 'VCE', ונציה: 'VCE',
-  };
-  const hit = Object.keys(NAMES).find((k) => lower.includes(k));
-  return hit ? { code: NAMES[hit], ...AIRPORTS[NAMES[hit]] } : null;
+  const hit = Object.keys(CITY_NAMES).find((k) => lower.includes(k));
+  return hit ? { code: CITY_NAMES[hit], ...AIRPORTS[CITY_NAMES[hit]] } : null;
 };
 
 /**
@@ -162,11 +165,35 @@ const METRO = {
   טוקיו: 'TYO', tokyo: 'TYO',
 };
 
+/**
+ * שם מדינה באנגלית לעיר מוכרת — "Naples" ⟵ "Naples, Italy".
+ *
+ * נמדד 14.09.2026: Hotels.com ו-Expedia פותחים "Naples" לבדו כנאפולי
+ * **שבפלורידה**, ו-"Naples, Italy" או "נאפולי" נכון. מוחל רק על שם לטיני
+ * בלי פסיק שמזוהה במלואו כעיר במאגר; כל קלט אחר חוזר כמו שהוא.
+ */
+export const qualifyDestination = (raw) => {
+  const text = String(raw || '').trim();
+  if (!text || text.includes(',') || !/^[A-Za-z .'-]+$/.test(text)) return text;
+  const code = rentalLocationCode(text);
+  const airport = code && AIRPORTS[code];
+  if (!airport) return text;
+  try {
+    const country = new Intl.DisplayNames(['en'], { type: 'region' }).of(airport.country);
+    return country ? `${text}, ${country}` : text;
+  } catch {
+    return text;
+  }
+};
+
 export const rentalLocationCode = (raw) => {
   const text = String(raw || '').trim();
   if (!text) return null;
   const lower = text.toLowerCase();
   if (METRO[lower]) return METRO[lower];
+  // שם עיר מלא שכבר מוכר (Naples, נאפולי) — התאמה מלאה בלבד, כמו כל השאר כאן.
+  // (רומא, פריז, לונדון ומילאנו כבר נענו למעלה כקוד מטרופולין.)
+  if (CITY_NAMES[lower]) return CITY_NAMES[lower];
   const code = text.toUpperCase();
   if (/^[A-Z]{3}$/.test(code) && (AIRPORTS[code] || Object.values(METRO).includes(code))) return code;
   const hit = Object.entries(AIRPORTS).find(([, a]) => a.city === text);

@@ -5,6 +5,7 @@ import {
 } from '@mui/material';
 import FlightIcon from '@mui/icons-material/Flight';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { rentalLocationCode } from '../../services/airportsData';
 
 const BOOKING_SITES = [
   {
@@ -20,24 +21,29 @@ const BOOKING_SITES = [
     name: 'Skyscanner',
     color: '#00B2A9',
     logo: '🔍',
+    // ── קוד שדה, לא שם ──
+    // נמדד 14.09.2026: Skyscanner פתח "tlv/nap/261001/261005" כ"Tel Aviv to Naples";
+    // הנתיב הקודם שלח "תל-אביב/נאפולי" ותאריך בשמונה ספרות. בלי קוד — דף הבית.
     getUrl: ({ origin, destination, departureDate, returnDate, passengers, tripType }) => {
-      const dep = departureDate ? departureDate.replace(/-/g, '') : '';
-      const ret = returnDate ? returnDate.replace(/-/g, '') : '';
-      const originSlug = (origin || 'tlv').toLowerCase().replace(/\s+/g, '-');
-      const destSlug = (destination || '').toLowerCase().replace(/\s+/g, '-');
-      const retPart = tripType === 'roundtrip' && ret ? `/${ret}` : '';
-      return `https://www.skyscanner.co.il/transport/flights/${originSlug}/${destSlug}/${dep}${retPart}/?adults=${passengers}&currency=ILS`;
+      const o = rentalLocationCode(origin || 'TLV');
+      const d = rentalLocationCode(destination);
+      const yymmdd = (x) => (x ? x.replace(/-/g, '').slice(2) : '');
+      if (!o || !d || !departureDate) return 'https://www.skyscanner.co.il/';
+      const retPart = tripType === 'roundtrip' && returnDate ? `/${yymmdd(returnDate)}` : '';
+      return `https://www.skyscanner.co.il/transport/flights/${o.toLowerCase()}/${d.toLowerCase()}/${yymmdd(departureDate)}${retPart}/?adults=${passengers}&currency=ILS`;
     }
   },
   {
     name: 'Kayak',
     color: '#FF690F',
     logo: '🚣',
+    // נמדד: "תל אביב-נאפולי/20261001" החזיר errorOccurred; "TLV-NAP/2026-10-01/2026-10-05/2adults" נפתח נכון.
     getUrl: ({ origin, destination, departureDate, returnDate, passengers, tripType }) => {
-      const dep = departureDate ? departureDate.replace(/-/g, '') : '';
-      const ret = returnDate ? returnDate.replace(/-/g, '') : '';
-      const retPart = tripType === 'roundtrip' && ret ? `/${ret}` : '';
-      return `https://www.kayak.com/flights/${origin || 'TLV'}-${destination || ''}/${dep}${retPart}/${passengers}adults?currency=ILS`;
+      const o = rentalLocationCode(origin || 'TLV');
+      const d = rentalLocationCode(destination);
+      if (!o || !d || !departureDate) return 'https://www.kayak.com/flights';
+      const retPart = tripType === 'roundtrip' && returnDate ? `/${returnDate}` : '';
+      return `https://www.kayak.com/flights/${o}-${d}/${departureDate}${retPart}/${passengers}adults?currency=ILS`;
     }
   },
 ];
@@ -176,7 +182,9 @@ const FlightSearch = () => {
                     sx={{ background: site.color }}
                     onClick={(e) => { e.stopPropagation(); openSite(site); }}
                   >
-                    חפש ב-{site.name}
+                    {/* "חפש" רק כשהקישור פותח חיפוש מוכן; דף בית (בלי קוד שדה) אינו חיפוש. */}
+                    {/\/(transport\/)?flights\/[a-zA-Z]{3}[-/][a-zA-Z]{3}/.test(site.getUrl({ origin, destination, departureDate, returnDate, passengers, tripType })) || site.name === 'Google Flights'
+                      ? `חפש ב-${site.name}` : `פתח את ${site.name}`}
                   </Button>
                 </Paper>
               </Grid>

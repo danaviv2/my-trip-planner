@@ -1,3 +1,4 @@
+import { rentalLocationCode } from './airportsData';
 /**
  * קישורים לספקי הזמנות אמיתיים.
  *
@@ -54,7 +55,10 @@ export const providerLinks = (type, q = {}) => {
         id: 'skyscanner',
         name: 'Skyscanner',
         note: 'שימושי כשהתאריכים גמישים',
-        url: `https://www.skyscanner.co.il/transport/flights/${enc(origin.toLowerCase())}/${enc(dest.toLowerCase())}/${from.replace(/-/g, '').slice(2)}/${to.replace(/-/g, '').slice(2)}/`,
+        // קוד שדה בלבד (נמדד 14.09.2026); שם עיר בנתיב אינו מזוהה, ובלי קוד — דף הבית.
+        url: rentalLocationCode(origin) && rentalLocationCode(dest) && from
+          ? `https://www.skyscanner.co.il/transport/flights/${rentalLocationCode(origin).toLowerCase()}/${rentalLocationCode(dest).toLowerCase()}/${from.replace(/-/g, '').slice(2)}/${to.replace(/-/g, '').slice(2)}/`
+          : 'https://www.skyscanner.co.il/',
       },
     ];
   }
@@ -85,13 +89,17 @@ export const providerLinks = (type, q = {}) => {
         id: 'kayak-cars',
         name: 'Kayak',
         note: 'משווה בין חברות ההשכרה במקום אחד',
-        url: `https://www.kayak.com/cars/${enc(dest)}/${from}/${to}`,
+        // שם חופשי נפתר לפלורידה או לרומא (נמדד); רק קוד בהתאמה מלאה — ראה CarRentalSearch.
+        url: rentalLocationCode(dest) && from && to
+          ? `https://www.kayak.com/cars/${rentalLocationCode(dest)}/${from}/${to}`
+          : 'https://www.kayak.com/cars',
       },
       {
         id: 'discover-cars',
         name: 'Discover Cars',
         note: 'מציג את תנאי הביטוח והפיקדון לפני ההזמנה',
-        url: `https://www.discovercars.com/search?country=&pickup=${enc(dest)}&date_from=${from}&date_to=${to}`,
+        // /search החזיר 404 (נמדד 14.09.2026), ואין קישור עמוק בלי מזהי מיקום פנימיים.
+        url: 'https://www.discovercars.com/',
       },
     ];
   }

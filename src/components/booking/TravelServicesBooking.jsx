@@ -223,7 +223,7 @@ const TravelServicesBooking = () => {
                             // noopener מונע מהאתר הנפתח גישה לחלון שלנו
                             rel="noopener noreferrer"
                           >
-                            חפש ב-{p.name}
+                            {/^https:\/\/[^/]+\/?$|\/cars$/.test(p.url) ? `פתח את ${p.name}` : `חפש ב-${p.name}`}
                           </Button>
                         </CardContent>
                       </Card>

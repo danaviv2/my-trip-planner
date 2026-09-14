@@ -1,3 +1,4 @@
+import { qualifyDestination } from '../services/airportsData';
 /**
  * יצירת קישורי הזמנה לשירותי נסיעה
  */
@@ -40,7 +41,7 @@ export const bookingLinks = {
    * `Hotel-Search?destination=` מחזיר "Rome, Lazio, Italy Hotel Search".
    */
   hotelsCom: (query) =>
-    `https://www.hotels.com/Hotel-Search?destination=${encodeURIComponent(String(query || '').trim())}`,
+    `https://www.hotels.com/Hotel-Search?destination=${encodeURIComponent(qualifyDestination(query))}`,
 
   /**
    * חיפוש מלונות ב-Expedia.
@@ -51,8 +52,9 @@ export const bookingLinks = {
    * 404 מתקן את עצמו, וזה נראה תקין. `destination=` נמדד ומחזיר
    * "Rome, Italy (ROM-All Airports) Hotel Search Results".
    */
+  // "Naples" לבדו נפתח כנאפולי שבפלורידה (נמדד) — qualifyDestination מוסיף מדינה לעיר מוכרת.
   expedia: (query) =>
-    `https://www.expedia.com/Hotel-Search?destination=${encodeURIComponent(String(query || '').trim())}`,
+    `https://www.expedia.com/Hotel-Search?destination=${encodeURIComponent(qualifyDestination(query))}`,
 
   /**
    * חיפוש טיסות — לא דרך Booking.
@@ -82,11 +84,9 @@ export const bookingLinks = {
   /**
    * קישור להשכרת רכב ב-Rentalcars.com
    */
-  car: (location, pickupDate, returnDate) => {
-    const pickup = pickupDate ? new Date(pickupDate).toISOString().split('T')[0] : '';
-    const returnD = returnDate ? new Date(returnDate).toISOString().split('T')[0] : '';
-    return `https://www.rentalcars.com/SearchResults.do?driversAge=30&dropCity=${encodeURIComponent(location)}&pickupDate=${pickup}&returnDate=${returnD}`;
-  },
+  // SearchResults.do פתח טופס ריק בלי מיקום (נמדד 14.09.2026) — הפרמטרים לא נקראו,
+  // ואין קישור עמוק בלי מזהי מיקום פנימיים. דף החיפוש, בלי להבטיח חיפוש מוכן.
+  car: () => 'https://www.rentalcars.com/',
 
   /**
    * קישור למסעדה (Google Maps / TripAdvisor)
