@@ -141,3 +141,34 @@ export const findAirport = (raw) => {
   const hit = Object.keys(NAMES).find((k) => lower.includes(k));
   return hit ? { code: NAMES[hit], ...AIRPORTS[NAMES[hit]] } : null;
 };
+
+/**
+ * קוד מיקום לחיפוש השכרת רכב — רק בהתאמה מלאה, לא בהכלה.
+ *
+ * `findAirport` מתאים לפי הכלה, כי הוא קורא מחרוזות ארוכות מכרטיס טיסה.
+ * לשדה שהמשתמש מקליד זה מסוכן: נמדד 14.09.2026 ב-Kayak ש-"Naples" בלבד
+ * נפתר ל-Naples, Florida, ו-"נאפולי, איטליה" לרומא. הכלה הייתה הופכת
+ * "Naples, Florida" ל-NAP באיטליה באותו ביטחון. כאן הטקסט כולו חייב להיות
+ * קוד שדה, שם עיר עם שדה אחד (התווית ב-AIRPORTS), או עיר מרובת שדות —
+ * ואז קוד המטרופולין, שנבדק ב-Kayak (ROM, PAR, LON, MIL, NYC, TYO נפתחו
+ * כולם לעיר הנכונה). אחרת null, והקורא פותח את האתר בלי חיפוש מוכן.
+ */
+const METRO = {
+  רומא: 'ROM', rome: 'ROM', roma: 'ROM',
+  פריז: 'PAR', paris: 'PAR',
+  לונדון: 'LON', london: 'LON',
+  מילאנו: 'MIL', milan: 'MIL', milano: 'MIL',
+  'ניו יורק': 'NYC', 'new york': 'NYC',
+  טוקיו: 'TYO', tokyo: 'TYO',
+};
+
+export const rentalLocationCode = (raw) => {
+  const text = String(raw || '').trim();
+  if (!text) return null;
+  const lower = text.toLowerCase();
+  if (METRO[lower]) return METRO[lower];
+  const code = text.toUpperCase();
+  if (/^[A-Z]{3}$/.test(code) && (AIRPORTS[code] || Object.values(METRO).includes(code))) return code;
+  const hit = Object.entries(AIRPORTS).find(([, a]) => a.city === text);
+  return hit ? hit[0] : null;
+};

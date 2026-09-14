@@ -10,6 +10,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MapIcon from '@mui/icons-material/Map';
 import { generateCarRentalTips } from '../../services/aiCarRentalService';
+import { rentalLocationCode } from '../../services/airportsData';
 
 const CATEGORY_LABELS = {
   economy:  { label: '💰 חסכוני',  color: '#2E7D32', bg: '#E8F5E9' },
@@ -17,32 +18,52 @@ const CATEGORY_LABELS = {
   premium:  { label: '👑 פרמיום',  color: '#E65100', bg: '#FFF3E0' },
 };
 
+// ── קישורים שנבדקו, לא קישורים שנראים נכון ──
+// נמדד 14.09.2026 עם "נאפולי", 01–05.10, בדפדפן: שלושת הקישורים הקודמים לא
+// עבדו. Rentalcars החזיר "לא הצלחנו למצוא את העמוד", Kayak חזר לדף הבית
+// (פורמט התאריך `2026/10/01` אינו מוכר לו), ו-DiscoverCars התעלם מהעיר
+// ומהתאריכים. ב-DiscoverCars ישב גם `a_aid=tripplanner` — מזהה שותפים
+// שאיש כאן לא נרשם אליו (הוסר), כלומר עמלה למישהו אחר.
+//
+// חיפוש מוכן נבנה רק כשהוא נבדק: Kayak עם קוד שדה תעופה ותאריכים בפורמט
+// `YYYY-MM-DD` (NAP, TLV וקודי מטרופולין ROM/PAR/LON נפתחו נכון). שם עיר חופשי **לא** — "Naples"
+// נפתר לפלורידה ו"נאפולי, איטליה" לרומא. לשני האחרים אין קישור עמוק ללא
+// מזהי מיקום פנימיים, ולכן הם נפתחים בדף החיפוש שלהם, והמשתמש מקליד.
 const RENTAL_SITES = [
   {
     name: 'Rentalcars',
     logo: '🚗',
     color: '#003580',
-    getUrl: ({ location, pickupDate, returnDate }) =>
-      `https://www.rentalcars.com/en/searchresults.do?adplat=google&cor=IL&pickup=${encodeURIComponent(location)}&puDay=${pickupDate || ''}&doDay=${returnDate || ''}`,
+    home: 'https://www.rentalcars.com/',
+    getUrl: () => 'https://www.rentalcars.com/',
   },
   {
     name: 'Kayak',
     logo: '🚙',
     color: '#FF690F',
+    home: 'https://www.kayak.com/cars',
     getUrl: ({ location, pickupDate, returnDate }) => {
-      const pu = pickupDate?.replace(/-/g, '/') || '';
-      const ret = returnDate?.replace(/-/g, '/') || '';
-      return `https://www.kayak.com/cars/${encodeURIComponent(location)}/${pu}/${ret}?sort=price_a`;
+      const code = rentalLocationCode(location);
+      const iso = /^\d{4}-\d{2}-\d{2}$/;
+      if (code && iso.test(pickupDate || '') && iso.test(returnDate || '')) {
+        return `https://www.kayak.com/cars/${code}/${pickupDate}/${returnDate}`;
+      }
+      return 'https://www.kayak.com/cars';
     },
   },
   {
     name: 'DiscoverCars',
     logo: '🔍',
     color: '#00897B',
-    getUrl: ({ location, pickupDate, returnDate }) =>
-      `https://www.discovercars.com/?a_aid=tripplanner&location=${encodeURIComponent(location)}&date_from=${pickupDate || ''}&date_to=${returnDate || ''}`,
+    home: 'https://www.discovercars.com/',
+    getUrl: () => 'https://www.discovercars.com/',
   },
 ];
+
+// "חפש ב-" רק כשהקישור באמת פותח חיפוש מוכן. כפתור שאומר "חפש" ופותח דף
+// בית הוא הבטחה שהמסך לא מקיים.
+const siteLabel = (site, params) =>
+  site.getUrl(params) === site.home ? `פתח את ${site.name}` : `חפש ב-${site.name}`;
 
 const CarRentalSearch = ({ location: propLocation, onShowOnMap }) => {
   const [location, setLocation] = useState(propLocation || '');
@@ -270,7 +291,7 @@ const CarRentalSearch = ({ location: propLocation, onShowOnMap }) => {
                       {/* כפתורי השכרה */}
                       <Box sx={{ mt: 0.5, display: 'flex', gap: 1 }}>
                         {RENTAL_SITES.map(site => (
-                          <Tooltip key={site.name} title={`חפש ב-${site.name}`}>
+                          <Tooltip key={site.name} title={siteLabel(site, params)}>
                             <Button
                               size="small"
                               variant="outlined"
@@ -343,7 +364,7 @@ const CarRentalSearch = ({ location: propLocation, onShowOnMap }) => {
                     {returnDate && ` ← ${new Date(returnDate).toLocaleDateString('he-IL')}`}
                   </Typography>
                   <Button variant="contained" endIcon={<OpenInNewIcon />} sx={{ background: site.color }}>
-                    חפש ב-{site.name}
+                    {siteLabel(site, params)}
                   </Button>
                 </Paper>
               </Grid>
