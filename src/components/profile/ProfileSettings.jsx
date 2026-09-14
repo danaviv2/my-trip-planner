@@ -23,6 +23,7 @@ import { deleteAccountAndData, signInMethod } from '../../services/accountServic
 import { resetTour } from '../../services/onboardingTourService';
 import { hasGmailConsent } from '../../services/googleTokenClient';
 import LegalLinks from '../common/LegalLinks';
+import useGmailDisclosure from '../consent/useGmailDisclosure';
 
 const TRIP_STYLES = ['balanced', 'culinary', 'adventure', 'culture', 'relax'];
 const CURRENCIES = ['ILS', 'USD', 'EUR', 'GBP'];
@@ -123,6 +124,11 @@ export default function ProfileSettings() {
   // המסך, והודעה למעלה לא נראית בלי גלילה — כלומר לא נראית בכלל.
   const [gmailNote, setGmailNote] = useState(null);
   const [gmailBusy, setGmailBusy] = useState(false);
+  const { ensureGmailDisclosure, gmailDisclosureDialog } = useGmailDisclosure();
+  const handleConnectGmail = async () => {
+    if (!(await ensureGmailDisclosure())) return;
+    try { await connectGmail(); } catch { /* המשתמש סגר את חלון Google */ }
+  };
   const handleDisconnectGmail = async () => {
     setGmailBusy(true);
     setGmailNote(null);
@@ -312,7 +318,7 @@ export default function ProfileSettings() {
                   size="small"
                   disabled={gmailBusy}
                   sx={{ mt: 1.5, ...TOUCH }}
-                  onClick={() => (gmailToken ? handleDisconnectGmail() : connectGmail())}
+                  onClick={() => (gmailToken ? handleDisconnectGmail() : handleConnectGmail())}
                 >
                   {gmailToken ? t('settings.security.disconnect') : t('settings.security.connect')}
                 </Button>
@@ -389,6 +395,7 @@ export default function ProfileSettings() {
         )}
       </Grid>
       <LegalLinks sx={{ mt: 3 }} />
+      {gmailDisclosureDialog}
 
       {/* ── דיאלוג המחיקה ──
           הכפתור ההרסני מושבת עד שמוקלדת מילת אישור. לחיצה אחת על

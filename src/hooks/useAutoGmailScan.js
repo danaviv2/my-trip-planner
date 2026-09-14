@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { requestGmailToken, hasGmailConsent, getClientId } from '../services/googleTokenClient';
 import { scanMailbox } from '../services/bookingScanService';
+import { cachedConsent, hasCurrentGmailDisclosure } from '../services/consentService';
 
 /**
  * סריקה שקטה של תיבת הדואר בפתיחת האפליקציה.
@@ -63,6 +64,9 @@ export const useAutoGmailScan = ({ user, addBookings, applyCancellations, ready 
   useEffect(() => {
     if (!user || !ready || startedRef.current) return;
     if (!getClientId() || !hasGmailConsent()) return;
+    // הרשאת OAuth שניתנה לפני גילוי הנאות אינה הסכמה מדעת: המשתמש לא
+    // ידע שהמיילים נשלחים ל-Gemini. סריקה ידנית אחת מציגה את הגילוי.
+    if (!hasCurrentGmailDisclosure(cachedConsent(user.uid))) return;
 
     const sinceLast = Date.now() - readLastScan();
     if (sinceLast < MIN_INTERVAL_MS) return;

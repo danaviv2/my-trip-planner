@@ -202,6 +202,8 @@ export const deleteAccountAndData = async (user, { password } = {}) => {
   for (const k of LOCAL_KEYS) {
     try { localStorage.removeItem(k); } catch { /* אחסון חסום */ }
   }
+  // מטמון ההסכמות תלוי-uid, ולכן אינו ברשימה הקבועה.
+  try { localStorage.removeItem(`consent_v1_${user.uid}`); } catch { /* אחסון חסום */ }
   return { ok: true, removed };
 };
 

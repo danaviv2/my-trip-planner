@@ -26,6 +26,7 @@ import { purgeStaleDestinationCache } from './services/aiDestinationService';
 import Header from './components/layout/Header';
 import ThemeWrapper from './components/layout/ThemeWrapper';
 import OnboardingTour from './components/onboarding/OnboardingTour';
+import ConsentGate from './components/consent/ConsentGate';
 import OfflineBanner from './components/shared/OfflineBanner';
 import UpdateBanner from './components/UpdateBanner';
 import TripChatWidget from './components/chat/TripChatWidget';
@@ -123,6 +124,10 @@ useEffect(() => {
                 מחזיר null — driver.js מזריק את הבועה ישירות ל-body.
                 אינו רץ אם אין לתחנה יעד על המסך; ראה onboardingTourService. */}
             <OnboardingTour />
+
+            {/* הסכמה לתנאים ולמדיניות — לכל משתמש מחובר שטרם הסכים לנוסח
+                הנוכחי. ראה ConsentGate: "המשך עם Google" עוקף את טופס ההרשמה. */}
+            <ConsentGate />
 
             {/* באנר עדכון גרסה */}
             <Snackbar

@@ -118,6 +118,9 @@ export default function OnboardingTour() {
     // ה-DOM צריך רגע להתייצב: העמודים הם React.lazy, והיעד נולד אחרי
     // שהצ'אנק נטען. בדיקה מיידית הייתה מוצאת מסך ריק תמיד.
     const timer = setTimeout(() => {
+      // חלון הסכמה פתוח (ConsentGate) — בועה מעליו הייתה מבקשת תשובה
+      // שהמשתמש אינו יכול לתת. המדריך ירוץ במעבר המסך הבא.
+      if (document.documentElement.dataset.consentPending) return;
       const steps = stepsFor(pathname, domHasTarget);
       if (!steps.length) return;
       shownRef.current = steps.map((s) => s.id);

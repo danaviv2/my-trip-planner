@@ -1122,5 +1122,25 @@
     "privacy": "Politique de confidentialité",
     "terms": "Conditions d’utilisation",
     "accessibility": "Déclaration d’accessibilité"
+  },
+  "consent": {
+    "title": "Avant de continuer",
+    "body": "Pour utiliser l’application, veuillez accepter les Conditions d’utilisation et la Politique de confidentialité. Le contenu est généré par IA et peut être inexact.",
+    "checkbox": "J’ai lu et j’accepte les <terms>Conditions d’utilisation</terms> et la <privacy>Politique de confidentialité</privacy>, et j’ai 18 ans ou plus.",
+    "accept": "Accepter et continuer",
+    "saveFailed": "Votre consentement n’a pas été enregistré (vérifiez la connexion) ; impossible de continuer. Réessayez."
+  },
+  "gmailDisclosure": {
+    "title": "Avant de connecter Gmail",
+    "points": [
+      "L’accès est en lecture seule. L’application n’envoie, ne supprime et ne modifie aucun e-mail.",
+      "Seuls les e-mails des 12 derniers mois dont l’objet contient une formule de confirmation de réservation, de billet ou de police sont lus. Certains peuvent être sans rapport avec un voyage : un filtre en écarte une partie, le reste est ignoré après vérification.",
+      "Le contenu de ces e-mails et leurs PDF joints est envoyé à Google Gemini pour extraire les détails de la réservation.",
+      "Seuls les détails de la réservation, l’objet et l’expéditeur sont enregistrés dans votre compte, pas le texte complet.",
+      "Les données ne servent ni à la publicité ni à l’entraînement de modèles d’IA.",
+      "Vous pouvez vous déconnecter à tout moment dans les Paramètres, ce qui révoque aussi l’autorisation dans votre compte Google."
+    ],
+    "accept": "Accepter et connecter",
+    "cancel": "Pas maintenant"
   }
 }

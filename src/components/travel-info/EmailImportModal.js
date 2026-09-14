@@ -5,6 +5,8 @@ import { parseTravelDocument } from '../../services/bookingParserService';
 import { useBookings } from '../../contexts/BookingsContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { scanMailbox, toBookings } from '../../services/bookingScanService';
+import useGmailDisclosure from '../consent/useGmailDisclosure';
+import { setGmailConsent } from '../../services/googleTokenClient';
 import { 
   Modal, 
   Box, 
@@ -20,7 +22,8 @@ import {
 const EmailImportModal = ({ open, onClose }) => {
   const { t } = useTranslation();
   const { addBookings, applyCancellations } = useBookings();
-  const { gmailToken, connectGmail, disconnectGmail, refreshGmailToken } = useAuth();
+  const { gmailToken, connectGmail, clearGmailToken, refreshGmailToken } = useAuth();
+  const { ensureGmailDisclosure, gmailDisclosureDialog } = useGmailDisclosure();
   const [scanProgress, setScanProgress] = useState('');
   const [scannedSubjects, setScannedSubjects] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
@@ -51,6 +54,9 @@ const EmailImportModal = ({ open, onClose }) => {
    * ההרשאה היא קריאה בלבד, ותוכן המיילים אינו נשמר — רק פרטי ההזמנה.
    */
   const connectToGmail = async () => {
+    // הגילוי לפני כל דבר אחר — גם כשיש כבר טוקן: הרשאה שניתנה לפני שהגילוי
+    // היה קיים אינה הסכמה לשליחת המיילים ל-Gemini.
+    if (!(await ensureGmailDisclosure())) return;
     setIsLoading(true);
     clearNotice();
     setScanProgress('');
@@ -143,8 +149,11 @@ const EmailImportModal = ({ open, onClose }) => {
       // כל ענף מסתיים בפעולה שאפשר לבצע. המודל נשאר פתוח בכל אחד מהם.
       const msg = String(err?.message || '');
       if (msg === 'GMAIL_TOKEN_EXPIRED') {
-        // ההנפקה השקטה נכשלה גם היא — סימן שההרשאה עצמה כבר לא בתוקף
-        disconnectGmail();
+        // ההנפקה השקטה נכשלה גם היא — סימן שההרשאה עצמה כבר לא בתוקף.
+        // לא `disconnectGmail`: הוא מנסה לשלול אצל Google, ואין מה לשלול —
+        // רק עוד ניסיון שקט שנכשל אחרי 8 שניות.
+        clearGmailToken();
+        setGmailConsent(false);
         setNotice({ severity: 'warning', text: t('emailImport.error.consentExpired') });
       } else if (err?.code === 'auth/popup-closed-by-user') {
         setNotice({ severity: 'info', text: t('emailImport.error.popupClosed') });
@@ -250,6 +259,7 @@ const EmailImportModal = ({ open, onClose }) => {
 
   
   return (
+    <>
     <Modal
       open={open}
       onClose={onClose}
@@ -511,6 +521,8 @@ const EmailImportModal = ({ open, onClose }) => {
         )}
       </Box>
     </Modal>
+    {gmailDisclosureDialog}
+    </>
   );
 };
 

@@ -1122,5 +1122,25 @@
     "privacy": "Privacy policy",
     "terms": "Terms of use",
     "accessibility": "Accessibility statement"
+  },
+  "consent": {
+    "title": "Before you continue",
+    "body": "To use the app, please agree to the Terms of Use and the Privacy Policy. Content is generated with AI and may be inaccurate.",
+    "checkbox": "I have read and agree to the <terms>Terms of Use</terms> and the <privacy>Privacy Policy</privacy>, and I am 18 or older.",
+    "accept": "Agree and continue",
+    "saveFailed": "Your consent was not saved (check your connection), so we cannot continue. Please try again."
+  },
+  "gmailDisclosure": {
+    "title": "Before connecting Gmail",
+    "points": [
+      "Access is read-only. The app does not send, delete or change emails.",
+      "Only emails from the last 12 months whose subject contains a booking-confirmation, ticket or policy phrase are read. Some may be unrelated confirmations — a filter drops some of them, and the rest are discarded after checking.",
+      "The content of those emails and their PDF attachments is sent to Google Gemini to extract the booking details.",
+      "Only the booking details, email subject and sender address are saved to your account — not the full email text.",
+      "The data is not used for advertising and is not used to train AI models.",
+      "You can disconnect at any time in Settings, which also revokes the permission in your Google account."
+    ],
+    "accept": "Agree and connect",
+    "cancel": "Not now"
   }
 }

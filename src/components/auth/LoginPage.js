@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box, Paper, Typography, TextField, Button, Divider,
-  CircularProgress, Alert, IconButton, InputAdornment,
+  CircularProgress, Alert, IconButton, InputAdornment, Checkbox, FormControlLabel, Link,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
+import { markSignupConsent, clearSignupConsent } from '../consent/ConsentGate';
+import LegalLinks from '../common/LegalLinks';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -22,6 +24,8 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
+  // לא מסומנת מראש: הסכמה שהמערכת סימנה במקום המשתמש אינה הסכמה מדעת.
+  const [agreed, setAgreed] = useState(false);
 
   const from = location.state?.from || '/';
 
@@ -33,10 +37,14 @@ const LoginPage = () => {
   const handleGoogle = async () => {
     setError('');
     setLoading(true);
+    // בטופס ההרשמה, סימון התיבה חוסך את חלון ההסכמה אחרי החזרה מ-Google.
+    // בלי סימון — השער (ConsentGate) ישאל אחרי ההתחברות.
+    if (mode === 'register' && agreed) markSignupConsent();
     try {
       await loginWithGoogle();
       navigate(from, { replace: true });
     } catch (e) {
+      clearSignupConsent();
       setError(translateError(e.code));
     } finally {
       setLoading(false);
@@ -53,6 +61,7 @@ const LoginPage = () => {
         await resetPassword(email);
         setInfo(t('login.resetSent'));
       } else if (mode === 'register') {
+        markSignupConsent();
         await registerWithEmail(email, password, displayName);
         navigate(from, { replace: true });
       } else {
@@ -60,11 +69,14 @@ const LoginPage = () => {
         navigate(from, { replace: true });
       }
     } catch (e) {
+      clearSignupConsent();
       setError(translateError(e.code));
     } finally {
       setLoading(false);
     }
   };
+
+  const legalLink = (to) => <Link href={to} target="_blank" rel="noopener" />;
 
   return (
     <Box sx={{
@@ -142,7 +154,18 @@ const LoginPage = () => {
               }}
             />
           )}
-          <Button fullWidth type="submit" variant="contained" disabled={loading}
+          {mode === 'register' && (
+            <FormControlLabel
+              sx={{ alignItems: 'flex-start', mb: 1.5, mx: 0 }}
+              control={<Checkbox checked={agreed} onChange={(e) => setAgreed(e.target.checked)} sx={{ pt: 0.25 }} />}
+              label={
+                <Typography variant="body2">
+                  <Trans i18nKey="consent.checkbox" components={{ terms: legalLink('/terms'), privacy: legalLink('/privacy') }} />
+                </Typography>
+              }
+            />
+          )}
+          <Button fullWidth type="submit" variant="contained" disabled={loading || (mode === 'register' && !agreed)}
             sx={{ py: 1.2, fontWeight: 700, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', mb: 1.5 }}>
             {loading ? <CircularProgress size={22} color="inherit" /> : (
               mode === 'login' ? t('login.btn_login') :
@@ -180,6 +203,7 @@ const LoginPage = () => {
             </Button>
           )}
         </Box>
+        <LegalLinks sx={{ pt: 2, pb: 0 }} />
       </Paper>
     </Box>
   );
