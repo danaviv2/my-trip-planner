@@ -22,6 +22,9 @@ const ALLOWED_MODELS = new Set([
 
 const DEFAULT_MODEL = 'gemini-2.5-flash';
 
+// מתחת ל-4.5MB של Vercel, עם מרווח לכותרות ולפרומפט שנשלח לצד הקובץ.
+export const GEMINI_MAX_BYTES = 4_400_000;
+
 // ── חזרה אחורה בלי שינוי קוד ──
 // `GEMINI_FORCE_MODEL` ב-Vercel מחליף כל מודל שהלקוח ביקש. הוא קיים בשביל
 // יום אחד: מעבר למודל חדש שמתגלה כשגוי באתר החי. משנים משתנה, פורסים מחדש,
@@ -60,7 +63,14 @@ export default async function handler(req, res) {
   // על חשבון בעל האתר. אימות זהות אינו אפשרי כאן — שמונה מסכים ציבוריים
   // קוראים ל-Gemini, ראה ההסבר ב-`_lib/guard.mjs`.
   if (rejectForeign(req, res)) return;
-  if (rejectOversized(req, res)) return;
+  // ── תקרה משלו, לא 100KB הכללי ──
+  // מ-04.09.2026 כל בקשה מעל 100KB נדחתה ב-413. אישור הזמנה ב-PDF נשלח
+  // כ-base64 (×4/3), ולכן קובץ של 75KB כבר עבר את התקרה — פענוח קבצים
+  // מצורפים הפסיק לעבוד בשקט באתר החי. נמדד 14.09 על ארבעה קבצים אמיתיים:
+  // 3 מתוך 4 (146KB–1.1MB) החזירו 413; כל חמש הזמנות ה-PDF של הבעלים
+  // נקלטו לפני 04.09. התקרה נגזרת מגבול Vercel (4.5MB לגוף בקשה, מתועד
+  // ב-/docs/functions/limitations) ולא ממספר עגול.
+  if (rejectOversized(req, res, GEMINI_MAX_BYTES)) return;
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
