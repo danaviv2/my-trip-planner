@@ -1341,5 +1341,12 @@
     "source": "Source : {{subject}}",
     "remove": "Supprimer",
     "keep": "Garder"
+  },
+  "plannerGrid": {
+    "label": "Jours de l’itinéraire",
+    "day": "Jour {{n}}",
+    "activities_one": "1 activité",
+    "activities_other": "{{count}} activités",
+    "activities_zero": "aucune activité"
   }
 }

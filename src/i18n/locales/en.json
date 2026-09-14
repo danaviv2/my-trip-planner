@@ -1341,5 +1341,12 @@
     "source": "Source: {{subject}}",
     "remove": "Remove",
     "keep": "Keep"
+  },
+  "plannerGrid": {
+    "label": "Itinerary days",
+    "day": "Day {{n}}",
+    "activities_one": "1 activity",
+    "activities_other": "{{count}} activities",
+    "activities_zero": "no activities"
   }
 }

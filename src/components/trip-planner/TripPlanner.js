@@ -62,8 +62,6 @@ import {
   CircularProgress,
   Badge,
   Snackbar,
-  Tabs,
-  Tab,
   Collapse,
   Switch,
   FormControlLabel,
@@ -134,6 +132,7 @@ import html2canvas from 'html2canvas';
 import BudgetMeter from '../budget/BudgetMeter';
 import { generateAttractions } from '../../services/aiAttractionsService';
 import DayAnchors from './DayAnchors';
+import PlannerDayGrid from './PlannerDayGrid';
 import { anchorsByDayNumber } from '../../services/tripAnchorsService';
 import { useBookings } from '../../contexts/BookingsContext';
 import PackingListModal from '../packing/PackingListModal';
@@ -1566,31 +1565,13 @@ const TripPlanner = () => {
         {/* מסלול לפי ימים */}
         {days.length > 0 ? (
           <Box>
-            {/* לשוניות ימים */}
-            <Tabs
-              value={selectedDayIndex}
-              onChange={(_, v) => setSelectedDayIndex(v)}
-              variant="scrollable"
-              scrollButtons="auto"
-              sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
-            >
-              {days.map((day, i) => (
-                <Tab
-                  key={i}
-                  label={
-                    <Box sx={{ lineHeight: 1.25, textAlign: 'center' }}>
-                      <Box sx={{ fontWeight: 700, fontSize: '0.82rem' }}>{`יום ${day.day}`}</Box>
-                      {dayLabel(day.date) && (
-                        <Box sx={{ fontSize: '0.66rem', opacity: 0.7, fontWeight: 500 }}>
-                          {dayLabel(day.date)}
-                        </Box>
-                      )}
-                    </Box>
-                  }
-                  sx={{ fontWeight: selectedDayIndex === i ? 700 : 400, minWidth: 80 }}
-                />
-              ))}
-            </Tabs>
+            {/* לוח ימים במקום לשוניות: כל הימים גלויים, עם מה שכבר סגור בכל אחד. ראה PlannerDayGrid. */}
+            <PlannerDayGrid
+              days={days}
+              bookings={bookings}
+              selectedIndex={selectedDayIndex}
+              onSelect={setSelectedDayIndex}
+            />
 
             {/* תוכן היום הנבחר */}
             {currentDay && (

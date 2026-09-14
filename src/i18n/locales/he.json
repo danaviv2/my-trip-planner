@@ -1353,5 +1353,13 @@
     "source": "מקור: {{subject}}",
     "remove": "הסר",
     "keep": "השאר"
+  },
+  "plannerGrid": {
+    "label": "ימי המסלול",
+    "day": "יום {{n}}",
+    "activities_one": "פעילות אחת",
+    "activities_two": "שתי פעילויות",
+    "activities_other": "{{count}} פעילויות",
+    "activities_zero": "אין פעילויות"
   }
 }
