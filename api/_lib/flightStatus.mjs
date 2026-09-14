@@ -54,7 +54,11 @@ export const fetchFlight = async (flight, date) => {
     if (res.status === 404) return { ok: false, code: 'NOT_FOUND' };
     if (!res.ok) return { ok: false, code: `UPSTREAM_${res.status}` };
 
-    const data = await res.json();
+    // גוף ריק = אין עדיין נתונים לטיסה (ראה api/flight-status.mjs). עד כה
+    // זרק כאן ודווח כ-FETCH_FAILED, כלומר כתקלה.
+    const text = await res.text();
+    if (!text.trim()) return { ok: false, code: 'NOT_FOUND' };
+    const data = JSON.parse(text);
     const leg = Array.isArray(data) ? data[0] : data;
     if (!leg) return { ok: false, code: 'NOT_FOUND' };
     return { ok: true, leg };

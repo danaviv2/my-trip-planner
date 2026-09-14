@@ -10,7 +10,9 @@
  * כתובת. לכן אי אפשר להכריע בין השתיים, ואין להעמיד פנים שכן.
  */
 
-const API = 'https://nominatim.openstreetmap.org/search';
+import { NOMINATIM_SEARCH } from './geoEndpoints';
+
+const API = NOMINATIM_SEARCH;
 
 /**
  * מילים בעברית בתוך כתובת לטינית מאפסות את החיפוש.
@@ -179,8 +181,10 @@ export const locateAddress = async (address) => {
 const query = async (q, limit) => {
   try {
     const res = await fetch(
-      `${API}?q=${encodeURIComponent(q)}&format=json&limit=${limit}&extratags=1`,
-      { headers: { 'Accept-Language': 'he,en', 'User-Agent': 'MyTripPlanner/1.0' } }
+      // השפה כפרמטר ולא ככותרת: דרך /api/geo כותרות הדפדפן אינן עוברות,
+      // והכתובת המוצגת למשתמש הייתה חוזרת בשפה המקומית של המקום.
+      // User-Agent נשלח בשרת — דפדפן ממילא אינו מאפשר לקבוע אותו.
+      `${API}?q=${encodeURIComponent(q)}&format=json&limit=${limit}&extratags=1&accept-language=he,en`
     );
     const data = await res.json();
     return Array.isArray(data) ? data : [];

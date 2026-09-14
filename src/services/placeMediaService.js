@@ -31,8 +31,9 @@
 
 import { getPlacePhoto } from './photoService';
 import { distanceKmExact } from './routeGeometryService';
+import { NOMINATIM_SEARCH } from './geoEndpoints';
 
-const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
+const NOMINATIM = NOMINATIM_SEARCH;
 const WIKI_REST = (lang, title) =>
   `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
 

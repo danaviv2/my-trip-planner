@@ -81,7 +81,13 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: 'UPSTREAM', status: upstream.status });
     }
 
-    const data = await upstream.json();
+    // ── גוף ריק הוא "אין נתונים", לא תקלה ──
+    // נמדד באתר החי 14.09.2026: LY 5111 לתאריך שבעוד שישה ימים חזר כתשובה
+    // תקינה בלי גוף, ו-`json()` זרק — המסך קיבל 500 "Unexpected end of JSON
+    // input" על טיסה שפשוט עוד אין לה נתונים.
+    const text = await upstream.text();
+    if (!text.trim()) return res.status(404).json({ error: 'NOT_FOUND', message: 'לא נמצאו נתונים לטיסה בתאריך הזה.' });
+    const data = JSON.parse(text);
     const leg = Array.isArray(data) ? data[0] : data;
     if (!leg) return res.status(404).json({ error: 'NOT_FOUND' });
 

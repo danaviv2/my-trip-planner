@@ -1,5 +1,7 @@
-const GEOCODE_URL = 'https://geocoding-api.open-meteo.com/v1/search';
-const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
+import { WEATHER_FORECAST, WEATHER_GEOCODE } from './geoEndpoints';
+
+const GEOCODE_URL = WEATHER_GEOCODE;
+const FORECAST_URL = WEATHER_FORECAST;
 
 /**
  * תאריך בפורמט שהשרת מבין, מכל צורה שהקורא מחזיק.

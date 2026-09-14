@@ -30,9 +30,11 @@
  */
 
 import { humanGap } from './tripTimelineService';
+import { NOMINATIM_SEARCH, OSRM_DRIVING } from './geoEndpoints';
 
-const OSRM = 'https://router.project-osrm.org/route/v1/driving';
-const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
+// הכתובות ב-geoEndpoints: בייצור דרך /api/geo, עם זיהוי ומטמון משותף.
+const OSRM = OSRM_DRIVING;
+const NOMINATIM = NOMINATIM_SEARCH;
 
 const GEO_PREFIX = 'road_geo_';
 // v2: ערכים שנשמרו לפני שהגיאומטריה נוספה אינם מכילים `path`. בלי החלפת

@@ -1,6 +1,17 @@
 {
   "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    {
+      "source": "/api/geo/route/:coords",
+      "destination": "/api/geo?op=route&coords=:coords"
+    },
+    {
+      "source": "/api/geo/:op",
+      "destination": "/api/geo?op=:op"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
   ],
   "buildCommand": "CI=false npm run build"
 }
