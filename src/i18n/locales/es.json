@@ -1154,5 +1154,30 @@
     ],
     "accept": "Aceptar y conectar",
     "cancel": "Ahora no"
+  },
+  "flightLookup": {
+    "title": "Estado del vuelo",
+    "subtitle": "Introduce el número de vuelo y la fecha; también te mostraremos la compensación que te corresponde por un retraso.",
+    "number": "Número de vuelo",
+    "date": "Fecha",
+    "check": "Consultar",
+    "checking": "Consultando...",
+    "arrivedLate": "Llegó con {{h}} horas de retraso",
+    "arrivedOnTime": "Llegó a tiempo",
+    "times": "Previsto {{s}} · real {{a}}",
+    "status": {
+      "Expected": "Programado",
+      "EnRoute": "En vuelo",
+      "CheckIn": "Facturación abierta",
+      "Boarding": "Embarcando",
+      "GateClosed": "Puerta cerrada",
+      "Departed": "Despegó",
+      "Delayed": "Retrasado",
+      "Approaching": "Aproximándose",
+      "Arrived": "Aterrizó",
+      "Canceled": "Cancelado",
+      "Diverted": "Desviado",
+      "CanceledUncertain": "Posiblemente cancelado"
+    }
   }
 }

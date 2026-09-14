@@ -63,6 +63,13 @@ export const fetchFlightStatus = async (flightNumber, date) => {
   }
 
   const data = await res.json();
+  // המסלול והמוביל מוחזרים בכל תשובה שנמצאה: בדיקה בלי הזמנה (FlightLookupCard)
+  // אינה מכירה אותם מראש, ובלעדיהם אי אפשר לחשב זכאות לפיצוי.
+  const route = {
+    departureAirport: data.departure?.airport || null,
+    arrivalAirport: data.arrival?.airport || null,
+    airline: data.airline || null,
+  };
   const scheduled = parse(data.arrival?.scheduled);
   const actual = parse(data.arrival?.actual);
 
@@ -83,6 +90,7 @@ export const fetchFlightStatus = async (flightNumber, date) => {
         scheduled: depSched,
         actual: depActual,
         status: data.status || null,
+        route,
         reason:
           `אין שעת הגעה בפועל במאגר. ידוע שההמראה אחרה ב-${depDelay} שעות — ` +
           'אך התקנה נמדדת לפי ההגעה, וטיסה מצמצמת לעיתים חלק מהאיחור באוויר.',
@@ -94,6 +102,7 @@ export const fetchFlightStatus = async (flightNumber, date) => {
       delayHours: null,
       atGate: false,
       status: data.status || null,
+      route,
       reason: 'הטיסה נמצאה אך אין לה עדיין שעת הגעה בפועל.',
     };
   }
@@ -110,6 +119,7 @@ export const fetchFlightStatus = async (flightNumber, date) => {
     scheduled,
     actual,
     status: data.status || null,
+    route,
   };
 };
 

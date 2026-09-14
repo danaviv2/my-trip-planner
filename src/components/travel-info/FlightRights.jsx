@@ -18,10 +18,16 @@ import { fetchFlightStatus, formatClock } from '../../services/flightStatusServi
  * כל הנתונים האלה כבר נקלטו אצלנו מאישור ההזמנה. הרכיב הזה רק מצליב
  * אותם — וזה ההבדל בין אפליקציה שמארגנת מידע לכזו שעושה בו שימוש.
  */
-const FlightRights = ({ flight, passengers = 1 }) => {
-  const [delay, setDelay] = useState('');
+// `initialStatus`: תוצאת בדיקה שכבר נעשתה (FlightLookupCard). בלעדיה הכרטיס
+// נפתח עם שדה ריק, והמשתמש שכבר ראה "איחור של 4.25 שעות" היה צריך ללחוץ
+// שוב — ולשלם שוב — כדי לגלות שמגיעים לו 400 אירו.
+const FlightRights = ({ flight, passengers = 1, initialStatus = null }) => {
+  const [delay, setDelay] = useState(
+    initialStatus?.found && initialStatus.delayHours != null ? String(initialStatus.delayHours) : ''
+  );
   const [copied, setCopied] = useState(false);
   const [checking, setChecking] = useState(false);
+  // המצב עצמו כבר מוצג אצל הקורא; כאן רק האיחור נכנס לחישוב, בלי התראה כפולה.
   const [status, setStatus] = useState(null);
 
   /**

@@ -19,6 +19,7 @@ import TripBoundsReport from './TripBoundsReport';
 import { geocodeBookings } from '../../services/bookingGeocodeService';
 import FlightAlertsCard from './FlightAlertsCard';
 import FlightRights from './FlightRights';
+import FlightLookupCard from './FlightLookupCard';
 import { tripCost, formatTotals } from '../../services/tripCostService';
 
 /**
@@ -376,6 +377,9 @@ const TravelInfoComponent = () => {
           {t('travelInfoPage.print')}
         </Button>
       </Box>
+
+      {/* בדיקת טיסה פתוחה — גם בלי הרשמה ובלי הזמנות. ראה FlightLookupCard. */}
+      <FlightLookupCard />
       
       {cloudError && (
         <Alert severity="warning" sx={{ mb: 2 }}>

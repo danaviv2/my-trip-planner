@@ -1154,5 +1154,30 @@
     ],
     "accept": "Accepter et connecter",
     "cancel": "Pas maintenant"
+  },
+  "flightLookup": {
+    "title": "Statut du vol",
+    "subtitle": "Saisissez un numéro de vol et une date — nous indiquerons aussi l’indemnisation due en cas de retard.",
+    "number": "Numéro de vol",
+    "date": "Date",
+    "check": "Vérifier",
+    "checking": "Vérification...",
+    "arrivedLate": "Arrivé avec {{h}} h de retard",
+    "arrivedOnTime": "Arrivé à l’heure",
+    "times": "Prévu {{s}} · réel {{a}}",
+    "status": {
+      "Expected": "Prévu",
+      "EnRoute": "En vol",
+      "CheckIn": "Enregistrement ouvert",
+      "Boarding": "Embarquement",
+      "GateClosed": "Porte fermée",
+      "Departed": "Parti",
+      "Delayed": "Retardé",
+      "Approaching": "En approche",
+      "Arrived": "Arrivé",
+      "Canceled": "Annulé",
+      "Diverted": "Dérouté",
+      "CanceledUncertain": "Peut-être annulé"
+    }
   }
 }

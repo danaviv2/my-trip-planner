@@ -1163,5 +1163,30 @@
     ],
     "accept": "מסכים, המשך לחיבור",
     "cancel": "לא עכשיו"
+  },
+  "flightLookup": {
+    "title": "מה מצב הטיסה?",
+    "subtitle": "הזינו מספר טיסה ותאריך — ונראה גם כמה פיצוי מגיע לכם על עיכוב.",
+    "number": "מספר טיסה",
+    "date": "תאריך",
+    "check": "בדיקה",
+    "checking": "בודקים...",
+    "arrivedLate": "הגיעה באיחור של {{h}} שעות",
+    "arrivedOnTime": "הגיעה בזמן",
+    "times": "מתוכנן {{s}} · בפועל {{a}}",
+    "status": {
+      "Expected": "מתוכננת",
+      "EnRoute": "בדרך",
+      "CheckIn": "צ׳ק־אין פתוח",
+      "Boarding": "עלייה למטוס",
+      "GateClosed": "השער נסגר",
+      "Departed": "המריאה",
+      "Delayed": "מתעכבת",
+      "Approaching": "לקראת נחיתה",
+      "Arrived": "נחתה",
+      "Canceled": "בוטלה",
+      "Diverted": "הוסטה",
+      "CanceledUncertain": "ייתכן שבוטלה"
+    }
   }
 }

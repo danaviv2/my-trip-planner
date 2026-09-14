@@ -1154,5 +1154,30 @@
     ],
     "accept": "Agree and connect",
     "cancel": "Not now"
+  },
+  "flightLookup": {
+    "title": "Flight status",
+    "subtitle": "Enter a flight number and date — we will also show what compensation a delay entitles you to.",
+    "number": "Flight number",
+    "date": "Date",
+    "check": "Check",
+    "checking": "Checking...",
+    "arrivedLate": "Arrived {{h}} hours late",
+    "arrivedOnTime": "Arrived on time",
+    "times": "Scheduled {{s}} · actual {{a}}",
+    "status": {
+      "Expected": "Scheduled",
+      "EnRoute": "En route",
+      "CheckIn": "Check-in open",
+      "Boarding": "Boarding",
+      "GateClosed": "Gate closed",
+      "Departed": "Departed",
+      "Delayed": "Delayed",
+      "Approaching": "Approaching",
+      "Arrived": "Arrived",
+      "Canceled": "Cancelled",
+      "Diverted": "Diverted",
+      "CanceledUncertain": "Possibly cancelled"
+    }
   }
 }

@@ -86,16 +86,28 @@ export default async function handler(req, res) {
     // תקינה בלי גוף, ו-`json()` זרק — המסך קיבל 500 "Unexpected end of JSON
     // input" על טיסה שפשוט עוד אין לה נתונים.
     const text = await upstream.text();
-    if (!text.trim()) return res.status(404).json({ error: 'NOT_FOUND', message: 'לא נמצאו נתונים לטיסה בתאריך הזה.' });
+    if (!text.trim()) {
+      // "אין עדיין נתונים" נשמר לעשר דקות: טיסה עתידית תקבל נתונים, אבל לא בדקה הקרובה.
+      res.setHeader('Cache-Control', 'public, s-maxage=600');
+      return res.status(404).json({ error: 'NOT_FOUND', message: 'לא נמצאו נתונים לטיסה בתאריך הזה.' });
+    }
     const data = JSON.parse(text);
     const leg = Array.isArray(data) ? data[0] : data;
     if (!leg) return res.status(404).json({ error: 'NOT_FOUND' });
 
     // נשלחות רק השעות הדרושות לחישוב. אין טעם להעביר לדפדפן את כל
     // המטען של הספק, והצמצום גם מקטין את שטח החשיפה.
+    // ── מטמון משותף: בדיקה אנונימית לא תשרוף את המכסה בתשלום ──
+    // מ-14.09.2026 הבדיקה פתוחה גם בלי הרשמה (FlightLookupCard). אותה טיסה
+    // נשאלת שוב ושוב — כל נוסע בה, וכל רענון. טיסה שהסתיימה לפני יומיים
+    // לא תשתנה עוד; טיסה של היום משתנה, ולכן חמש דקות בלבד.
+    const ageDays = (Date.now() - Date.parse(`${date}T00:00:00Z`)) / 86_400_000;
+    res.setHeader('Cache-Control', `public, s-maxage=${ageDays > 2 ? 86_400 : 300}`);
     return res.status(200).json({
       flight: leg.number || flight,
       status: leg.status || null,
+      // שם המוביל קובע אם EU261 חל על טיסה שנוחתת באיחוד (isEuCarrier).
+      airline: leg.airline?.name || null,
       departure: {
         airport: leg.departure?.airport?.iata || null,
         scheduled: leg.departure?.scheduledTime?.utc || null,
