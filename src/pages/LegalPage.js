@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { Alert, Box, Container, Typography } from '@mui/material';
+import { Alert, Box, Button, Container, Typography } from '@mui/material';
+import { openAccessibilitySettings } from '../components/common/AccessibilitySettings';
 import { useTranslation } from 'react-i18next';
 import { privacy } from '../legal/privacy';
 import { terms } from '../legal/terms';
@@ -40,6 +41,11 @@ export default function LegalPage({ doc }) {
         <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
           {t('legal.hebrewOnly')}
         </Alert>
+      )}
+      {doc === 'accessibility' && (
+        <Button variant="contained" onClick={openAccessibilitySettings} sx={{ mb: 3, minHeight: 44 }}>
+          ♿ {t('a11y.title')}
+        </Button>
       )}
       <Box dir="rtl" lang="he" sx={{ textAlign: 'start' }}>
         <Typography variant="h4" component="h1" fontWeight={800} gutterBottom>

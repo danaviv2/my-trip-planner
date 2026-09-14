@@ -33,6 +33,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import BottomNav from './BottomNav';
 import InstallPWAButton from '../pwa/InstallPWAButton';
+import { openAccessibilitySettings } from '../common/AccessibilitySettings';
 
 const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -387,6 +388,16 @@ const Header = () => {
 
         {/* אזור משתמש + שפה בתחתית */}
         <Box sx={{ p: 2 }}>
+          {/* הגדרות נגישות — במגירה ולא בסרגל: הסרגל בנייד כבר מלא (ראה למעלה). */}
+          <Button
+            fullWidth
+            variant="outlined"
+            size="small"
+            onClick={() => { setDrawerOpen(false); openAccessibilitySettings(); }}
+            sx={{ mb: 1.5, minHeight: 40, justifyContent: 'flex-start', gap: 1 }}
+          >
+            <span aria-hidden="true">♿</span> {t('a11y.title')}
+          </Button>
           {/* בורר שפה */}
           <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
             {LANGUAGES.map((lang) => (

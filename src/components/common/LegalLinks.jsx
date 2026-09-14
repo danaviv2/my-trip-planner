@@ -2,6 +2,7 @@ import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { Link, Stack } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { openAccessibilitySettings } from './AccessibilitySettings';
 
 // שלושת המסמכים המשפטיים בשורה אחת. Google דורשת קישור למדיניות הפרטיות
 // מדף הבית ומתוך האפליקציה, ותקנה 35 דורשת את הצהרת הנגישות "במקום בולט".
@@ -24,6 +25,9 @@ const LegalLinks = ({ sx }) => {
           {t(`legal.${k}`)}
         </Link>
       ))}
+      <Link component="button" type="button" onClick={openAccessibilitySettings} color="text.secondary" underline="hover" sx={{ fontSize: 'inherit', fontFamily: 'inherit' }}>
+        {t('a11y.title')}
+      </Link>
     </Stack>
   );
 };

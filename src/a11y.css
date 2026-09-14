@@ -1,0 +1,36 @@
+/* ── הגדרות נגישות שהמשתמש בחר (a11yPrefsService) ──
+   גודל הטקסט והניגודיות חלים במקום אחר (font-size על html, ו-theme).
+   כאן רק מה שאין לו מקבילה ב-theme. */
+
+/* הדגשת קישורים: קו תחתון תמיד, וטבעת בולטת במעבר מקלדת. */
+html.a11y-links a[href] {
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
+}
+html.a11y-links a[href]:focus-visible {
+  outline: 3px solid #1a237e !important;
+  outline-offset: 2px;
+}
+
+/* הפחתת תנועה: אנימציות ומעברים כמעט מיידיים. 0.01ms ולא none — אירועי
+   transitionend/animationend עדיין נורים, ורכיבי MUI שממתינים להם (Drawer,
+   Dialog) לא נתקעים חצי-פתוחים. */
+html.a11y-reduce-motion *,
+html.a11y-reduce-motion *::before,
+html.a11y-reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* טקסט מוגדל בטלפון: שם האתר בסרגל העליון גדל יחד עם הטקסט, והכפתורים
+   (44px קבועים) נדחקו מחוץ למסך. נמדד 14.09.2026 ב-375px וטקסט 150%: כפתור
+   התפריט ב-‎-61px — ובמגירה שהוא פותח יושבת הגדרת הנגישות עצמה. הסמל ✈️
+   נשאר קישור לדף הבית. */
+@media (max-width: 599px) {
+  html.a11y-large-text .brand-text {
+    display: none !important;
+  }
+}

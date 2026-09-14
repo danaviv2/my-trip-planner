@@ -1361,5 +1361,16 @@
     "activities_two": "שתי פעילויות",
     "activities_other": "{{count}} פעילויות",
     "activities_zero": "אין פעילויות"
+  },
+  "a11y": {
+    "title": "הגדרות נגישות",
+    "subtitle": "ההגדרות חלות מיד, על כל המסכים.",
+    "textSize": "גודל טקסט",
+    "highContrast": "ניגודיות גבוהה",
+    "highlightLinks": "הדגשת קישורים",
+    "reduceMotion": "הפחתת אנימציות",
+    "savedHere": "נשמר במכשיר הזה.",
+    "reset": "איפוס",
+    "close": "סגירה"
   }
 }

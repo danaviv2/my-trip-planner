@@ -1348,5 +1348,16 @@
     "activities_one": "1 actividad",
     "activities_other": "{{count}} actividades",
     "activities_zero": "sin actividades"
+  },
+  "a11y": {
+    "title": "Ajustes de accesibilidad",
+    "subtitle": "Los cambios se aplican al momento, en todas las pantallas.",
+    "textSize": "Tamaño del texto",
+    "highContrast": "Alto contraste",
+    "highlightLinks": "Resaltar enlaces",
+    "reduceMotion": "Reducir animaciones",
+    "savedHere": "Se guarda en este dispositivo.",
+    "reset": "Restablecer",
+    "close": "Cerrar"
   }
 }

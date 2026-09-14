@@ -27,6 +27,7 @@ import Header from './components/layout/Header';
 import ThemeWrapper from './components/layout/ThemeWrapper';
 import OnboardingTour from './components/onboarding/OnboardingTour';
 import ConsentGate from './components/consent/ConsentGate';
+import AccessibilitySettings from './components/common/AccessibilitySettings';
 import OfflineBanner from './components/shared/OfflineBanner';
 import UpdateBanner from './components/UpdateBanner';
 import TripChatWidget from './components/chat/TripChatWidget';
@@ -128,6 +129,9 @@ useEffect(() => {
             {/* הסכמה לתנאים ולמדיניות — לכל משתמש מחובר שטרם הסכים לנוסח
                 הנוכחי. ראה ConsentGate: "המשך עם Google" עוקף את טופס ההרשמה. */}
             <ConsentGate />
+
+            {/* חלון הגדרות הנגישות — נפתח באירוע מהמגירה, מהשורה המשפטית ומדף ההצהרה. */}
+            <AccessibilitySettings />
 
             {/* באנר עדכון גרסה */}
             <Snackbar
