@@ -1179,5 +1179,12 @@
       "Diverted": "Dérouté",
       "CanceledUncertain": "Peut-être annulé"
     }
+  },
+  "dayGrid": {
+    "label": "Jours du voyage",
+    "gap_one": "1 jour sans réservation",
+    "gap_other": "{{count}} jours sans réservation",
+    "staying": "nuitée",
+    "free": "aucune réservation"
   }
 }

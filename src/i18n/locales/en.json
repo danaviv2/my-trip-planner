@@ -1179,5 +1179,12 @@
       "Diverted": "Diverted",
       "CanceledUncertain": "Possibly cancelled"
     }
+  },
+  "dayGrid": {
+    "label": "Trip days",
+    "gap_one": "1 day with no bookings",
+    "gap_other": "{{count}} days with no bookings",
+    "staying": "overnight stay",
+    "free": "no bookings"
   }
 }

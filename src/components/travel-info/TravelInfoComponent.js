@@ -13,6 +13,7 @@ import { findConflicts } from '../../services/itineraryConflictService';
 import { findDrivingRestrictions } from '../../services/drivingRestrictionsService';
 import { useBookings } from '../../contexts/BookingsContext';
 import TripTimeline from './TripTimeline';
+import TripDayGrid from './TripDayGrid';
 import NextUpCard from './NextUpCard';
 import AddPlanItemDialog from './AddPlanItemDialog';
 import TripBoundsReport from './TripBoundsReport';
@@ -323,6 +324,7 @@ const TravelInfoComponent = () => {
                     רכיב React ואינו מעביר attributes ל-DOM. יעד תחנה 2,
                     שנורית רק כשיש כאן ציר זמן — למשתמש חדש אין. */}
                 <Box data-tour="timeline">
+                  <TripDayGrid bookings={trip.bookings || []} />
                   <TripTimeline
                     bookings={trip.bookings || []}
                     onDelete={removeBooking}

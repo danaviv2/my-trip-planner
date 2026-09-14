@@ -333,6 +333,80 @@ export const buildTimeline = (bookings = []) => {
   return days;
 };
 
+// "YYYY-MM-DD" ⟵ היום שאחריו, בזמן מקומי. חיבור 86400000ms היה מחמיץ יום
+// או כופל אותו במעבר שעון קיץ; בניית Date מרכיביו אינה תלויה בכך.
+const nextDayKey = (key) => {
+  const [y, m, d] = key.split('-').map(Number);
+  const n = new Date(y, m - 1, d + 1);
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+};
+
+/**
+ * לוח ימים לנסיעה: כל יום מהראשון לאחרון, עם מה שקורה בו.
+ *
+ * ── נגזר מ-buildTimeline, לא מחושב לצידו ──
+ * הלוח והציר הם שתי תצוגות של אותה עובדה. כששני מקומות חישבו את היום של
+ * הזמנה (ה-overrides נקראו רק באחד), רשומה ישבה בשני תאריכים שונים
+ * (CLAUDE.md, "Two views of one fact"). לכן הלוח מקבל את הימים שהציר כבר
+ * בנה, ואינו קורא הזמנות בעצמו.
+ *
+ * ימים בלי אירוע נכללים: חור בלוח הוא מידע ("יום חופשי"), ודילוג עליו
+ * היה מציג 10 ו-12 כשכנים. לילה בתוך שהות במלון מסומן 🛏️ — בלעדיו יום
+ * שכולו במלון נראה כיום שאין לו מקום לינה.
+ *
+ * @param {Array} days תוצאת buildTimeline
+ * @returns {Array<{dayKey, icons: string[], labels: string[], staying: boolean, empty: boolean}>}
+ */
+export const dayGrid = (days = []) => {
+  if (!days.length) return [];
+  const byKey = new Map(days.map((d) => [d.dayKey, d]));
+
+  // שהות = מיום הכניסה (לא כולל) ועד יום היציאה (לא כולל), לכל הזמנת מלון.
+  const stayDays = new Set();
+  const checkIns = new Map();
+  days.forEach((d) => d.events.forEach((ev) => {
+    if (ev.kind === 'hotel-in' && ev.booking) checkIns.set(ev.booking, d.dayKey);
+  }));
+  days.forEach((d) => d.events.forEach((ev) => {
+    if (ev.kind !== 'hotel-out' || !checkIns.has(ev.booking)) return;
+    let k = nextDayKey(checkIns.get(ev.booking));
+    // תקרה: רשומה פגומה (יציאה לפני כניסה) לא תיצור לולאה אינסופית.
+    for (let guard = 0; k < d.dayKey && guard < 366; guard += 1, k = nextDayKey(k)) stayDays.add(k);
+  }));
+
+  const first = days[0].dayKey;
+  const last = days[days.length - 1].dayKey;
+  const cells = [];
+  for (let k = first, guard = 0; k <= last && guard < 366; k = nextDayKey(k), guard += 1) {
+    const events = byKey.get(k)?.events || [];
+    const icons = [];
+    const labels = [];
+    events.forEach((ev) => {
+      if (!icons.includes(ev.icon)) icons.push(ev.icon);
+      if (!labels.includes(ev.label)) labels.push(ev.label);
+    });
+    const staying = stayDays.has(k);
+    cells.push({ dayKey: k, icons, labels, staying, empty: !events.length && !staying });
+  }
+
+  // ── רצף ארוך של ימים ריקים מתכווץ לתא אחד ──
+  // נמדד על ההזמנות האמיתיות: רשומת טרקלין ישנה ב-19.07 (STATUS סעיף 14)
+  // מתחת לנסיעה שהסתיימה ב-05.07 מתחה את הלוח ב-13 תאים ריקים — יותר
+  // מהנסיעה עצמה. יום או שניים ריקים הם "יום חופשי" ונשארים; מעבר לזה
+  // תא אחד אומר כמה ימים עברו, בלי להסתיר שיש עוד משהו אחריהם.
+  const out = [];
+  for (let i = 0; i < cells.length;) {
+    if (!cells[i].empty) { out.push(cells[i]); i += 1; continue; }
+    let j = i;
+    while (j < cells.length && cells[j].empty) j += 1;
+    const run = cells.slice(i, j);
+    if (run.length <= 2) out.push(...run);
+    else out.push({ dayKey: run[0].dayKey, gap: true, count: run.length, icons: [], labels: [], staying: false, empty: true });
+    i = j;
+  }
+  return out;
+};
+
 /**
  * השעה שאירוע צריך לקבל כדי לשבת בין שני שכניו.
  *

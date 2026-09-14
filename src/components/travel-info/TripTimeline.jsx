@@ -13,6 +13,7 @@ import DayMiniMap, { groundPoints } from './DayMiniMap';
 import EventEditDialog from './EventEditDialog';
 
 import { noflip } from '../../utils/noflip';
+import { dayAnchorId } from './TripDayGrid';
 /**
  * הנסיעה כרצף אירועים לפי זמן.
  *
@@ -317,7 +318,9 @@ const TripTimeline = ({ bookings = [], onDelete, onEditEvent, onResetEvent }) =>
               </Box>
             )}
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mt: i === 0 ? 1 : 3, mb: 1.5, px: 0.25 }}>
+            {/* העוגן של לוח הימים (TripDayGrid). `scrollMarginTop` — אחרת הכותרת
+                נגללת אל מתחת לסרגל העליון הקבוע ואינה נראית. */}
+            <Box id={dayAnchorId(day.dayKey)} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mt: i === 0 ? 1 : 3, mb: 1.5, px: 0.25, scrollMarginTop: { xs: '72px', md: '80px' } }}>
               {/* `primary.dark` על רקע כהה נמדד 3.62 — מתחת ל-4.5.
                   הגוון נשמר, רק נבחר הקצה שקריא בכל ערכה. */}
               <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: (t) => (t.palette.mode === 'dark' ? 'primary.light' : 'primary.dark'), letterSpacing: '0.2px' }}>
