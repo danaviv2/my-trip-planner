@@ -10,7 +10,16 @@ import { clearLedger } from '../services/scanLedgerService';
 import { useAutoGmailScan } from '../hooks/useAutoGmailScan';
 import { withoutContradictedFields } from '../services/bookingConsistencyService';
 import {
-  dateKey, flightKey, sameName, sameFlightNumber, sameAirport, stripInvisible,
+  dateKey,
+  flightKey,
+  sameName,
+  sameFlightNumber,
+  sameAirport,
+  stripInvisible,
+  referenceKey,
+  referencesOf,
+  sameReference,
+  referencesConflict,
 } from '../services/bookingIdentity';
 
 /**
@@ -31,7 +40,7 @@ const CANCELLED_KEY = 'cancelledBookingRefs';
 
 // מזהה הביטול חייב להיראות זהה בשלושת המקומות: בסינון, באחסון המקומי
 // ובמזהה המסמך בענן — שבו לוכסן אסור.
-const refKey = (s) => norm(s).replace(/\//g, '-');
+const refKey = referenceKey;
 
 // הזמנות שנמחקו ידנית. נשמר תוכן הרשומה ולא מזהה, כי המזהה משתנה בכל
 // ייבוא מחדש בעוד תוכן ההזמנה נשאר.
@@ -84,8 +93,10 @@ const writeCancelled = (set) => {
 /** מסלק רשומות חסרות תוכן, כולל כאלה שכבר הצטברו במאגר. */
 const withoutEmptyRecords = (list) => list.filter((b) => !isEmptyRecord(b));
 
+// כל מספרי ההפניה נבדקים, לא רק `confirmationNumber`: ביטול שמגיע ממייל
+// של הספק נושא את מספר הספק, והרשומה השמורה אולי נקלטה עם מספר המתווך.
 const withoutCancelled = (list, refs) =>
-  refs.size ? list.filter((b) => !refs.has(refKey(b.confirmationNumber))) : list;
+  refs.size ? list.filter((b) => ![...referencesOf(b)].some((r) => refs.has(r))) : list;
 
 const readLocal = () => {
   try {
@@ -314,7 +325,7 @@ const sameBooking = (a, b) => {
   // שגויים, החדשה נותנת מספר פוליסה נכון, ואין ביניהן שדה מוסכם.
   if (sameSource(a, b)) return true;
 
-  if (agrees(a.confirmationNumber, b.confirmationNumber)) return true;
+  if (sameReference(a, b)) return true;
   if ((a.type || '') !== (b.type || '')) return false;
 
   // מפתח־גיבוב נבנה משדות שעשויים להיעדר, ולכן פיצל בהכרח גרסאות חלקיות
@@ -324,7 +335,7 @@ const sameBooking = (a, b) => {
   const fields = IDENTITY[a.type || ''];
   if (!fields) return false;
 
-  if (contradicts(a.confirmationNumber, b.confirmationNumber)) return false;
+  if (referencesConflict(a, b)) return false;
 
   // כל סוג שדה מושווה בדרכו: מזהה כטקסט, תאריך לפי ערך קנוני, שם עסק
   // לפי הליבה המזהה שלו.
@@ -361,8 +372,21 @@ const mergeBookings = (a, b) => {
     out.overrides = { ...(b.overrides || {}), ...(a.overrides || {}) };
   }
 
+  // מספרי ההפניה מאוחדים ולא נבחרים: גרסה אחת הביאה את מספר המתווך
+  // והשנייה את מספר הספק, ורק שניהם יחד יזהו את המייל הבא — איזה מהם
+  // שלא יישא. הראשי נשאר של הבסיס, וכל השאר נכנסים ל-otherReferences.
+  const refs = [...referencesOf(a), ...referencesOf(b)];
+  const primary = referenceKey(a.confirmationNumber) ? a.confirmationNumber : b.confirmationNumber;
+  const others = [a.confirmationNumber, b.confirmationNumber, ...(a.otherReferences || []), ...(b.otherReferences || [])]
+    .filter((r) => referenceKey(r) && referenceKey(r) !== referenceKey(primary))
+    .filter((r, i, arr) => arr.findIndex((q) => referenceKey(q) === referenceKey(r)) === i);
+  if (refs.length) {
+    if (primary) out.confirmationNumber = primary;
+    if (others.length) out.otherReferences = others;
+  }
+
   Object.entries(b).forEach(([k, v]) => {
-    if (k === 'id' || k === 'importedAt' || k === 'overrides') return;
+    if (k === 'id' || k === 'importedAt' || k === 'overrides' || k === 'otherReferences' || k === 'confirmationNumber') return;
     const cur = out[k];
     if (cur === '' || cur == null) out[k] = v;
     else if (typeof cur === 'string' && typeof v === 'string' && v.length > cur.length) out[k] = v;
@@ -380,32 +404,54 @@ const filled = (b) =>
     ([k, v]) => !['id', 'importedAt', 'type', 'direction'].includes(k) && v !== '' && v != null
   ).length;
 
+// איחוד של רשומה חדשה לתוך רשומה קיימת — אותם כללים בדיוק כמו קודם.
+const absorb = (existing, b) => {
+  // כשמדובר באותו מסמך, הקריאה המאוחרת גוברת במקום להתמזג. אחרת
+  // ערך שגוי שכבר שמור שורד לנצח: האיחוד ממלא שדות ריקים ומעדיף
+  // מחרוזת ארוכה יותר, אך אינו מסיר דבר — ותיקון בפענוח לעולם לא
+  // מגיע למסך בלי שהמשתמש ימחק ידנית.
+  if (sameSource(existing, b)) {
+    // התיקונים של המשתמש עוברים לגרסה המנצחת. הקריאה המאוחרת דורסת
+    // את הרשומה כולה, ובלי ההעברה הזו תיקון ידני היה נמחק בשקט
+    // בסריקה הבאה — בדיוק מה שהשכבה הנפרדת נועדה למנוע.
+    const edits = existing.overrides || b.overrides;
+    const winner = (b.importedAt || '') >= (existing.importedAt || '') ? { ...b } : { ...existing };
+    if (edits) winner.overrides = { ...(b.overrides || {}), ...(existing.overrides || {}) };
+    return winner;
+  }
+  // הרשומה עם יותר שדות מלאים משמשת בסיס. אחרת, כששתיהן מילאו את
+  // אותו שדה, סדר ההגעה קובע — וגרסה חלקית עלולה לדרוס ערך נכון.
+  const [base, extra] = filled(existing) >= filled(b) ? [existing, b] : [b, existing];
+  return mergeBookings(base, extra);
+};
+
 const dedupe = (list = []) => {
   const out = [];
   (list || []).forEach((b) => {
     if (!b) return;
-    const i = out.findIndex((o) => sameBooking(o, b));
+    let i = out.findIndex((o) => sameBooking(o, b));
     if (i === -1) {
       out.push({ ...b });
-    } else {
-      // הרשומה עם יותר שדות מלאים משמשת בסיס. אחרת, כששתיהן מילאו את
-      // אותו שדה, סדר ההגעה קובע — וגרסה חלקית עלולה לדרוס ערך נכון.
-      // כשמדובר באותו מסמך, הקריאה המאוחרת גוברת במקום להתמזג. אחרת
-      // ערך שגוי שכבר שמור שורד לנצח: האיחוד ממלא שדות ריקים ומעדיף
-      // מחרוזת ארוכה יותר, אך אינו מסיר דבר — ותיקון בפענוח לעולם לא
-      // מגיע למסך בלי שהמשתמש ימחק ידנית.
-      if (sameSource(out[i], b)) {
-        // התיקונים של המשתמש עוברים לגרסה המנצחת. הקריאה המאוחרת דורסת
-        // את הרשומה כולה, ובלי ההעברה הזו תיקון ידני היה נמחק בשקט
-        // בסריקה הבאה — בדיוק מה שהשכבה הנפרדת נועדה למנוע.
-        const edits = out[i].overrides || b.overrides;
-        const winner = (b.importedAt || '') >= (out[i].importedAt || '') ? { ...b } : { ...out[i] };
-        if (edits) winner.overrides = { ...(b.overrides || {}), ...(out[i].overrides || {}) };
-        out[i] = winner;
-        return;
+      return;
+    }
+    out[i] = absorb(out[i], b);
+
+    // ── איחוד טרנזיטיבי ──
+    // רשומה שקיבלה מספר הפניה חדש עשויה להתאים עכשיו לרשומה שכבר נמצאת
+    // ברשימה. נמדד 14.09.2026: מייל check-in של DiscoverCars (רק מספר
+    // המתווך) והשובר ב-PDF (רק מספר הספק) אינם חולקים מספר, ולכן נשארו
+    // שתיים — ומייל האישור, שנושא את שניהם, התמזג רק באחת. בסדר הגעה
+    // אחר הכול היה מתאחד; התוצאה תלתה בסדר הסריקה.
+    for (let merged = true; merged; ) {
+      merged = false;
+      for (let j = 0; j < out.length; j++) {
+        if (j === i || !sameBooking(out[i], out[j])) continue;
+        out[i] = absorb(out[i], out[j]);
+        out.splice(j, 1);
+        if (j < i) i -= 1;
+        merged = true;
+        break;
       }
-      const [base, extra] = filled(out[i]) >= filled(b) ? [out[i], b] : [b, out[i]];
-      out[i] = mergeBookings(base, extra);
     }
   });
   return out;
@@ -676,14 +722,16 @@ export const BookingsProvider = ({ children }) => {
       const current = bookingsRef.current;
       const doomed = current.filter(
         (b) =>
-          (refKey(b.confirmationNumber) && refs.has(refKey(b.confirmationNumber))) ||
+          [...referencesOf(b)].some((r) => refs.has(r)) ||
           cancelled.some((c) => sameBooking(b, c))
       );
 
       // הסימון נשמר בנפרד מהמחיקה, אחרת הסריקה הבאה תייבא מחדש את אישור
       // ההזמנה המקורי שעדיין יושב בתיבה.
       const marked = readCancelled();
-      const fresh = [...refs, ...doomed.map((b) => refKey(b.confirmationNumber))]
+      // כל מספרי ההפניה של הזמנה שבוטלה נרשמים, כדי שגם אישור שנושא רק
+      // את המספר האחר לא יחזיר אותה בסריקה הבאה.
+      const fresh = [...refs, ...doomed.flatMap((b) => [...referencesOf(b)])]
         .filter((r) => r && !marked.has(r));
       fresh.forEach((r) => marked.add(r));
       writeCancelled(marked);

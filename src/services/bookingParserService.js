@@ -1,4 +1,5 @@
 import { callGemini, geminiEndpoint, GEMINI_MODELS, generationFor } from './geminiClient';
+import { isMeaningfulReference } from './bookingIdentity';
 const GEMINI_URL = geminiEndpoint(GEMINI_MODELS.parse);
 
 /**
@@ -124,6 +125,7 @@ Return this exact structure:
     "category": "rental" or "transfer",
     "company": "rental company",
     "confirmationNumber": "reference",
+    "otherReferences": ["any other reference number for this same rental, or empty"],
     "pickupDate": "YYYY-MM-DD",
     "pickupTime": "HH:MM",
     "pickupLocation": "full location",
@@ -147,6 +149,7 @@ Return this exact structure:
     {
       "name": "attraction, tour or event name",
       "confirmationNumber": "booking reference or ticket number",
+      "otherReferences": ["any other reference number for this same booking, or empty"],
       "date": "YYYY-MM-DD",
       "time": "HH:MM entry or start time, or null",
       "location": "venue name and address",
@@ -158,6 +161,7 @@ Return this exact structure:
     {
       "name": "restaurant name",
       "confirmationNumber": "reservation reference, or null",
+      "otherReferences": ["any other reference number for this same reservation, or empty"],
       "date": "YYYY-MM-DD",
       "time": "HH:MM of the table, or null",
       "location": "street address of the restaurant",
@@ -168,6 +172,7 @@ Return this exact structure:
   "hotel": {
     "name": "hotel or accommodation name",
     "confirmationNumber": "reference",
+    "otherReferences": ["any other reference number for this same stay, or empty"],
     "checkIn": "YYYY-MM-DD",
     "checkOut": "YYYY-MM-DD",
     "address": "full address or city",
@@ -178,6 +183,12 @@ Return this exact structure:
 }
 Rules:
 - Convert DD/MM/YYYY to YYYY-MM-DD.
+- One booking can carry several reference numbers: a booking site or broker issues
+  its own ("Booking number: D014297212") and the supplier issues another
+  ("Confirmation number: DG 269534"). Put the supplier's confirmation number in
+  "confirmationNumber" and EVERY other reference for the same booking in
+  "otherReferences". Never put there a PIN, secret code, phone number, price,
+  flight number, ticket number of a different service, or a card number.
 - NEVER invent a year. Many local confirmations write only a day and a month
   ("16/8", "16 באוגוסט", "Wednesday 24 June"). When the year is missing, take it
   from the "תאריך שליחת המייל" line above, choosing the year that puts the
@@ -280,6 +291,23 @@ Rules:
   not a new booking either. Set "isBooking" to false.`;
 
 /** ממיר את תשובת המודל למבנה שהמסכים צורכים. משותף לשני המסלולים. */
+// מספרי הפניה נוספים לאותה הזמנה — ראה `referencesOf` ב-bookingIdentity.
+// מסוננים כאן באותו סף כמו בזהות, כדי שקוד סודי בן ארבע ספרות לא יישמר
+// במאגר בכלל. כפילות של המספר הראשי אינה מוסיפה דבר.
+const otherRefs = (obj) => {
+  const main = String(obj?.confirmationNumber || '').replace(/\s+/g, '').toLowerCase();
+  const list = Array.isArray(obj?.otherReferences) ? obj.otherReferences : [];
+  const seen = new Set();
+  return list
+    .map((r) => String(r || '').trim())
+    .filter((r) => {
+      const k = r.replace(/\s+/g, '').toLowerCase();
+      if (!isMeaningfulReference(k) || k === main || seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+};
+
 const normalizeParsed = (raw) => {
   const cleaned = String(raw).replace(/```json\s*/gi, '').replace(/```/g, '').trim();
   let parsed;
@@ -336,6 +364,7 @@ const normalizeParsed = (raw) => {
               : 'rental',
           company: parsed.carRental.company || '',
           confirmationNumber: parsed.carRental.confirmationNumber || '',
+          otherReferences: otherRefs(parsed.carRental),
           pickupDate: parsed.carRental.pickupDate || '',
           pickupTime: parsed.carRental.pickupTime || '',
           pickupLocation: parsed.carRental.pickupLocation || '',
@@ -361,6 +390,7 @@ const normalizeParsed = (raw) => {
     activities: activities.map((a) => ({
       name: a.name || '',
       confirmationNumber: a.confirmationNumber || '',
+      otherReferences: otherRefs(a),
       date: a.date || '',
       time: a.time || '',
       location: a.location || '',
@@ -373,6 +403,7 @@ const normalizeParsed = (raw) => {
     restaurants: restaurants.map((r) => ({
       name: r.name || '',
       confirmationNumber: r.confirmationNumber || '',
+      otherReferences: otherRefs(r),
       date: r.date || '',
       time: r.time || '',
       location: r.location || '',
@@ -383,6 +414,7 @@ const normalizeParsed = (raw) => {
       ? {
           name: parsed.hotel.name || '',
           confirmationNumber: parsed.hotel.confirmationNumber || '',
+          otherReferences: otherRefs(parsed.hotel),
           checkIn: parsed.hotel.checkIn || '',
           checkOut: parsed.hotel.checkOut || '',
           address: parsed.hotel.address || '',

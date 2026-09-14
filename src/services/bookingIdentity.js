@@ -190,3 +190,57 @@ export const sameName = (a, b) => {
   const [short, long] = x.length <= y.length ? [x, y] : [y, x];
   return short.length >= 5 && ` ${long} `.includes(` ${short} `);
 };
+
+// ── מספרי הפניה: הזמנה אחת יכולה לשאת כמה ──
+//
+// מתווך וספק מנפיקים כל אחד מספר משלו לאותה הזמנה. במייל של DiscoverCars
+// מופיעים "Booking number: D014297212" (המתווך) ו-"Confirmation number:
+// DG 269534" (Noleggiare). נמדד 14.09.2026: gemini-3.8-flash בחר את הראשון
+// ב-3 מתוך 9 ריצות ואת השני בשאר, ו-3.6 כמוהו. מייל ה-check-in של אותו
+// מתווך נושא רק את מספר המתווך, והשובר ב-PDF רק את מספר הספק.
+//
+// השוואה לפי שדה יחיד (`confirmationNumber`) קבעה ששני המספרים "סותרים",
+// וכך אותה השכרה הייתה נשמרת פעמיים — לפי איזה מספר המודל בחר באותה ריצה.
+// כלל בפרומפט לא פותר זאת: גם מודל עקבי לגמרי יקבל מסמכים שכל אחד מהם
+// נושא רק אחד מהמספרים. לכן הזהות היא **קבוצה**: שתי רשומות הן אותה הזמנה
+// אם יש להן מספר משותף, וסותרות רק אם לשתיהן יש מספרים ואין אף אחד משותף.
+
+/**
+ * מפתח קנוני למספר הפניה. זהה בדיוק ל-`refKey` ב-BookingsContext, כי הוא
+ * משמש גם כמזהה מסמך הביטול בענן, שבו לוכסן אסור.
+ */
+export const referenceKey = (value) =>
+  stripInvisible(value).trim().toLowerCase().replace(/\s+/g, '').replace(/\//g, '-');
+
+// מספר הפניה אמיתי ארוך מ-4 תווים ונושא לפחות ספרה אחת. בלי הסף הזה,
+// "1" או "n/a" שהמודל שם בשדה היה מאחד כל שתי הזמנות שנשאו אותו — איחוד
+// שגוי מסוכן מכפילות, כי הוא מוחק הזמנה אמיתית מהמסך.
+// 5 ולא 4: נמדד 14.09.2026 ש-gemini-2.5-flash הכניס את "קוד סודי: 0809"
+// של Booking.com לרשימת המספרים, למרות איסור מפורש בפרומפט. קוד בן ארבע
+// ספרות מתנגש בין הזמנות, ואינו מזהה. המספר הקצר ביותר בנתונים האמיתיים
+// הוא "DG 269534" (8).
+export const isMeaningfulReference = (key) => key.length >= 5 && /\d/.test(key);
+
+/** כל מספרי ההפניה של רשומה, כמפתחות קנוניים. */
+export const referencesOf = (booking) => {
+  const raw = [
+    booking?.confirmationNumber,
+    ...(Array.isArray(booking?.otherReferences) ? booking.otherReferences : []),
+  ];
+  return new Set(raw.map(referenceKey).filter(isMeaningfulReference));
+};
+
+/** הסכמה: לפחות מספר הפניה אחד משותף. */
+export const sameReference = (a, b) => {
+  const x = referencesOf(a);
+  if (!x.size) return false;
+  for (const r of referencesOf(b)) if (x.has(r)) return true;
+  return false;
+};
+
+/** סתירה: לשתיהן יש מספרים, ואין אף אחד משותף. רשומה בלי מספר אינה סותרת. */
+export const referencesConflict = (a, b) => {
+  const x = referencesOf(a);
+  const y = referencesOf(b);
+  return x.size > 0 && y.size > 0 && !sameReference(a, b);
+};
