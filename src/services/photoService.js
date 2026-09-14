@@ -3,7 +3,10 @@
  */
 
 const MEM_CACHE = {};
-const LS_PREFIX = 'place_photo_';
+// v2 (14.09.2026): המפתח הקודם מחק כל תו שאינו a-z0-9, ולכן "Óbidos" נשמר
+// כ-"_bidos" ושמות עבריים כולם כקו תחתון. בנוסף נשמר שם `null` מתקופת השמות
+// העבריים (0/4 תמונות) — ערכים שהיו ממשיכים לחסום שבוע. החלפת הקידומת משליכה אותם.
+const LS_PREFIX = 'place_photo_v2_';
 const LS_TTL = 7 * 24 * 60 * 60 * 1000; // שבוע
 
 function lsGet(key) {
@@ -34,11 +37,16 @@ export async function getPlacePhoto(placeName, country = '') {
   ].filter((v, i, a) => a.indexOf(v) === i); // unique
 
   for (const name of candidates) {
-    const cacheKey = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const cacheKey = encodeURIComponent(name.toLowerCase());
 
-    if (MEM_CACHE[cacheKey] !== undefined) return MEM_CACHE[cacheKey];
+    // ── "אין תמונה" במטמון אינו סוף החיפוש ──
+    // עד כה ערך null שמור למועמד הראשון החזיר null מיד, והמועמד השני — שהיה
+    // מוצא תמונה — לא נוסה שבוע. נמדד בסקר: "Óbidos" לבדו הוא דף פירושונים
+    // (null), ו-"Óbidos, Portugal" הוא העיר.
+    if (MEM_CACHE[cacheKey]) return MEM_CACHE[cacheKey];
+    if (MEM_CACHE[cacheKey] === null) continue;
     const cached = lsGet(cacheKey);
-    if (cached !== undefined) { MEM_CACHE[cacheKey] = cached; return cached; }
+    if (cached !== undefined) { MEM_CACHE[cacheKey] = cached; if (cached) return cached; continue; }
 
     try {
       const res = await fetch(
