@@ -262,7 +262,9 @@ const TripPlannerPage = () => {
     if (trip.days) updateDays(trip.days);
     const budgetVal = ['low', 'medium', 'high'].includes(trip.budget) ? trip.budget : 'medium';
     updateBudget(budgetVal);
-    if (trip.startDate) updateStartDate(trip.startDate);
+    // גם כשאין תאריך: אחרת נשאר התאריך של הטיול הקודם, ו"שמור" היה מטביע
+    // אותו בטיול הזה (handleSaveTrip קורא מההעדפות).
+    updateStartDate(trip.startDate || '');
     if (trip.dailyItinerary?.length > 0) {
       // התאריך נכנס לטיוטה עצמה: לוח הימים נגזר ממנה, לא מההעדפות.
       updateTripPlan({

@@ -609,12 +609,27 @@ const TripPlanner = () => {
   // תאריך ההתחלה של טיול שנטען — מאותה סיבה. בלעדיו יום 1 נשאר "היום"
   // גם לטיול שנשמר עם תאריך יציאה. נבנה מרכיביו: new Date("YYYY-MM-DD")
   // הוא חצות UTC, שממערב לגריניץ' הוא אתמול.
+  //
+  // טיול בלי תאריך שמור חוזר ל"היום" כשהוא מחליף טיול אחר. נמדד 15.09.2026:
+  // סאן פרנסיסקו (בלי תאריך) שנפתח אחרי טיול בדיקה מ-1.10 ירש את 1.10,
+  // וכרטיס המלון הציג תאריכים שאיש לא בחר. יעד ותאריך באותו effect: שני
+  // טיולים עם אותו תאריך לא היו מריצים effect של תאריך בלבד.
+  const loadedTripRef = useRef({ destination: tripPlan?.destination, startDate: tripPlan?.startDate });
   useEffect(() => {
-    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(tripPlan?.startDate || ''));
-    if (!m) return;
-    const next = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    const prev = loadedTripRef.current;
+    const destination = tripPlan?.destination;
+    const iso = tripPlan?.startDate;
+    loadedTripRef.current = { destination, startDate: iso };
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+    let next = null;
+    if (m) next = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    else if (destination && destination !== prev.destination) {
+      const now = new Date();
+      next = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    }
+    if (!next) return;
     setStartDate((current) => (current && current.getTime() === next.getTime() ? current : next));
-  }, [tripPlan?.startDate]);
+  }, [tripPlan?.destination, tripPlan?.startDate]);
 
   // שליפת אטרקציות מומלצות כשהיעד משתנה
   useEffect(() => {
@@ -1830,7 +1845,9 @@ const TripPlanner = () => {
                     const range = hotelStayRange(days, selectedDayIndex, tripPlan?.stops);
                     const checkIn = range && days[range.start]?.date;
                     const checkOut = range && addDaysIso(days[range.end]?.date, 1);
-                    const stay = checkIn && checkOut ? { checkIn, checkOut } : null;
+                    // תאריכים רק לטיול שנשמר עם תאריך יציאה. בלעדיו לוח הימים
+                    // מתחיל "מהיום" כברירת מחדל, ותאריך כזה בחיפוש מלון הוא ניחוש.
+                    const stay = tripPlan?.startDate && checkIn && checkOut ? { checkIn, checkOut } : null;
                     const stopName = range && tripPlan?.stops?.length
                       ? (() => {
                           let acc = 0;
