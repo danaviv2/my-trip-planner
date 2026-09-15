@@ -1359,5 +1359,31 @@
     "savedHere": "Saved on this device.",
     "reset": "Reset",
     "close": "Close"
+  },
+  "homeFaq": {
+    "title": "Frequently asked questions",
+    "subtitle": "What to know before you start.",
+    "q": {
+      "import": "How do bookings get into the app?",
+      "documents": "Which documents can I upload?",
+      "stored": "What is kept from my emails and files?",
+      "edit": "Can I fix details that were read wrong?",
+      "delay": "What happens if my flight is delayed?",
+      "noSignup": "Can I check a flight without signing up?",
+      "trips": "Can I manage several trips?",
+      "mobile": "Does it work on my phone?",
+      "delete": "How do I delete my account?"
+    },
+    "a": {
+      "import": "Three ways: a Gmail scan (read-only, only emails whose subject looks like a booking confirmation), uploading a file or photo of the document, or pasting the email text. You can also add an item manually.",
+      "documents": "PDF, photos or screenshots, and EML or TXT files — several at once. Flights, hotels, car rentals, transfers, attractions, restaurants and travel insurance.",
+      "stored": "Only the booking details that were read, plus the file name or email subject and sender — so you can see where each detail came from. The full email text and the file itself are not kept.",
+      "edit": "Yes. Every item in the timeline can be edited or deleted, and your correction is not overwritten by the next scan.",
+      "delay": "If you enabled notifications, you will get a delay alert. Every flight also shows the compensation due under EU or Israeli rules, with a ready claim letter to copy.",
+      "noSignup": "Yes. On the trip details page, enter a flight number and date to see its status, the delay and the compensation due.",
+      "trips": "Yes. Bookings are grouped into trips by date, and each trip has its own timeline and day grid.",
+      "mobile": "Yes, in the browser. For notifications on iPhone, add the site to your Home Screen (iOS 16.4 or later).",
+      "delete": "Settings → Delete account. Your account, trips, bookings and alerts are deleted, and Gmail access is revoked in your Google account too."
+    }
   }
 }

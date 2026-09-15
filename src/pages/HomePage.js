@@ -26,6 +26,7 @@ import ShareTripDialog from '../components/shared/ShareTripDialog';
 
 import { noflip } from '../utils/noflip';
 import LegalLinks from '../components/common/LegalLinks';
+import HomeFaq from '../components/home/HomeFaq';
 const HomePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -620,6 +621,11 @@ const HomePage = () => {
           </Grid>
         </Paper>
 
+      </Container>
+
+      {/* שאלות נפוצות — לאורח ולמשתמש כאחד; כל תשובה נשענת על יכולת שנבדקה. ראה HomeFaq. */}
+      <HomeFaq />
+      <Container maxWidth="lg">
         <LegalLinks sx={{ mt: 2 }} />
       </Container>
 

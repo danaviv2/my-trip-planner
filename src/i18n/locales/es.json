@@ -1359,5 +1359,31 @@
     "savedHere": "Se guarda en este dispositivo.",
     "reset": "Restablecer",
     "close": "Cerrar"
+  },
+  "homeFaq": {
+    "title": "Preguntas frecuentes",
+    "subtitle": "Lo que conviene saber antes de empezar.",
+    "q": {
+      "import": "¿Cómo llegan las reservas a la app?",
+      "documents": "¿Qué documentos puedo subir?",
+      "stored": "¿Qué se guarda de mis correos y archivos?",
+      "edit": "¿Puedo corregir datos mal leídos?",
+      "delay": "¿Qué pasa si mi vuelo se retrasa?",
+      "noSignup": "¿Puedo consultar un vuelo sin registrarme?",
+      "trips": "¿Puedo gestionar varios viajes?",
+      "mobile": "¿Funciona en el móvil?",
+      "delete": "¿Cómo elimino mi cuenta?"
+    },
+    "a": {
+      "import": "De tres formas: escaneo de Gmail (solo lectura, solo correos cuyo asunto parece una confirmación de reserva), subiendo un archivo o foto del documento, o pegando el texto del correo. También puedes añadir un elemento a mano.",
+      "documents": "PDF, fotos o capturas de pantalla, y archivos EML o TXT, varios a la vez. Vuelos, hoteles, alquiler de coches, traslados, atracciones, restaurantes y seguro de viaje.",
+      "stored": "Solo los datos de la reserva, el nombre del archivo o el asunto y remitente del correo, para que sepas de dónde salió cada dato. No se guardan el texto completo del correo ni el archivo.",
+      "edit": "Sí. Cada elemento de la línea de tiempo se puede editar o borrar, y tu corrección no se pierde en el siguiente escaneo.",
+      "delay": "Si activaste las notificaciones, recibirás un aviso de retraso. Cada vuelo muestra además la compensación según la normativa europea o israelí, con una carta de reclamación lista para copiar.",
+      "noSignup": "Sí. En la página de detalles del viaje, introduce número de vuelo y fecha para ver el estado, el retraso y la compensación.",
+      "trips": "Sí. Las reservas se agrupan en viajes por fechas, y cada viaje tiene su línea de tiempo y su cuadrícula de días.",
+      "mobile": "Sí, desde el navegador. Para recibir notificaciones en iPhone, añade el sitio a la pantalla de inicio (iOS 16.4 o posterior).",
+      "delete": "Ajustes → Eliminar cuenta. Se eliminan la cuenta, los viajes, las reservas y los avisos, y se revoca el acceso a Gmail también en tu cuenta de Google."
+    }
   }
 }

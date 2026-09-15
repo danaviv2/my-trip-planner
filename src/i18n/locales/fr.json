@@ -1359,5 +1359,31 @@
     "savedHere": "Enregistré sur cet appareil.",
     "reset": "Réinitialiser",
     "close": "Fermer"
+  },
+  "homeFaq": {
+    "title": "Questions fréquentes",
+    "subtitle": "Ce qu’il faut savoir avant de commencer.",
+    "q": {
+      "import": "Comment les réservations arrivent-elles dans l’application ?",
+      "documents": "Quels documents puis-je importer ?",
+      "stored": "Que conserve-t-on de mes e-mails et fichiers ?",
+      "edit": "Puis-je corriger des informations mal lues ?",
+      "delay": "Que se passe-t-il si mon vol est retardé ?",
+      "noSignup": "Puis-je vérifier un vol sans m’inscrire ?",
+      "trips": "Puis-je gérer plusieurs voyages ?",
+      "mobile": "Est-ce que ça marche sur téléphone ?",
+      "delete": "Comment supprimer mon compte ?"
+    },
+    "a": {
+      "import": "De trois façons : analyse de Gmail (lecture seule, uniquement les e-mails dont l’objet ressemble à une confirmation), import d’un fichier ou d’une photo du document, ou copier-coller du texte de l’e-mail. Vous pouvez aussi ajouter un élément à la main.",
+      "documents": "PDF, photos ou captures d’écran, et fichiers EML ou TXT — plusieurs à la fois. Vols, hôtels, locations de voiture, transferts, activités, restaurants et assurance voyage.",
+      "stored": "Uniquement les détails de réservation lus, le nom du fichier ou l’objet et l’expéditeur de l’e-mail — pour savoir d’où vient chaque information. Le texte complet de l’e-mail et le fichier ne sont pas conservés.",
+      "edit": "Oui. Chaque élément de la chronologie peut être modifié ou supprimé, et votre correction n’est pas écrasée par l’analyse suivante.",
+      "delay": "Si les notifications sont activées, vous recevez une alerte de retard. Chaque vol affiche aussi l’indemnisation due selon les règles européennes ou israéliennes, avec une lettre de réclamation prête à copier.",
+      "noSignup": "Oui. Sur la page des détails du voyage, saisissez un numéro de vol et une date pour voir le statut, le retard et l’indemnisation.",
+      "trips": "Oui. Les réservations sont regroupées en voyages selon les dates, et chaque voyage a sa chronologie et sa grille de jours.",
+      "mobile": "Oui, dans le navigateur. Pour les notifications sur iPhone, ajoutez le site à l’écran d’accueil (iOS 16.4 ou plus).",
+      "delete": "Paramètres → Supprimer le compte. Le compte, les voyages, les réservations et les alertes sont supprimés, et l’accès à Gmail est aussi révoqué dans votre compte Google."
+    }
   }
 }

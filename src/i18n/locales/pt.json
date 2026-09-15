@@ -1359,5 +1359,31 @@
     "savedHere": "Guardado neste dispositivo.",
     "reset": "Repor",
     "close": "Fechar"
+  },
+  "homeFaq": {
+    "title": "Perguntas frequentes",
+    "subtitle": "O que convém saber antes de começar.",
+    "q": {
+      "import": "Como é que as reservas entram na aplicação?",
+      "documents": "Que documentos posso carregar?",
+      "stored": "O que fica guardado dos meus e-mails e ficheiros?",
+      "edit": "Posso corrigir dados mal lidos?",
+      "delay": "O que acontece se o meu voo atrasar?",
+      "noSignup": "Posso verificar um voo sem me registar?",
+      "trips": "Posso gerir várias viagens?",
+      "mobile": "Funciona no telemóvel?",
+      "delete": "Como apago a minha conta?"
+    },
+    "a": {
+      "import": "De três formas: verificação do Gmail (só leitura, apenas e-mails cujo assunto parece uma confirmação de reserva), carregando um ficheiro ou foto do documento, ou colando o texto do e-mail. Também pode adicionar um item manualmente.",
+      "documents": "PDF, fotos ou capturas de ecrã, e ficheiros EML ou TXT — vários de uma vez. Voos, hotéis, aluguer de carro, transferes, atrações, restaurantes e seguro de viagem.",
+      "stored": "Apenas os dados da reserva lidos, o nome do ficheiro ou o assunto e remetente do e-mail — para saber de onde veio cada dado. O texto completo do e-mail e o ficheiro não são guardados.",
+      "edit": "Sim. Cada item da linha do tempo pode ser editado ou apagado, e a sua correção não é substituída na verificação seguinte.",
+      "delay": "Se ativou as notificações, recebe um alerta de atraso. Cada voo mostra também a compensação devida pelas regras europeias ou israelitas, com uma carta de reclamação pronta a copiar.",
+      "noSignup": "Sim. Na página de detalhes da viagem, indique o número do voo e a data para ver o estado, o atraso e a compensação.",
+      "trips": "Sim. As reservas são agrupadas em viagens por datas, e cada viagem tem a sua linha do tempo e grelha de dias.",
+      "mobile": "Sim, no navegador. Para notificações no iPhone, adicione o site ao ecrã principal (iOS 16.4 ou superior).",
+      "delete": "Definições → Apagar conta. A conta, as viagens, as reservas e os alertas são apagados, e o acesso ao Gmail é também revogado na sua conta Google."
+    }
   }
 }
