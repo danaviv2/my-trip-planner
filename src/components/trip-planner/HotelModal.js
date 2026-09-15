@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Box, Typography, TextField, Button } from '@mui/material';
 import bookingLinks from '../../utils/bookingLinks';
 
@@ -9,19 +9,24 @@ import bookingLinks from '../../utils/bookingLinks';
  * ואיפס את 5 שדות הטופס תוך כדי מילוי. ה-JSX זהה למקור; התלויות שהגיעו
  * מהסקופ של App עברו ל-props.
  */
-const HotelModal = ({ open, onClose, onSave, defaultLocation }) => {
-  const [hotel, setHotel] = useState({
-    name: '',
-    address: '',
-    checkIn: '',
-    checkOut: '',
-    notes: ''
-  });
+const EMPTY = { name: '', address: '', checkIn: '', checkOut: '', notes: '' };
+
+const HotelModal = ({ open, onClose, onSave, defaultLocation, initialHotel }) => {
+  const [hotel, setHotel] = useState(EMPTY);
+
+  // ── מילוי מראש מהמלצה ──
+  // "הוסף לתכנון הלינה" ליד מלון מומלץ פותח את החלון עם השם, הכתובת
+  // ותאריכי העצירה — כדי שלא יוקלדו שוב. החלון נפתח לאישור ולא נשמר
+  // מעצמו: זו המלצת AI, והיא אינה אומרת שהמשתמש בחר בה או הזמין.
+  useEffect(() => {
+    if (open) setHotel({ ...EMPTY, ...(initialHotel || {}) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleSave = () => {
     onSave(hotel);
     onClose();
-    setHotel({ name: '', address: '', checkIn: '', checkOut: '', notes: '' });
+    setHotel(EMPTY);
   };
 
   const searchHotel = (site) => {
@@ -32,7 +37,10 @@ const HotelModal = ({ open, onClose, onSave, defaultLocation }) => {
 
     switch (site) {
       case 'booking':
-        url = bookingLinks.hotelSearch(raw);
+        // עם תאריכים כשמולאו — אחרת Booking נפתחת בלי תאריכים ומבקשת שוב.
+        url = hotel.checkIn && hotel.checkOut
+          ? bookingLinks.hotel(raw, hotel.checkIn, hotel.checkOut)
+          : bookingLinks.hotelSearch(raw);
         break;
       case 'hotels':
         url = bookingLinks.hotelsCom(raw);

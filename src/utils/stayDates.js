@@ -34,3 +34,49 @@ export const stopStay = (startDate, startDay, days) => {
   if (!checkIn) return null;
   return { checkIn, checkOut: addDaysIso(checkIn, days) };
 };
+
+const hotelName = (day) => String(day?.hotel?.name || '').trim().toLowerCase();
+
+/**
+ * טווח הימים של הלינה שיום נתון שייך לה, במסך התכנון.
+ *
+ * כשהטיול נשמר עם עצירות (טיול מתגלגל) — הטווח הוא העצירה, כמו בכפתור
+ * החיפוש שם, כדי ששני המסכים לא יחלקו על אותו מלון. בלי עצירות, או כשסכום
+ * ימיהן אינו תואם את המסלול (נערך אחרי השמירה) — רצף הימים הצמודים עם אותו
+ * מלון. נמדד 15.09.2026 על ארבעת הטיולים השמורים: המלון מופיע בכל יום
+ * ונחזר בכל ימי העצירה (Clift בימים 1–3 בסאן פרנסיסקו).
+ *
+ * @returns {{start: number, end: number} | null} אינדקסים כוללים
+ */
+export const hotelStayRange = (days = [], index, stops = []) => {
+  const name = hotelName(days[index]);
+  if (!name) return null;
+
+  const total = (stops || []).reduce((s, x) => s + (Number(x?.days) || 0), 0);
+  if (stops?.length && total === days.length) {
+    let start = 0;
+    for (const s of stops) {
+      const n = Number(s.days) || 0;
+      if (index < start + n) return { start, end: start + n - 1 };
+      start += n;
+    }
+  }
+
+  let start = index;
+  let end = index;
+  while (start > 0 && hotelName(days[start - 1]) === name) start--;
+  while (end < days.length - 1 && hotelName(days[end + 1]) === name) end++;
+  return { start, end };
+};
+
+/**
+ * האם מלון כבר נמצא בתכנון הלינה. לפי שם ותאריך כניסה, לא לפי דגל שנשמר
+ * בכפתור: הכפתור מופיע בכל יום של העצירה, והרשימה היא מקור האמת היחיד.
+ */
+export const isHotelPlanned = (accommodations = [], name, checkIn = '') => {
+  const n = String(name || '').trim().toLowerCase();
+  if (!n) return false;
+  return (accommodations || []).some(
+    (a) => String(a?.name || '').trim().toLowerCase() === n && String(a?.checkIn || '') === String(checkIn || '')
+  );
+};

@@ -1292,6 +1292,9 @@
       "warnRed": "Journée trop chargée ({{h}} heures) — déplacez au moins une activité",
       "lodging": "Hébergement suggéré",
       "searchBooking": "Rechercher sur Booking.com",
+      "addToPlan": "Ajouter au plan d’hébergement",
+      "inPlan": "Dans le plan d’hébergement",
+      "stay": "{{from}}–{{to}}",
       "stopFailed": "Impossible de créer un itinéraire pour cette étape",
       "saving": "Enregistrement...",
       "saveAndOpen": "Enregistrer et ouvrir dans le planificateur"

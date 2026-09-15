@@ -1292,6 +1292,9 @@
       "warnRed": "Dia demasiado cheio ({{h}} horas) — mova pelo menos uma atividade",
       "lodging": "Alojamento sugerido",
       "searchBooking": "Pesquisar no Booking.com",
+      "addToPlan": "Adicionar ao plano de alojamento",
+      "inPlan": "No plano de alojamento",
+      "stay": "{{from}}–{{to}}",
       "stopFailed": "Não foi possível criar um itinerário para esta paragem",
       "saving": "A guardar...",
       "saveAndOpen": "Guardar e abrir no planeador"

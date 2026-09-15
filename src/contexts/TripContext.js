@@ -84,7 +84,13 @@ export const TripProvider = ({ children }) => {
 
     try {
       const dailyItinerary = await generateItinerary({ destination, days, interests, budget, advancedPreferences, anchorsByDay });
-      setTripPlan({ destination, dailyItinerary });
+      // "צור מסלול מחדש" לאותו יעד אינו מבטל את הלינה שכבר נקבעה.
+      setTripPlan((prev) => ({
+        destination,
+        dailyItinerary,
+        ...(prev?.destination === destination && prev?.accommodations?.length
+          ? { accommodations: prev.accommodations } : {}),
+      }));
       setSelectedDayIndex(0);
       return { success: true };
     } catch (err) {

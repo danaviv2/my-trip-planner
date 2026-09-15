@@ -1292,6 +1292,9 @@
       "warnRed": "Overloaded day ({{h}} hours) — move at least one activity",
       "lodging": "Suggested stay",
       "searchBooking": "Search on Booking.com",
+      "addToPlan": "Add to lodging plan",
+      "inPlan": "In lodging plan",
+      "stay": "{{from}}–{{to}}",
       "stopFailed": "We could not create an itinerary for this stop",
       "saving": "Saving...",
       "saveAndOpen": "Save and open in planner"

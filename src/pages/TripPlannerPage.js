@@ -53,12 +53,36 @@ const TripPlannerPage = () => {
   const [shareOpen, setShareOpen] = useState(false);
   const [mainTab, setMainTab] = useState('plan');
   const [servicesTab, setServicesTab] = useState(0);
-  // נשמר ב-localStorage כמו `syncedBookings` שלידו. עד
-  // 04.09.2026 זה היה `useState([])` בלבד, ולכן מלון שנוסף נעלם ברענון —
-  // מה שהיה הופך את תיקון הכפתור להצלחה מדומה.
-  const [accommodations, setAccommodations] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('accommodations') || '[]'); } catch { return []; }
+  // ── הלינה שייכת לטיול ──
+  // עד 15.09.2026 זו הייתה רשימה אחת ב-localStorage (`accommodations`) לכל
+  // הטיולים: מלון שנוסף בתכנון סאן פרנסיסקו הופיע גם בניו יורק, ולא נשמר
+  // בחשבון. עכשיו היא חלק מהטיוטה (tripPlan), כמו הימים, ונשמרת עם הטיול.
+  // פונקציית עדכון, כדי ששתי הוספות ברצף לא ידרסו זו את זו.
+  const accommodations = tripPlan?.accommodations || [];
+  const setAccommodations = (updater) => updateTripPlan((prev) => {
+    const current = prev?.accommodations || [];
+    const next = typeof updater === 'function' ? updater(current) : updater;
+    return { ...(prev || {}), accommodations: next };
   });
+
+  // ── העברה חד-פעמית מהרשימה הישנה ──
+  // מלון בלי תאריכים אינו מלמד לאיזה טיול הוא שייך, ולכן לא מנחשים: הרשימה
+  // כולה עוברת לטיול שפתוח עכשיו, כפי שהמשתמש ראה אותה עד היום. המפתח
+  // נמחק רק אחרי שיש טיול לקבל אותה — אחרת היא הייתה נעלמת בשקט.
+  useEffect(() => {
+    if (!tripPlan?.dailyItinerary?.length) return;
+    let legacy = [];
+    try { legacy = JSON.parse(localStorage.getItem('accommodations') || '[]'); } catch {}
+    if (!Array.isArray(legacy)) legacy = [];
+    if (legacy.length) {
+      setAccommodations((current) => [
+        ...current,
+        ...legacy.filter((h) => h && !current.some((c) => c.name === h.name && c.checkIn === h.checkIn)),
+      ]);
+    }
+    try { localStorage.removeItem('accommodations'); } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripPlan?.dailyItinerary?.length]);
   const [hotelModalOpen, setHotelModalOpen] = useState(false);
   const [mapFocus, setMapFocus] = useState(null);
 
@@ -148,17 +172,6 @@ const TripPlannerPage = () => {
   };
   const restoredRef = useRef(false);
 
-  // כתיבה בכל שינוי, ולא בתוך הצרכן: `AccommodationPlanner` מוסיף ומוחק,
-  // ואם כל אחד מהם היה שומר בעצמו היה נוצר נתיב שני שאפשר לשכוח לעדכן —
-  // בדיוק הדרך שבה נולד הבאג המקורי.
-  useEffect(() => {
-    try {
-      localStorage.setItem('accommodations', JSON.stringify(accommodations));
-    } catch {
-      // מכסת האחסון מלאה או מצב פרטי. הרשימה עדיין עובדת בזיכרון,
-      // ואין ערך בהודעת שגיאה על פעולה שהמשתמש לא ביקש.
-    }
-  }, [accommodations]);
 
   // ── טעינה מ-Firestore: פעם אחת לכל משתמש ──
   // שלושה דברים היו שבורים כאן, וכולם באותו כיוון — קריאות מיותרות
@@ -256,6 +269,9 @@ const TripPlannerPage = () => {
         destination: dest2,
         dailyItinerary: trip.dailyItinerary,
         ...(trip.startDate ? { startDate: trip.startDate } : {}),
+        // העצירות קובעות את טווח הלינה של כל מלון מומלץ (hotelStayRange).
+        ...(trip.stops?.length ? { stops: trip.stops } : {}),
+        accommodations: trip.accommodations || [],
       });
     }
   }, [searchParams, savedTrips]);
@@ -274,6 +290,7 @@ const TripPlannerPage = () => {
       budget: userPreferences.budget,
       startDate: userPreferences.startDate,
       dailyItinerary: tripPlan?.dailyItinerary || [],
+      accommodations: tripPlan?.accommodations || [],
     };
     const trip = await saveTripToList(tripData, lastSavedTripId || null);
     if (trip?.id) setLastSavedTripId(String(trip.id));

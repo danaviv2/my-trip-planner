@@ -133,6 +133,9 @@ import BudgetMeter from '../budget/BudgetMeter';
 import { generateAttractions } from '../../services/aiAttractionsService';
 import DayAnchors from './DayAnchors';
 import PlannerDayGrid from './PlannerDayGrid';
+import RecommendedHotelCard from './RecommendedHotelCard';
+import HotelModal from './HotelModal';
+import { hotelStayRange, isHotelPlanned, addDaysIso } from '../../utils/stayDates';
 import { anchorsByDayNumber } from '../../services/tripAnchorsService';
 import { useBookings } from '../../contexts/BookingsContext';
 import PackingListModal from '../packing/PackingListModal';
@@ -458,6 +461,9 @@ const TripPlanner = () => {
    * רץ פעם אחת לכל יעד שמגיע ב-URL, ולא בכל render.
    */
   const [stashedName, setStashedName] = useState(null);
+  // מלון מומלץ שנפתח לאישור. נשמר לטיוטה (tripPlan.accommodations) — אותה רשימה
+  // ש"תכנון לינה לאורך המסלול" מציג, כך שאין שני מקורות.
+  const [hotelDraft, setHotelDraft] = useState(null);
   const handledParam = useRef(null);
 
   useEffect(() => {
@@ -1817,6 +1823,38 @@ const TripPlanner = () => {
                     );
                   })}
 
+                  {/* לינה מומלצת — נשמרה עם הטיול ועד היום לא הוצגה כאן. הטווח הוא
+                      העצירה (או רצף הימים עם אותו מלון), והתאריכים נלקחים מלוח
+                      הימים עצמו, כדי שהכרטיס והלוח לא יחלקו על אותו יום. */}
+                  {currentDay.hotel?.name && (() => {
+                    const range = hotelStayRange(days, selectedDayIndex, tripPlan?.stops);
+                    const checkIn = range && days[range.start]?.date;
+                    const checkOut = range && addDaysIso(days[range.end]?.date, 1);
+                    const stay = checkIn && checkOut ? { checkIn, checkOut } : null;
+                    const stopName = range && tripPlan?.stops?.length
+                      ? (() => {
+                          let acc = 0;
+                          const s = tripPlan.stops.find((x) => (acc += Number(x.days) || 0) > range.start);
+                          return s ? (s.nameEn || s.name) : '';
+                        })()
+                      : '';
+                    return (
+                      <RecommendedHotelCard
+                        hotel={currentDay.hotel}
+                        city={stopName}
+                        stay={stay}
+                        planned={isHotelPlanned(tripPlan?.accommodations, currentDay.hotel.name, stay?.checkIn)}
+                        onAdd={() => setHotelDraft({
+                          name: currentDay.hotel.name,
+                          address: currentDay.hotel.address || stopName,
+                          checkIn: stay?.checkIn || '',
+                          checkOut: stay?.checkOut || '',
+                          notes: '',
+                        })}
+                      />
+                    );
+                  })()}
+
                   {/* הוספה ידנית. בלעדיה ההתראה על כרטיס מתוזמן — "יש לך
                       כניסה לפומפיי ב-10:00, הוסף אותו למסלול" — הצביעה על
                       דלת נעולה. */}
@@ -1965,6 +2003,18 @@ const TripPlanner = () => {
         </Box>
       )}
       
+      {/* הוספת מלון מומלץ לתכנון הלינה */}
+      <HotelModal
+        open={!!hotelDraft}
+        initialHotel={hotelDraft}
+        onClose={() => setHotelDraft(null)}
+        onSave={(h) => updateTripPlan((prev) => ({
+          ...(prev || {}),
+          accommodations: [...(prev?.accommodations || []), h],
+        }))}
+        defaultLocation={hotelDraft?.address || ''}
+      />
+
       {/* עורך הפעילויות של לוח הזמנים */}
       <ActivityEditorDialog
         open={editorOpen}

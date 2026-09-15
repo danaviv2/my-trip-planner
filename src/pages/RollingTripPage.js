@@ -17,9 +17,6 @@ import {
   Refresh as RefreshIcon,
   Save as SaveIcon,
   Remove as RemoveIcon,
-  Hotel as HotelIcon,
-  Star as StarIcon,
-  OpenInNew as OpenInNewIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   Check as CheckIcon,
@@ -36,8 +33,9 @@ import { analyzeItinerary, summarizeAnalysis, autoOptimize } from '../services/d
 import RouteShapeMap from '../components/rolling/RouteShapeMap';
 import { analyzeRoute, formatDuration } from '../services/routeGeometryService';
 import { geminiEndpoint, GEMINI_MODELS } from '../services/geminiClient';
-import bookingLinks from '../utils/bookingLinks';
-import { stopStay } from '../utils/stayDates';
+import { stopStay, isHotelPlanned } from '../utils/stayDates';
+import RecommendedHotelCard from '../components/trip-planner/RecommendedHotelCard';
+import HotelModal from '../components/trip-planner/HotelModal';
 
 import { noflip } from '../utils/noflip';
 
@@ -127,6 +125,10 @@ export default function RollingTripPage() {
   const [expandedStop,      setExpandedStop]      = useState(null);
   const [saving,            setSaving]            = useState(false);
   const [optimizeMsg,       setOptimizeMsg]       = useState('');
+  // לינה שהמשתמש אישר מתוך ההמלצות. נשמרת עם הטיול (accommodations) ונפתחת
+  // בתכנון הלינה של אותו טיול — לא ברשימה אחת לכל הטיולים.
+  const [accommodations,    setAccommodations]    = useState([]);
+  const [hotelDraft,        setHotelDraft]        = useState(null);
   // עריכת פעילויות בשלב 4
   const [editingAct,  setEditingAct]  = useState(null);  // { si, di, ai }
   const [newActForm,  setNewActForm]  = useState(null);  // { si, di } – where to add
@@ -938,42 +940,26 @@ export default function RollingTripPage() {
                       )}
 
                       {/* מלון */}
-                      {day.hotel && (
-                        <Paper sx={{ mt: 1.5, p: 1.5, borderRadius: 2,
-                          background: 'linear-gradient(135deg, #667eea11, #764ba211)',
-                          border: '1px solid #667eea33' }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                            <HotelIcon sx={{ color: '#667eea', fontSize: 18 }} />
-                            <Typography variant="body2" fontWeight={700} color="primary">🌙 {t('rolling.full.lodging')}</Typography>
-                            <Box sx={{ display: 'flex' }}>
-                              {Array.from({ length: day.hotel.stars || 3 }).map((_, i) => (
-                                <StarIcon key={i} sx={{ fontSize: 11, color: '#f5af19' }} />
-                              ))}
-                            </Box>
-                            <Chip label={day.hotel.priceRange || '€€'} size="small"
-                              sx={{ ml: 'auto', fontSize: '0.63rem', bgcolor: '#667eea22', color: '#667eea', fontWeight: 700 }} />
-                          </Box>
-                          <Typography variant="body2" fontWeight={600}>{day.hotel.name}</Typography>
-                          <Typography variant="caption" color="text.secondary" display="block">{day.hotel.description}</Typography>
-                          {day.hotel.bookingTip && (
-                            <Typography variant="caption" sx={{ color: '#764ba2', display: 'block', mt: 0.3 }}>
-                              💡 {day.hotel.bookingTip}
-                            </Typography>
-                          )}
-                          <Button size="small" endIcon={<OpenInNewIcon fontSize="small" />}
-                            href={(() => {
-                              // תאריכי העצירה כולה, לא של היום: המלון מומלץ ללינה בעיר.
-                              // בלי תאריך יציאה — חיפוש בלי תאריכים, לא תאריך מנוחש.
-                              const stay = stopStay(startDate, startDay, days);
-                              const q = `${day.hotel.name} ${stop.nameEn || stop.name}`;
-                              return stay ? bookingLinks.hotel(q, stay.checkIn, stay.checkOut) : bookingLinks.hotelSearch(q);
-                            })()}
-                            target="_blank" rel="noopener noreferrer"
-                            sx={{ mt: 0.5, fontSize: '0.7rem', p: '2px 8px', color: '#667eea' }}>
-                            {t('rolling.full.searchBooking')}
-                          </Button>
-                        </Paper>
-                      )}
+                      {day.hotel && (() => {
+                        // תאריכי העצירה כולה, לא של היום: המלון מומלץ ללינה בעיר.
+                        // בלי תאריך יציאה — חיפוש בלי תאריכים, לא תאריך מנוחש.
+                        const stay = stopStay(startDate, startDay, days);
+                        return (
+                          <RecommendedHotelCard
+                            hotel={day.hotel}
+                            city={stop.nameEn || stop.name}
+                            stay={stay}
+                            planned={isHotelPlanned(accommodations, day.hotel.name, stay?.checkIn)}
+                            onAdd={() => setHotelDraft({
+                              name: day.hotel.name,
+                              address: day.hotel.address || `${stop.nameEn || stop.name}, ${stop.country || ''}`.replace(/,\s*$/, ''),
+                              checkIn: stay?.checkIn || '',
+                              checkOut: stay?.checkOut || '',
+                              notes: '',
+                            })}
+                          />
+                        );
+                      })()}
 
                       {di < itinerary.length - 1 && <Divider sx={{ my: 2 }} />}
                     </Box>
@@ -989,7 +975,7 @@ export default function RollingTripPage() {
         {/* כפתורי תחתית */}
         <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
           <Button variant="outlined" startIcon={<RefreshIcon />}
-            onClick={() => { setActiveStep(0); setStops([]); setFullItinerary([]); }}>
+            onClick={() => { setActiveStep(0); setStops([]); setFullItinerary([]); setAccommodations([]); }}>
             {t('rolling.restart')}
           </Button>
           <Button variant="contained" startIcon={<SaveIcon />} disabled={saving}
@@ -1009,6 +995,7 @@ export default function RollingTripPage() {
                   days: totalDays,
                   dailyItinerary: flatItinerary,
                   rollingTrip: true,
+                  accommodations,
                   // תאריך היציאה נשאל במסך ונזרק בשמירה, ולכן התכנון פתח תמיד מהיום.
                   ...(startDate ? { startDate } : {}),
                   stops: fullItinerary.map(({ stop, days }) => ({ name: stop.name, nameEn: stop.nameEn || stop.name, country: stop.country, days })),
@@ -1058,6 +1045,15 @@ export default function RollingTripPage() {
           {activeStep === 3 && !buildingItinerary && renderStep4()}
         </Paper>
       </Container>
+
+      {/* הוספת מלון מומלץ לתכנון הלינה — ממולא מראש, נשמר רק באישור */}
+      <HotelModal
+        open={!!hotelDraft}
+        initialHotel={hotelDraft}
+        onClose={() => setHotelDraft(null)}
+        onSave={(h) => setAccommodations((prev) => [...prev, h])}
+        defaultLocation={hotelDraft?.address || ''}
+      />
 
       {/* Local Phrases Dialog */}
       <Dialog open={phrasesOpen} onClose={() => setPhrasesOpen(false)} fullWidth maxWidth="sm">

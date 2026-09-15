@@ -1292,6 +1292,9 @@
       "warnRed": "Día demasiado cargado ({{h}} horas): conviene mover al menos una actividad",
       "lodging": "Alojamiento sugerido",
       "searchBooking": "Buscar en Booking.com",
+      "addToPlan": "Añadir al plan de alojamiento",
+      "inPlan": "En el plan de alojamiento",
+      "stay": "{{from}}–{{to}}",
       "stopFailed": "No pudimos crear un itinerario para esta parada",
       "saving": "Guardando...",
       "saveAndOpen": "Guardar y abrir en el planificador"
