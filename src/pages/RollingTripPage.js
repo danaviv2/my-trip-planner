@@ -39,6 +39,11 @@ import { geminiEndpoint, GEMINI_MODELS } from '../services/geminiClient';
 import bookingLinks from '../utils/bookingLinks';
 
 import { noflip } from '../utils/noflip';
+
+// תוויות העומס לפי הציון שהשירות מחזיר. הטקסט היה בשירות, בעברית קשיחה,
+// והופיע כך גם כשהממשק באנגלית.
+const LOAD_LABEL = { green: 'rolling.full.loadGreen', yellow: 'rolling.full.loadYellow', red: 'rolling.full.loadRed' };
+const LOAD_WARNING = { yellow: 'rolling.full.warnYellow', red: 'rolling.full.warnRed' };
 // ─── קבועים ────────────────────────────────────────────────────
 
 const PACE_OPTIONS = [
@@ -700,7 +705,7 @@ export default function RollingTripPage() {
               </Box>
               <Button size="small" variant="contained" startIcon={<AIIcon />}
                 onClick={() => {
-                  const { newItinerary, movedCount, details } = autoOptimize(fullItinerary);
+                  const { newItinerary, movedCount } = autoOptimize(fullItinerary);
                   setFullItinerary(newItinerary);
                   setOptimizeMsg(movedCount > 0
                     ? `✅ ${t('rolling.full.moved', { n: movedCount })}`
@@ -760,7 +765,7 @@ export default function RollingTripPage() {
                   const analyses = itineraryAnalysis[si]?.dayAnalyses || [];
                   const worst = analyses.find(a => a.score === 'red') || analyses.find(a => a.score === 'yellow');
                   return worst ? (
-                    <Chip size="small" label={`${worst.emoji} ${worst.label}`}
+                    <Chip size="small" label={`${worst.emoji} ${t(LOAD_LABEL[worst.score])}`}
                       sx={{ bgcolor: 'rgba(255,255,255,0.25)', color: 'white', fontWeight: 700, fontSize: '0.65rem', flexShrink: 0 }} />
                   ) : null;
                 })()}
@@ -789,7 +794,7 @@ export default function RollingTripPage() {
                           {day.title}
                         </Typography>
                         {dayAnalysis && (
-                          <Tooltip title={dayAnalysis.warning || `${t('rolling.full.hours', { h: dayAnalysis.hours })} · ${dayAnalysis.label}`}>
+                          <Tooltip title={LOAD_WARNING[dayAnalysis.score] ? t(LOAD_WARNING[dayAnalysis.score], { h: dayAnalysis.hours }) : `${t('rolling.full.hours', { h: dayAnalysis.hours })} · ${t(LOAD_LABEL[dayAnalysis.score])}`}>
                             <Chip
                               size="small"
                               label={`${dayAnalysis.emoji} ${t('rolling.full.hoursShort', { h: dayAnalysis.hours })}`}
@@ -810,7 +815,7 @@ export default function RollingTripPage() {
                       {/* אזהרת עומס */}
                       {dayAnalysis?.score === 'red' && (
                         <Alert severity="warning" icon={false} sx={{ py: 0.3, px: 1.5, mb: 1, borderRadius: 2, fontSize: '0.75rem' }}>
-                          🔴 {dayAnalysis.warning}
+                          🔴 {t(LOAD_WARNING.red, { h: dayAnalysis.hours })}
                         </Alert>
                       )}
 

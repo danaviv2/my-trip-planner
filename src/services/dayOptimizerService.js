@@ -47,7 +47,10 @@ function travelMinutes(km) {
 
 /**
  * @param {Array} activities
- * @returns {{ totalMinutes, actMinutes, travelMinutes, hours, score, label, color, emoji, warning }}
+ * @returns {{ totalMinutes, actMinutes, travelMinutes, hours, score, color, emoji }}
+ *
+ * אין כאן טקסט לתצוגה. "עמוס מדי" נכתב פעם כאן בעברית קשיחה, והופיע כך גם
+ * במסך באנגלית. השירות מחזיר ציון ומספרים; המסך מתרגם (rolling.full.load*).
  */
 export function analyzeDay(activities = []) {
   let actMin   = 0;
@@ -65,18 +68,16 @@ export function analyzeDay(activities = []) {
   const total = actMin + travMin;
   const hours = +(total / 60).toFixed(1);
 
-  let score, label, color, emoji, warning;
+  let score, color, emoji;
   if (hours <= 7) {
-    score = 'green';  label = 'מאוזן';    color = '#43e97b'; emoji = '🟢'; warning = null;
+    score = 'green';  color = '#43e97b'; emoji = '🟢';
   } else if (hours <= 9.5) {
-    score = 'yellow'; label = 'עמוס';     color = '#f5af19'; emoji = '🟡';
-    warning = `יום עמוס (${hours} שעות) — שקול להזיז פעילות אחת`;
+    score = 'yellow'; color = '#f5af19'; emoji = '🟡';
   } else {
-    score = 'red';    label = 'עמוס מדי'; color = '#f5576c'; emoji = '🔴';
-    warning = `יום עמוס מדי (${hours} שעות) — מומלץ להזיז לפחות פעילות אחת`;
+    score = 'red';    color = '#f5576c'; emoji = '🔴';
   }
 
-  return { totalMinutes: total, actMinutes: actMin, travelMinutes: travMin, hours, score, label, color, emoji, warning };
+  return { totalMinutes: total, actMinutes: actMin, travelMinutes: travMin, hours, score, color, emoji };
 }
 
 // ─── ניתוח כל הטיול ───────────────────────────────────────────
@@ -113,7 +114,7 @@ export function summarizeAnalysis(analysis = []) {
 /**
  * מזיז פעילויות מימים עמוסים (אדום/צהוב) לימים קלים בתוך אותה עצירה
  * @param {Array} fullItinerary
- * @returns {{ newItinerary, movedCount, details: [string] }}
+ * @returns {{ newItinerary, movedCount, details: [{ name, fromDay, toDay, stop }] }}
  */
 export function autoOptimize(fullItinerary) {
   const next = JSON.parse(JSON.stringify(fullItinerary));
@@ -160,7 +161,7 @@ export function autoOptimize(fullItinerary) {
         days[di + 1].activities.splice(insertAt, 0, { ...moved, time: '09:30' });
 
         movedCount++;
-        details.push(`"${moved.name}" הוזז מיום ${di + 1} ליום ${di + 2} ב-${stopObj.stop?.name || ''}`);
+        details.push({ name: moved.name, fromDay: di + 1, toDay: di + 2, stop: stopObj.stop?.name || '' });
         changed = true;
       }
     }
