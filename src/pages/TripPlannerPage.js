@@ -251,7 +251,12 @@ const TripPlannerPage = () => {
     updateBudget(budgetVal);
     if (trip.startDate) updateStartDate(trip.startDate);
     if (trip.dailyItinerary?.length > 0) {
-      updateTripPlan({ destination: dest2, dailyItinerary: trip.dailyItinerary });
+      // התאריך נכנס לטיוטה עצמה: לוח הימים נגזר ממנה, לא מההעדפות.
+      updateTripPlan({
+        destination: dest2,
+        dailyItinerary: trip.dailyItinerary,
+        ...(trip.startDate ? { startDate: trip.startDate } : {}),
+      });
     }
   }, [searchParams, savedTrips]);
 

@@ -600,6 +600,16 @@ const TripPlanner = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripPlan?.destination, tripPlan?.name]);
 
+  // תאריך ההתחלה של טיול שנטען — מאותה סיבה. בלעדיו יום 1 נשאר "היום"
+  // גם לטיול שנשמר עם תאריך יציאה. נבנה מרכיביו: new Date("YYYY-MM-DD")
+  // הוא חצות UTC, שממערב לגריניץ' הוא אתמול.
+  useEffect(() => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(tripPlan?.startDate || ''));
+    if (!m) return;
+    const next = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    setStartDate((current) => (current && current.getTime() === next.getTime() ? current : next));
+  }, [tripPlan?.startDate]);
+
   // שליפת אטרקציות מומלצות כשהיעד משתנה
   useEffect(() => {
     if (destination) {

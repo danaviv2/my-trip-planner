@@ -37,6 +37,7 @@ import RouteShapeMap from '../components/rolling/RouteShapeMap';
 import { analyzeRoute, formatDuration } from '../services/routeGeometryService';
 import { geminiEndpoint, GEMINI_MODELS } from '../services/geminiClient';
 import bookingLinks from '../utils/bookingLinks';
+import { stopStay } from '../utils/stayDates';
 
 import { noflip } from '../utils/noflip';
 
@@ -960,7 +961,13 @@ export default function RollingTripPage() {
                             </Typography>
                           )}
                           <Button size="small" endIcon={<OpenInNewIcon fontSize="small" />}
-                            href={bookingLinks.hotelSearch(`${day.hotel.name} ${stop.nameEn || stop.name}`)}
+                            href={(() => {
+                              // תאריכי העצירה כולה, לא של היום: המלון מומלץ ללינה בעיר.
+                              // בלי תאריך יציאה — חיפוש בלי תאריכים, לא תאריך מנוחש.
+                              const stay = stopStay(startDate, startDay, days);
+                              const q = `${day.hotel.name} ${stop.nameEn || stop.name}`;
+                              return stay ? bookingLinks.hotel(q, stay.checkIn, stay.checkOut) : bookingLinks.hotelSearch(q);
+                            })()}
                             target="_blank" rel="noopener noreferrer"
                             sx={{ mt: 0.5, fontSize: '0.7rem', p: '2px 8px', color: '#667eea' }}>
                             {t('rolling.full.searchBooking')}
@@ -1002,6 +1009,8 @@ export default function RollingTripPage() {
                   days: totalDays,
                   dailyItinerary: flatItinerary,
                   rollingTrip: true,
+                  // תאריך היציאה נשאל במסך ונזרק בשמירה, ולכן התכנון פתח תמיד מהיום.
+                  ...(startDate ? { startDate } : {}),
                   stops: fullItinerary.map(({ stop, days }) => ({ name: stop.name, nameEn: stop.nameEn || stop.name, country: stop.country, days })),
                 });
                 navigate(`/trip-planner?tripId=${trip.id}`);
