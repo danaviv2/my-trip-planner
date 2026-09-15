@@ -579,6 +579,27 @@ const TripPlanner = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripPlan]);
 
+  // ── טיול אחר נטען אחרי שהרכיב כבר עלה ──
+  // שם הטיול והיעד נקראים מ-tripPlan פעם אחת, ב-useState. פתיחת טיול
+  // מ"הטיולים שלי" או מ"שמור ופתח בתכנון" מעלה את הרכיב עם הטיוטה
+  // הקודמת, ורק אחר כך TripPlannerPage מחליף אותה. נמדד 15.09.2026 בחשבון
+  // הבעלים: כותרת הדף "ניו יורק", ומתחתיה "טיול לסאן פרנסיסקו" עד רענון.
+  // שם שהמשתמש הקליד בעצמו אינו נדרס — רק השם שנגזר מהיעד הקודם.
+  const loadedDestinationRef = useRef(tripPlan?.destination);
+  useEffect(() => {
+    const next = tripPlan?.destination;
+    const previous = loadedDestinationRef.current;
+    if (!next || next === previous) return;
+    loadedDestinationRef.current = next;
+    setDestination(next);
+    setTripName((current) => {
+      if (tripPlan?.name) return tripPlan.name;
+      const derivedFromPrevious = !current || current === `טיול ל${previous || ''}`;
+      return derivedFromPrevious ? `טיול ל${next}` : current;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripPlan?.destination, tripPlan?.name]);
+
   // שליפת אטרקציות מומלצות כשהיעד משתנה
   useEffect(() => {
     if (destination) {

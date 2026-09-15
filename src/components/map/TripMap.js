@@ -227,13 +227,16 @@ const getBookingButtons = (activity, destination) => {
  * הזה". מי שמגיע ראשון עם גודל אמיתי — ה-effect או הצופה — מבצע,
  * והשני מוצא שאין מה לעשות. אין מרוץ כי אין תלות בסדר.
  */
-const FitBounds = ({ positions, dayIndex }) => {
+const FitBounds = ({ positions, dayIndex, tripKey }) => {
   const map = useMap();
   const posRef = useRef(positions);
-  const dayRef = useRef(dayIndex);
+  // המפתח כולל את הטיול, לא רק את היום. "יום 1" של טיול אחר הוא יום אחר:
+  // נמדד 15.09.2026 — פתיחת ניו יורק אחרי סאן פרנסיסקו השאירה את המפה על
+  // סאן פרנסיסקו (אריח ‎-122.4) וכל חמשת הסמנים מחוץ למסך, כי "יום 0 כבר הותאם".
+  const dayRef = useRef(`${tripKey}|${dayIndex}`);
   const fittedFor = useRef(NOT_FITTED);
   posRef.current = positions;
-  dayRef.current = dayIndex;
+  dayRef.current = `${tripKey}|${dayIndex}`;
 
   const tryFit = useCallback(() => {
     const key = dayRef.current;
@@ -247,7 +250,7 @@ const FitBounds = ({ positions, dayIndex }) => {
     fittedFor.current = key;
   }, [map]);
 
-  useEffect(() => { tryFit(); }, [dayIndex, positions, tryFit]);
+  useEffect(() => { tryFit(); }, [dayIndex, tripKey, positions, tryFit]);
 
   useEffect(() => {
     const el = map.getContainer();
@@ -531,7 +534,13 @@ const TripMap = ({ tripPlan, selectedDayIndex, onSelectDay }) => {
         <TileLayer key={layer} attribution={TILES[layer].attribution} url={TILES[layer].url} />
 
         <FlyTo target={focus} />
-        <FitBounds positions={positions} dayIndex={whole ? 'all' : selectedDayIndex} />
+        <FitBounds
+          positions={positions}
+          dayIndex={whole ? 'all' : selectedDayIndex}
+          // יעד ומספר ימים: שני טיולים לאותו יעד באותו אורך יושבים ממילא
+          // באותו אזור. מיקום פעילות אינו נכנס — עריכה הייתה מאפסת זום.
+          tripKey={`${tripPlan?.destination || ''}|${tripPlan?.dailyItinerary?.length || 0}`}
+        />
 
         {/* קו מסלול.
             במבט היומי — בין הפעילויות. במבט המלא — בין הימים, וכל קטע
