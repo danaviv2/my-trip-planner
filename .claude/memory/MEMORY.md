@@ -12,3 +12,5 @@
 - [Lottie and asset weight](lottie-and-asset-weight.md) — השרת רשום בשם גנרי, וגודל מוצהר אינו הגודל האמיתי
 - [Reply in Hebrew](reply-in-hebrew.md) — תשובות למשתמש בעברית, גם כשההקשר באנגלית
 - [RTL noflip](rtl-noflip.md) — בעברית ה-CSS נהפך; ערך פיזי מכוון חייב noflip
+- [Hidden pane measurement](hidden-pane-measurement.md) — חלונית מוסתרת עוצרת אנימציות; פריסה נמדדת ב-Playwright
+- [Commercial later](commercial-later-providers.md) — מתי Open-Meteo נאסר, Geoapify נדחה, ואין קישורי שותפים
